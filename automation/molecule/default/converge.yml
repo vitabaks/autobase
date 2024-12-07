@@ -4,6 +4,21 @@
   gather_facts: true
 
   tasks:
+    - name: Ensure sudo is installed
+      ansible.builtin.package:
+        name: sudo
+        state: present
+
+    - name: Ensure sudo NOPASSWD is configured for ansible user
+      become: true
+      become_method: su
+      ansible.builtin.lineinfile:
+        path: /etc/sudoers
+        state: present
+        regexp: '^{{ ansible_facts.user | default("root") }} ALL=\(ALL\) NOPASSWD: ALL$'
+        line: '{{ ansible_facts.user | default("root") }} ALL=(ALL) NOPASSWD: ALL'
+        validate: 'visudo -cf %s'
+
     - name: Set variables for PostgreSQL Cluster deployment test
       ansible.builtin.set_fact:
         firewall_enabled_at_boot: false

@@ -2,6 +2,7 @@
 - name: Converge
   hosts: all
   gather_facts: true
+  become: true
 
   tasks:
     - name: Set variables for Patroni cluster deployment test
@@ -56,20 +57,17 @@
         tasks_from: system
 
     - name: Install openssh-server package
-      become: true
       ansible.builtin.package:
         name: openssh-server
         state: present
 
     - name: Start ssh service
-      become: true
       ansible.builtin.systemd:
         name: "{{ 'ssh' if ansible_os_family == 'Debian' else 'sshd' }}"
         state: started
         enabled: true
 
     - name: Delete "/run/nologin" file (if exists)
-      become: true
       ansible.builtin.file:
         path: /run/nologin
         state: absent

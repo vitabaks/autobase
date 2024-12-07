@@ -258,6 +258,8 @@
 
 - name: "Remove 'standby_cluster' parameter from DCS (if exists)"
   ansible.builtin.command: patronictl -c {{ patroni_config_file }} edit-config -s standby_cluster=null --force
+  environment:
+    PATH: "{{ ansible_env.PATH }}:/usr/bin:/usr/local/bin"
   when: inventory_hostname in groups['primary']
 
 # Copy the pg_hba.conf file to a new PostgreSQL to save pg_hba rules.
