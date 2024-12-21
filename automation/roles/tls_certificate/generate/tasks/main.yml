@@ -1,0 +1,109 @@
+---
+- name: "Clean up existing certificates"
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - "{{ tls_privatekey_path | default('/etc/tls/server.key') }}"
+    - "{{ tls_cert_path | default('/etc/tls/server.crt') }}"
+    - "{{ tls_ca_cert_path | default('/etc/tls/ca.crt') }}"
+    - "{{ tls_ca_privatekey_path | default('/etc/tls/ca.key') }}"
+    - "{{ tls_etcd_cert_path | default('/etc/etcd/server.crt') }}"
+    - "{{ tls_etcd_ca_cert_path | default('/etc/etcd/ca.crt') }}"
+    - "{{ tls_etcd_privatekey_path | default('/etc/etcd/server.key') }}"
+    - "/etc/tls"
+
+- ansible.builtin.set_fact:
+    all_san_entries: []
+
+- name: "Gather host-specific network information"
+  ansible.builtin.set_fact:
+    san_entry: >-
+      DNS:{{ ansible_hostname }},DNS:{{ ansible_fqdn }},IP:{{ inventory_hostname }}
+
+- block:
+    - name: "Aggregate all subjectAltName entries"
+      ansible.builtin.set_fact:
+        all_san_entries: "{{ all_san_entries + [hostvars[item].san_entry] }}"
+      with_items: "{{ ansible_play_hosts }}"
+
+    - name: "Join subjectAltName entries into a single string"
+      ansible.builtin.set_fact:
+        subject_alt_name: "{{ all_san_entries | join(',') + ',DNS:localhost,IP:127.0.0.1' }}"
+      when: ansible_play_hosts | length > 1
+
+    - name: "Display Certificate subjectAltName future value"
+      ansible.builtin.debug:
+        var: subject_alt_name
+
+######## Generate CA ########
+    - name: "Ensure TLS directory exist"
+      ansible.builtin.file:
+        path: "/etc/tls"
+        state: directory
+        mode: "0700"
+
+    - name: "Generate CA private key"
+      community.crypto.openssl_privatekey:
+        path: "/etc/tls/ca.key"
+        size: "{{ tls_privatekey_size | default(4096) }}"
+        type: "{{ tls_privatekey_type | default('RSA') }}"
+
+    - name: "Create CSR for CA certificate"
+      community.crypto.openssl_csr_pipe:
+        privatekey_path: "/etc/tls/ca.key"
+        common_name: PostgreSQL CA
+        use_common_name_for_san: false
+        basic_constraints:
+          - 'CA:TRUE'
+        basic_constraints_critical: true
+        key_usage:
+          - keyCertSign
+        key_usage_critical: true
+      register: ca_csr
+
+    - name: "Create self-signed CA certificate from CSR"
+      community.crypto.x509_certificate:
+        path: "/etc/tls/ca.crt"
+        csr_content: "{{ ca_csr.csr }}"
+        privatekey_path: "/etc/tls/ca.key"
+        provider: "{{ tls_cert_provider | default('selfsigned') }}"
+        entrust_not_after: "+{{ tls_cert_valid_days | default(3650) }}d"
+
+######## Generate Server cert/key ########
+    - name: "Create server private key"
+      community.crypto.openssl_privatekey:
+        path: "/etc/tls/server.key"
+        size: "{{ tls_privatekey_size | default(4096) }}"
+        type: "{{ tls_privatekey_type | default('RSA') }}"
+
+    - name: "Create server CSR"
+      community.crypto.openssl_csr_pipe:
+        privatekey_path: "/etc/tls/server.key"
+        common_name: postgresql.cluster
+        key_usage:
+          - digitalSignature
+          - keyEncipherment
+          - dataEncipherment
+        extended_key_usage:
+          - clientAuth
+          - serverAuth
+        subject_alt_name: "{{ subject_alt_name }}"
+      register: csr
+
+    - name: "Sign server certificate with the CA"
+      community.crypto.x509_certificate_pipe:
+        csr_content: "{{ csr.csr }}"
+        provider: ownca
+        ownca_path: "/etc/tls/ca.crt"
+        ownca_privatekey_path: "/etc/tls/ca.key"
+        ownca_not_after: +3650d
+        ownca_not_before: "-1d"
+      register: certificate
+
+    - name: "Write server certificate"
+      ansible.builtin.copy:
+        dest: "/etc/tls/server.crt"
+        content: "{{ certificate.certificate }}"
+  delegate_to: "{{ groups.master[0] }}"
+  run_once: true
