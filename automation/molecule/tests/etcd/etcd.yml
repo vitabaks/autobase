@@ -1,5 +1,5 @@
 ---
-- name: Check etcd health with TLS
+- name: Check etcd health
   ansible.builtin.uri:
     url: "{% if tls_cert_generate | bool %}https{% else %}http{% endif %}://{{ inventory_hostname }}:2379/health"
     method: GET

@@ -11,33 +11,33 @@
 
 # if dcs_exists: false and dcs_type: "etcd"
 [etcd_cluster]  # recommendation: 3, or 5-7 nodes
-10.16.16.209
-10.16.16.210
-10.16.16.211
+#10.128.64.140
+#10.128.64.142
+#10.128.64.143
 
 # if dcs_exists: false and dcs_type: "consul"
 [consul_instances]  # recommendation: 3 or 5-7 nodes
-10.16.16.209 consul_node_role=server consul_bootstrap_expect=true consul_datacenter=dc1
-10.16.16.210 consul_node_role=server consul_bootstrap_expect=true consul_datacenter=dc1
-10.16.16.211 consul_node_role=server consul_bootstrap_expect=true consul_datacenter=dc1
+#10.128.64.140 consul_node_role=server consul_bootstrap_expect=true consul_datacenter=dc1
+#10.128.64.142 consul_node_role=server consul_bootstrap_expect=true consul_datacenter=dc1
+#10.128.64.143 consul_node_role=server consul_bootstrap_expect=true consul_datacenter=dc1
 #10.128.64.144 consul_node_role=client consul_datacenter=dc2
 #10.128.64.145 consul_node_role=client consul_datacenter=dc2
 
 # if with_haproxy_load_balancing: true
 [balancers]
-10.16.16.209 # balancer_tags="datacenter=dc1"
-10.16.16.210 # balancer_tags="datacenter=dc1"
-10.16.16.211 # balancer_tags="datacenter=dc1"
+#10.128.64.140 # balancer_tags="datacenter=dc1"
+#10.128.64.142 # balancer_tags="datacenter=dc1"
+#10.128.64.143 # balancer_tags="datacenter=dc1"
 #10.128.64.144 balancer_tags="datacenter=dc2"
 #10.128.64.145 balancer_tags="datacenter=dc2" new_node=true
 
 # PostgreSQL nodes
 [master]
-10.16.16.209 hostname=pgnode01 postgresql_exists=false # patroni_tags="datacenter=dc1"
+#10.128.64.140 hostname=pgnode01 postgresql_exists=false # patroni_tags="datacenter=dc1"
 
 [replica]
-10.16.16.210 hostname=pgnode02 postgresql_exists=false # patroni_tags="datacenter=dc1"
-10.16.16.211 hostname=pgnode03 postgresql_exists=false # patroni_tags="datacenter=dc1"
+#10.128.64.142 hostname=pgnode02 postgresql_exists=false # patroni_tags="datacenter=dc1"
+#10.128.64.143 hostname=pgnode03 postgresql_exists=false # patroni_tags="datacenter=dc1"
 #10.128.64.144 hostname=pgnode04 postgresql_exists=false patroni_tags="datacenter=dc2"
 #10.128.64.145 hostname=pgnode04 postgresql_exists=false patroni_tags="datacenter=dc2" new_node=true
 
