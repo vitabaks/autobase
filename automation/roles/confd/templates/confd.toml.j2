@@ -4,12 +4,12 @@ watch = true
 nodes = [
 {% if not dcs_exists|bool and dcs_type == 'etcd' %}
   {% for host in groups['etcd_cluster'] %}
-  "{{ patroni_etcd_protocol }}://{{ hostvars[host]['inventory_hostname'] }}:2379",
+  "{{ patroni_etcd_protocol | default('http', true) }}://{{ hostvars[host]['inventory_hostname'] }}:2379",
   {% endfor %}
 {% endif %}
 {% if dcs_exists|bool and dcs_type == 'etcd' %}
   {% for etcd_hosts in patroni_etcd_hosts %}
-  "{{ patroni_etcd_protocol }}://{{etcd_hosts.host}}:{{etcd_hosts.port}}",
+  "{{ patroni_etcd_protocol | default('http', true) }}://{{etcd_hosts.host}}:{{etcd_hosts.port}}",
   {% endfor %}
 {% endif %}
 ]

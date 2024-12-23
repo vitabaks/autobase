@@ -136,7 +136,7 @@
     - name: Wait until the etcd cluster is healthy
       ansible.builtin.command: >
         /usr/local/bin/etcdctl endpoint health
-        --endpoints={{ patroni_etcd_protocol }}://{{ inventory_hostname }}:2379
+        --endpoints={{ patroni_etcd_protocol | default('http', true) }}://{{ inventory_hostname }}:2379
         {% if tls_cert_generate | bool %}
         --cacert={{ tls_etcd_ca_cert_path | default('/etc/etcd/ca.crt') }}
         --cert={{ tls_etcd_cert_path | default('/etc/etcd/server.crt') }}
