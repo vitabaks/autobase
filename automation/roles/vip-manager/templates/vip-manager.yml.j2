@@ -27,12 +27,12 @@ dcs-type: {{ vip_manager_dcs_type | default(dcs_type) }} # etcd, consul or patro
 {% if not dcs_exists | bool %}
 dcs-endpoints:
 {% for host in groups['etcd_cluster'] %}
-  - {% if tls_cert_generate | bool %}https{% else %}http{% endif %}://{{ hostvars[host]['inventory_hostname'] }}:2379
+  - {{ patroni_etcd_protocol }}://{{ hostvars[host]['inventory_hostname'] }}:2379
 {% endfor %}
 {% else %}
 dcs-endpoints:
 {% for etcd_hosts in patroni_etcd_hosts %}
-  - {% if tls_cert_generate | bool %}https{% else %}http{% endif %}://{{ etcd_hosts.host }}:{{ etcd_hosts.port }}
+  - {{ patroni_etcd_protocol }}://{{ etcd_hosts.host }}:{{ etcd_hosts.port }}
 {% endfor %}
 {% endif %}
 {% endif %}
