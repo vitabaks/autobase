@@ -4,10 +4,10 @@
     url: "{{ patroni_etcd_protocol }}://{{ inventory_hostname }}:2379/health"
     method: GET
     return_content: true
-    validate_certs: "{% if tls_cert_generate | bool %}true{% else %}false{% endif %}"
-    ca_path: "{% if tls_cert_generate | bool %}{{ tls_etcd_ca_cert_path }}{% else %}''{% endif %}"
-    client_cert: "{% if tls_cert_generate | bool %}{{ tls_etcd_cert_path }}{% else %}''{% endif %}"
-    client_key: "{% if tls_cert_generate | bool %}{{ tls_etcd_privatekey_path }}{% else %}''{% endif %}"
+    validate_certs: "{{ tls_cert_generate | bool }}"
+    ca_path: "{{ tls_etcd_ca_cert_path | default(omit) }}"
+    client_cert: "{{ tls_etcd_cert_path | default(omit) }}"
+    client_key: "{{ tls_etcd_privatekey_path | default(omit) }}"
   register: etcd_health_status
   failed_when: "(etcd_health_status.content | from_json).health != 'true'"
   when: dcs_type == "etcd"
