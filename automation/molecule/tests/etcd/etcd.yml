@@ -5,9 +5,9 @@
     method: GET
     return_content: true
     validate_certs: "{{ tls_cert_generate | bool }}"
-    ca_path: "{{ tls_etcd_ca_cert_path | default(omit) }}"
-    client_cert: "{{ tls_etcd_cert_path | default(omit) }}"
-    client_key: "{{ tls_etcd_privatekey_path | default(omit) }}"
+    ca_path: "{{ tls_etcd_ca_cert_path if tls_cert_generate | bool else omit }}"
+    client_cert: "{{ tls_etcd_cert_path if tls_cert_generate | bool else omit }}"
+    client_key: "{{ tls_etcd_privatekey_path if tls_cert_generate | bool else omit }}"
   register: etcd_health_status
   failed_when: "(etcd_health_status.content | from_json).health != 'true'"
   when: dcs_type == "etcd"
