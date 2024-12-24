@@ -80,7 +80,7 @@
     - name: "Create server CSR"
       community.crypto.openssl_csr_pipe:
         privatekey_path: "/etc/tls/server.key"
-        common_name: postgresql.cluster
+        common_name: "{{ patroni_cluster_name }}"
         key_usage:
           - digitalSignature
           - keyEncipherment
@@ -88,6 +88,10 @@
         extended_key_usage:
           - clientAuth
           - serverAuth
+        subject:
+          C: "AL"
+          O: "autobase"
+          CN: "{{ patroni_cluster_name }}"
         subject_alt_name: "{{ subject_alt_name }}"
       register: csr
 
