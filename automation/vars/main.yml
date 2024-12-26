@@ -245,8 +245,8 @@ postgresql_parameters:
   - { option: "max_connections", value: "1000" }
   - { option: "superuser_reserved_connections", value: "5" }
   - { option: "password_encryption", value: "{{ postgresql_password_encryption_algorithm }}" }
-  - { option: "ssl", value: "{% if tls_cert_generate | bool %}on{% else %}off{% endif %}"}
-  - { option: "ssl_prefer_server_ciphers", value: "{% if tls_cert_generate | bool %}on{% else %}off{% endif %}"}
+  - { option: "ssl", value: "{{ 'on' if tls_cert_generate | bool else 'off' }}" }
+  - { option: "ssl_prefer_server_ciphers", value: "{{ 'on' if tls_cert_generate | bool else 'off' }}" }
   - { option: "ssl_cert_file", value: "{{ tls_cert_path | default('') }}"}
   - { option: "ssl_key_file", value: "{{ tls_privatekey_path | default('') }}"}
   - { option: "ssl_ca_file", value: "{{ tls_ca_cert_path | default('') }}"}
