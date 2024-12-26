@@ -344,35 +344,13 @@ postgresql_pg_hba:
   - { type: "local", database: "all", user: "all", address: "", method: "{{ postgresql_password_encryption_algorithm }}" }
   - { type: "host", database: "all", user: "all", address: "127.0.0.1/32", method: "{{ postgresql_password_encryption_algorithm }}" }
   - { type: "host", database: "all", user: "all", address: "::1/128", method: "{{ postgresql_password_encryption_algorithm }}" }
-  - type: >-
-      {% if tls_cert_generate | bool %}hostssl
-      {% else %}host
-      {% endif %}
-    database: "all"
-    user: "all"
-    address: "0.0.0.0/0"
-    method: "{{ postgresql_password_encryption_algorithm }}"
+  - { type: "{{ hba_host_type }}", database: "all", user: "all", address: "0.0.0.0/0", method: "{{ postgresql_password_encryption_algorithm }}" }
+#  - { type: "{{ hba_host_type }}", database: "mydatabase", user: "mydb-user", address: "192.168.0.0/24", method: "{{ postgresql_password_encryption_algorithm }}" }
+#  - { type: "{{ hba_host_type }}", database: "all", user: "all", address: "192.168.0.0/24", method: "ident", options: "map=main" }  # use pg_ident
 
-#  - type: >-
-#      {% if tls_cert_generate | bool %}hostssl
-#      {% else %}host
-#      {% endif %}
-#    database: "mydatabase"
-#    user: "mydb-user"
-#    address: "192.168.0.0/24"
-#    method: "{{ postgresql_password_encryption_algorithm }}"
+hba_host_type: "{{ 'hostssl' if tls_cert_generate | bool else 'host' }}"
 
-#  - type: >-
-#      {% if tls_cert_generate | bool %}hostssl
-#      {% else %}host
-#      {% endif %}
-#    database: "all"
-#    user: "all"
-#    address: "192.168.0.0/24"
-#    method: "ident"
-#    options: "map=main"  # use pg_ident
 # list of lines that Patroni will use to generate pg_ident.conf
-
 postgresql_pg_ident: []
 #  - { mapname: "main", system_username: "postgres", pg_username: "backup" }
 #  - { mapname: "", system_username: "", pg_username: "" }
