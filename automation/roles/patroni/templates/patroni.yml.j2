@@ -39,7 +39,7 @@ restapi:
 etcd3:
   hosts: {% for host in groups['etcd_cluster'] %}{{ hostvars[host]['inventory_hostname'] }}:2379{% if not loop.last %},{% endif %}{% endfor %}
 
-  {% if tls_cert_generate | bool %}
+  {% if tls_cert_generate | default(false) | bool %}
   protocol: https
   cacert: {{ tls_ca_cert_path | default('/etc/tls/ca.crt') }}
   cert: {{ tls_cert_path | default('/etc/tls/server.crt') }}
@@ -51,7 +51,7 @@ etcd3:
 etcd3:
   hosts: {% for etcd_hosts in patroni_etcd_hosts %}{{etcd_hosts.host}}:{{etcd_hosts.port}}{% if not loop.last %},{% endif %}{% endfor %}
 
-  {% if tls_cert_generate | bool %}
+  {% if tls_cert_generate | default(false) | bool %}
   protocol: https
   cacert: {{ tls_ca_cert_path | default('/etc/tls/ca.crt') }}
   cert: {{ tls_cert_path | default('/etc/tls/server.crt') }}
