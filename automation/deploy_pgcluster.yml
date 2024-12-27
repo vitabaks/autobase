@@ -83,15 +83,6 @@
         - pgbackrest_auto_conf | default(true) | bool  # to be able to disable auto backup settings
       tags: always
 
-    - name: Make sure that the python3-cryptography package is present
-      ansible.builtin.package:
-        name: python3-cryptography
-        state: present
-      register: pack_status
-      until: pack_status is success
-      delay: 5
-      retries: 3
-
   roles:
     # (optional) if 'ssh_public_keys' is defined
     - role: authorized-keys
@@ -369,6 +360,11 @@
       when: pg_probackup_install|bool
 
     - role: cron
+
+    - role: tls_certificate/copy
+      when: tls_cert_generate|bool
+      vars:
+        copy_for: "pg"
 
     - role: pgbouncer
       when: pgbouncer_install|bool

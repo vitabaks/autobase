@@ -1,4 +1,13 @@
 ---
+- name: Make sure that the python3-cryptography package is present
+  ansible.builtin.package:
+    name: python3-cryptography
+    state: present
+  register: pack_status
+  until: pack_status is success
+  delay: 5
+  retries: 3
+
 - name: "Clean up existing certificates"
   ansible.builtin.file:
     path: "{{ item }}"
@@ -101,7 +110,7 @@
         provider: ownca
         ownca_path: "/etc/tls/ca.crt"
         ownca_privatekey_path: "/etc/tls/ca.key"
-        ownca_not_after: +3650d
+        ownca_not_after: +{{ tls_cert_valid_days | default(3650) }}d
         ownca_not_before: "-1d"
       register: certificate
 

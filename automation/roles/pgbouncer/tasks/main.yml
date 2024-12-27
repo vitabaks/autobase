@@ -36,14 +36,6 @@
     mode: "0750"
   tags: pgbouncer_conf, pgbouncer
 
-- name: Fetch PostgreSQL TLS certificate, key and CA from the master node
-  ansible.builtin.include_role:
-    name: ../roles/tls_certificate/copy
-  vars:
-    copy_for: "pg"
-  when: tls_cert_generate|bool
-  tags: pgbouncer_conf, pgbouncer
-
 - name: Ensure log directory "{{ pgbouncer_log_dir }}" exist
   ansible.builtin.file:
     path: "{{ pgbouncer_log_dir }}"
