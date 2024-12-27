@@ -20,7 +20,6 @@
     - "{{ tls_etcd_cert_path | default('/etc/etcd/server.crt') }}"
     - "{{ tls_etcd_ca_cert_path | default('/etc/etcd/ca.crt') }}"
     - "{{ tls_etcd_privatekey_path | default('/etc/etcd/server.key') }}"
-    - "/etc/tls"
 
 - ansible.builtin.set_fact:
     all_san_entries: []
