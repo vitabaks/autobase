@@ -47,7 +47,7 @@
 ######## Generate CA ########
     - name: "Ensure TLS directory exist"
       ansible.builtin.file:
-        dest: "{{ tls_privatekey_path | default('/etc/tls/server.key') | dirname }}"
+        path: "{{ tls_privatekey_path | default('/etc/tls/server.key') | dirname }}"
         state: directory
         owner: "root"
         group: "root"
