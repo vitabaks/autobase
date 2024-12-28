@@ -49,7 +49,7 @@
         group: "{{ tls_owner }}"
         mode: "{{ item.mode }}"
       loop:
-        - { index: 0, path: "{{ tls_privatekey_path | default('/etc/tls/server.key') }}", mode: "0400" }
-        - { index: 1, path: "{{ tls_cert_path | default('/etc/tls/server.crt') }}", mode: "0644" }
-        - { index: 2, path: "{{ tls_ca_cert_path | default('/etc/tls/ca.crt') }}", mode: "0644" }
+        - { index: 0, path: "{{ tls_privatekey_path | default(postgresql_home_dir + '/tls/server.key') }}", mode: "0400" }
+        - { index: 1, path: "{{ tls_cert_path | default(postgresql_home_dir + '/tls/server.crt') }}", mode: "0644" }
+        - { index: 2, path: "{{ tls_ca_cert_path | default(postgresql_home_dir + '/tls/ca.crt') }}", mode: "0644" }
   when: copy_for == 'pg'
