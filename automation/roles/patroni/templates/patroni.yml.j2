@@ -35,29 +35,20 @@ restapi:
 #    password: password
 {% endif %}
 
-{% if not dcs_exists|bool and dcs_type == 'etcd' %}
+{% if dcs_type == 'etcd' %}
 etcd3:
+  {% if not dcs_exists|bool %}
   hosts: {% for host in groups['etcd_cluster'] %}{{ hostvars[host]['inventory_hostname'] }}:2379{% if not loop.last %},{% endif %}{% endfor %}
-
-  {% if tls_cert_generate | default(false) | bool %}
-  protocol: https
-  cacert: {{ tls_ca_cert_path | default('/etc/tls/ca.crt') }}
-  cert: {{ tls_cert_path | default('/etc/tls/server.crt') }}
-  key: {{ tls_privatekey_path | default('/etc/tls/server.key') }}
   {% endif %}
-{% endif %}
-
-{% if dcs_exists|bool and dcs_type == 'etcd' %}
-etcd3:
+  {% if dcs_exists|bool %}
   hosts: {% for etcd_hosts in patroni_etcd_hosts %}{{etcd_hosts.host}}:{{etcd_hosts.port}}{% if not loop.last %},{% endif %}{% endfor %}
-
+  {% endif %}
   {% if tls_cert_generate | default(false) | bool %}
   protocol: https
-  cacert: {{ tls_ca_cert_path | default('/etc/tls/ca.crt') }}
-  cert: {{ tls_cert_path | default('/etc/tls/server.crt') }}
-  key: {{ tls_privatekey_path | default('/etc/tls/server.key') }}
+  cacert: {{ tls_etcd_ca_cert_path | default('/etc/etcd/ca.crt') }}
+  cert: {{ tls_etcd_cert_path | default('/etc/etcd/server.crt') }}
+  key: {{ tls_etcd_privatekey_path | default('/etc/etcd/server.key') }}
   {% endif %}
-
   {% if patroni_etcd_username | default('') | length > 0 %}
   username: {{ patroni_etcd_username | default('') }}
   {% endif %}
