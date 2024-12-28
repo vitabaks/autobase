@@ -46,9 +46,9 @@ etcd3:
 
   {% if tls_cert_generate | default(false) | bool %}
   protocol: https
-  cacert: {{ tls_ca_cert_path | default(postgresql_home_dir + '/tls/ca.crt') }}
-  cert: {{ tls_cert_path | default(postgresql_home_dir + '/tls/server.crt') }}
-  key: {{ tls_privatekey_path | default(postgresql_home_dir + '/tls/server.key') }}
+  cacert: {{ tls_ca_cert_path | default('/etc/tls/ca.crt') }}
+  cert: {{ tls_cert_path | default('/etc/tls/server.crt') }}
+  key: {{ tls_privatekey_path | default('/etc/tls/server.key') }}
   {% endif %}
   {% if patroni_etcd_username | default('') | length > 0 %}
   username: {{ patroni_etcd_username | default('') }}

@@ -1,22 +1,26 @@
 backend = "etcdv3"
-interval = 10
-watch = true
 nodes = [
-{% if not dcs_exists|bool and dcs_type == 'etcd' %}
+{% if not dcs_exists|bool %}
   {% for host in groups['etcd_cluster'] %}
   "{{ patroni_etcd_protocol | default('http', true) }}://{{ hostvars[host]['inventory_hostname'] }}:2379",
   {% endfor %}
 {% endif %}
-{% if dcs_exists|bool and dcs_type == 'etcd' %}
+{% if dcs_exists|bool %}
   {% for etcd_hosts in patroni_etcd_hosts %}
   "{{ patroni_etcd_protocol | default('http', true) }}://{{etcd_hosts.host}}:{{etcd_hosts.port}}",
   {% endfor %}
 {% endif %}
 ]
-{% if dcs_exists|bool and dcs_type == 'etcd' %}
+{% if tls_cert_generate | default(false) | bool %}
+scheme = "https"
+client_cakeys = "{{ tls_ca_cert_path | default('/etc/tls/ca.crt') }}"
+client_cert = "{{ tls_cert_path | default('/etc/tls/server.crt') }}"
+client_key = "{{ tls_privatekey_path | default('/etc/tls/server.key') }}"
+{% endif %}
 {% if patroni_etcd_username | default('') | length > 0 %}
 basic_auth = true
 username = "{{ patroni_etcd_username | default('') }}"
 password = "{{ patroni_etcd_password | default('') }}"
 {% endif %}
-{% endif %}
+watch = true
+interval = 10
