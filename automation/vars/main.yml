@@ -181,7 +181,7 @@ tls_cert_path: "{{ postgresql_home_dir }}/tls/server.crt"
 tls_privatekey_path: "{{ postgresql_home_dir }}/tls/server.key"
 tls_ca_cert_path: "{{ postgresql_home_dir }}/tls/ca.crt"
 tls_owner: "postgres"
-tls_etcd_cert_path: "/etc/etcd/server.crt"
+tls_etcd_cert_path: "/etc/etcd/tls/server.crt"
 tls_etcd_ca_cert_path: "/etc/etcd/ca.crt"
 tls_etcd_privatekey_path: "/etc/etcd/server.key"
 

@@ -10,17 +10,26 @@
     - "/etc/tls/server.crt"
     - "/etc/tls/ca.crt"
 
-- name: Copy etcd TLS certificate, key and CA to all nodes from memory
-  ansible.builtin.copy:
-    content: "{{ tls_files.results[item.index].content | b64decode }}"
-    dest: "{{ item.path }}"
-    owner: "etcd"
-    group: "etcd"
-    mode: "{{ item.mode }}"
-  loop:
-    - { index: 0, path: "{{ tls_etcd_privatekey_path | default('/etc/etcd/server.key') }}", mode: "0400" }
-    - { index: 1, path: "{{ tls_etcd_cert_path | default('/etc/etcd/server.crt') }}", mode: "0644" }
-    - { index: 2, path: "{{ tls_etcd_ca_cert_path | default('/etc/etcd/ca.crt') }}", mode: "0644" }
+- block:
+    - name: Create directory {{ tls_etcd_privatekey_path | dirname }}
+      ansible.builtin.file:
+        dest: "{{ tls_etcd_privatekey_path | dirname }}"
+        state: directory
+        owner: "etcd"
+        group: "etcd"
+        mode: "0755"
+
+    - name: Copy etcd TLS certificate, key and CA to all nodes from memory
+      ansible.builtin.copy:
+        content: "{{ tls_files.results[item.index].content | b64decode }}"
+        dest: "{{ item.path }}"
+        owner: "etcd"
+        group: "etcd"
+        mode: "{{ item.mode }}"
+      loop:
+        - { index: 0, path: "{{ tls_etcd_privatekey_path | default('/etc/etcd/server.key') }}", mode: "0400" }
+        - { index: 1, path: "{{ tls_etcd_cert_path | default('/etc/etcd/server.crt') }}", mode: "0644" }
+        - { index: 2, path: "{{ tls_etcd_ca_cert_path | default('/etc/etcd/ca.crt') }}", mode: "0644" }
   when: copy_for == 'etcd'
 
 - block:
