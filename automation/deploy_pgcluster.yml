@@ -83,23 +83,6 @@
         - pgbackrest_auto_conf | default(true) | bool  # to be able to disable auto backup settings
       tags: always
 
-  roles:
-    # (optional) if 'ssh_public_keys' is defined
-    - role: authorized-keys
-      tags: ssh_public_keys
-
-    - role: pre-checks
-      vars:
-        minimal_ansible_version: 2.16.0
-        timescale_minimal_pg_version: 12 # if enable_timescale is defined
-      tags: always
-
-    - role: hostname
-
-    - role: tls_certificate/generate
-      when: tls_cert_generate|bool
-
-  tasks:
     - name: Clean dnf cache
       ansible.builtin.command: dnf clean all
       when:
@@ -207,6 +190,22 @@
       when: pre_deploy_command | default('') | length > 0
       tags: pre_deploy, pre_deploy_command
 
+  roles:
+    # (optional) if 'ssh_public_keys' is defined
+    - role: authorized-keys
+      tags: ssh_public_keys
+
+    - role: pre-checks
+      vars:
+        minimal_ansible_version: 2.16.0
+        timescale_minimal_pg_version: 12 # if enable_timescale is defined
+      tags: always
+
+    - role: hostname
+
+    - role: tls_certificate/generate
+      when: tls_cert_generate|bool
+
 - name: deploy_pgcluster.yml | Deploy etcd cluster
   ansible.builtin.import_playbook: etcd_cluster.yml
   when: not dcs_exists|bool and dcs_type == "etcd"
@@ -266,7 +265,6 @@
       when: firewall_enabled_at_boot|bool
       tags: firewall
 
-    - role: hostname
     - role: resolv_conf
     - role: etc_hosts
     - role: add-repository
