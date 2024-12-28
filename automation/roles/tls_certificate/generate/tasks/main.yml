@@ -22,7 +22,7 @@
     - "/etc/tls/server.key"
     - "/etc/tls/server.crt"
     - "/etc/tls/ca.crt"
-    - "etc/tls/ca.key"
+    - "/etc/tls/ca.key"
 
 - ansible.builtin.set_fact:
     all_san_entries: []
