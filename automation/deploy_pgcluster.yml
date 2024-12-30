@@ -361,8 +361,6 @@
 
     - role: tls_certificate/copy
       when: tls_cert_generate|bool
-      vars:
-        copy_for: "pg"
 
     - role: pgbouncer
       when: pgbouncer_install|bool

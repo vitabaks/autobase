@@ -10,46 +10,22 @@
     - "{{ tls_cert_path | default('/etc/tls/server.crt') }}"
     - "{{ tls_ca_cert_path | default('/etc/tls/ca.crt') }}"
 
-- block:
-    - name: Create directory {{ tls_etcd_privatekey_path | default('/etc/etcd/tls/server.key') | dirname }}
-      ansible.builtin.file:
-        path: "{{ tls_etcd_privatekey_path | default('/etc/etcd/tls/server.key') | dirname }}"
-        state: directory
-        owner: "etcd"
-        group: "etcd"
-        mode: "0755"
+- name: Create directory {{ copy_tls_privatekey_path | default(tls_privatekey_path | default('/etc/tls/server.key')) | dirname }}
+  ansible.builtin.file:
+    path: "{{ copy_tls_privatekey_path | default(tls_privatekey_path | default('/etc/tls/server.key')) | dirname }}"
+    state: directory
+    owner: "{{ copy_tls_owner | default(tls_owner | default('postgres')) }}"
+    group: "{{ copy_tls_owner | default(tls_owner | default('postgres')) }}"
+    mode: "0755"
 
-    - name: Copy etcd TLS certificate, key and CA to all nodes from memory
-      ansible.builtin.copy:
-        content: "{{ tls_files.results[item.index].content | b64decode }}"
-        dest: "{{ item.path }}"
-        owner: "etcd"
-        group: "etcd"
-        mode: "{{ item.mode }}"
-      loop:
-        - { index: 0, path: "{{ tls_etcd_privatekey_path | default('/etc/etcd/tls/server.key') }}", mode: "0400" }
-        - { index: 1, path: "{{ tls_etcd_cert_path | default('/etc/etcd/tls/server.crt') }}", mode: "0644" }
-        - { index: 2, path: "{{ tls_etcd_ca_cert_path | default('/etc/etcd/tls/ca.crt') }}", mode: "0644" }
-  when: copy_for == 'etcd'
-
-- block:
-    - name: Create directory {{ tls_privatekey_path | default('/etc/tls/server.key') | dirname }}
-      ansible.builtin.file:
-        path: "{{ tls_privatekey_path | default('/etc/tls/server.key') | dirname }}"
-        state: directory
-        owner: "{{ tls_owner }}"
-        group: "{{ tls_owner }}"
-        mode: "0755"
-
-    - name: Copy PostgreSQL TLS certificate, key and CA to all nodes
-      ansible.builtin.copy:
-        content: "{{ tls_files.results[item.index].content | b64decode }}"
-        dest: "{{ item.path }}"
-        owner: "{{ tls_owner }}"
-        group: "{{ tls_owner }}"
-        mode: "{{ item.mode }}"
-      loop:
-        - { index: 0, path: "{{ tls_privatekey_path | default('/etc/tls/server.key') }}", mode: "0400" }
-        - { index: 1, path: "{{ tls_cert_path | default('/etc/tls/server.crt') }}", mode: "0644" }
-        - { index: 2, path: "{{ tls_ca_cert_path | default('/etc/tls/ca.crt') }}", mode: "0644" }
-  when: copy_for == 'pg'
+- name: Copy PostgreSQL TLS certificate, key and CA to all nodes
+  ansible.builtin.copy:
+    content: "{{ tls_files.results[item.index].content | b64decode }}"
+    dest: "{{ item.path }}"
+    owner: "{{ copy_tls_owner | default(tls_owner | default('postgres')) }}"
+    group: "{{ copy_tls_owner | default(tls_owner | default('postgres')) }}"
+    mode: "{{ item.mode }}"
+  loop:
+    - { index: 1, path: "{{ copy_tls_cert_path | default(tls_cert_path | default('/etc/tls/server.crt')) }}", mode: "0644" }
+    - { index: 2, path: "{{ copy_tls_ca_cert_path | default(tls_ca_cert_path | default('/etc/tls/ca.crt')) }}", mode: "0644" }
+    - { index: 0, path: "{{ copy_tls_privatekey_path | default(tls_privatekey_path | default('/etc/tls/server.key')) }}", mode: "0400" }

@@ -236,8 +236,6 @@
       when: pg_probackup_install|bool
 
     - role: tls_certificate/copy
-      vars:
-        copy_for: "pg"
       when: tls_cert_generate|bool
 
     - role: pgbouncer
