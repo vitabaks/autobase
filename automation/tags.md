@@ -108,3 +108,6 @@
 - ssh_public_keys
 - mount, zpool
 - perf, flamegraph
+- tls
+  - tls_cert_generate
+  - tls_cert_copy
