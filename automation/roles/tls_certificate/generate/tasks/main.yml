@@ -1,0 +1,120 @@
+---
+- name: Make sure that the python3-cryptography package is present
+  ansible.builtin.package:
+    name: python3-cryptography
+    state: present
+  register: pack_status
+  until: pack_status is success
+  delay: 5
+  retries: 3
+  tags: tls, tls_cert_generate
+
+- name: Clean up existing certificates (if any)
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - "{{ tls_privatekey_path | default('/etc/tls/server.key') }}"
+    - "{{ tls_cert_path | default('/etc/tls/server.crt') }}"
+    - "{{ tls_ca_cert_path | default('/etc/tls/ca.crt') }}"
+    - "{{ tls_ca_key_path | default('/etc/tls/ca.key') }}"
+    - "{{ tls_etcd_cert_path | default('/etc/etcd/tls/server.crt') }}"
+    - "{{ tls_etcd_ca_cert_path | default('/etc/etcd/tls/ca.crt') }}"
+    - "{{ tls_etcd_privatekey_path | default('/etc/etcd/tls/server.key') }}"
+  tags: tls, tls_cert_generate
+
+- block:
+    - name: "Generate subjectAltName entries for all hosts"
+      ansible.builtin.set_fact:
+        subject_alt_name: >-
+          {{
+            (
+              ansible_play_hosts | map('extract', hostvars, 'ansible_hostname') | map('regex_replace', '^', 'DNS:') | list +
+              ansible_play_hosts | map('extract', hostvars, 'ansible_fqdn') | map('regex_replace', '^', 'DNS:') | list +
+              ansible_play_hosts | map('extract', hostvars, 'inventory_hostname') | map('regex_replace', '^', 'IP:') | list +
+              ['DNS:localhost', 'IP:127.0.0.1']
+            ) | unique | join(',')
+          }}
+
+    - name: "Display Certificate subjectAltName future value"
+      ansible.builtin.debug:
+        var: subject_alt_name
+
+    ######## Generate CA ########
+    - name: "Ensure TLS directory exist"
+      ansible.builtin.file:
+        path: "{{ tls_privatekey_path | default('/etc/tls/server.key') | dirname }}"
+        state: directory
+        owner: "root"
+        group: "root"
+        mode: "0755"
+
+    - name: "Generate CA private key"
+      community.crypto.openssl_privatekey:
+        path: "{{ tls_ca_key_path | default('/etc/tls/ca.key') }}"
+        size: "{{ tls_privatekey_size | default(4096) }}"
+        type: "{{ tls_privatekey_type | default('RSA') }}"
+
+    - name: "Create CSR for CA certificate"
+      community.crypto.openssl_csr_pipe:
+        privatekey_path: "{{ tls_ca_key_path | default('/etc/tls/ca.key') }}"
+        common_name: PostgreSQL CA
+        use_common_name_for_san: false
+        basic_constraints:
+          - 'CA:TRUE'
+        basic_constraints_critical: true
+        key_usage:
+          - keyCertSign
+        key_usage_critical: true
+      register: ca_csr
+
+    - name: "Create self-signed CA certificate from CSR"
+      community.crypto.x509_certificate:
+        path: "{{ tls_ca_cert_path | default('/etc/tls/ca.crt') }}"
+        csr_content: "{{ ca_csr.csr }}"
+        privatekey_path: "{{ tls_ca_key_path | default('/etc/tls/ca.key') }}"
+        provider: "{{ tls_cert_provider | default('selfsigned') }}"
+        entrust_not_after: "+{{ tls_cert_valid_days | default(3650) }}d"
+
+    ######## Generate Server cert/key ########
+    - name: "Create server private key"
+      community.crypto.openssl_privatekey:
+        path: "{{ tls_privatekey_path | default('/etc/tls/server.key') }}"
+        size: "{{ tls_privatekey_size | default(4096) }}"
+        type: "{{ tls_privatekey_type | default('RSA') }}"
+
+    - name: "Create server CSR"
+      community.crypto.openssl_csr_pipe:
+        privatekey_path: "{{ tls_privatekey_path | default('/etc/tls/server.key') }}"
+        common_name: "{{ patroni_cluster_name }}"
+        key_usage:
+          - digitalSignature
+          - keyEncipherment
+          - dataEncipherment
+        extended_key_usage:
+          - clientAuth
+          - serverAuth
+        subject:
+          C: "AL"
+          O: "autobase"
+          CN: "{{ patroni_cluster_name }}"
+        subject_alt_name: "{{ subject_alt_name }}"
+      register: csr
+
+    - name: "Sign server certificate with the CA"
+      community.crypto.x509_certificate_pipe:
+        csr_content: "{{ csr.csr }}"
+        provider: ownca
+        ownca_path: "{{ tls_ca_cert_path | default('/etc/tls/ca.crt') }}"
+        ownca_privatekey_path: "{{ tls_ca_key_path | default('/etc/tls/ca.key') }}"
+        ownca_not_after: +{{ tls_cert_valid_days | default(3650) }}d
+        ownca_not_before: "-1d"
+      register: certificate
+
+    - name: "Write server certificate"
+      ansible.builtin.copy:
+        dest: "{{ tls_cert_path | default('/etc/tls/server.crt') }}"
+        content: "{{ certificate.certificate }}"
+  delegate_to: "{{ groups.master[0] }}"
+  run_once: true
+  tags: tls, tls_cert_generate

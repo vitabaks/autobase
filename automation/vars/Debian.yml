@@ -40,7 +40,6 @@ system_packages:
   - python3-psycopg2
   - python3-setuptools
   - python3-pip
-  - python3-cryptography
   - curl
   - less
   - sudo

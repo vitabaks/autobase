@@ -60,7 +60,6 @@ system_packages:
   - python{{ python_version }}-setuptools
   - python{{ python_version }}-pip
   - python{{ python_version }}-urllib3
-  - python3-cryptography
   - less
   - sudo
   - vim

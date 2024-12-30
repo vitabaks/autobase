@@ -86,6 +86,17 @@
     state: directory
   tags: etcd, etcd_conf
 
+- name: Fetch etcd TLS certificate, key and CA from the master node
+  ansible.builtin.include_role:
+    name: ../roles/tls_certificate/copy
+  vars:
+    copy_tls_cert_path: "{{ tls_etcd_cert_path | default('/etc/etcd/tls/server.crt') }}"
+    copy_tls_ca_cert_path: "{{ tls_etcd_ca_cert_path | default('/etc/etcd/tls/ca.crt') }}"
+    copy_tls_privatekey_path: "{{ tls_etcd_privatekey_path | default('/etc/etcd/tls/server.key') }}"
+    copy_tls_owner: "etcd"
+  when: tls_cert_generate|bool
+  tags: etcd, etcd_conf
+
 - name: Create etcd data directory
   ansible.builtin.file:
     path: "{{ etcd_data_dir }}"
@@ -128,7 +139,12 @@
     - name: Wait until the etcd cluster is healthy
       ansible.builtin.command: >
         /usr/local/bin/etcdctl endpoint health
-        --endpoints=http://{{ inventory_hostname }}:2379
+        --endpoints={{ patroni_etcd_protocol | default('http', true) }}://{{ inventory_hostname }}:2379
+        {% if tls_cert_generate | default(false) | bool %}
+        --cacert={{ tls_etcd_ca_cert_path | default('/etc/etcd/tls/ca.crt') }}
+        --cert={{ tls_etcd_cert_path | default('/etc/etcd/tls/server.crt') }}
+        --key={{ tls_etcd_privatekey_path | default('/etc/etcd/tls/server.key') }}
+        {% endif %}
       environment:
         ETCDCTL_API: "3"
       register: etcd_health_result

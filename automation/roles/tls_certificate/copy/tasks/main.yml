@@ -1,42 +1,34 @@
 ---
-# for add_pgnode.yml
-
-- name: Ensure TLS directories exist
-  ansible.builtin.file:
-    path: "{{ item | dirname }}"
-    state: directory
-    owner: "{{ tls_owner | default('postgres') }}"
-    group: "{{ tls_owner | default('postgres') }}"
-    mode: "0750"
-  loop:
-    - "{{ tls_privatekey_path | default('/etc/tls/server.key') }}"
-    - "{{ tls_cert_path | default('/etc/tls/server.crt') }}"
-
-- name: Fetch TLS certificate and key from master
+- name: Fetch TLS certificate, key and CA from the master node into memory
   run_once: true
-  ansible.builtin.fetch:
+  ansible.builtin.slurp:
     src: "{{ item }}"
-    dest: "files/tls/"
-    validate_checksum: true
-    flat: true
   delegate_to: "{{ groups.master[0] }}"
+  register: tls_files
   loop:
     - "{{ tls_privatekey_path | default('/etc/tls/server.key') }}"
     - "{{ tls_cert_path | default('/etc/tls/server.crt') }}"
+    - "{{ tls_ca_cert_path | default('/etc/tls/ca.crt') }}"
+  tags: tls, tls_cert_copy
 
-- name: Copy TLS certificate and key to replica
+- name: Create directory {{ copy_tls_privatekey_path | default(tls_privatekey_path | default('/etc/tls/server.key')) | dirname }}
+  ansible.builtin.file:
+    path: "{{ copy_tls_privatekey_path | default(tls_privatekey_path | default('/etc/tls/server.key')) | dirname }}"
+    state: directory
+    owner: "{{ copy_tls_owner | default(tls_owner | default('postgres')) }}"
+    group: "{{ copy_tls_owner | default(tls_owner | default('postgres')) }}"
+    mode: "0755"
+  tags: tls, tls_cert_copy
+
+- name: Copy PostgreSQL TLS certificate, key and CA to all nodes
   ansible.builtin.copy:
-    src: "files/tls/{{ item.path | basename }}"
+    content: "{{ tls_files.results[item.index].content | b64decode }}"
     dest: "{{ item.path }}"
-    owner: "{{ tls_owner | default('postgres') }}"
-    group: "{{ tls_owner | default('postgres') }}"
+    owner: "{{ copy_tls_owner | default(tls_owner | default('postgres')) }}"
+    group: "{{ copy_tls_owner | default(tls_owner | default('postgres')) }}"
     mode: "{{ item.mode }}"
   loop:
-    - { path: "{{ tls_privatekey_path | default('/etc/tls/server.key') }}", mode: "{{ tls_privatekey_mode | default('0400') }}" }
-    - { path: "{{ tls_cert_path | default('/etc/tls/server.crt') }}", mode: "{{ tls_cert_mode | default('0644') }}" }
-
-- name: Delete TLS certificate and key from the ansible controller
-  ansible.builtin.file:
-    path: "files/tls/"
-    state: absent
-  delegate_to: localhost
+    - { index: 1, path: "{{ copy_tls_cert_path | default(tls_cert_path | default('/etc/tls/server.crt')) }}", mode: "0644" }
+    - { index: 2, path: "{{ copy_tls_ca_cert_path | default(tls_ca_cert_path | default('/etc/tls/ca.crt')) }}", mode: "0644" }
+    - { index: 0, path: "{{ copy_tls_privatekey_path | default(tls_privatekey_path | default('/etc/tls/server.key')) }}", mode: "0400" }
+  tags: tls, tls_cert_copy
