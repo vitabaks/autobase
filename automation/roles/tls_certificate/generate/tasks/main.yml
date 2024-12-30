@@ -21,24 +21,18 @@
     - "{{ tls_etcd_ca_cert_path | default('/etc/etcd/tls/ca.crt') }}"
     - "{{ tls_etcd_privatekey_path | default('/etc/etcd/tls/server.key') }}"
 
-- ansible.builtin.set_fact:
-    all_san_entries: []
-
-- name: "Gather host-specific network information"
-  ansible.builtin.set_fact:
-    san_entry: >-
-      DNS:{{ ansible_hostname }},DNS:{{ ansible_fqdn }},IP:{{ inventory_hostname }}
-
 - block:
-    - name: "Aggregate all subjectAltName entries"
+    - name: "Generate subjectAltName entries for all hosts"
       ansible.builtin.set_fact:
-        all_san_entries: "{{ all_san_entries + [hostvars[item].san_entry] }}"
-      with_items: "{{ ansible_play_hosts }}"
-
-    - name: "Join subjectAltName entries into a single string"
-      ansible.builtin.set_fact:
-        subject_alt_name: "{{ all_san_entries | join(',') + ',DNS:localhost,IP:127.0.0.1' }}"
-      when: ansible_play_hosts | length > 1
+        subject_alt_name: >-
+          {{
+            (
+              ansible_play_hosts | map('extract', hostvars, 'ansible_hostname') | map('regex_replace', '^', 'DNS:') | list +
+              ansible_play_hosts | map('extract', hostvars, 'ansible_fqdn') | map('regex_replace', '^', 'DNS:') | list +
+              ansible_play_hosts | map('extract', hostvars, 'inventory_hostname') | map('regex_replace', '^', 'IP:') | list +
+              ['DNS:localhost', 'IP:127.0.0.1']
+            ) | unique | join(',')
+          }}
 
     - name: "Display Certificate subjectAltName future value"
       ansible.builtin.debug:
