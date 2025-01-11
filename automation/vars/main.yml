@@ -409,6 +409,7 @@ patroni_restapi_listen_addr: "0.0.0.0" # Listen on all interfaces. Or use "{{ in
 patroni_restapi_port: 8008
 patroni_restapi_username: "patroni"
 patroni_restapi_password: ""  # If not defined, a password will be generated automatically during deployment.
+patroni_restapi_request_queue_size: 5
 patroni_ttl: 30
 patroni_loop_wait: 10
 patroni_retry_timeout: 10

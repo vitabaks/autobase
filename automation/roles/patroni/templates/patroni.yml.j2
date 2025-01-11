@@ -34,6 +34,9 @@ restapi:
 #    username: username
 #    password: password
 {% endif %}
+{% if patroni_restapi_request_queue_size is defined %}
+  request_queue_size: {{ patroni_restapi_request_queue_size |int }}
+{% endif %}
 
 {% if dcs_type == 'etcd' %}
 etcd3:
