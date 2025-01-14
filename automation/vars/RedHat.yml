@@ -7,7 +7,7 @@ postgresql_data_dir: "\
   {% if cloud_provider | default('') | length > 0 %}\
     {{ pg_data_mount_path | default('/pgdata') }}/{{ postgresql_version }}/data\
   {% else %}\
-    /var/lib/pgsql/{{ postgresql_version }}/data\
+    {{ env_postgresql_data_dir | default('/var/lib/pgsql/' ~ postgresql_version ~ '/data') }}\
   {% endif %}"
 # Note: When deploying to cloud providers, we create a disk and mount the data directory,
 # along the path defined in the 'pg_data_mount_path' variable (or use '/pgdata' by default).
