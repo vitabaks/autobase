@@ -1,0 +1,74 @@
+---
+name: "Bug report"
+description: "Submit a report and help us improve Autobase"
+title: "[Bug] "
+labels: ["bug", "needs triage"]
+body:
+  - type: markdown
+    attributes:
+      value: "### Thank you for contributing to Autobase!"
+  - type: markdown
+    attributes:
+      value: |
+        Before submitting, we'd appreciate it if you:
+          - Verify that your issue is not already reported on GitHub.
+          - Ensure your description is detailed to help us reproduce the problem.
+          - Attach logs or error messages, if applicable, to help us diagnose the problem.
+          - Check the Autobase [documentation](https://autobase.tech/docs).
+          - Ensure you have an active Autobase [subscription](https://autobase.tech/docs/support) for prioritized support.
+  - type: textarea
+    id: bug-description
+    attributes:
+      label: Bug description
+      description: Briefly describe the issue you're experiencing.
+    validations:
+      required: true
+  - type: textarea
+    id: expected-behavior
+    attributes:
+      label: Expected behavior
+      description: Describe what you expected to happen.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: Describe the steps to reproduce the bug. Provide specific details for better understanding.
+      value: |
+        1.
+        2.
+        3.
+        ...
+    validations:
+      required: false
+  - type: dropdown
+    id: install-method
+    attributes:
+      label: Installation method
+      description: |
+        Select the installation method you used.
+        If "other", provide details in the "Additional info" section.
+      options:
+        - "Console (UI)"
+        - "Command line"
+        - "GitOps"
+        - "Other"
+    validations:
+      required: true
+  - type: textarea
+    id: system-info
+    attributes:
+      label: System info
+      description: |
+        Provide information about your system. Include OS version, Autobase version, and any relevant configuration details.
+    validations:
+      required: true
+  - type: textarea
+    id: additional-info
+    attributes:
+      label: Additional info
+      description: |
+        Any additional information related to the issue, such as error messages, or ansible and system logs.
+    validations:
+      required: false

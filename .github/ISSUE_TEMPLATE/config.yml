@@ -1,0 +1,9 @@
+---
+blank_issues_enabled: false
+contact_links:
+  - name: "Question"
+    url: https://github.com/vitabaks/autobase/discussions/new?category=q-a
+    about: Ask a question about Autobase
+  - name: "Commercial support"
+    url: https://autobase.tech/docs/support
+    about: Find out more about the available Autobase packages

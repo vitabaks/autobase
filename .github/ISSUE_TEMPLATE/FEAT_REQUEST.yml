@@ -1,0 +1,52 @@
+---
+name: "Feature request"
+description: "Submit a feature request and help us improve Autobase"
+title: "[Feat] "
+labels: ["feature request", "needs triage"]
+body:
+  - type: markdown
+    attributes:
+      value: "### Thank you for contributing to Autobase!"
+  - type: markdown
+    attributes:
+      value: |
+        Before submitting, please:
+          - Verify that your feature request is not already reported on GitHub.
+          - Ensure you have an active Autobase [subscription](https://autobase.tech/docs/support) for prioritized support.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: |
+        Describe the problem your feature request is intended to solve. How does the lack of this feature affect you?
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: |
+        Clearly describe the feature you want and how it would improve Autobase.
+    validations:
+      required: true
+  - type: dropdown
+    id: importance
+    attributes:
+      label: Importance
+      description: |
+        How important is this feature for you? Select "blocker" if its absence prevents you from using Autobase.
+      options:
+        - "nice to have"
+        - "really want"
+        - "must have"
+        - "blocker"
+    validations:
+      required: true
+  - type: textarea
+    id: proposed-implementation
+    attributes:
+      label: Proposed implementation
+      description: |
+        If you have any ideas, share how this feature could be implemented.
+    validations:
+      required: false
