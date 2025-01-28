@@ -133,7 +133,7 @@ This means access to PostgreSQL experts who will assist with deployment, mainten
 
 Explore our [support packages](https://autobase.tech/docs/support) to find a plan that fits your needs.
 
-![Cluster creation demo](images/pg_console_create_cluster_demo.gif)
+![Cluster creation demo](images/autobase_create_cluster_demo.gif)
 
 Refer to the [Deployment](https://autobase.tech/docs/category/deployment) section to learn more about the different deployment methods.
 
@@ -168,7 +168,7 @@ Licensed under the MIT License. See the [LICENSE](./LICENSE) file for details.
 
 ## Author
 Vitaliy Kukharik (PostgreSQL DBA) \
-vitabaks@gmail.com
+vitaliy@autobase.tech
 
 ## Feedback, bug-reports, requests, ...
 Are [welcome](https://github.com/vitabaks/autobase/issues)!
