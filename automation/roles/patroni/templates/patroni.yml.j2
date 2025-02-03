@@ -246,7 +246,7 @@ tags:
 {% if 'clonefrom=' not in normalized_tags %}
   clonefrom: false
 {% endif %}
-
+{% if 'replicatefrom=' not in normalized_tags and patroni_replicatefrom | default('') | length > 0 %}
   # specify a node to replicate from (cascading replication)
-#  replicatefrom: (node name)
-
+  replicatefrom: {{ patroni_replicatefrom | default('') }}
+{% endif %}
