@@ -6,8 +6,9 @@
 # "postgresql_exists=true" if PostgreSQL is already exists and running
 # "hostname=" variable is optional (used to change the server name)
 # "new_node=true" to add a new server to an existing cluster using the add_pgnode.yml playbook
+# balancer_tags="key=value" the Balancer tags for the /replica, /sync, /async endpoints. Must match 'patroni_tags'.
 # patroni_tags="key=value" the Patroni tags in "key=value" format separated by commas.
-# balancer_tags="key=value" the Balancer tags for the /replica, /sync, /async endpoints. Add the tag to the 'patroni_tags' variable first.
+# patroni_replicatefrom="<hostname>" the Patroni node to replicate from (cascading replication).
 
 # if dcs_exists: false and dcs_type: "etcd"
 [etcd_cluster]  # recommendation: 3, or 5-7 nodes
@@ -28,8 +29,8 @@
 #10.128.64.140 # balancer_tags="datacenter=dc1"
 #10.128.64.142 # balancer_tags="datacenter=dc1"
 #10.128.64.143 # balancer_tags="datacenter=dc1"
-#10.128.64.144 balancer_tags="datacenter=dc2"
-#10.128.64.145 balancer_tags="datacenter=dc2" new_node=true
+#10.128.64.144 # balancer_tags="datacenter=dc2"
+#10.128.64.145 # balancer_tags="datacenter=dc2" new_node=true
 
 # PostgreSQL nodes
 [master]
@@ -38,8 +39,8 @@
 [replica]
 #10.128.64.142 hostname=pgnode02 postgresql_exists=false # patroni_tags="datacenter=dc1"
 #10.128.64.143 hostname=pgnode03 postgresql_exists=false # patroni_tags="datacenter=dc1"
-#10.128.64.144 hostname=pgnode04 postgresql_exists=false patroni_tags="datacenter=dc2"
-#10.128.64.145 hostname=pgnode04 postgresql_exists=false patroni_tags="datacenter=dc2" new_node=true
+#10.128.64.144 hostname=pgnode04 postgresql_exists=false # patroni_tags="datacenter=dc2" patroni_replicatefrom="pgnode03"
+#10.128.64.145 hostname=pgnode04 postgresql_exists=false # patroni_tags="datacenter=dc2" new_node=true
 
 [postgres_cluster:children]
 master
