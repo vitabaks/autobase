@@ -85,52 +85,109 @@
 # Create (if state is present)
 - block:
     # if server_network is specified, get vpc id for this subnet
-    - name: "AWS: Gather information about VPC for '{{ server_network }}'"
-      amazon.aws.ec2_vpc_subnet_info:
-        region: "{{ server_location }}"
-        subnet_ids: "{{ server_network }}"
-      register: vpc_subnet_info
+    - block:
+        - name: "AWS: Gather information about VPC subnet for '{{ server_network }}'"
+          amazon.aws.ec2_vpc_subnet_info:
+            region: "{{ server_location }}"
+            subnet_ids: "{{ server_network }}"
+          register: vpc_subnet_info
+
+        - name: "Set variable: vpc_id"
+          ansible.builtin.set_fact:
+            vpc_id: "{{ vpc_subnet_info.subnets[0].vpc_id }}"
+          when: vpc_subnet_info.subnets[0].vpc_id is defined
       when: server_network | length > 0
 
-    - name: "Set variable: vpc_id"
-      ansible.builtin.set_fact:
-        vpc_id: "{{ vpc_subnet_info.subnets[0].vpc_id }}"
-      when:
-        - server_network | length > 0
-        - vpc_subnet_info.subnets[0].vpc_id is defined
-
     # if server_network is not specified, use default vpc subnet
-    - name: "AWS: Gather information about default VPC"
-      amazon.aws.ec2_vpc_net_info:
-        region: "{{ server_location }}"
-        filters:
-          "is-default": true
-      register: vpc_info
+    - block:
+        - name: "AWS: Gather information about default VPC"
+          amazon.aws.ec2_vpc_net_info:
+            region: "{{ server_location }}"
+            filters:
+              "is-default": true
+          register: vpc_info
+
+        # if no default vpc
+        - name: "No default VPC found"
+          ansible.builtin.debug:
+            msg: "No default VPC found in region {{ server_location }}"
+          when: vpc_info.vpcs | length == 0 or vpc_info.vpcs[0].id is not defined
+
+        - name: "AWS: Gather information about VPC subnet for default VPC"
+          amazon.aws.ec2_vpc_subnet_info:
+            region: "{{ server_location }}"
+            filters:
+              vpc-id: "{{ vpc_info.vpcs[0].id }}"
+          register: vpc_subnet_info
+          when: vpc_info.vpcs[0].id is defined
+
+        - name: "Set variable: vpc_id"
+          ansible.builtin.set_fact:
+            vpc_id: "{{ vpc_info.vpcs[0].id }}"
+          when: vpc_info.vpcs[0].id is defined
+
+        - name: "Set variable: server_network"
+          ansible.builtin.set_fact:
+            server_network: "{{ vpc_subnet_info.subnets[0].id }}"
+          when: vpc_subnet_info.subnets[0].id is defined
       when: server_network | length < 1
 
-    - name: "AWS: Gather information about VPC subnet for default VPC"
-      amazon.aws.ec2_vpc_subnet_info:
-        region: "{{ server_location }}"
-        filters:
-          vpc-id: "{{ vpc_info.vpcs[0].id }}"
-      register: vpc_subnet_info
-      when:
-        - server_network | length < 1
-        - vpc_info.vpcs[0].id is defined
+    # if server_network is not specified and there is no default VPC, create a VPC, subnet, gateway and route table
+    - block:
+        - name: "AWS: Create VPC"
+          amazon.aws.ec2_vpc_net:
+            name: "{{ aws_vpc_name | default('postgres-cluster-vpc') }}"
+            cidr_block: "{{ aws_vpc_cidr | default('10.0.0.0/16') }}"
+            region: "{{ server_location }}"
+            state: present
+          register: aws_vpc
 
-    - name: "Set variable: vpc_id"
-      ansible.builtin.set_fact:
-        vpc_id: "{{ vpc_info.vpcs[0].id }}"
-      when:
-        - server_network | length < 1
-        - vpc_info.vpcs[0].id is defined
+        - name: "AWS: Create subnet"
+          amazon.aws.ec2_vpc_subnet:
+            vpc_id: "{{ aws_vpc.vpc.id }}"
+            cidr: "{{ aws_subnet_cidr | default('10.0.1.0/24') }}"
+            region: "{{ server_location }}"
+            state: present
+          register: aws_subnet
 
-    - name: "Set variable: server_network"
-      ansible.builtin.set_fact:
-        server_network: "{{ vpc_subnet_info.subnets[0].id }}"
-      when:
-        - server_network | length < 1
-        - vpc_subnet_info.subnets[0].id is defined
+        - name: "AWS: Gather information about VPC subnet for {{ aws_vpc_name | default('postgres-cluster-vpc') }}"
+          amazon.aws.ec2_vpc_subnet_info:
+            region: "{{ server_location }}"
+            filters:
+              vpc-id: "{{ aws_vpc.vpc.id }}"
+          register: vpc_subnet_info
+
+        - name: "AWS: Create Internet gateway"
+          amazon.aws.ec2_vpc_igw:
+            vpc_id: "{{ aws_vpc.vpc.id }}"
+            state: present
+            region: "{{ server_location }}"
+          register: aws_igw
+
+        - name: "AWS: Gather information about VPC route tables"
+          amazon.aws.ec2_vpc_route_table_info:
+            region: "{{ server_location }}"
+            filters:
+              vpc-id: "{{ aws_vpc.vpc.id }}"
+          register: aws_route_table_info
+
+        - name: "AWS: Update the main route table"
+          amazon.aws.ec2_vpc_route_table:
+            vpc_id: "{{ aws_vpc.vpc.id }}"
+            route_table_id: "{{ aws_route_table_info.route_tables[0].route_table_id }}"
+            routes:
+              - dest: 0.0.0.0/0
+                gateway_id: "{{ aws_igw.gateway_id }}"
+            region: "{{ server_location }}"
+
+        - name: "Set variable: vpc_id"
+          ansible.builtin.set_fact:
+            vpc_id: "{{ aws_vpc.vpc.id }}"
+
+        - name: "Set variable: server_network"
+          ansible.builtin.set_fact:
+            server_network: "{{ aws_subnet.subnet.id }}"
+      when: server_network | length < 1
 
     # Security Group (Firewall)
     - name: "AWS: Create or modify Security Group"
