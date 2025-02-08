@@ -15,13 +15,17 @@
 
 This automated database platform enables you to create and manage production-ready, highly available PostgreSQL clusters. It simplifies the deployment process, reduces operational costs, and makes database management accessible—even for teams without specialized expertise.
 
-**Automate failover, backups, restore, upgrades, scaling, and more with ease.**
+**Automate deployment, failover, backups, restore, upgrades, scaling, and more with ease.**
 
 You can find a version of this documentation that is searchable and also easier to navigate at [autobase.tech](http://autobase.tech)
 
-<a href="https://www.producthunt.com/posts/postgresql-cluster-org?embed=true&utm_source=badge-featured&utm_medium=badge&utm_souce=badge-postgresql&#0045;cluster&#0045;org" target="_blank"><img src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=583645&theme=light" alt="postgresql&#0045;cluster&#0046;org - The&#0032;open&#0045;source&#0032;alternative&#0032;to&#0032;cloud&#0045;managed&#0032;databases | Product Hunt" style="width: 250px; height: 54px;" width="250" height="54" /></a>
+---
 
-:trophy: **Use the [sponsoring](https://github.com/vitabaks/autobase#sponsor-this-project) program to get personalized support, or just to contribute to this project.**
+### Project Status
+
+Autobase has been actively developed for over 5 years (since 2019) and is trusted by companies worldwide, including in production environments with high loads and demanding reliability requirements. Our mission is to provide an open-source DBaaS that delivers reliability, flexibility, and cost-efficiency.
+
+The project will remain open-source forever, but to ensure its continuous growth and development, we rely on [sponsorship](https://autobase.tech/docs/sponsor). By subscribing to [Autobase packages](https://autobase.tech/docs/support), you gain access to personalized support from the project authors and PostgreSQL experts, ensuring the reliability of your database infrastructure.
 
 ---
 
