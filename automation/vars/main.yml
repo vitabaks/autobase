@@ -42,8 +42,8 @@ haproxy_maxconn:
   master: 10000
   replica: 10000
 haproxy_timeout:
-  client: "60s"
-  server: "60s"
+  client: "60m"
+  server: "60m"
 # Optionally declare log format for haproxy.
 # Uncomment following lines (and remove extra space in front of variable definition) for JSON structured log format.
 # haproxy_log_format: "{
