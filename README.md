@@ -4,10 +4,10 @@
 
 # Autobase for PostgreSQL® :elephant: :sparkling_heart:
 
-[<img src="https://github.com/vitabaks/autobase/workflows/Ansible-lint/badge.svg?branch=master">](https://github.com/vitabaks/autobase/actions?query=workflow%3AAnsible-lint)
-[<img src="https://github.com/vitabaks/autobase/workflows/Yamllint/badge.svg?branch=master">](https://github.com/vitabaks/autobase/actions?query=workflow%3AYamllint)
-[<img src="https://github.com/vitabaks/autobase/workflows/Flake8/badge.svg?branch=master">](https://github.com/vitabaks/autobase/actions?query=workflow%3AFlake8)
-[<img src="https://github.com/vitabaks/autobase/workflows/Molecule/badge.svg?branch=master">](https://github.com/vitabaks/autobase/actions?query=workflow%3AMolecule)
+[![Ansible-lint](https://github.com/vitabaks/autobase/actions/workflows/ansible-lint.yml/badge.svg)](https://github.com/vitabaks/autobase/actions/workflows/ansible-lint.yml)
+[![Yamllint](https://github.com/vitabaks/autobase/actions/workflows/yamllint.yml/badge.svg)](https://github.com/vitabaks/autobase/actions/workflows/yamllint.yml)
+[![Flake8](https://github.com/vitabaks/autobase/actions/workflows/flake8.yml/badge.svg)](https://github.com/vitabaks/autobase/actions/workflows/flake8.yml)
+[![Molecule](https://github.com/vitabaks/autobase/actions/workflows/molecule.yml/badge.svg)](https://github.com/vitabaks/autobase/actions/workflows/molecule.yml)
 [![GitHub license](https://img.shields.io/github/license/vitabaks/autobase)](https://github.com/vitabaks/autobase/blob/master/LICENSE) 
 ![GitHub stars](https://img.shields.io/github/stars/vitabaks/autobase)
 
