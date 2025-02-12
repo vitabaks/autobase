@@ -771,7 +771,6 @@
       ansible.builtin.stat:
         path: "{{ postgresql_data_dir }}/patroni.dynamic.json"
       register: patroni_dynamic_json
-      when: not keep_patroni_dynamic_json | bool
 
     - name: Remove patroni.dynamic.json file
       ansible.builtin.file:
@@ -781,6 +780,7 @@
         - patroni_dynamic_json is defined
         - patroni_dynamic_json.stat is defined
         - patroni_dynamic_json.stat.exists
+        - not keep_patroni_dynamic_json | bool
 
     - name: Edit patroni.dynamic.json | disable archive_command (if enabled)
       yedit:
@@ -788,7 +788,11 @@
         key: postgresql.parameters.archive_command
         value: "cd ."  # not doing anything yet with WAL-s
         content_type: json
-      when: disable_archive_command | bool
+      when:
+        - patroni_dynamic_json is defined
+        - patroni_dynamic_json.stat is defined
+        - patroni_dynamic_json.stat.exists
+        - disable_archive_command | bool
 
     - name: Edit patroni.yml | disable archive_command (if enabled)
       yedit:
