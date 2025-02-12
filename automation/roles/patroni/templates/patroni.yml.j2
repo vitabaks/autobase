@@ -74,9 +74,11 @@ bootstrap:
     command: {{ wal_g_patroni_cluster_bootstrap_command }}
     no_params: True
     recovery_conf:
-       recovery_target_action: promote
-       recovery_target_timeline: latest
-       restore_command: wal-g wal-fetch %f %p
+      {% for item in wal_g_patroni_cluster_bootstrap_recovery_conf %}
+      {% for key, value in item.items() %}
+      {{ key }}: {{ value }}
+      {% endfor %}
+      {% endfor %}
 {% endif %}
 {% if patroni_cluster_bootstrap_method == 'pg_probackup' %}
   pg_probackup:
