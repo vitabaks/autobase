@@ -16,7 +16,7 @@
         - pgdata_initialized.stat.exists
   when:
     - not postgresql_exists | bool
-    - not (postgresql_cluster_maintenance|default(false)|bool) # exclude for config_pgcluster.yml
+    - not (postgresql_cluster_maintenance|default(false)|bool) # exclude for config_pgcluster.yml and add_pgnode.yml
 
 # when postgresql exists
 - block:
@@ -33,4 +33,4 @@
         - not pgdata_initialized.stat.exists
   when:
     - postgresql_exists | bool
-    - not (postgresql_cluster_maintenance|default(false)|bool) # exclude for config_pgcluster.yml
+    - not (postgresql_cluster_maintenance|default(false)|bool) # exclude for config_pgcluster.yml and add_pgnode.yml

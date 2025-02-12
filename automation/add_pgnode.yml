@@ -21,6 +21,10 @@
       ansible.builtin.include_vars: "vars/{{ ansible_os_family }}.yml"
       tags: always
 
+    - name: Set maintenance variable
+      ansible.builtin.set_fact:
+        postgresql_cluster_maintenance: true
+
     - name: "[Pre-Check] Checking Linux distribution"
       ansible.builtin.fail:
         msg: "{{ ansible_distribution }} is not supported"
