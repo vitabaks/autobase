@@ -42,7 +42,7 @@ services:
     container_name: pg-console-ui
     restart: unless-stopped
     labels:
-      caddy: ${PG_CONSOLE_DOMAIN}
+      caddy: ${DOMAIN}
       caddy.@api.path: /api/v1/*
       caddy.0_reverse_proxy: "@api pg-console-api:8080"
       caddy.1_reverse_proxy: "{{upstreams 80}}"
