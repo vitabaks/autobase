@@ -17,57 +17,57 @@ services:
     labels:
       # Global options
       caddy.email: ${EMAIL}
-  pg-console-api:
+  autobase-console-api:
     image: autobase/console_api:latest
-    container_name: pg-console-api
+    container_name: autobase-console-api
     restart: unless-stopped
 
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - /tmp/ansible:/tmp/ansible
     depends_on:
-      - pg-console-db
+      - autobase-console-db
 
     environment:
       - PG_CONSOLE_API_URL=${PG_CONSOLE_API_URL}
       - PG_CONSOLE_AUTHORIZATION_TOKEN=${AUTH_TOKEN}
-      - PG_CONSOLE_DB_HOST=pg-console-db
+      - PG_CONSOLE_DB_HOST=autobase-console-db
       - PG_CONSOLE_LOGGER_LEVEL=${PG_CONSOLE_LOGGER_LEVEL:-INFO}
       - PG_CONSOLE_DOCKER_IMAGE=autobase/automation:latest
     networks:
-      - pg-console
+      - autobase-console
       - caddy
 
-  pg-console-ui:
+  autobase-console-ui:
     image: autobase/console_ui:latest
-    container_name: pg-console-ui
+    container_name: autobase-console-ui
     restart: unless-stopped
     labels:
       caddy: ${DOMAIN}
       caddy.@api.path: /api/v1/*
-      caddy.0_reverse_proxy: "@api pg-console-api:8080"
+      caddy.0_reverse_proxy: "@api autobase-console-api:8080"
       caddy.1_reverse_proxy: "{{upstreams 80}}"
 
     environment:
       - PG_CONSOLE_API_URL=${PG_CONSOLE_API_URL}
       - PG_CONSOLE_AUTHORIZATION_TOKEN=${AUTH_TOKEN}
     networks:
-      - pg-console
+      - autobase-console
       - caddy
-  pg-console-db:
+  autobase-console-db:
     image: autobase/console_db:latest
-    container_name: pg-console-db
+    container_name: autobase-console-db
     restart: unless-stopped
     volumes:
       - console_postgres:/var/lib/postgresql
     networks:
-      - pg-console
+      - autobase-console
 
 volumes:
   console_postgres:
   caddy_data:
 
 networks:
-  pg-console:
+  autobase-console:
   caddy:
     name: caddy
