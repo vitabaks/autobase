@@ -1,0 +1,71 @@
+services:
+
+  caddy:
+    image: lucaslorentz/caddy-docker-proxy:ci-alpine
+    ports:
+      - 80:80
+      - 443:443
+    environment:
+      - CADDY_INGRESS_NETWORKS=caddy
+    networks:
+      - caddy
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - caddy_data:/data
+    restart: unless-stopped
+    labels:
+      # Global options
+      caddy.email: ${EMAIL}
+  pg-console-api:
+    image: autobase/console_api:latest
+    container_name: pg-console-api
+    restart: unless-stopped
+
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /tmp/ansible:/tmp/ansible
+    depends_on:
+      - pg-console-db
+
+    environment:
+      - PG_CONSOLE_API_URL=${PG_CONSOLE_API_URL}
+      - PG_CONSOLE_AUTHORIZATION_TOKEN=${PG_CONSOLE_AUTH_TOKEN}
+      - PG_CONSOLE_DB_HOST=pg-console-db
+      - PG_CONSOLE_LOGGER_LEVEL=${PG_CONSOLE_LOGGER_LEVEL:-INFO}
+    networks:
+      - pg-console
+      - caddy
+
+  pg-console-ui:
+    image: autobase/console_ui:latest
+    container_name: pg-console-ui
+    restart: unless-stopped
+    labels:
+      caddy: ${PG_CONSOLE_DOMAIN}
+      caddy.@api.path: /api/v1/*
+      caddy.0_reverse_proxy: "@api pg-console-api:8080"
+      caddy.1_reverse_proxy: "{{upstreams 80}}"
+
+    environment:
+      - PG_CONSOLE_API_URL=${PG_CONSOLE_API_URL}
+      - PG_CONSOLE_AUTHORIZATION_TOKEN=${PG_CONSOLE_AUTH_TOKEN}
+    networks:
+      - pg-console
+      - caddy
+  pg-console-db:
+    image: autobase/console_db:latest
+    container_name: pg-console-db
+    restart: unless-stopped
+    volumes:
+      - console_postgres:/var/lib/postgresql
+    networks:
+      - pg-console
+
+volumes:
+  console_postgres:
+  caddy_data: {}
+
+networks:
+  pg-console:
+  caddy:
+    name: caddy
