@@ -64,7 +64,7 @@ services:
 
 volumes:
   console_postgres:
-  caddy_data: {}
+  caddy_data:
 
 networks:
   pg-console:
