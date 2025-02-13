@@ -52,7 +52,7 @@ services:
     depends_on:
       - autobase-console-api
     environment:
-      - PG_CONSOLE_API_URL=${PG_CONSOLE_API_URL}
+      - PG_CONSOLE_API_URL=/api/v1
       - PG_CONSOLE_AUTHORIZATION_TOKEN=${AUTH_TOKEN}
     networks:
       - autobase
