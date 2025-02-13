@@ -17,7 +17,7 @@ PG_CONSOLE_DOMAIN=your-domain.com  # Set your domain
 EMAIL=your@email.com              # Required for Caddy SSL
 PG_CONSOLE_API_URL=https://your-domain.com/api/v1
 PG_CONSOLE_AUTH_TOKEN=your-token
-PG_CONSOLE_LOGGER_LEVEL=info           # Required for Caddy SSL
+PG_CONSOLE_LOGGER_LEVEL=info
 ```
 
 3. Run the stack:
