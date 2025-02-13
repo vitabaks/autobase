@@ -35,8 +35,5 @@ docker compose up -d
 - Data is persisted in Docker volumes: `console_postgres` and `caddy_data`
 - The Caddy network is created automatically by Docker Compose
 - All services are configured to restart automatically unless stopped manually.
-- Additional environment variables can be configured based on your project needs
-
-> [!NOTE]
-> The `PG_CONSOLE_DOCKER_IMAGE` variable is optional since the Console API service will automatically launch the automation image that matches the console version (see API service configuration).
-> Using the latest versions is great for testing but not recommended for production installations.
+- Additional [environment variables](https://github.com/vitabaks/autobase/tree/master/console/service#configuration) can be configured based on your project needs
+- Using the `latest` versions is great for testing. For production installations, specify release versions in the [docker-compose.yml](docker-compose.yml) file.
