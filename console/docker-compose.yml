@@ -46,9 +46,10 @@ services:
     labels:
       caddy: ${DOMAIN}
       caddy.route: /api/v1/*
-      caddy.reverse_proxy: autobase-console-api:8080
-      caddy.handle_path: /*
-      caddy.handle_path.reverse_proxy: autobase-console-ui:80
+      caddy.handle_path: /api/v1/*
+      caddy.handle_path.reverse_proxy: autobase-console-api:8080
+      caddy.1.handle_path: /*
+      caddy.1.handle_path.reverse_proxy: autobase-console-ui:80
     depends_on:
       - autobase-console-api
     environment:
