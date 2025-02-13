@@ -27,7 +27,6 @@ services:
     depends_on:
       - autobase-console-db
     environment:
-      - PG_CONSOLE_API_URL=${PG_CONSOLE_API_URL}
       - PG_CONSOLE_AUTHORIZATION_TOKEN=${AUTH_TOKEN}
       - PG_CONSOLE_DB_HOST=autobase-console-db
       - PG_CONSOLE_LOGGER_LEVEL=${PG_CONSOLE_LOGGER_LEVEL:-INFO}
