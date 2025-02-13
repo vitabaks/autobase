@@ -45,11 +45,10 @@ services:
     restart: unless-stopped
     labels:
       caddy: ${DOMAIN}
-      caddy.route: /api/v1/*
-      caddy.handle_path: /api/v1/*
-      caddy.handle_path.reverse_proxy: autobase-console-api:8080
-      caddy.1.handle_path: /*
-      caddy.1.handle_path.reverse_proxy: autobase-console-ui:80
+      caddy.route_0: /api/v1/*
+      caddy.route_0.reverse_proxy: autobase-console-api:8080
+      caddy.route_1: /*
+      caddy.route_1.reverse_proxy: autobase-console-ui:80
     depends_on:
       - autobase-console-api
     environment:
