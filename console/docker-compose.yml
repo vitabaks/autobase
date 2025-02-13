@@ -70,7 +70,9 @@ services:
 
 volumes:
   console_postgres:
+    name: console_postgres
   caddy_data:
+    name: caddy_data
 
 networks:
   autobase:
