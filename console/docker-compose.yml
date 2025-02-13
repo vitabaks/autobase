@@ -33,7 +33,7 @@ services:
       - PG_CONSOLE_AUTHORIZATION_TOKEN=${AUTH_TOKEN}
       - PG_CONSOLE_DB_HOST=pg-console-db
       - PG_CONSOLE_LOGGER_LEVEL=${PG_CONSOLE_LOGGER_LEVEL:-INFO}
-      - PG_CONSOLE_DOCKER_IMAGE=autonbase/automation:latest
+      - PG_CONSOLE_DOCKER_IMAGE=autobase/automation:latest
     networks:
       - pg-console
       - caddy
