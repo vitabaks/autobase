@@ -20,8 +20,7 @@ cp .env.example .env
 ```bash
 DOMAIN=your-domain.com  # Set your domain
 EMAIL=your@email.com    # Required for Caddy SSL
-PG_CONSOLE_API_URL=https://your-domain.com/api/v1
-PG_CONSOLE_AUTH_TOKEN=your-token
+AUTH_TOKEN=your-token   # Your authorization token
 ```
 
 3. Run the stack:
@@ -39,5 +38,5 @@ docker compose up -d
 - Additional environment variables can be configured based on your project needs
 
 > [!NOTE]
-> The PG_CONSOLE_DOCKER_IMAGE variable is optional since the Console API service will automatically launch the automation image that matches the console version (see API service configuration).
+> The `PG_CONSOLE_DOCKER_IMAGE` variable is optional since the Console API service will automatically launch the automation image that matches the console version (see API service configuration).
 > Using the latest versions is great for testing but not recommended for production installations.
