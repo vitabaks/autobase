@@ -3,6 +3,7 @@ services:
 
   caddy:
     image: lucaslorentz/caddy-docker-proxy:ci-alpine
+    container_name: caddy
     ports:
       - 80:80
       - 443:443
@@ -14,6 +15,9 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       - caddy_data:/data
     restart: unless-stopped
+    depends_on:
+      - autobase-console-ui
+      - autobase-console-api
     labels:
       caddy.email: ${EMAIL}
 
@@ -41,9 +45,12 @@ services:
     restart: unless-stopped
     labels:
       caddy: ${DOMAIN}
-      caddy.@api.path: /api/v1/*
-      caddy.0_reverse_proxy: "@api autobase-console-api:8080"
-      caddy.1_reverse_proxy: "{{upstreams 80}}"
+      caddy.api.route: /api/v1/*
+      caddy.api.reverse_proxy: autobase-console-api:8080
+      caddy.ui.route: /*
+      caddy.ui.reverse_proxy: autobase-console-ui:80
+    depends_on:
+      - autobase-console-api
     environment:
       - PG_CONSOLE_API_URL=${PG_CONSOLE_API_URL}
       - PG_CONSOLE_AUTHORIZATION_TOKEN=${AUTH_TOKEN}
