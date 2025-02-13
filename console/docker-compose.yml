@@ -36,7 +36,7 @@ services:
       - PG_CONSOLE_LOGGER_LEVEL=${PG_CONSOLE_LOGGER_LEVEL:-INFO}
       - PG_CONSOLE_DOCKER_IMAGE=autobase/automation:latest
     networks:
-      - autobase-console
+      - autobase
       - caddy
 
   autobase-console-ui:
@@ -55,7 +55,7 @@ services:
       - PG_CONSOLE_API_URL=${PG_CONSOLE_API_URL}
       - PG_CONSOLE_AUTHORIZATION_TOKEN=${AUTH_TOKEN}
     networks:
-      - autobase-console
+      - autobase
       - caddy
 
   autobase-console-db:
@@ -65,7 +65,7 @@ services:
     volumes:
       - console_postgres:/var/lib/postgresql
     networks:
-      - autobase-console
+      - autobase
 
 volumes:
   console_postgres:
@@ -73,5 +73,6 @@ volumes:
 
 networks:
   autobase-console:
+    name: autobase
   caddy:
     name: caddy
