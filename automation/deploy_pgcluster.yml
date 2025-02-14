@@ -139,7 +139,7 @@
           when: pre_deploy_command_print | default(false) | bool
 
         - name: Run pre-deploy command
-          ansible.builtin.shell: "{{ pre_deploy_command }} > /tmp/pre_deploy_command.log 2>&1"
+          ansible.builtin.shell: "{{ pre_deploy_command }} > {{ pre_deploy_command_log | default('/var/tmp/pre_deploy_command.log') }} 2>&1"
           args:
             executable: /bin/bash
           register: pre_deploy_result
@@ -165,8 +165,8 @@
             - item.ansible_job_id is defined
 
         - name: Get pre-deploy command log
-          ansible.builtin.command: cat /tmp/pre_deploy_command.log
-          register: pre_deploy_command_log
+          ansible.builtin.command: "cat {{ pre_deploy_command_log | default('/var/tmp/pre_deploy_command.log') }}"
+          register: pre_deploy_log_content
           delegate_to: "{{ item }}"
           loop: "{{ pre_deploy_command_hosts.split(',') | map('extract', groups) | list | flatten }}"
           changed_when: false
@@ -175,11 +175,11 @@
         - name: Print pre-deploy command result
           ansible.builtin.debug:
             msg: "{{ item.stdout_lines }}"
-          loop: "{{ pre_deploy_command_log.results }}"
+          loop: "{{ pre_deploy_log_content.results }}"
           loop_control:
             label: "{{ item.item }}"
           when:
-            - pre_deploy_command_log.results is defined
+            - pre_deploy_log_content.results is defined
             - item.stdout_lines is defined
 
         - name: Stop if pre-deploy command failed
@@ -410,7 +410,7 @@
           when: post_deploy_command_print | default(false) | bool
 
         - name: Run post-deploy command
-          ansible.builtin.shell: "{{ post_deploy_command }} > /tmp/post_deploy_command.log 2>&1"
+          ansible.builtin.shell: "{{ post_deploy_command }} > {{ post_deploy_command_log | default('/var/tmp/post_deploy_command.log') }} 2>&1"
           args:
             executable: /bin/bash
           register: post_deploy_result
@@ -436,8 +436,8 @@
             - item.ansible_job_id is defined
 
         - name: Get post-deploy command log
-          ansible.builtin.command: cat /tmp/post_deploy_command.log
-          register: post_deploy_command_log
+          ansible.builtin.command: "cat {{ post_deploy_command_log | default('/var/tmp/post_deploy_command.log') }}"
+          register: post_deploy_log_content
           delegate_to: "{{ item }}"
           loop: "{{ post_deploy_command_hosts.split(',') | map('extract', groups) | list | flatten }}"
           changed_when: false
@@ -446,11 +446,11 @@
         - name: Print post-deploy command result
           ansible.builtin.debug:
             msg: "{{ item.stdout_lines }}"
-          loop: "{{ post_deploy_command_log.results }}"
+          loop: "{{ post_deploy_log_content.results }}"
           loop_control:
             label: "{{ item.item }}"
           when:
-            - post_deploy_command_log.results is defined
+            - post_deploy_log_content.results is defined
             - item.stdout_lines is defined
 
         - name: Stop if post-deploy command failed
