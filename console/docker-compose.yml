@@ -15,9 +15,6 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       - caddy_data:/data
     restart: unless-stopped
-    depends_on:
-      - autobase-console-ui
-      - autobase-console-api
     labels:
       caddy.email: ${EMAIL}
 
@@ -28,8 +25,6 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - /tmp/ansible:/tmp/ansible
-    depends_on:
-      - autobase-console-db
     environment:
       - PG_CONSOLE_AUTHORIZATION_TOKEN=${AUTH_TOKEN}
       - PG_CONSOLE_DB_HOST=autobase-console-db
@@ -49,8 +44,6 @@ services:
       caddy.route_0.reverse_proxy: autobase-console-api:8080
       caddy.route_1: /*
       caddy.route_1.reverse_proxy: autobase-console-ui:80
-    depends_on:
-      - autobase-console-api
     environment:
       - PG_CONSOLE_API_URL=/api/v1
       - PG_CONSOLE_AUTHORIZATION_TOKEN=${AUTH_TOKEN}
