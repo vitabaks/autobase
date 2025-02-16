@@ -548,6 +548,11 @@ wal_g_json:  # config https://github.com/wal-g/wal-g#configuration
 #  - { option: "", value: "" }
 wal_g_archive_command: "{{ wal_g_path }} wal-push %p"
 wal_g_patroni_cluster_bootstrap_command: "{{ wal_g_path }} backup-fetch {{ postgresql_data_dir }} LATEST"
+wal_g_patroni_cluster_bootstrap_recovery_conf:
+  - restore_command: "{{ wal_g_path }} wal-fetch %f %p"
+  - recovery_target_action: "promote"
+  - recovery_target_timeline: "latest"
+#  - recovery_target_time: "2020-06-01 11:00:00+03"  # Point-in-Time Recovery (example)
 
 # Define job_parts outside of wal_g_cron_jobs
 # ⚠️ Ensure there is a space at the beginning of each part to prevent commands from concatenating.
