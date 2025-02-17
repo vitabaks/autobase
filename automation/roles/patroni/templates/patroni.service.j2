@@ -47,5 +47,7 @@ TimeoutSec=60
 # Restart the service if it crashed
 Restart=on-failure
  
+LimitNOFILE={{ patroni_systemd_limit_nofile | default(65536) }}
+
 [Install]
 WantedBy=multi-user.target
