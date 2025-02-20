@@ -46,11 +46,11 @@ client_tls_ciphers = {{ pgbouncer_client_tls_ciphers | default('secure') }}
 {% endif %}
 {% if pgbouncer_server_tls_sslmode | default('require') != 'disable' %}
 server_tls_sslmode = {{ pgbouncer_server_tls_sslmode | default('require') }}
+server_tls_key_file = {{ pgbouncer_server_tls_key_file | default(tls_privatekey_path | default('/etc/tls/server.key')) }}
+server_tls_cert_file = {{ pgbouncer_server_tls_cert_file | default(tls_cert_path | default('/etc/tls/server.crt')) }}
+server_tls_ca_file = {{ pgbouncer_server_tls_ca_file | default(tls_ca_cert_path | default('/etc/tls/ca.crt')) }}
 server_tls_protocols = {{ pgbouncer_server_tls_protocols | default('secure') }}
 server_tls_ciphers = {{ pgbouncer_server_tls_ciphers | default('secure') }}
-server_tls_cert_file = {{ pgbouncer_server_tls_cert_file | default(tls_cert_path | default('/etc/tls/server.crt')) }}
-server_tls_key_file = {{ pgbouncer_server_tls_key_file | default(tls_privatekey_path | default('/etc/tls/server.key')) }}
-server_tls_ca_file = {{ pgbouncer_server_tls_ca_file | default(tls_ca_cert_path | default('/etc/tls/ca.crt')) }}
 {% endif %}
 {% endif %}
 log_connections = 0
