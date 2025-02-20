@@ -393,8 +393,8 @@ pgbouncer_client_tls_ciphers: "secure" # allowed values: default, secure, fast, 
 pgbouncer_server_tls_sslmode: "require"
 pgbouncer_server_tls_protocols: "secure"
 pgbouncer_server_tls_ciphers: "secure"
-pgbouncer_server_tls_cert_file: "{{ tls_cert_path }}"
 pgbouncer_server_tls_key_file: "{{ tls_privatekey_path }}"
+pgbouncer_server_tls_cert_file: "{{ tls_cert_path }}"
 pgbouncer_server_tls_ca_file: "{{ tls_ca_cert_path }}"
 
 pgbouncer_pools:
