@@ -387,7 +387,7 @@ pgbouncer_auth_dbname: "postgres"
 pgbouncer_client_tls_sslmode: "require"
 pgbouncer_client_tls_key_file: "{{ tls_privatekey_path }}"
 pgbouncer_client_tls_cert_file: "{{ tls_cert_path }}"
-pgbouncer_client_tls_ca_file: ""
+pgbouncer_client_tls_ca_file: "{{ tls_ca_cert_path }}"
 pgbouncer_client_tls_protocols: "secure" # allowed values: tlsv1.0, tlsv1.1, tlsv1.2, tlsv1.3, all, secure (tlsv1.2,tlsv1.3)
 pgbouncer_client_tls_ciphers: "secure" # allowed values: default, secure, fast, normal, all (not recommended)
 pgbouncer_server_tls_sslmode: "require"
