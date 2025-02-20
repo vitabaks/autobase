@@ -35,24 +35,35 @@ pkt_buf = 8192
 listen_backlog = 4096
 max_prepared_statements = {{ pgbouncer_max_prepared_statements }}
 so_reuseport = 1
-{% if pgbouncer_client_tls_sslmode != 'disable' %}
+{% if tls_cert_generate | default(false) | bool %}
+{% if pgbouncer_client_tls_sslmode | default('disable') != 'disable' %}
 client_tls_sslmode = {{ pgbouncer_client_tls_sslmode }}
+{% if pgbouncer_client_tls_key_file | default('') | length > 0 %}
 client_tls_key_file = {{ pgbouncer_client_tls_key_file }}
+{% endif %}
+{% if pgbouncer_client_tls_cert_file | default('') | length > 0 %}
 client_tls_cert_file = {{ pgbouncer_client_tls_cert_file }}
+{% endif %}
 {% if pgbouncer_client_tls_ca_file | default('') | length > 0 %}
 client_tls_ca_file = {{ pgbouncer_client_tls_ca_file }}
 {% endif %}
-client_tls_protocols = {{ pgbouncer_client_tls_protocols }}
-client_tls_ciphers = {{ pgbouncer_client_tls_ciphers }}
+client_tls_protocols = {{ pgbouncer_client_tls_protocols | default('secure') }}
+client_tls_ciphers = {{ pgbouncer_client_tls_ciphers | default('secure') }}
 {% endif %}
-{% if pgbouncer_server_tls_sslmode != 'disable' %}
+{% endif %}
+{% if pgbouncer_server_tls_sslmode | default('disable') != 'disable' %}
 server_tls_sslmode = {{ pgbouncer_server_tls_sslmode }}
-server_tls_protocols = {{ pgbouncer_server_tls_protocols }}
-server_tls_ciphers = {{ pgbouncer_server_tls_ciphers }}
+server_tls_protocols = {{ pgbouncer_server_tls_protocols | default('secure') }}
+server_tls_ciphers = {{ pgbouncer_server_tls_ciphers | default('secure') }}
+{% if pgbouncer_server_tls_cert_file | default('') | length > 0 %}
 server_tls_cert_file = {{ pgbouncer_server_tls_cert_file }}
+{% endif %}
+{% if pgbouncer_server_tls_key_file | default('') | length > 0 %}
 server_tls_key_file = {{ pgbouncer_server_tls_key_file }}
+{% endif %}
 {% if pgbouncer_server_tls_ca_file | default('') | length > 0 %}
 server_tls_ca_file = {{ pgbouncer_server_tls_ca_file }}
+{% endif %}
 {% endif %}
 {% endif %}
 log_connections = 0
