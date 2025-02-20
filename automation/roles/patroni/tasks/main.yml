@@ -461,34 +461,38 @@
             postgresql_packages|join(" ") is not search("postgrespro")) and
             not postgresql_conf_file.stat.exists
 
-    # When performing PITR, we do not clear the directory if pgbackrest is used
-    # to be able to use the '--delta restore' option.
-    - name: Prepare PostgreSQL | make sure the data directory "{{ postgresql_data_dir }}" is empty
-      ansible.builtin.file:
-        path: "{{ postgresql_data_dir }}"
-        state: "{{ item }}"
-        owner: postgres
-        group: postgres
-        mode: "0700"
-      loop:
-        - absent
-        - directory
+    # When performing PITR, we do not clear the directory if pgbackrest is used to be able to use the '--delta restore' option.
+    # In all other cases, we must clear the data directory before restore.
+    - block:
+        - name: Prepare PostgreSQL | Make sure the patroni service is stopped
+          ansible.builtin.systemd:
+            name: patroni
+            state: stopped
+
+        - name: Prepare PostgreSQL | make sure the data directory "{{ postgresql_data_dir }}" is empty
+          ansible.builtin.file:
+            path: "{{ postgresql_data_dir }}"
+            state: "{{ item }}"
+            owner: postgres
+            group: postgres
+            mode: "0700"
+          loop:
+            - absent
+            - directory
+
+        - name: Prepare PostgreSQL | make sure the custom WAL directory "{{ postgresql_wal_dir }}" is empty
+          ansible.builtin.file:
+            path: "{{ postgresql_wal_dir }}"
+            state: "{{ item }}"
+            owner: postgres
+            group: postgres
+            mode: "0700"
+          loop:
+            - absent
+            - directory
+          when: postgresql_wal_dir | default('') | length > 0
       when: (is_master | bool and patroni_cluster_bootstrap_method != "pgbackrest")
             or (not is_master | bool and ('pgbackrest' not in patroni_create_replica_methods or new_node | default(false) | bool))
-
-    - name: Prepare PostgreSQL | make sure the custom WAL directory "{{ postgresql_wal_dir }}" is empty
-      ansible.builtin.file:
-        path: "{{ postgresql_wal_dir }}"
-        state: "{{ item }}"
-        owner: postgres
-        group: postgres
-        mode: "0700"
-      loop:
-        - absent
-        - directory
-      when: (postgresql_wal_dir is defined and postgresql_wal_dir | length > 0) and
-            ((is_master | bool and patroni_cluster_bootstrap_method != "pgbackrest")
-              or (not is_master | bool and ('pgbackrest' not in patroni_create_replica_methods or new_node | default(false) | bool)))
   when: not postgresql_exists | bool or patroni_cluster_bootstrap_method != "initdb"
   tags: patroni, point_in_time_recovery
 
@@ -771,7 +775,6 @@
       ansible.builtin.stat:
         path: "{{ postgresql_data_dir }}/patroni.dynamic.json"
       register: patroni_dynamic_json
-      when: not keep_patroni_dynamic_json | bool
 
     - name: Remove patroni.dynamic.json file
       ansible.builtin.file:
@@ -781,6 +784,7 @@
         - patroni_dynamic_json is defined
         - patroni_dynamic_json.stat is defined
         - patroni_dynamic_json.stat.exists
+        - not keep_patroni_dynamic_json | bool
 
     - name: Edit patroni.dynamic.json | disable archive_command (if enabled)
       yedit:
@@ -788,7 +792,11 @@
         key: postgresql.parameters.archive_command
         value: "cd ."  # not doing anything yet with WAL-s
         content_type: json
-      when: disable_archive_command | bool
+      when:
+        - patroni_dynamic_json is defined
+        - patroni_dynamic_json.stat is defined
+        - patroni_dynamic_json.stat.exists
+        - disable_archive_command | bool
 
     - name: Edit patroni.yml | disable archive_command (if enabled)
       yedit:
