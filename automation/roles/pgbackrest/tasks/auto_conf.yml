@@ -172,7 +172,7 @@
   no_log: true  # do not output contents to the ansible log
   when: cloud_provider | default('') | lower == 'digitalocean'
 
-# AWS S3 bucket (if 'cloud_provider=hetzner')
+# Hetzner Object Storage (if 'cloud_provider=hetzner')
 - name: "Set variable 'pgbackrest_conf' for backup in Hetzner Object Storage (S3 bucket)"
   ansible.builtin.set_fact:
     pgbackrest_conf:
