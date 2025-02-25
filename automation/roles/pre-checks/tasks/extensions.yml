@@ -4,7 +4,6 @@
 
 # pre-checks
 - name: TimescaleDB | Checking PostgreSQL version
-  run_once: true
   ansible.builtin.fail:
     msg:
       - "The current PostgreSQL version ({{ postgresql_version }}) is not supported by the TimescaleDB."
@@ -14,7 +13,6 @@
     - postgresql_version | string is version(timescale_minimal_pg_version | default(12) | string, '<')
 
 - name: Timescale (pgvectorscale) | Checking PostgreSQL version
-  run_once: true
   ansible.builtin.fail:
     msg:
       - "The current PostgreSQL version ({{ postgresql_version }}) is not supported by the pgvectorscale."
@@ -24,7 +22,6 @@
     - postgresql_version | string is version(pgvectorscale_minimal_pg_version | default(13) | string, '<')
 
 - name: Timescale (pgvectorscale) | Checking supported operating system and version
-  run_once: true
   ansible.builtin.fail:
     msg:
       - "pgvectorscale is not supported on {{ ansible_distribution }} {{ ansible_distribution_release }}."
@@ -34,7 +31,6 @@
     - not (ansible_os_family == "Debian" and ansible_distribution_release in ['bookworm', 'jammy', 'noble'])
 
 - name: ParadeDB | Checking PostgreSQL version
-  run_once: true
   ansible.builtin.fail:
     msg:
       - "The current PostgreSQL version ({{ postgresql_version }}) is not supported by the ParadeDB (pg_search, pg_analytics)."
@@ -44,7 +40,6 @@
     - postgresql_version | string is version(paradedb_minimal_pg_version | default(14) | string, '<')
 
 - name: ParadeDB | Checking supported operating system and version
-  run_once: true
   ansible.builtin.fail:
     msg:
       - "ParadeDB (pg_search, pg_analytics) is not supported on {{ ansible_distribution }} {{ ansible_distribution_release }}."
@@ -58,7 +53,6 @@
 
 # shared_preload_libraries
 - name: Create a list of extensions
-  run_once: true
   ansible.builtin.set_fact:
     extensions: >-
       {{
@@ -76,7 +70,6 @@
       }}
 
 - name: Add required extensions to 'shared_preload_libraries' (if missing)
-  run_once: true
   ansible.builtin.set_fact:
     # This complex line does several things:
     # 1. It takes the current list of PostgreSQL parameters,

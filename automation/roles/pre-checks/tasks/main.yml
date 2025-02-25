@@ -48,10 +48,10 @@
     - wal_g_install | bool
     - inventory_hostname in groups['postgres_cluster']
 
-- name: Perform pre-checks for extensions
-  ansible.builtin.import_tasks: extensions.yml
-  when: inventory_hostname in groups['postgres_cluster']
-
 - name: Generate passwords
   ansible.builtin.import_tasks: passwords.yml
   when: inventory_hostname in groups['postgres_cluster']
+
+- name: Perform pre-checks for extensions
+  ansible.builtin.import_tasks: extensions.yml
+  when: inventory_hostname == groups['master'][0]
