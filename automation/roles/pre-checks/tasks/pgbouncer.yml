@@ -3,11 +3,12 @@
 # This task sets the value for max_connections from the provided variables, defaulting to 100 if not explicitly set.
 # It loops through the 'postgresql_parameters' list and, if 'max_connections' is found in the option, it sets the 'max_connections' value accordingly.
 - name: Set max_connections from vars or use default
-  run_once: true
   ansible.builtin.set_fact:
     max_connections: "{{ (item.value | default(100)) | int }}"
-  when: item.option == "max_connections"
   loop: "{{ postgresql_parameters | default([]) }}"
+  when:
+    - inventory_hostname == groups['master'][0]
+    - item.option == "max_connections"
 
 # This task calculates the pgbouncer_pool_size for each defined pgbouncer pool.
 # The pool size for each pool is extracted from its 'pool_parameters' string using a regular expression.
@@ -15,7 +16,6 @@
 # If 'pool_size' is not defined, it uses pgbouncer_default_pool_size if available, otherwise 0.
 # The calculated pool size is then added to the total 'pgbouncer_pool_size'.
 - name: PgBouncer | Calculate pool_size
-  run_once: true
   ansible.builtin.set_fact:
     pgbouncer_pool_size: "{{
         (pgbouncer_pool_size | default(0) | int)
@@ -29,6 +29,7 @@
   loop: "{{ pgbouncer_pools | default([]) }}"
   loop_control:
     loop_var: pool_item
+  when: inventory_hostname == groups['master'][0]
 
 # This task computes the total pool size across all databases.
 # If 'postgresql_databases' isn't defined or is empty, 'pgbouncer_pool_size' is the total pool size.
@@ -36,7 +37,6 @@
 #   1. It checks each database against 'pgbouncer_pools'.
 #   2. For databases without a corresponding pool, it adds 'pgbouncer_default_pool_size' (or 0 if not defined) to 'pgbouncer_pool_size'.
 - name: PgBouncer | Calculate total pool_size
-  run_once: true
   ansible.builtin.set_fact:
     pgbouncer_total_pool_size: >-
       {{
@@ -49,21 +49,24 @@
         ) * (pgbouncer_default_pool_size | default(0) | int))
         * (pgbouncer_processes | default(1) | int)
       }}
-  when: pgbouncer_pool_size is defined
+  when:
+    - inventory_hostname == groups['master'][0]
+    - pgbouncer_pool_size is defined
 
 - name: PgBouncer | Show total pool_size
-  run_once: true
   ansible.builtin.debug:
     var: pgbouncer_total_pool_size
-  when: pgbouncer_total_pool_size is defined
+  when:
+    - inventory_hostname == groups['master'][0]
+    - pgbouncer_total_pool_size is defined
 
 # This task fails the playbook execution if the total pool size is greater than max_connections.
 # It checks if 'pgbouncer_pools' is defined and has length > 0 and whether the total pool size is greater than max_connections.
 # If both conditions are met, the execution is stopped with a message indicating that the settings need to be changed.
 - name: PgBouncer | Failed when pgbouncer_total_pool_size > max_connections
-  run_once: true
   ansible.builtin.fail:
     msg: "pgbouncer_total_pool_size: {{ pgbouncer_total_pool_size }} > max_connections: {{ max_connections }}. Need change settings"
   when:
+    - inventory_hostname == groups['master'][0]
     - pgbouncer_pools|default([]) | length > 0
     - pgbouncer_total_pool_size | int > max_connections | default(100) | int
