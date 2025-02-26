@@ -63,6 +63,13 @@
       changed_when: false
       when: patroni_leader_result is undefined or patroni_leader_result.status == -1
 
+  roles:
+    - role: pre-checks
+      vars:
+        minimal_ansible_version: 2.16.0
+        timescale_minimal_pg_version: 12 # if enable_timescale is defined
+
+  tasks:
     - name: '[Prepare] Add host to group "primary" (in-memory inventory)'
       ansible.builtin.add_host:
         name: "{{ item }}"
@@ -101,13 +108,6 @@
         - not (pgbackrest_install | bool or wal_g_install | bool)
         - cloud_provider | default('') | lower in ['aws', 'gcp', 'azure']
         - pgbackrest_auto_conf | default(true) | bool  # to be able to disable auto backup settings
-      tags: always
-
-  roles:
-    - role: pre-checks
-      vars:
-        minimal_ansible_version: 2.16.0
-        timescale_minimal_pg_version: 12 # if enable_timescale is defined
   tags:
     - always
 

@@ -29,12 +29,12 @@
       when: shared_buffers_unit == 'gb'
 
     - name: "HugePages | No configuration is required"
-      run_once: true
       ansible.builtin.debug:
         msg: >-
           Current shared_buffers size: {{ shared_buffers }} (less than {{ min_shared_buffers_gb | default(8) }}GB).
           No HugePages configuration is required.
       when:
+        - inventory_hostname == groups['master'][0]  # display only once
         - (shared_buffers_gb | default(0) | int) < (min_shared_buffers_gb | default(8) | int)
 
     - name: "HugePages | Get Hugepagesize value from /proc/meminfo"

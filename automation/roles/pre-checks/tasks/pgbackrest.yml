@@ -17,12 +17,12 @@
 
 # Checking parameters for working with a dedicated pgbackrest server
 - name: pgBackRest | Ensure pgbackrest host is in inventory
-  run_once: true # noqa run-once
   ansible.builtin.fail:
     msg:
       - "The 'pgbackrest_repo_host' variable is set but the 'pgbackrest' group in your inventory is empty."
       - "Please add the necessary host to the 'pgbackrest' group in your inventory."
   when:
+    - inventory_hostname == groups['master'][0]  # display only once
     - pgbackrest_repo_host | length > 0
     - groups['pgbackrest'] is undefined or groups['pgbackrest'] | length == 0
 
