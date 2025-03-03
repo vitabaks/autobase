@@ -279,6 +279,17 @@
     - wal_g_package_file == "wal-g.linux-amd64.tar.gz"
   tags: wal-g, wal_g, wal_g_install
 
+# Ensure the WAL_G_PREFETCH directory is created if configured
+- name: "Create WAL-G prefetch directory {{ wal_g_prefetch_dir_path }}"
+  ansible.builtin.file:
+    path: "{{ wal_g_prefetch_dir_path }}"
+    state: directory
+    owner: postgres
+    group: postgres
+    mode: '0740'
+  when: wal_g_prefetch_dir_create | default(true) | bool
+  tags: wal-g, wal_g, wal_g_install
+
 # Configure walg.json
 - name: "Generate conf file {{ postgresql_home_dir }}/.walg.json"
   ansible.builtin.template:

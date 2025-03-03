@@ -12,6 +12,7 @@
       - { option: "WALG_COMPRESSION_METHOD", value: "{{ WALG_COMPRESSION_METHOD | default('brotli') }}" }
       - { option: "WALG_DELTA_MAX_STEPS", value: "{{ WALG_DELTA_MAX_STEPS | default('6') }}" }
       - { option: "WALG_DOWNLOAD_CONCURRENCY", value: "{{ WALG_DOWNLOAD_CONCURRENCY | default([ansible_processor_vcpus | int // 2, 1] | max) }}" }
+      - { option: "WALG_PREFETCH_DIR", value: "{{ wal_g_prefetch_dir_path | default(postgresql_home_dir + '/wal-g-prefetch') }}" }
       - { option: "WALG_UPLOAD_CONCURRENCY", value: "{{ WALG_UPLOAD_CONCURRENCY | default([ansible_processor_vcpus | int // 2, 1] | max) }}" }
       - { option: "WALG_UPLOAD_DISK_CONCURRENCY", value: "{{ WALG_UPLOAD_DISK_CONCURRENCY | default([ansible_processor_vcpus | int // 2, 1] | max) }}" }
       - { option: "PGDATA", value: "{{ postgresql_data_dir }}" }
@@ -33,6 +34,7 @@
           - { option: "WALG_COMPRESSION_METHOD", value: "{{ WALG_COMPRESSION_METHOD | default('brotli') }}" }
           - { option: "WALG_DELTA_MAX_STEPS", value: "{{ WALG_DELTA_MAX_STEPS | default('6') }}" }
           - { option: "WALG_DOWNLOAD_CONCURRENCY", value: "{{ WALG_DOWNLOAD_CONCURRENCY | default([ansible_processor_vcpus | int // 2, 1] | max) }}" }
+          - { option: "WALG_PREFETCH_DIR", value: "{{ wal_g_prefetch_dir_path | default(postgresql_home_dir + '/wal-g-prefetch') }}" }
           - { option: "WALG_UPLOAD_CONCURRENCY", value: "{{ WALG_UPLOAD_CONCURRENCY | default([ansible_processor_vcpus | int // 2, 1] | max) }}" }
           - { option: "WALG_UPLOAD_DISK_CONCURRENCY", value: "{{ WALG_UPLOAD_DISK_CONCURRENCY | default([ansible_processor_vcpus | int // 2, 1] | max) }}" }
           - { option: "PGDATA", value: "{{ postgresql_data_dir }}" }
@@ -82,6 +84,7 @@
       - { option: "WALG_COMPRESSION_METHOD", value: "{{ WALG_COMPRESSION_METHOD | default('brotli') }}" }
       - { option: "WALG_DELTA_MAX_STEPS", value: "{{ WALG_DELTA_MAX_STEPS | default('6') }}" }
       - { option: "WALG_DOWNLOAD_CONCURRENCY", value: "{{ WALG_DOWNLOAD_CONCURRENCY | default([ansible_processor_vcpus | int // 2, 1] | max) }}" }
+      - { option: "WALG_PREFETCH_DIR", value: "{{ wal_g_prefetch_dir_path | default(postgresql_home_dir + '/wal-g-prefetch') }}" }
       - { option: "WALG_UPLOAD_CONCURRENCY", value: "{{ WALG_UPLOAD_CONCURRENCY | default([ansible_processor_vcpus | int // 2, 1] | max) }}" }
       - { option: "WALG_UPLOAD_DISK_CONCURRENCY", value: "{{ WALG_UPLOAD_DISK_CONCURRENCY | default([ansible_processor_vcpus | int // 2, 1] | max) }}" }
       - { option: "PGDATA", value: "{{ postgresql_data_dir }}" }
@@ -105,6 +108,7 @@
       - { option: "WALG_COMPRESSION_METHOD", value: "{{ WALG_COMPRESSION_METHOD | default('brotli') }}" }
       - { option: "WALG_DELTA_MAX_STEPS", value: "{{ WALG_DELTA_MAX_STEPS | default('6') }}" }
       - { option: "WALG_DOWNLOAD_CONCURRENCY", value: "{{ WALG_DOWNLOAD_CONCURRENCY | default([ansible_processor_vcpus | int // 2, 1] | max) }}" }
+      - { option: "WALG_PREFETCH_DIR", value: "{{ wal_g_prefetch_dir_path | default(postgresql_home_dir + '/wal-g-prefetch') }}" }
       - { option: "WALG_UPLOAD_CONCURRENCY", value: "{{ WALG_UPLOAD_CONCURRENCY | default([ansible_processor_vcpus | int // 2, 1] | max) }}" }
       - { option: "WALG_UPLOAD_DISK_CONCURRENCY", value: "{{ WALG_UPLOAD_DISK_CONCURRENCY | default([ansible_processor_vcpus | int // 2, 1] | max) }}" }
       - { option: "PGDATA", value: "{{ postgresql_data_dir }}" }
@@ -127,6 +131,7 @@
       - { option: "WALG_COMPRESSION_METHOD", value: "{{ WALG_COMPRESSION_METHOD | default('brotli') }}" }
       - { option: "WALG_DELTA_MAX_STEPS", value: "{{ WALG_DELTA_MAX_STEPS | default('6') }}" }
       - { option: "WALG_DOWNLOAD_CONCURRENCY", value: "{{ WALG_DOWNLOAD_CONCURRENCY | default([ansible_processor_vcpus | int // 2, 1] | max) }}" }
+      - { option: "WALG_PREFETCH_DIR", value: "{{ wal_g_prefetch_dir_path | default(postgresql_home_dir + '/wal-g-prefetch') }}" }
       - { option: "WALG_UPLOAD_CONCURRENCY", value: "{{ WALG_UPLOAD_CONCURRENCY | default([ansible_processor_vcpus | int // 2, 1] | max) }}" }
       - { option: "WALG_UPLOAD_DISK_CONCURRENCY", value: "{{ WALG_UPLOAD_DISK_CONCURRENCY | default([ansible_processor_vcpus | int // 2, 1] | max) }}" }
       - { option: "PGDATA", value: "{{ postgresql_data_dir }}" }
