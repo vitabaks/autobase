@@ -539,6 +539,7 @@ wal_g_json:  # config https://github.com/wal-g/wal-g#configuration
   - { option: "WALG_S3_PREFIX", value: "{{ WALG_S3_PREFIX | default('s3://' + patroni_cluster_name) }}" } # define values or pass via --extra-vars
   - { option: "WALG_COMPRESSION_METHOD", value: "{{ WALG_COMPRESSION_METHOD | default('brotli') }}" }  # or "lz4", "lzma", "zstd"
   - { option: "WALG_DELTA_MAX_STEPS", value: "{{ WALG_DELTA_MAX_STEPS | default('6') }}" }  # determines how many delta backups can be between full backups
+  - { option: "WALG_PREFETCH_DIR", value: "{{ wal_g_prefetch_dir_path }}" }  # prevent pg_rewind failures by setting non-default prefetch directory
   - { option: "PGDATA", value: "{{ postgresql_data_dir }}" }
   - { option: "PGHOST", value: "{{ postgresql_unix_socket_dir }}" }
   - { option: "PGPORT", value: "{{ postgresql_port }}" }
@@ -553,6 +554,8 @@ wal_g_patroni_cluster_bootstrap_recovery_conf:
   - recovery_target_action: "promote"
   - recovery_target_timeline: "latest"
 #  - recovery_target_time: "2020-06-01 11:00:00+03"  # Point-in-Time Recovery (example)
+wal_g_prefetch_dir_create: true # or 'false'
+wal_g_prefetch_dir_path: "{{ postgresql_home_dir }}/wal-g-prefetch"
 
 # Define job_parts outside of wal_g_cron_jobs
 # ⚠️ Ensure there is a space at the beginning of each part to prevent commands from concatenating.
