@@ -1,0 +1,53 @@
+---
+- name: Restart pgbouncer service
+  ansible.builtin.systemd:
+    name: pgbouncer{{ '-%d' % (idx + 1) if idx > 0 else '' }}
+    enabled: true
+    state: restarted
+  loop: '{{ range(0, (pgbouncer_processes | default(1) | int)) | list }}'
+  loop_control:
+    index_var: idx
+    label: "{{ 'pgbouncer' if idx == 0 else 'pgbouncer-%d' % (idx + 1) }}"
+  register: pgbouncer_restart_result
+  retries: 3
+  delay: 5
+  until: pgbouncer_restart_result is success
+  listen: 'restart pgbouncer'
+
+- name: Wait for port "{{ pgbouncer_listen_port }}" to become open on the host
+  ansible.builtin.wait_for:
+    port: '{{ pgbouncer_listen_port }}'
+    host: '{{ inventory_hostname }}'
+    state: started
+    timeout: 120
+    delay: 5
+  ignore_errors: false
+  listen: 'restart pgbouncer'
+
+- name: Reload pgbouncer service
+  ansible.builtin.systemd:
+    name: pgbouncer{{ '-%d' % (idx + 1) if idx > 0 else '' }}
+    state: reloaded
+  loop: '{{ range(0, (pgbouncer_processes | default(1) | int)) | list }}'
+  loop_control:
+    index_var: idx
+    label: "{{ 'pgbouncer' if idx == 0 else 'pgbouncer-%d' % (idx + 1) }}"
+  listen: 'reload pgbouncer'
+  ignore_errors: true # Added to prevent test failures in CI.
+
+- name: Reload patroni service
+  ansible.builtin.systemd:
+    daemon_reload: true
+    name: patroni
+    enabled: true
+    state: reloaded
+  listen: 'reload patroni'
+
+- name: Reload postgres
+  become: true
+  become_user: postgres
+  ansible.builtin.command: '{{ postgresql_bin_dir }}/pg_ctl reload -D {{ postgresql_data_dir }}'
+  register: pg_ctl_reload_result
+  changed_when: pg_ctl_reload_result.rc == 0
+  failed_when: false # exec 'reload' on all running postgres (to re-run with --tag pg_hba).
+  listen: 'reload postgres'

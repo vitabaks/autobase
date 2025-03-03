@@ -1,0 +1,71 @@
+- name: config_pgcluster.yml | Check the PostgreSQL cluster state and perform pre-checks
+  block:
+    - name: '[Prepare] Set maintenance variable'
+      ansible.builtin.set_fact:
+        postgresql_cluster_maintenance: true
+
+    - name: '[Prepare] Get Patroni Cluster Leader Node'
+      ansible.builtin.uri:
+        url: http://{{ inventory_hostname }}:{{ patroni_restapi_port }}/leader
+        status_code: 200
+      register: patroni_leader_result
+      changed_when: false
+      failed_when: false
+      check_mode: false
+      environment:
+        no_proxy: '{{ inventory_hostname }}'
+
+    # Stop, if Patroni is unavailable
+    - name: The Patroni cluster is unhealthy
+      ansible.builtin.fail:
+        msg: 'Patroni is unavailable on {{ ansible_hostname }}. Please check the cluster status.'
+      changed_when: false
+      when: patroni_leader_result is undefined or patroni_leader_result.status == -1
+
+    - name: Run pre-checks
+      ansible.builtin.include_role:
+        name: pre-checks
+      vars:
+        minimal_ansible_version: 2.16.0
+        timescale_minimal_pg_version: 12 # if enable_timescale is defined
+
+    - name: '[Prepare] Add host to group "primary" (in-memory inventory)'
+      ansible.builtin.add_host:
+        name: '{{ item }}'
+        groups: primary
+        is_master: true
+        postgresql_exists: true
+      when: hostvars[item]['patroni_leader_result']['status'] == 200
+      loop: "{{ groups['postgres_cluster'] }}"
+      changed_when: false
+      check_mode: false
+
+    - name: '[Prepare] Add hosts to group "secondary" (in-memory inventory)'
+      ansible.builtin.add_host:
+        name: '{{ item }}'
+        groups: secondary
+        is_master: false
+        postgresql_exists: true
+      when: hostvars[item]['patroni_leader_result']['status'] != 200
+      loop: "{{ groups['postgres_cluster'] }}"
+      changed_when: false
+      check_mode: false
+
+    - name: 'Print Patroni Cluster info'
+      ansible.builtin.debug:
+        msg:
+          - 'Cluster Name: {{ patroni_cluster_name }}'
+          - 'Cluster Leader: {{ ansible_hostname }}'
+      when: inventory_hostname in groups['primary']
+
+    # if 'cloud_provider' is 'aws', 'gcp', or 'azure'
+    # set_fact: 'pgbackrest_install' to configure Postgres backups (TODO: Add the ability to configure backups in the UI)
+    - name: "Set variable: 'pgbackrest_install' to configure Postgres backups"
+      ansible.builtin.set_fact:
+        pgbackrest_install: true
+      when:
+        - not (pgbackrest_install | bool or wal_g_install | bool)
+        - cloud_provider | default('') | lower in ['aws', 'gcp', 'azure']
+        - pgbackrest_auto_conf | default(true) | bool # to be able to disable auto backup settings
+  tags:
+    - always

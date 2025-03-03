@@ -1,0 +1,45 @@
+- name: config_pgcluster.yml | Restart patroni on master after config settings if need
+  when: ansible_host in groups['primary']
+  environment: '{{ proxy_env | default({}) }}'
+  block:
+    - name: Switchover Patroni leader role
+      ansible.builtin.include_role:
+        name: update
+        tasks_from: switchover
+      when:
+        - pending_restart | bool
+        - pg_pending_restart_settings | length > 0
+
+    - name: Stop read-only traffic
+      ansible.builtin.include_role:
+        name: update
+        tasks_from: stop_traffic
+      when:
+        - pending_restart | bool
+        - pg_pending_restart_settings | length > 0
+
+    - name: Stop Services
+      ansible.builtin.include_role:
+        name: update
+        tasks_from: stop_services
+      when:
+        - pending_restart | bool
+        - pg_pending_restart_settings | length > 0
+
+    - name: Start Services
+      ansible.builtin.include_role:
+        name: update
+        tasks_from: start_services
+      when:
+        - pending_restart | bool
+        - pg_pending_restart_settings | length > 0
+
+    - name: Start read-only traffic
+      ansible.builtin.include_role:
+        name: update
+        tasks_from: start_traffic
+      when:
+        - pending_restart | bool
+        - pg_pending_restart_settings | length > 0
+  tags:
+    - patroni_conf

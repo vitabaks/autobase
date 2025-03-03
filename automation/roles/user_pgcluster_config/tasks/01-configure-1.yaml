@@ -1,0 +1,22 @@
+- name: config_pgcluster.yml | Configuration PostgreSQL HA Cluster (based on "Patroni")
+  block:
+    # set_fact: 'pgbackrest_install' to configure Postgres backups (TODO: Add the ability to configure backups in the UI)
+    # Note: Applicable only for "aws", "gcp", "azure", because:
+    # "digitalocean" - requires the Spaces access keys "AWS_ACCESS_KEY_ID" and "AWS_SECRET_ACCESS_KEY"
+    # "hetzner" - currently, Hetzner Cloud does not provide S3 storage
+    - name: "Set variable: 'pgbackrest_install' to configure Postgres backups"
+      ansible.builtin.set_fact:
+        pgbackrest_install: true
+      when:
+        - not (pgbackrest_install | bool or wal_g_install | bool)
+        - cloud_provider | default('') | lower in ['aws', 'gcp', 'azure']
+        - pgbackrest_auto_conf | default(true) | bool # to be able to disable auto backup settings
+      tags: always
+
+    - name: Run pre-checks
+      when: cloud_provider | default('') | length > 0
+      ansible.builtin.include_role:
+        name: cloud-resources
+      vars:
+        postgresql_cluster_maintenance: true
+      tags: always

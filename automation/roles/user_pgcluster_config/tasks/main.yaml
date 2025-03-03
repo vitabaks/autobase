@@ -1,0 +1,20 @@
+- name: Import 01-configure-1.yaml
+  ansible.builtin.import_tasks: 01-configure-1.yaml
+
+- name: Import 02-pre-checks.yaml
+  ansible.builtin.import_tasks: 02-pre-checks.yaml
+
+- name: Import 03-configure-2.yaml
+  ansible.builtin.import_tasks: 03-configure-2.yaml
+
+- name: Import 04-configure-pgBackRest.yaml
+  ansible.builtin.import_tasks: 04-configure-pgBackRest.yaml
+
+- name: Import 05-restart-patroni-secondary.yaml
+  ansible.builtin.import_tasks: 05-restart-patroni-secondary.yaml
+
+- name: Import 06-restart-patroni-master.yaml
+  ansible.builtin.import_tasks: 06-restart-patroni-master.yaml
+
+- name: Import 07-configure-clusterinfo.yaml
+  ansible.builtin.import_tasks: 07-configure-clusterinfo.yaml
