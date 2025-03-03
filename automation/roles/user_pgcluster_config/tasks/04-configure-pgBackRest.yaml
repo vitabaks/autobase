@@ -1,0 +1,18 @@
+- name: config_pgcluster | Configure pgBackRest
+  when: ansible_host in groups['pgbackrest'] or ansible_host in groups['postgres_cluster']
+  block:
+    # if 'cloud_provider' is 'aws', 'gcp', or 'azure'
+    # set_fact: 'pgbackrest_install' to configure Postgres backups (TODO: Add the ability to configure backups in the UI)
+    - name: "Set variable: 'pgbackrest_install' to configure Postgres backups"
+      ansible.builtin.set_fact:
+        pgbackrest_install: true
+      when:
+        - not (pgbackrest_install | bool or wal_g_install | bool)
+        - cloud_provider | default('') | lower in ['aws', 'gcp', 'azure']
+        - pgbackrest_auto_conf | default(true) | bool # to be able to disable auto backup settings
+      tags: always
+
+    - name: pgbackrest_install
+      when: pgbackrest_install | bool
+      ansible.builtin.include_role:
+        name: pgbackrest

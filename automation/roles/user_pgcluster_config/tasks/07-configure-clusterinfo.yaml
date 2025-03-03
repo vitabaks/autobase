@@ -1,0 +1,9 @@
+- name: config_pgcluster.yml | Configure PostgreSQL Cluster and info
+  when: ansible_host in groups['primary']
+  block:
+    - name: postgresql-extensions
+      ansible.builtin.include_role:
+        name: postgresql-extensions
+    - name: deploy-finish
+      ansible.builtin.include_role:
+        name: deploy-finish
