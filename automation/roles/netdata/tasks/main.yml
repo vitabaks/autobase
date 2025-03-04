@@ -3,7 +3,7 @@
 - block:
     - name: Download Netdata installation script
       ansible.builtin.get_url:
-        url: "{{ netdata_kickstart_url | default('https://get.netdata.cloud/netdata-kickstart.sh') }}"
+        url: "{{ netdata_kickstart_url | default('https://get.netdata.cloud/kickstart.sh') }}"
         dest: /tmp/netdata-kickstart.sh
         mode: +x
       register: get_url_status
