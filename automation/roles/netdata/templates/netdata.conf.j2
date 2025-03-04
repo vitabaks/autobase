@@ -10,21 +10,686 @@
 # The value shown in the commented settings, is the default value.
 #
 
+# global netdata configuration
+
 [global]
-    run as user = netdata
+	# run as user = netdata
+	# host access prefix = 
+	hostname = {{ ansible_hostname }}
+	# profile = standalone
+	# glibc malloc arena max for plugins = 1
+	# glibc malloc arena max for netdata = 1
+	# cpu cores = 2
+	# libuv worker threads = 16
+	# timezone = Etc/UTC
+	# OOM score = 0
+	# process scheduling policy = batch
+	# process nice level = 0
+	# pthread stack size = 8MiB
+	# is ephemeral node = no
+	# has unstable connection = no
 
-    memory mode = {{ netdata_conf.memory_mode | default('dbengine') }}
-    page cache size = {{ netdata_conf.page_cache_size | default('64') }}
-    dbengine disk space = {{ netdata_conf.dbengine_disk_space | default('512') }}
-    dbengine multihost disk space = {{ netdata_conf.dbengine_disk_space | default('512') }}
+[db]
+	# enable replication = yes
+	# replication period = 1d
+	# replication step = 10m
+	# cleanup orphan hosts after = 1h
+	# update every = 1s
+	db = {{ netdata_conf.db_mode | default('dbengine') }}
+	# memory deduplication (ksm) = auto
+	# cleanup ephemeral hosts after = 1d
+	# cleanup obsolete charts after = 1h
+	# gap when lost iterations above = 1
+	# dbengine page type = gorilla
+	dbengine page cache size = {{ netdata_conf.dbengine_page_cache_size | default('32MiB') }}
+	# dbengine extent cache size = off
+	# dbengine enable journal integrity check = no
+	# dbengine use all ram for caches = no
+	# dbengine out of memory protection = 191.07MiB
+	# dbengine use direct io = yes
+	# dbengine pages per extent = 109
+	# storage tiers = 3
+	# dbengine tier backfill = new
+	# dbengine tier 1 update every iterations = 60
+	# dbengine tier 2 update every iterations = 60
+	dbengine tier 0 retention size = {{ dbengine_tier_0_retention_size | default('1024MiB') }}
+	dbengine tier 0 retention time = {{ dbengine_tier_0_retention_time | default('14d') }}
+	dbengine tier 1 retention size = {{ dbengine_tier_1_retention_size | default('1024MiB') }}
+	dbengine tier 1 retention time = {{ dbengine_tier_1_retention_time | default('3mo') }}
+	dbengine tier 2 retention size = {{ dbengine_tier_2_retention_size | default('1024MiB') }}
+	dbengine tier 2 retention time = {{ dbengine_tier_2_retention_time | default('1y') }}
+	# replication threads = 1
 
-    # some defaults to run netdata with least priority
-    process scheduling policy = idle
-    OOM score = 1000
+[directories]
+	# config = /etc/netdata
+	# stock config = /usr/lib/netdata/conf.d
+	# log = /var/log/netdata
+	# web = /usr/share/netdata/web
+	# cache = /var/cache/netdata
+	# lib = /var/lib/netdata
+	# lock = /var/lib/netdata/lock
+	# cloud.d = /var/lib/netdata/cloud.d
+	# plugins = "/usr/libexec/netdata/plugins.d" "/etc/netdata/custom-plugins.d"
+	# home = /var/lib/netdata
+	# registry = /var/lib/netdata/registry
+	# stock health config = /usr/lib/netdata/conf.d/health.d
+	# health config = /etc/netdata/health.d
+
+[logs]
+	# facility = daemon
+	# logs flood protection period = 1m
+	# logs to trigger flood protection = 1000
+	# level = info
+	# debug = /var/log/netdata/debug.log
+	# daemon = journal
+	# collector = journal
+	# access = /var/log/netdata/access.log
+	# health = journal
+	# debug flags = 0x0000000000000000
+
+[environment variables]
+	# TZ = :/etc/localtime
+	# PATH = /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/snap/bin:/sbin:/usr/sbin:/usr/local/bin:/usr/local/sbin
+	# PYTHONPATH = 
+
+[host labels]
+	# name = value
+
+[cloud]
+	# conversation log = no
+	# scope = full
+	# query threads = 6
+	# proxy = env
+
+[ml]
+	# enabled = auto
+	# maximum num samples to train = 21600
+	# minimum num samples to train = 900
+	# train every = 3h
+	# number of models per dimension = 18
+	# delete models older than = 7d
+	# num samples to diff = 1
+	# num samples to smooth = 3
+	# num samples to lag = 5
+	# random sampling ratio = 0.20000
+	# maximum number of k-means iterations = 1000
+	# dimension anomaly score threshold = 0.99000
+	# host anomaly rate threshold = 1.00000
+	# anomaly detection grouping method = average
+	# anomaly detection grouping duration = 5m
+	# num training threads = 1
+	# flush models batch size = 256
+	# dimension anomaly rate suppression window = 15m
+	# dimension anomaly rate suppression threshold = 450
+	# enable statistics charts = yes
+	# hosts to skip from training = !*
+	# charts to skip from training = netdata.*
+	# stream anomaly detection charts = yes
+
+[health]
+	# silencers file = /var/lib/netdata/health.silencers.json
+	# enabled = yes
+	# enable stock health configuration = yes
+	# use summary for notifications = yes
+	# default repeat warning = off
+	# default repeat critical = off
+	# in memory max health log entries = 1000
+	# health log retention = 5d
+	# script to execute on alarm = /usr/libexec/netdata/plugins.d/alarm-notify.sh
+	# enabled alarms = *
+	# run at least every = 10s
+	# postpone alarms during hibernation for = 1m
 
 [web]
-    web files owner = netdata
-    web files group = netdata
+	# ssl key = /etc/netdata/ssl/key.pem
+	# ssl certificate = /etc/netdata/ssl/cert.pem
+	# tls version = 1.3
+	# tls ciphers = none
+	# ses max tg_des_window = 15
+	# des max tg_des_window = 15
+	# mode = static-threaded
+	# listen backlog = 4096
+	default port = {{ netdata_port | default(netdata_conf.web_default_port | default(19999)) }}
+	bind to = {{ netdata_conf.web_bind_to | default('localhost') }}
+	# bearer token protection = no
+	# disconnect idle clients after = 1m
+	# timeout for first request = 1m
+	# accept a streaming request every = off
+	# respect do not track policy = no
+	# x-frame-options response header = 
+	# allow connections from = localhost *
+	# allow connections by dns = heuristic
+	# allow dashboard from = localhost *
+	# allow dashboard by dns = heuristic
+	# allow badges from = *
+	# allow badges by dns = heuristic
+	# allow streaming from = *
+	# allow streaming by dns = heuristic
+	# allow netdata.conf from = localhost fd* 10.* 192.168.* 172.16.* 172.17.* 172.18.* 172.19.* 172.20.* 172.21.* 172.22.* 172.23.* 172.24.* 172.25.* 172.26.* 172.27.* 172.28.* 172.29.* 172.30.* 172.31.* UNKNOWN
+	# allow netdata.conf by dns = no
+	# allow management from = localhost
+	# allow management by dns = heuristic
+	# enable gzip compression = yes
+	# gzip compression strategy = default
+	# gzip compression level = 3
+	# ssl skip certificate verification = no
+	# web server threads = 6
+	# web server max sockets = 131072
 
-    bind to = {{ netdata_conf.web_bind_to | default('localhost') }}
+[registry]
+	# enabled = no
+	# netdata unique id file = /var/lib/netdata/registry/netdata.public.unique.id
+	# registry db file = /var/lib/netdata/registry/registry.db
+	# registry log file = /var/lib/netdata/registry/registry-log.db
+	# registry save db every new entries = 1000000
+	# registry expire idle persons = 1y
+	# registry domain = 
+	# registry to announce = https://registry.my-netdata.io
+	# registry hostname = ip-172-31-32-178
+	# verify browser cookies support = yes
+	# enable cookies SameSite and Secure = yes
+	# max URL length = 1024
+	# max URL name length = 50
+	# use mmap = no
+	# netdata management api key file = /var/lib/netdata/netdata.api.key
+	# allow from = *
+	# allow by dns = heuristic
 
+[pulse]
+	# extended = no
+	# update every = 1s
+
+[plugins]
+	# idlejitter = yes
+	# netdata pulse = yes
+	# profile = no
+	# tc = yes
+	# diskspace = yes
+	# proc = yes
+	# cgroups = yes
+	# timex = yes
+	# enable running new plugins = yes
+	# check for new plugins every = 1m
+	# slabinfo = no
+	# nfacct = yes
+	# statsd = yes
+	# perf = yes
+	# network-viewer = yes
+	# systemd-journal = yes
+	# ioping = yes
+	# charts.d = yes
+	# debugfs = yes
+	# go.d = yes
+	# ebpf = yes
+	# apps = yes
+	# python.d = yes
+
+[statsd]
+	# update every (flushInterval) = 1s
+	# udp messages to process at once = 10
+	# create private charts for metrics matching = *
+	# max private charts hard limit = 1000
+	# set charts as obsolete after = off
+	# decimal detail = 1000
+	# disconnect idle tcp clients after = 10m
+	# private charts hidden = no
+	# histograms and timers percentile (percentThreshold) = 95.00000
+	# dictionaries max unique dimensions = 200
+	# add dimension for number of events received = no
+	# gaps on gauges (deleteGauges) = no
+	# gaps on counters (deleteCounters) = no
+	# gaps on meters (deleteMeters) = no
+	# gaps on sets (deleteSets) = no
+	# gaps on histograms (deleteHistograms) = no
+	# gaps on timers (deleteTimers) = no
+	# gaps on dictionaries (deleteDictionaries) = no
+	# statsd server max TCP sockets = 131072
+	# listen backlog = 4096
+	# default port = 8125
+	# bind to = udp:localhost tcp:localhost
+
+[plugin:idlejitter]
+	# loop time = 20ms
+
+[plugin:nfacct]
+	# update every = 1s
+	# command options = 
+
+[plugin:perf]
+	# update every = 1s
+	# command options = 
+
+[plugin:network-viewer]
+	# update every = 1s
+	# command options = 
+
+[plugin:systemd-journal]
+	# update every = 1s
+	# command options = 
+
+[plugin:ioping]
+	# update every = 1s
+	# command options = 
+
+[plugin:charts.d]
+	# update every = 1s
+	# command options = 
+
+[plugin:debugfs]
+	# update every = 1s
+	# command options = 
+
+[plugin:tc]
+	# script to run to get tc values = /usr/libexec/netdata/plugins.d/tc-qos-helper.sh
+	# enable tokens charts for all interfaces = no
+	# enable ctokens charts for all interfaces = no
+	# enable show all classes and qdiscs for all interfaces = no
+	# cleanup unused classes every = 120
+
+[plugin:proc:diskspace]
+	# remove charts of unmounted disks = yes
+	# update every = 1s
+	# check for new mount points every = 15s
+	# exclude space metrics on paths = /dev /dev/shm /proc/* /sys/* /var/run/user/* /run/lock /run/user/* /snap/* /var/lib/docker/* /var/lib/containers/storage/* /run/credentials/* /run/containerd/*  /rpool /rpool/*
+	# exclude space metrics on filesystems = *gvfs *gluster* *s3fs *ipfs *davfs2 *httpfs *sshfs *gdfs *moosefs fusectl autofs cgroup cgroup2 hugetlbfs devtmpfs fuse.lxcfs
+	# exclude inode metrics on filesystems = msdosfs msdos vfat overlayfs aufs* *unionfs
+	# space usage for all disks = auto
+	# inodes usage for all disks = auto
+
+[plugin:proc]
+	# /proc/net/dev = yes
+	# /proc/pagetypeinfo = no
+	# /proc/stat = yes
+	# /proc/uptime = yes
+	# /proc/loadavg = yes
+	# /proc/sys/fs/file-nr = yes
+	# /proc/sys/kernel/random/entropy_avail = yes
+	# /run/reboot_required = yes
+	# /proc/pressure = yes
+	# /proc/interrupts = yes
+	# /proc/softirqs = yes
+	# /proc/vmstat = yes
+	# /proc/meminfo = yes
+	# /sys/kernel/mm/ksm = yes
+	# /sys/block/zram = yes
+	# /sys/devices/system/edac/mc = yes
+	# /sys/devices/pci/aer = yes
+	# /sys/devices/system/node = yes
+	# /proc/net/wireless = yes
+	# /proc/net/sockstat = yes
+	# /proc/net/sockstat6 = yes
+	# /proc/net/netstat = yes
+	# /proc/net/sctp/snmp = yes
+	# /proc/net/softnet_stat = yes
+	# /proc/net/ip_vs/stats = yes
+	# /sys/class/infiniband = yes
+	# /proc/net/stat/conntrack = yes
+	# /proc/net/stat/synproxy = yes
+	# /proc/diskstats = yes
+	# /proc/mdstat = yes
+	# /proc/net/rpc/nfsd = yes
+	# /proc/net/rpc/nfs = yes
+	# /proc/spl/kstat/zfs/arcstats = yes
+	# /sys/fs/btrfs = yes
+	# ipc = yes
+	# /sys/class/power_supply = yes
+	# /sys/class/drm = yes
+
+[plugin:cgroups]
+	# update every = 1s
+	# check for new cgroups every = 10s
+	# use unified cgroups = auto
+	# max cgroups to allow = 1000
+	# max cgroups depth to monitor = 0
+	# enable by default cgroups matching =  !*/init.scope  !/system.slice/run-*.scope  *user.slice/docker-* !*user.slice* *.scope  /machine.slice/*.service  */kubepods/pod*/*  */kubepods/*/pod*/*  */*-kubepods-pod*/*  */*-kubepods-*-pod*/*  !*kubepods* !*kubelet*  !*/vcpu*  !*/emulator  !*.mount  !*.partition  !*.service  !*.service/udev  !*.socket  !*.slice  !*.swap  !*.user  !/  !/docker  !*/libvirt  !/lxc  !/lxc/*/*  !/lxc.monitor*  !/lxc.pivot  !/lxc.payload  !*lxcfs.service/.control !/machine  !/qemu  !/system  !/systemd  !/user  * 
+	# enable by default cgroups names matching =  * 
+	# search for cgroups in subpaths matching =  !*/init.scope  !*-qemu  !*.libvirt-qemu  !/init.scope  !/system  !/systemd  !/user  !/lxc/*/*  !/lxc.monitor  !/lxc.payload/*/*  !/lxc.payload.*  * 
+	# script to get cgroup names = /usr/libexec/netdata/plugins.d/cgroup-name.sh
+	# script to get cgroup network interfaces = /usr/libexec/netdata/plugins.d/cgroup-network
+	# run script to rename cgroups matching =  !/  !*.mount  !*.socket  !*.partition  /machine.slice/*.service  !*.service  !*.slice  !*.swap  !*.user  !init.scope  !*.scope/vcpu*  !*.scope/emulator  *.scope  *docker*  *lxc*  *qemu*  */kubepods/pod*/*  */kubepods/*/pod*/*  */*-kubepods-pod*/*  */*-kubepods-*-pod*/*  !*kubepods* !*kubelet*  *.libvirt-qemu  * 
+	# cgroups to match as systemd services =  !/system.slice/*/*.service  /system.slice/*.service 
+
+[plugin:timex]
+	# update every = 10s
+	# clock synchronization state = yes
+	# time offset = yes
+
+[plugin:go.d]
+	# update every = 1s
+	# command options = 
+
+[plugin:ebpf]
+	# update every = 1s
+	# command options = 
+
+[plugin:apps]
+	# update every = 1s
+	# command options = 
+
+[plugin:python.d]
+	# update every = 1s
+	# command options = 
+
+[plugin:proc:/proc/stat]
+	# cpu utilization = yes
+	# per cpu core utilization = no
+	# cpu interrupts = yes
+	# context switches = yes
+	# processes started = yes
+	# processes running = yes
+	# keep per core files open = yes
+	# keep cpuidle files open = yes
+	# core_throttle_count = auto
+	# package_throttle_count = no
+	# cpu frequency = yes
+	# cpu idle states = no
+	# core_throttle_count filename to monitor = /sys/devices/system/cpu/%s/thermal_throttle/core_throttle_count
+	# package_throttle_count filename to monitor = /sys/devices/system/cpu/%s/thermal_throttle/package_throttle_count
+	# scaling_cur_freq filename to monitor = /sys/devices/system/cpu/%s/cpufreq/scaling_cur_freq
+	# time_in_state filename to monitor = /sys/devices/system/cpu/%s/cpufreq/stats/time_in_state
+	# schedstat filename to monitor = /proc/schedstat
+	# cpuidle name filename to monitor = /sys/devices/system/cpu/cpu%zu/cpuidle/state%zu/name
+	# cpuidle time filename to monitor = /sys/devices/system/cpu/cpu%zu/cpuidle/state%zu/time
+	# filename to monitor = /proc/stat
+
+[plugin:proc:/proc/uptime]
+	# filename to monitor = /proc/uptime
+
+[plugin:proc:/proc/loadavg]
+	# filename to monitor = /proc/loadavg
+	# enable load average = yes
+	# enable total processes = yes
+
+[plugin:proc:/proc/sys/fs/file-nr]
+	# filename to monitor = /proc/sys/fs/file-nr
+
+[plugin:proc:/proc/sys/kernel/random/entropy_avail]
+	# filename to monitor = /proc/sys/kernel/random/entropy_avail
+
+[plugin:proc:/proc/pressure]
+	# base path of pressure metrics = /proc/pressure
+	# enable cpu some pressure = yes
+	# enable cpu full pressure = no
+	# enable memory some pressure = yes
+	# enable memory full pressure = yes
+	# enable io some pressure = yes
+	# enable io full pressure = yes
+	# enable irq some pressure = no
+	# enable irq full pressure = yes
+
+[plugin:proc:/proc/interrupts]
+	# interrupts per core = no
+	# filename to monitor = /proc/interrupts
+
+[plugin:proc:/proc/softirqs]
+	# interrupts per core = no
+	# filename to monitor = /proc/softirqs
+
+[plugin:proc:/proc/vmstat]
+	# filename to monitor = /proc/vmstat
+	# swap i/o = auto
+	# disk i/o = yes
+	# memory page faults = yes
+	# out of memory kills = yes
+	# system-wide numa metric summary = auto
+	# transparent huge pages = auto
+	# zswap i/o = auto
+	# memory ballooning = auto
+	# kernel same memory = auto
+
+[plugin:proc:/sys/devices/system/node]
+	# directory to monitor = /sys/devices/system/node
+	# enable per-node numa metrics = auto
+
+[plugin:proc:/proc/meminfo]
+	# system ram = yes
+	# system swap = auto
+	# hardware corrupted ECC = auto
+	# committed memory = yes
+	# writeback memory = yes
+	# kernel memory = yes
+	# slab memory = yes
+	# hugepages = auto
+	# transparent hugepages = auto
+	# memory reclaiming = yes
+	# high low memory = yes
+	# cma memory = auto
+	# direct maps = yes
+	# filename to monitor = /proc/meminfo
+
+[plugin:proc:/sys/kernel/mm/ksm]
+	# /sys/kernel/mm/ksm/pages_shared = /sys/kernel/mm/ksm/pages_shared
+	# /sys/kernel/mm/ksm/pages_sharing = /sys/kernel/mm/ksm/pages_sharing
+	# /sys/kernel/mm/ksm/pages_unshared = /sys/kernel/mm/ksm/pages_unshared
+	# /sys/kernel/mm/ksm/pages_volatile = /sys/kernel/mm/ksm/pages_volatile
+
+[plugin:proc:/sys/devices/system/edac/mc]
+	# directory to monitor = /sys/devices/system/edac/mc
+
+[plugin:proc:/sys/class/pci/aer]
+	# enable root ports = no
+	# enable pci slots = no
+
+[plugin:proc:/proc/net/wireless]
+	# filename to monitor = /proc/net/wireless
+	# status for all interfaces = auto
+	# quality for all interfaces = auto
+	# discarded packets for all interfaces = auto
+	# missed beacon for all interface = auto
+
+[plugin:proc:/proc/net/sockstat]
+	# ipv4 sockets = auto
+	# ipv4 TCP sockets = auto
+	# ipv4 TCP memory = auto
+	# ipv4 UDP sockets = auto
+	# ipv4 UDP memory = auto
+	# ipv4 UDPLITE sockets = auto
+	# ipv4 RAW sockets = auto
+	# ipv4 FRAG sockets = auto
+	# ipv4 FRAG memory = auto
+	# update constants every = 1m
+	# filename to monitor = /proc/net/sockstat
+
+[plugin:proc:/proc/net/sockstat6]
+	# ipv6 TCP sockets = auto
+	# ipv6 UDP sockets = auto
+	# ipv6 UDPLITE sockets = auto
+	# ipv6 RAW sockets = auto
+	# ipv6 FRAG sockets = auto
+	# filename to monitor = /proc/net/sockstat6
+
+[plugin:proc:/proc/net/netstat]
+	# bandwidth = auto
+	# input errors = auto
+	# multicast bandwidth = auto
+	# broadcast bandwidth = auto
+	# multicast packets = auto
+	# broadcast packets = auto
+	# ECN packets = auto
+	# TCP reorders = auto
+	# TCP SYN cookies = auto
+	# TCP out-of-order queue = auto
+	# TCP connection aborts = auto
+	# TCP memory pressures = auto
+	# TCP SYN queue = auto
+	# TCP accept queue = auto
+	# filename to monitor = /proc/net/netstat
+
+[plugin:proc:/proc/net/snmp]
+	# ipv4 packets = auto
+	# ipv4 fragments sent = auto
+	# ipv4 fragments assembly = auto
+	# ipv4 errors = auto
+	# ipv4 TCP connections = auto
+	# ipv4 TCP packets = auto
+	# ipv4 TCP errors = auto
+	# ipv4 TCP opens = auto
+	# ipv4 TCP handshake issues = auto
+	# ipv4 UDP packets = auto
+	# ipv4 UDP errors = auto
+	# ipv4 ICMP packets = auto
+	# ipv4 ICMP messages = auto
+	# ipv4 UDPLite packets = auto
+	# filename to monitor = /proc/net/snmp
+
+[plugin:proc:/proc/net/snmp6]
+	# ipv6 packets = auto
+	# ipv6 fragments sent = auto
+	# ipv6 fragments assembly = auto
+	# ipv6 errors = auto
+	# ipv6 UDP packets = auto
+	# ipv6 UDP errors = auto
+	# ipv6 UDPlite packets = auto
+	# ipv6 UDPlite errors = auto
+	# bandwidth = auto
+	# multicast bandwidth = auto
+	# broadcast bandwidth = auto
+	# multicast packets = auto
+	# icmp = auto
+	# icmp redirects = auto
+	# icmp errors = auto
+	# icmp echos = auto
+	# icmp group membership = auto
+	# icmp router = auto
+	# icmp neighbor = auto
+	# icmp mldv2 = auto
+	# icmp types = auto
+	# ect = auto
+	# filename to monitor = /proc/net/snmp6
+
+[plugin:proc:/proc/net/sctp/snmp]
+	# established associations = auto
+	# association transitions = auto
+	# fragmentation = auto
+	# packets = auto
+	# packet errors = auto
+	# chunk types = auto
+	# filename to monitor = /proc/net/sctp/snmp
+
+[plugin:proc:/proc/net/softnet_stat]
+	# softnet_stat per core = no
+	# filename to monitor = /proc/net/softnet_stat
+
+[plugin:proc:/proc/net/ip_vs_stats]
+	# IPVS bandwidth = yes
+	# IPVS connections = yes
+	# IPVS packets = yes
+	# filename to monitor = /proc/net/ip_vs_stats
+
+[plugin:proc:/sys/class/infiniband]
+	# dirname to monitor = /sys/class/infiniband
+	# bandwidth counters = yes
+	# packets counters = yes
+	# errors counters = yes
+	# hardware packets counters = auto
+	# hardware errors counters = auto
+	# monitor only active ports = auto
+	# disable by default interfaces matching = 
+	# refresh ports state every = 30s
+
+[plugin:proc:/proc/net/stat/nf_conntrack]
+	# filename to monitor = /proc/net/stat/nf_conntrack
+	# netfilter new connections = no
+	# netfilter connection changes = no
+	# netfilter connection expectations = no
+	# netfilter connection searches = no
+	# netfilter errors = no
+	# netfilter connections = yes
+
+[plugin:proc:/proc/sys/net/netfilter/nf_conntrack_max]
+	# filename to monitor = /proc/sys/net/netfilter/nf_conntrack_max
+	# read every seconds = 10
+
+[plugin:proc:/proc/sys/net/netfilter/nf_conntrack_count]
+	# filename to monitor = /proc/sys/net/netfilter/nf_conntrack_count
+
+[plugin:proc:/proc/net/stat/synproxy]
+	# SYNPROXY cookies = auto
+	# SYNPROXY SYN received = auto
+	# SYNPROXY connections reopened = auto
+	# filename to monitor = /proc/net/stat/synproxy
+
+[plugin:proc:/proc/diskstats]
+	# enable new disks detected at runtime = yes
+	# performance metrics for physical disks = auto
+	# performance metrics for virtual disks = auto
+	# performance metrics for partitions = no
+	# bandwidth for all disks = auto
+	# operations for all disks = auto
+	# merged operations for all disks = auto
+	# i/o time for all disks = auto
+	# queued operations for all disks = auto
+	# utilization percentage for all disks = auto
+	# extended operations for all disks = auto
+	# backlog for all disks = auto
+	# bcache for all disks = auto
+	# bcache priority stats update every = off
+	# remove charts of removed disks = yes
+	# path to get block device = /sys/block/%s
+	# path to get block device bcache = /sys/block/%s/bcache
+	# path to get virtual block device = /sys/devices/virtual/block/%s
+	# path to get block device infos = /sys/dev/block/%lu:%lu/%s
+	# path to device mapper = /dev/mapper
+	# path to /dev/disk = /dev/disk
+	# path to /sys/block = /sys/block
+	# path to /dev/disk/by-label = /dev/disk/by-label
+	# path to /dev/disk/by-id = /dev/disk/by-id
+	# path to /dev/vx/dsk = /dev/vx/dsk
+	# name disks by id = no
+	# preferred disk ids = *
+	# exclude disks = loop* ram*
+	# filename to monitor = /proc/diskstats
+	# performance metrics for disks with major 259 = yes
+
+[plugin:proc:/proc/mdstat]
+	# faulty devices = yes
+	# nonredundant arrays availability = yes
+	# mismatch count = auto
+	# disk stats = yes
+	# operation status = yes
+	# make charts obsolete = yes
+	# filename to monitor = /proc/mdstat
+	# mismatch_cnt filename to monitor = /sys/block/%s/md/mismatch_cnt
+
+[plugin:proc:/proc/net/rpc/nfsd]
+	# filename to monitor = /proc/net/rpc/nfsd
+
+[plugin:proc:/proc/net/rpc/nfs]
+	# filename to monitor = /proc/net/rpc/nfs
+
+[plugin:proc:/proc/spl/kstat/zfs/arcstats]
+	# filename to monitor = /proc/spl/kstat/zfs/arcstats
+
+[plugin:proc:/sys/fs/btrfs]
+	# path to monitor = /sys/fs/btrfs
+	# check for btrfs changes every = 1m
+	# physical disks allocation = auto
+	# data allocation = auto
+	# metadata allocation = auto
+	# system allocation = auto
+	# commit stats = auto
+	# error stats = auto
+
+[plugin:proc:ipc]
+	# message queues = yes
+	# semaphore totals = yes
+	# shared memory totals = yes
+	# msg filename to monitor = /proc/sysvipc/msg
+	# shm filename to monitor = /proc/sysvipc/shm
+	# max dimensions in memory allowed = 50
+
+[plugin:proc:/sys/class/power_supply]
+	# battery capacity = yes
+	# battery power = yes
+	# battery charge = no
+	# battery energy = no
+	# power supply voltage = no
+	# keep files open = auto
+	# directory to monitor = /sys/class/power_supply
+
+[plugin:proc:/sys/class/drm]
+	# directory to monitor = /sys/class/drm
+
+[plugin:proc:/proc/net/dev]
+	# compressed packets for all interfaces = no
+	# disable by default interfaces matching = lo fireqos* *-ifb fwpr* fwbr* fwln* ifb4*

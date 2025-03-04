@@ -1,10 +1,10 @@
 ---
 
 - block:
-    - name: Download the installation script "kickstart.sh"
+    - name: Download Netdata installation script
       ansible.builtin.get_url:
-        url: https://my-netdata.io/kickstart.sh
-        dest: /tmp/kickstart.sh
+        url: "{{ netdata_kickstart_url | default('https://get.netdata.cloud/kickstart.sh') }}"
+        dest: /tmp/netdata-kickstart.sh
         mode: +x
       register: get_url_status
       until: get_url_status is success
@@ -12,7 +12,7 @@
       retries: 3
 
     - name: Install Netdata
-      ansible.builtin.command: /tmp/kickstart.sh {{ netdata_install_options | default('--dont-wait') }}
+      ansible.builtin.command: /tmp/netdata-kickstart.sh {{ netdata_install_options | default('--dont-wait') }}
       register: install_status
       until: install_status is success
       delay: 10
@@ -31,6 +31,8 @@
         name: netdata
         state: restarted
   environment: "{{ proxy_env | default({}) }}"
+  ignore_errors: "{{ netdata_install_ignore_errors | default(true) }}"  # show the error and continue the playbook execution
+  when: netdata_install | default(false)| bool
   tags: netdata
 
 ...
