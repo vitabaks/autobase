@@ -254,7 +254,6 @@
         (cluster_vip is defined and cluster_vip | length > 0)
 
     - role: netdata
-      when: netdata_install is defined and netdata_install|bool
 
     # finish (info)
     - role: deploy-finish
