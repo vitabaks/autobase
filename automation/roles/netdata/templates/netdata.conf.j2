@@ -149,7 +149,7 @@
 	# des max tg_des_window = 15
 	# mode = static-threaded
 	# listen backlog = 4096
-	default port = {{ netdata_conf.web_default_port | default(19999) }}
+	default port = {{ netdata_port | default(netdata_conf.web_default_port | default(19999)) }}
 	bind to = {{ netdata_conf.web_bind_to | default('localhost') }}
 	# bearer token protection = no
 	# disconnect idle clients after = 1m
