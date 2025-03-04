@@ -396,7 +396,6 @@
       when: pgbouncer_install|bool
 
     - role: netdata
-      when: netdata_install is defined and netdata_install|bool
 
     # finish (info)
     - role: deploy-finish
