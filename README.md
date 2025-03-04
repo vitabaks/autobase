@@ -8,7 +8,7 @@
 [![Yamllint](https://github.com/vitabaks/autobase/actions/workflows/yamllint.yml/badge.svg)](https://github.com/vitabaks/autobase/actions/workflows/yamllint.yml)
 [![Flake8](https://github.com/vitabaks/autobase/actions/workflows/flake8.yml/badge.svg)](https://github.com/vitabaks/autobase/actions/workflows/flake8.yml)
 [![Molecule](https://github.com/vitabaks/autobase/actions/workflows/molecule.yml/badge.svg)](https://github.com/vitabaks/autobase/actions/workflows/molecule.yml)
-[![GitHub license](https://img.shields.io/github/license/vitabaks/autobase)](https://github.com/vitabaks/autobase/blob/master/LICENSE) 
+[![GitHub license](https://img.shields.io/github/license/vitabaks/autobase)](https://github.com/vitabaks/autobase/blob/master/LICENSE)
 ![GitHub stars](https://img.shields.io/github/stars/vitabaks/autobase)
 
 **Autobase for PostgreSQL®** is an open-source alternative to cloud-managed databases (DBaaS) such as Amazon RDS, Google Cloud SQL, Azure Database, and more.
@@ -69,7 +69,7 @@ List of ports when using HAProxy:
 
 ##### Components of HAProxy load balancing:
 
-- [**HAProxy**](http://www.haproxy.org/) is a free, very fast and reliable solution offering high availability, load balancing, and proxying for TCP and HTTP-based applications. 
+- [**HAProxy**](http://www.haproxy.org/) is a free, very fast and reliable solution offering high availability, load balancing, and proxying for TCP and HTTP-based applications.
 
 - [**confd**](https://github.com/kelseyhightower/confd) manage local application configuration files using templates and data from etcd or consul. Used to automate HAProxy configuration file management.
 
@@ -87,14 +87,14 @@ Client access point (example):
 - `master.postgres-cluster.service.consul`
 - `replica.postgres-cluster.service.consul`
 
-Besides, it can be useful for a distributed cluster across different data centers. We can specify in advance which data center the database server is located in and then use this for applications running in the same data center. 
+Besides, it can be useful for a distributed cluster across different data centers. We can specify in advance which data center the database server is located in and then use this for applications running in the same data center.
 
 Example: `replica.postgres-cluster.service.dc1.consul`, `replica.postgres-cluster.service.dc2.consul`
 
 It requires the installation of a consul in client mode on each application server for service DNS resolution (or use [forward DNS](https://developer.hashicorp.com/consul/tutorials/networking/dns-forwarding?utm_source=docs) to the remote consul server instead of installing a local consul client).
 
 ## Compatibility
-RedHat and Debian based distros (x86_64)
+RedHat and Debian based distros (x86_64, arm64)
 
 ###### Supported Linux Distributions:
 - **Debian**: 11, 12
@@ -104,7 +104,7 @@ RedHat and Debian based distros (x86_64)
 - **Rocky Linux**: 8, 9
 - **AlmaLinux**: 8, 9
 
-###### PostgreSQL versions: 
+###### PostgreSQL versions:
 all supported PostgreSQL versions
 
 :white_check_mark: tested, works fine: PostgreSQL 10, 11, 12, 13, 14, 15, 16, 17
