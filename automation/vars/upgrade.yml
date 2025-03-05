@@ -96,4 +96,3 @@ pg_slow_active_query_treshold_to_terminate: 100 # (0 = terminate all active back
 
 # if 'pgbackrest_install' is 'true'
 pgbackrest_stanza_upgrade: true # perform the "stanza-upgrade" command after the upgrade.
-

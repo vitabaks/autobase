@@ -3,7 +3,7 @@
 
 # RedHat
 - name: Install perf
-  ansible.builtin.yum:
+  ansible.builtin.dnf:
     name: perf
     state: present
     disablerepo: "pgdg*"

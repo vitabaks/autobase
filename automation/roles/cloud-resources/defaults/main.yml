@@ -72,4 +72,3 @@ hetzner_object_storage_endpoint: "https://{{ hetzner_object_storage_region }}.yo
 hetzner_object_storage_access_key: "" # (required) Object Storage ACCESS KEY
 hetzner_object_storage_secret_key: "" # (required) Object Storage SECRET KEY
 hetzner_object_storage_absent: false # Allow to delete Object Storage when deleting a cluster servers using the 'state=absent' variable.
-

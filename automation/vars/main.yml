@@ -728,4 +728,3 @@ netdata_conf:
   # You can fine-tune retention for each tier by setting a time limit or size limit. Setting a limit to 0 disables it.
 # More options you can specify in the roles/netdata/templates/netdata.conf.j2
 # https://learn.netdata.cloud/docs/netdata-agent/configuration
-
