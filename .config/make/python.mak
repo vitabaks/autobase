@@ -1,5 +1,5 @@
 # Python default launcher
-python_launcher ?= python3.10
+python_launcher ?= python3.13
 python_requirements_file ?= automation/requirements.txt
 python_requirements_dev_file ?= .config/python/dev/requirements.txt
 
