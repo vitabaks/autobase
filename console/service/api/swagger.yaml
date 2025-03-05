@@ -434,6 +434,7 @@ paths:
           schema:
             $ref: "#/definitions/Response.Error"
 
+
   # TODO: not implemented yet
   /clusters/{id}/reinit:
     post:
@@ -1547,6 +1548,7 @@ definitions:
       description:
         type: string
         example: "environment for production"
+
 
   Response.OperationsList:
     type: object
