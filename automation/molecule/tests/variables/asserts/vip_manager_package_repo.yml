@@ -34,7 +34,7 @@
 - name: Molecule.tests.variables.asserts.vip_manager_package_repo | Debian | Define origin_vip_manager_package_repo
   run_once: true
   ansible.builtin.set_fact: # yamllint disable rule:line-length
-    origin_vip_manager_package_repo: "https://github.com/cybertec-postgresql/vip-manager/releases/download/v{{ vip_manager_version }}/vip-manager_{{ vip_manager_version }}_Linux_{{ vip_manager_architecture_map[ansible_architecture]}}.rpm"
+    origin_vip_manager_package_repo: "https://github.com/cybertec-postgresql/vip-manager/releases/download/v{{ vip_manager_version }}/vip-manager_{{ vip_manager_version }}_Linux_{{ vip_manager_architecture_map[ansible_architecture]}}.deb"
 
 # 🖨️ Debug the vip_manager_package_repo for Debian
 # This task prints the actual URL for the VIP Manager package for Debian OS
