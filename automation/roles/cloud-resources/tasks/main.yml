@@ -1,5 +1,4 @@
 ---
-
 - name: Ensure that required variables are specified
   ansible.builtin.fail:
     msg:
@@ -60,5 +59,3 @@
 - name: Import tasks for Hetzner Cloud
   ansible.builtin.import_tasks: hetzner.yml
   when: cloud_provider | lower == 'hetzner'
-
-...

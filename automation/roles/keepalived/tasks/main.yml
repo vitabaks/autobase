@@ -1,5 +1,4 @@
 ---
-
 - name: Install keepalived packages
   ansible.builtin.package:
     name: keepalived
@@ -54,7 +53,7 @@
   when: add_balancer is not defined or not add_balancer|bool
   tags: keepalived_conf, keepalived
 
-- block:  # for add_balancer.yml
+- block: # for add_balancer.yml
     - name: "Fetch keepalived.conf conf file from {{ groups.balancers[0] }}"
       run_once: true
       ansible.builtin.fetch:
@@ -85,7 +84,7 @@
         line: "{{ item.line }}"
         backrefs: true
       loop:
-        - { regexp: '^.*interface', line: '   interface {{ vip_interface }}' }
+        - { regexp: "^.*interface", line: "   interface {{ vip_interface }}" }
       loop_control:
         label: "{{ item.line }}"
       notify: "restart keepalived"
@@ -97,8 +96,6 @@
     name: keepalived_t
     permissive: true
   when: ansible_selinux.status is defined and
-        ansible_selinux.status == 'enabled'
-  ignore_errors: true  # noqa ignore-errors
+    ansible_selinux.status == 'enabled'
+  ignore_errors: true # noqa ignore-errors
   tags: keepalived, keepalived_selinux
-
-...

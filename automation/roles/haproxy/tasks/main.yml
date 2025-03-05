@@ -1,5 +1,4 @@
 ---
-
 - name: Gather facts from postgres_cluster hosts
   ansible.builtin.setup:
   delegate_to: "{{ item }}"
@@ -234,7 +233,7 @@
     sysctl_set: true
     state: present
     reload: true
-  ignore_errors: true  # to prevent test failures in CI
+  ignore_errors: true # to prevent test failures in CI
   tags: haproxy, load_balancing
 
 - name: Add haproxy group
@@ -271,7 +270,7 @@
     group: haproxy
   notify: "restart haproxy"
   when: (add_balancer is not defined or not add_balancer|bool) and
-        (postgresql_cluster_maintenance is not defined or not postgresql_cluster_maintenance|bool)
+    (postgresql_cluster_maintenance is not defined or not postgresql_cluster_maintenance|bool)
   tags: haproxy, haproxy_conf, load_balancing
 
 - name: Generate systemd service file "/etc/systemd/system/haproxy.service"
@@ -283,7 +282,7 @@
   notify: "restart haproxy"
   tags: haproxy, haproxy_service, load_balancing
 
-- block:  # for add_balancer.yml
+- block: # for add_balancer.yml
     - name: "Fetch haproxy.cfg file from {{ groups.balancers[0] }}"
       run_once: true
       ansible.builtin.fetch:
@@ -317,16 +316,16 @@
         line: "{{ bind_config_without_vip_item.line }}"
         backrefs: true
       loop:
-        - regexp: '^.*bind.*:{{ haproxy_listen_port.stats }}$'
-          line: '    bind {{ hostvars[inventory_hostname].inventory_hostname }}:{{ haproxy_listen_port.stats }}'
-        - regexp: '^.*bind.*:{{ haproxy_listen_port.master }}$'
-          line: '    bind {{ hostvars[inventory_hostname].inventory_hostname }}:{{ haproxy_listen_port.master }}'
-        - regexp: '^.*bind.*:{{ haproxy_listen_port.replicas }}$'
-          line: '    bind {{ hostvars[inventory_hostname].inventory_hostname }}:{{ haproxy_listen_port.replicas }}'
-        - regexp: '^.*bind.*:{{ haproxy_listen_port.replicas_sync }}$'
-          line: '    bind {{ hostvars[inventory_hostname].inventory_hostname }}:{{ haproxy_listen_port.replicas_sync }}'
-        - regexp: '^.*bind.*:{{ haproxy_listen_port.replicas_async }}$'
-          line: '    bind {{ hostvars[inventory_hostname].inventory_hostname }}:{{ haproxy_listen_port.replicas_async }}'
+        - regexp: "^.*bind.*:{{ haproxy_listen_port.stats }}$"
+          line: "    bind {{ hostvars[inventory_hostname].inventory_hostname }}:{{ haproxy_listen_port.stats }}"
+        - regexp: "^.*bind.*:{{ haproxy_listen_port.master }}$"
+          line: "    bind {{ hostvars[inventory_hostname].inventory_hostname }}:{{ haproxy_listen_port.master }}"
+        - regexp: "^.*bind.*:{{ haproxy_listen_port.replicas }}$"
+          line: "    bind {{ hostvars[inventory_hostname].inventory_hostname }}:{{ haproxy_listen_port.replicas }}"
+        - regexp: "^.*bind.*:{{ haproxy_listen_port.replicas_sync }}$"
+          line: "    bind {{ hostvars[inventory_hostname].inventory_hostname }}:{{ haproxy_listen_port.replicas_sync }}"
+        - regexp: "^.*bind.*:{{ haproxy_listen_port.replicas_async }}$"
+          line: "    bind {{ hostvars[inventory_hostname].inventory_hostname }}:{{ haproxy_listen_port.replicas_async }}"
       loop_control:
         loop_var: bind_config_without_vip_item
         label: "{{ bind_config_without_vip_item.line }}"
@@ -340,16 +339,16 @@
         line: "{{ bind_config_with_vip_item.line }}"
         backrefs: true
       loop:
-        - regexp: '^.*bind.*:{{ haproxy_listen_port.stats }}$'
-          line: '    bind {{ hostvars[inventory_hostname].inventory_hostname }}:{{ haproxy_listen_port.stats }}'
-        - regexp: '^.*bind.*:{{ haproxy_listen_port.master }}$'
-          line: '    bind {{ cluster_vip }}:{{ haproxy_listen_port.master }}'
-        - regexp: '^.*bind.*:{{ haproxy_listen_port.replicas }}$'
-          line: '    bind {{ cluster_vip }}:{{ haproxy_listen_port.replicas }}'
-        - regexp: '^.*bind.*:{{ haproxy_listen_port.replicas_sync }}$'
-          line: '    bind {{ cluster_vip }}:{{ haproxy_listen_port.replicas_sync }}'
-        - regexp: '^.*bind.*:{{ haproxy_listen_port.replicas_async }}$'
-          line: '    bind {{ cluster_vip }}:{{ haproxy_listen_port.replicas_async }}'
+        - regexp: "^.*bind.*:{{ haproxy_listen_port.stats }}$"
+          line: "    bind {{ hostvars[inventory_hostname].inventory_hostname }}:{{ haproxy_listen_port.stats }}"
+        - regexp: "^.*bind.*:{{ haproxy_listen_port.master }}$"
+          line: "    bind {{ cluster_vip }}:{{ haproxy_listen_port.master }}"
+        - regexp: "^.*bind.*:{{ haproxy_listen_port.replicas }}$"
+          line: "    bind {{ cluster_vip }}:{{ haproxy_listen_port.replicas }}"
+        - regexp: "^.*bind.*:{{ haproxy_listen_port.replicas_sync }}$"
+          line: "    bind {{ cluster_vip }}:{{ haproxy_listen_port.replicas_sync }}"
+        - regexp: "^.*bind.*:{{ haproxy_listen_port.replicas_async }}$"
+          line: "    bind {{ cluster_vip }}:{{ haproxy_listen_port.replicas_async }}"
       loop_control:
         loop_var: bind_config_with_vip_item
         label: "{{ bind_config_with_vip_item.line }}"
@@ -391,5 +390,3 @@
   when: ansible_selinux.status is defined and ansible_selinux.status == 'enabled'
   ignore_errors: true
   tags: haproxy, load_balancing, haproxy_selinux
-
-...

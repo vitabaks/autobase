@@ -1,5 +1,4 @@
 ---
-
 - name: "Configure a password file ({{ postgresql_home_dir }}/.pgpass)"
   become: true
   become_user: root
@@ -17,5 +16,3 @@
     - postgresql_pgpass is defined
     - postgresql_pgpass | length > 0
   tags: pgpass
-
-...

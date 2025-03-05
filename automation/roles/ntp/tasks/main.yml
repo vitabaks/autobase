@@ -1,5 +1,4 @@
 ---
-
 - block:
     # Debian
     - name: Install ntp package
@@ -44,5 +43,3 @@
       when: ansible_os_family == "RedHat"
   when: ntp_enabled is defined and ntp_enabled|bool
   tags: ntp
-
-...

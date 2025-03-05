@@ -10,7 +10,8 @@
 - name: Molecule.tests.variables.asserts.system_info | Set CPU Model Test Data (valid)
   run_once: true
   ansible.builtin.set_fact:
-    ansible_processor: ["GenuineIntel", "Intel(R) Core(TM) i7-8700 CPU @ 3.20GHz", "Intel(R) Core(TM) i7-8700 CPU @ 3.20GHz"]
+    ansible_processor:
+      ["GenuineIntel", "Intel(R) Core(TM) i7-8700 CPU @ 3.20GHz", "Intel(R) Core(TM) i7-8700 CPU @ 3.20GHz"]
     ansible_processor_count: 6
     ansible_processor_cores: 12
 
@@ -53,9 +54,9 @@
   ansible.builtin.set_fact:
     ansible_mounts:
       - mount: "/"
-        size_total: "53687091200"  # 50 GB
+        size_total: "53687091200" # 50 GB
       - mount: "/home"
-        size_total: "107374182400"  # 100 GB
+        size_total: "107374182400" # 100 GB
 
 # 📝 Establishing test data for Disk space total
 - name: Molecule.tests.variables.asserts.system_info | Establish Disk space total Test Data

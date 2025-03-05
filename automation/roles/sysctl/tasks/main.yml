@@ -1,5 +1,4 @@
 ---
-
 - name: Make sure handlers are flushed immediately
   ansible.builtin.meta: flush_handlers
 
@@ -21,5 +20,3 @@
   ignore_errors: true
   when: sysctl_set|bool
   tags: sysctl, kernel
-
-...

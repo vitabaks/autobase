@@ -4,7 +4,7 @@
     daemon_reload: true
   become: true
   when: ansible_service_mgr == "systemd"
-  listen: 'reload systemd daemon'
+  listen: "reload systemd daemon"
 
 - name: restart consul on unix
   ansible.builtin.service:
@@ -13,12 +13,12 @@
   when:
     - ansible_os_family != "Darwin"
     - ansible_os_family != "Windows"
-  listen: 'restart consul'
+  listen: "restart consul"
 
 - name: restart consul on Mac
   ansible.builtin.include_tasks: "{{ role_path }}/handlers/restart_consul_mac.yml"
   when: ansible_os_family == "Darwin"
-  listen: 'restart consul'
+  listen: "restart consul"
 
 - name: restart consul on windows
   ansible.windows.win_service:
@@ -33,4 +33,4 @@
   retries: 3
   delay: 1
   until: windows_service_started is succeeded
-  listen: 'restart consul'
+  listen: "restart consul"

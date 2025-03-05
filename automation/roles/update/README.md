@@ -2,7 +2,7 @@
 
 This role is designed to update the PostgreSQL HA cluster to a new minor version (for example, 15.1->15.2, and etc).
 
-By default, only PostgreSQL packages defined in the postgresql_packages variable are updated (vars/Debian.yml or vars/RedHat.yml). In addition, you can update Patroni or the entire system. 
+By default, only PostgreSQL packages defined in the postgresql_packages variable are updated (vars/Debian.yml or vars/RedHat.yml). In addition, you can update Patroni or the entire system.
 
 #### Usage
 
@@ -18,10 +18,9 @@ Update all system packages:
 
 `ansible-playbook update_pgcluster.yml -e target=system`
 
-
 #### Variables
 
-- `target` 
+- `target`
   - Defines the target for the update.
   - Available values: 'postgres', 'patroni', 'system'
   - Default value: `postgres`
@@ -31,7 +30,7 @@ Update all system packages:
   - Default value: `10485760` (10 MiB)
 - `max_transaction_sec`
   - Determines the maximum transaction time, in the presence of which the update will not be performed.
-  - Note: If long-running transactions are present, you will be prompted to try again later. 
+  - Note: If long-running transactions are present, you will be prompted to try again later.
   - Default value: `15` (seconds)
 - `update_extensions`
   - Attempt to automatically update all PostgreSQL extensions in all databases.
@@ -46,7 +45,7 @@ Update all system packages:
 - `reboot_host_post_delay`
   - The waiting time (in minutes) for the caches to warm up after restarting the server before updating the next server.
   - Note: Applicable when there are multiple replicas.
-  - Default value: `5` (minutes). 
+  - Default value: `5` (minutes).
 
 ---
 
@@ -57,6 +56,7 @@ Note: About the expected downtime of the database during the update:
 When using load balancing for read-only traffic (the "Type A" and "Type C" schemes), zero downtime is expected (for read traffic), provided there is more than one replica in the cluster. For write traffic (to the Primary), the expected downtime is ~5-10 seconds.
 
 #### 1. PRE-UPDATE: Perform pre-update tasks
+
 - Test PostgreSQL DB Access
 - Make sure that physical replication is active
   - Stop, if there are no active replicas
@@ -68,7 +68,9 @@ When using load balancing for read-only traffic (the "Type A" and "Type C" schem
   - Stop, if long-running transactions detected
 - Update the pgBackRest package on the backup server (Dedicated Repository Host).
   - Note: This task runs only if the backup host is specified in the 'pgbackrest' group in the inventory file, and the variable `target` is set to '`system`'.
+
 #### 2. UPDATE: Secondary (one by one)
+
 - Stop read-only traffic
   - Enable `noloadbalance`, `nosync`, `nofailover` parameters in the patroni.yml
   - Reload patroni service
@@ -98,13 +100,15 @@ When using load balancing for read-only traffic (the "Type A" and "Type C" schem
   - Wait N minutes for caches to warm up after reboot
     - Note: variable `reboot_host_post_delay`
 - Perform the same steps for the next replica server.
+
 #### 3. UPDATE: Primary
+
 - Switchover Patroni leader role
   - Perform switchover of the leader for the Patroni cluster
-  -  Make sure that the Patroni is healthy and is a replica
-     - Notes:
-       - At this stage, the leader becomes a replica
-       - the database downtime is ~5 seconds (write traffic)
+  - Make sure that the Patroni is healthy and is a replica
+    - Notes:
+      - At this stage, the leader becomes a replica
+      - the database downtime is ~5 seconds (write traffic)
 - Stop read-only traffic
   - Enable `noloadbalance`, `nosync`, `nofailover` parameters in the patroni.yml
   - Reload patroni service
@@ -131,7 +135,9 @@ When using load balancing for read-only traffic (the "Type A" and "Type C" schem
   - Disable `noloadbalance`, `nosync`, `nofailover` parameters in the patroni.yml
   - Reload patroni service
   - Make sure replica endpoint is available
+
 #### 4. POST-UPDATE: Update extensions
+
 - Update extensions
   - Get the current Patroni Cluster Leader Node
   - Get a list of databases

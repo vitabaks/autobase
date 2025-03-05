@@ -2,8 +2,9 @@
 # File: main.yml - Main tasks for Consul
 - name: Looking up latest version of Consul
   ansible.builtin.set_fact:
-    consul_version: "{{ (lookup('url', 'https://api.github.com/repos/hashicorp/consul/releases/latest', split_lines=False) |
-                    from_json).get('tag_name') | replace('v', '') }}"
+    consul_version:
+      "{{ (lookup('url', 'https://api.github.com/repos/hashicorp/consul/releases/latest', split_lines=False) |
+      from_json).get('tag_name') | replace('v', '') }}"
   when: 'consul_version == "latest"'
 
 - name: Install python dependencies
@@ -51,7 +52,7 @@
   ansible.builtin.include_vars: "{{ vars_file_item }}"
   with_first_found:
     - files:
-        - '{{ ansible_os_family }}-{{ ansible_distribution_major_version }}.yml'
+        - "{{ ansible_os_family }}-{{ ansible_distribution_major_version }}.yml"
         - "{{ ansible_os_family }}.yml"
   loop_control:
     loop_var: vars_file_item

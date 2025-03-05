@@ -1,5 +1,4 @@
 ---
-
 # 🔄 Determine base pg_wal_dir name
 - name: Roles.patroni.custom_wal_dir | Set pg_wal_dir based on postgresql_version
   ansible.builtin.set_fact:
@@ -152,5 +151,3 @@
         path: "{{ postgresql_data_dir }}/{{ pg_wal_dir }}_old"
         state: absent
   when: sym.stat.exists and not sym.stat.islnk | bool
-
-...

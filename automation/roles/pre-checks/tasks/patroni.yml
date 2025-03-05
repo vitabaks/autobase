@@ -1,5 +1,4 @@
 ---
-
 # when postgresql NOT exists
 - block:
     - name: PostgreSQL | check that data directory "{{ postgresql_data_dir }}" is not initialized

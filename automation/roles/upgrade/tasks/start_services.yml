@@ -1,5 +1,4 @@
 ---
-
 - name: Start Patroni service on the Cluster Leader
   become: true
   become_user: root
@@ -11,8 +10,8 @@
 
 - name: Wait for Patroni port "{{ patroni_restapi_port }}" to become open on the host
   ansible.builtin.wait_for:
-    port: '{{ patroni_restapi_port }}'
-    host: '{{ inventory_hostname }}'
+    port: "{{ patroni_restapi_port }}"
+    host: "{{ inventory_hostname }}"
     state: started
     timeout: "{{ (pg_start_stop_timeout | int) // 2 }}"
     delay: 2
@@ -51,8 +50,8 @@
 
 - name: Wait for Patroni port "{{ patroni_restapi_port }}" to become open on the host
   ansible.builtin.wait_for:
-    port: '{{ patroni_restapi_port }}'
-    host: '{{ inventory_hostname }}'
+    port: "{{ patroni_restapi_port }}"
+    host: "{{ inventory_hostname }}"
     state: started
     timeout: "{{ (pg_start_stop_timeout | int) // 2 }}"
     delay: 2
@@ -84,8 +83,6 @@
   ansible.builtin.command: "{{ pg_new_bindir }}/pg_isready -p {{ postgresql_port }}"
   register: pg_isready_result
   until: pg_isready_result.rc == 0
-  retries: 300  # max duration 10 minutes
+  retries: 300 # max duration 10 minutes
   delay: 2
   changed_when: false
-
-...

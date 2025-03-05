@@ -1,5 +1,4 @@
 ---
-
 # Patroni configure
 - name: Make sure that conf directory exists
   ansible.builtin.file:
@@ -69,7 +68,7 @@
 - name: Delete postgresql parameters from "/etc/patroni/patroni.yml"
   ansible.builtin.lineinfile:
     path: /etc/patroni/patroni.yml
-    regexp: '^.*{{ item.option }}: {{ item.value }}$'
+    regexp: "^.*{{ item.option }}: {{ item.value }}$"
     state: absent
   loop: "{{ postgresql_parameters }}"
   when: item.value == "null"
@@ -104,4 +103,3 @@
           - "{{ pg_pending_restart_settings | map(attribute='name') | list }}"
       when: pg_pending_restart_settings | length > 0
   tags: patroni, patroni_conf
-...

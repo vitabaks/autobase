@@ -1,5 +1,4 @@
 ---
-
 - name: Update dnf cache
   ansible.builtin.shell: dnf clean all && dnf -y makecache
   args:
@@ -34,5 +33,3 @@
   ansible.builtin.set_fact:
     update_postgres_failed: true
   when: update_postgres_package is failed
-
-...

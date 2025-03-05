@@ -1,0 +1,12 @@
+{
+  "Exclude": [
+    ".env",
+    ".j2",
+    "console/ui/src/shared/i18n/",
+    "settings.json",
+    ".sql",
+    "go.mod",
+    "go.sum",
+    "patroni/library/"
+  ]
+}

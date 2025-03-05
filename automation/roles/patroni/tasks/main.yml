@@ -1,5 +1,4 @@
 ---
-
 - name: Make sure handlers are flushed immediately
   ansible.builtin.meta: flush_handlers
 
@@ -13,7 +12,7 @@
   tags: patroni, patroni_install, pip
 
 # Patroni install
-- block:  # installation_method: "repo" and patroni_installation_method: "pip"
+- block: # installation_method: "repo" and patroni_installation_method: "pip"
     - name: Copy patroni requirements.txt file
       ansible.builtin.copy:
         src: requirements.txt
@@ -22,7 +21,7 @@
 
     - name: Install setuptools
       ansible.builtin.pip:
-        name: setuptools<66.0.0  # https://github.com/pypa/setuptools/issues/3772
+        name: setuptools<66.0.0 # https://github.com/pypa/setuptools/issues/3772
         state: latest
         executable: pip3
         extra_args: "--trusted-host=pypi.python.org --trusted-host=pypi.org --trusted-host=files.pythonhosted.org"
@@ -69,7 +68,7 @@
   environment: "{{ proxy_env | default({}) }}"
   tags: patroni, patroni_install
 
-- block:  # when "patroni_pip_requirements_repo" and "patroni_pip_package_repo" is defined
+- block: # when "patroni_pip_requirements_repo" and "patroni_pip_package_repo" is defined
     - name: Download patroni requirements
       ansible.builtin.get_url:
         url: "{{ item }}"
@@ -114,7 +113,7 @@
   when: installation_method == "repo" and patroni_installation_method == "pip"
   tags: patroni, patroni_install
 
-- block:  # installation_method: "file" and patroni_installation_method: "pip"
+- block: # installation_method: "file" and patroni_installation_method: "pip"
     - name: Copy patroni requirements
       ansible.builtin.copy:
         src: "{{ item }}"
@@ -155,7 +154,7 @@
   when: installation_method == "file" and patroni_installation_method == "pip"
   tags: patroni, patroni_install
 
-- block:  # installation_method: "repo" and patroni_installation_method: "rpm/deb"
+- block: # installation_method: "repo" and patroni_installation_method: "rpm/deb"
     # Debian
     - name: Install patroni package
       ansible.builtin.package:
@@ -294,7 +293,7 @@
   when: patroni_log_destination == 'logfile'
   tags: patroni, patroni_conf
 
-- block:  # for add_pgnode.yml
+- block: # for add_pgnode.yml
     - name: Fetch patroni.yml conf file from master
       run_once: true
       ansible.builtin.fetch:
@@ -327,16 +326,16 @@
         line: "{{ patroni_config_without_cluster_vip_item.line }}"
         backrefs: true
       loop:
-        - regexp: '^name:'
-          line: 'name: {{ ansible_hostname }}'
-        - regexp: '^  listen: .*:{{ patroni_restapi_port }}$'
-          line: '  listen: {{ hostvars[inventory_hostname].inventory_hostname }}:{{ patroni_restapi_port }}'
-        - regexp: '^  connect_address: .*:{{ patroni_restapi_port }}$'
-          line: '  connect_address: {{ hostvars[inventory_hostname].inventory_hostname }}:{{ patroni_restapi_port }}'
-        - regexp: '^  listen: ((?!{{ patroni_restapi_port }}).)*$'
-          line: '  listen: {{ hostvars[inventory_hostname].inventory_hostname }},127.0.0.1:{{ postgresql_port }}'
-        - regexp: '^  connect_address: ((?!{{ patroni_restapi_port }}).)*$'
-          line: '  connect_address: {{ hostvars[inventory_hostname].inventory_hostname }}:{{ postgresql_port }}'
+        - regexp: "^name:"
+          line: "name: {{ ansible_hostname }}"
+        - regexp: "^  listen: .*:{{ patroni_restapi_port }}$"
+          line: "  listen: {{ hostvars[inventory_hostname].inventory_hostname }}:{{ patroni_restapi_port }}"
+        - regexp: "^  connect_address: .*:{{ patroni_restapi_port }}$"
+          line: "  connect_address: {{ hostvars[inventory_hostname].inventory_hostname }}:{{ patroni_restapi_port }}"
+        - regexp: "^  listen: ((?!{{ patroni_restapi_port }}).)*$"
+          line: "  listen: {{ hostvars[inventory_hostname].inventory_hostname }},127.0.0.1:{{ postgresql_port }}"
+        - regexp: "^  connect_address: ((?!{{ patroni_restapi_port }}).)*$"
+          line: "  connect_address: {{ hostvars[inventory_hostname].inventory_hostname }}:{{ postgresql_port }}"
       loop_control:
         loop_var: patroni_config_without_cluster_vip_item
         label: "{{ patroni_config_without_cluster_vip_item.line }}"
@@ -349,16 +348,16 @@
         line: "{{ patroni_config_with_cluster_vip_item.line }}"
         backrefs: true
       loop:
-        - regexp: '^name:'
-          line: 'name: {{ ansible_hostname }}'
-        - regexp: '^  listen: .*:{{ patroni_restapi_port }}$'
-          line: '  listen: {{ hostvars[inventory_hostname].inventory_hostname }}:{{ patroni_restapi_port }}'
-        - regexp: '^  connect_address: .*:{{ patroni_restapi_port }}$'
-          line: '  connect_address: {{ hostvars[inventory_hostname].inventory_hostname }}:{{ patroni_restapi_port }}'
-        - regexp: '^  listen: ((?!{{ patroni_restapi_port }}).)*$'
-          line: '  listen: {{ hostvars[inventory_hostname].inventory_hostname }},{{ cluster_vip }},127.0.0.1:{{ postgresql_port }}'
-        - regexp: '^  connect_address: ((?!{{ patroni_restapi_port }}).)*$'
-          line: '  connect_address: {{ hostvars[inventory_hostname].inventory_hostname }}:{{ postgresql_port }}'
+        - regexp: "^name:"
+          line: "name: {{ ansible_hostname }}"
+        - regexp: "^  listen: .*:{{ patroni_restapi_port }}$"
+          line: "  listen: {{ hostvars[inventory_hostname].inventory_hostname }}:{{ patroni_restapi_port }}"
+        - regexp: "^  connect_address: .*:{{ patroni_restapi_port }}$"
+          line: "  connect_address: {{ hostvars[inventory_hostname].inventory_hostname }}:{{ patroni_restapi_port }}"
+        - regexp: "^  listen: ((?!{{ patroni_restapi_port }}).)*$"
+          line: "  listen: {{ hostvars[inventory_hostname].inventory_hostname }},{{ cluster_vip }},127.0.0.1:{{ postgresql_port }}"
+        - regexp: "^  connect_address: ((?!{{ patroni_restapi_port }}).)*$"
+          line: "  connect_address: {{ hostvars[inventory_hostname].inventory_hostname }}:{{ postgresql_port }}"
       loop_control:
         loop_var: patroni_config_with_cluster_vip_item
         label: "{{ patroni_config_with_cluster_vip_item.line }}"
@@ -418,7 +417,7 @@
   when: postgresql_wal_dir is defined and postgresql_wal_dir | length > 0
   tags: patroni, custom_wal_dir
 
-- block:  # when postgresql NOT exists or PITR
+- block: # when postgresql NOT exists or PITR
     - name: Prepare PostgreSQL | make sure PostgreSQL data directory "{{ postgresql_data_dir }}" exists
       ansible.builtin.file:
         path: "{{ postgresql_data_dir }}"
@@ -437,14 +436,14 @@
         group: postgres
         recurse: true
       when: ansible_os_family == "Debian" and
-            postgresql_packages|join(" ") is not search("postgrespro")
+        postgresql_packages|join(" ") is not search("postgrespro")
 
     - name: Prepare PostgreSQL | make sure PostgreSQL config files exists
       ansible.builtin.stat:
         path: "{{ postgresql_conf_dir }}/postgresql.conf"
       register: postgresql_conf_file
       when: ansible_os_family == "Debian" and
-            postgresql_packages|join(" ") is not search("postgrespro")
+        postgresql_packages|join(" ") is not search("postgrespro")
 
     - name: Prepare PostgreSQL | generate default PostgreSQL config files
       become: true
@@ -458,8 +457,8 @@
       register: pg_createcluster_result
       failed_when: pg_createcluster_result.rc != 0
       when: (ansible_os_family == "Debian" and
-            postgresql_packages|join(" ") is not search("postgrespro")) and
-            not postgresql_conf_file.stat.exists
+        postgresql_packages|join(" ") is not search("postgrespro")) and
+        not postgresql_conf_file.stat.exists
 
     # When performing PITR, we do not clear the directory if pgbackrest is used to be able to use the '--delta restore' option.
     # In all other cases, we must clear the data directory before restore.
@@ -492,12 +491,12 @@
             - directory
           when: postgresql_wal_dir | default('') | length > 0
       when: (is_master | bool and patroni_cluster_bootstrap_method != "pgbackrest")
-            or (not is_master | bool and ('pgbackrest' not in patroni_create_replica_methods or new_node | default(false) | bool))
+        or (not is_master | bool and ('pgbackrest' not in patroni_create_replica_methods or new_node | default(false) | bool))
   when: not postgresql_exists | bool or patroni_cluster_bootstrap_method != "initdb"
   tags: patroni, point_in_time_recovery
 
-- block:  # when postgresql exists
-    - block:  # for master only
+- block: # when postgresql exists
+    - block: # for master only
         - name: Prepare PostgreSQL | check PostgreSQL is started on Master
           become: true
           become_user: postgres
@@ -601,7 +600,7 @@
   when: postgresql_exists | bool and patroni_cluster_bootstrap_method == "initdb"
   tags: patroni, patroni_start_master
 
-- block:  # PITR (custom bootstrap)
+- block: # PITR (custom bootstrap)
     # Prepare (install pexpect, ruamel.yaml)
     - name: Prepare | Make sure the ansible required python library is exist
       ansible.builtin.pip:
@@ -651,24 +650,22 @@
       ansible.builtin.expect:
         command: "patronictl -c /etc/patroni/patroni.yml remove {{ patroni_cluster_name }}"
         responses:
-          'Please confirm the cluster name to remove': '{{ patroni_cluster_name }}'
-          'You are about to remove all information in DCS': 'Yes I am aware'
+          "Please confirm the cluster name to remove": "{{ patroni_cluster_name }}"
+          "You are about to remove all information in DCS": "Yes I am aware"
       register: patronictl_remove_result
-      changed_when:
-        patronictl_remove_result.rc == 0 and
+      changed_when: patronictl_remove_result.rc == 0 and
         patronictl_remove_result.stdout|lower is not search("key not found")
-      failed_when:
-        patronictl_remove_result.rc != 0
+      failed_when: patronictl_remove_result.rc != 0
       environment:
         PATH: "{{ ansible_env.PATH }}:/usr/bin:/usr/local/bin"
       when: is_master | bool
 
-    - block:  # for pgbackrest only (for use --delta restore)
+    - block: # for pgbackrest only (for use --delta restore)
         - name: Run "{{ pgbackrest_patroni_cluster_restore_command }}" on Master
           ansible.builtin.command: >
             {{ pgbackrest_patroni_cluster_restore_command }}
             {{ '--target-action=promote' if pgbackrest_patroni_cluster_restore_command is search('--type=') else '' }}
-          async: "{{ cluster_restore_timeout | default(86400) }}"  # timeout 24 hours
+          async: "{{ cluster_restore_timeout | default(86400) }}" # timeout 24 hours
           poll: 0
           register: pgbackrest_restore_master
           when: is_master | bool
@@ -678,7 +675,7 @@
           ansible.builtin.command: >
             {{ pgbackrest_patroni_cluster_restore_command }}
             {{ '--target-action=pause' if pgbackrest_patroni_cluster_restore_command is search('--type=') else '' }}
-          async: "{{ cluster_restore_timeout | default(86400) }}"  # timeout 24 hours
+          async: "{{ cluster_restore_timeout | default(86400) }}" # timeout 24 hours
           poll: 0
           register: pgbackrest_restore_replica
           when: not is_master | bool and 'pgbackrest' in patroni_create_replica_methods
@@ -693,7 +690,7 @@
             label: "{{ item.changed }}"
           register: pgbackrest_restore_jobs_result
           until: pgbackrest_restore_jobs_result.finished
-          retries: "{{ (cluster_restore_timeout | default(86400)) | int // 30 }}"  # timeout 24 hours
+          retries: "{{ (cluster_restore_timeout | default(86400)) | int // 30 }}" # timeout 24 hours
           delay: 30
           when: item.ansible_job_id is defined
 
@@ -714,7 +711,7 @@
             {% endif %}
             -o '-c archive_command=/bin/true'
             -l /tmp/pg_recovery_{{ ansible_date_time.date }}.log
-          async: "{{ pg_ctl_timeout | default(3600) }}"  # run the command asynchronously
+          async: "{{ pg_ctl_timeout | default(3600) }}" # run the command asynchronously
           poll: 0
           register: pg_ctl_start_result
           when: is_master | bool or (not is_master | bool and 'pgbackrest' in patroni_create_replica_methods)
@@ -734,7 +731,7 @@
             -tAXc "select pg_is_in_recovery()"
           register: pg_is_in_recovery
           until: pg_is_in_recovery.stdout == "f"
-          retries: "{{ (cluster_restore_timeout | default(86400)) | int // 30 }}"  # timeout 24 hours
+          retries: "{{ (cluster_restore_timeout | default(86400)) | int // 30 }}" # timeout 24 hours
           delay: 30
           changed_when: false
           failed_when: false
@@ -749,7 +746,7 @@
 
         - name: PostgreSQL recovery details
           ansible.builtin.debug:
-            msg: '{{ pg_recovery_result.stdout_lines }}'
+            msg: "{{ pg_recovery_result.stdout_lines }}"
           when: pg_recovery_result.stdout_lines is defined
 
         - name: Check that PostgreSQL is stopped
@@ -767,10 +764,10 @@
       become_user: postgres
   environment: "{{ proxy_env | default({}) }}"
   when: patroni_cluster_bootstrap_method != "initdb" and
-        (pgbackrest_install|bool or wal_g_install|bool)
+    (pgbackrest_install|bool or wal_g_install|bool)
   tags: patroni, point_in_time_recovery
 
-- block:  # PITR (custom bootstrap) - disable archive_command
+- block: # PITR (custom bootstrap) - disable archive_command
     - name: Check if patroni.dynamic.json exists
       ansible.builtin.stat:
         path: "{{ postgresql_data_dir }}/patroni.dynamic.json"
@@ -790,7 +787,7 @@
       yedit:
         src: "{{ postgresql_data_dir }}/patroni.dynamic.json"
         key: postgresql.parameters.archive_command
-        value: "cd ."  # not doing anything yet with WAL-s
+        value: "cd ." # not doing anything yet with WAL-s
         content_type: json
       when:
         - patroni_dynamic_json is defined
@@ -802,16 +799,16 @@
       yedit:
         src: /etc/patroni/patroni.yml
         key: bootstrap.dcs.postgresql.parameters.archive_command
-        value: "cd ."  # not doing anything yet with WAL-s
+        value: "cd ." # not doing anything yet with WAL-s
       when: disable_archive_command | bool
   when: patroni_cluster_bootstrap_method != "initdb" and
-        (pgbackrest_install | bool or wal_g_install | bool) and
-        (existing_pgcluster is not defined or not existing_pgcluster | bool)
+    (pgbackrest_install | bool or wal_g_install | bool) and
+    (existing_pgcluster is not defined or not existing_pgcluster | bool)
   become: true
   become_user: postgres
   tags: patroni, point_in_time_recovery
 
-- block:  # PITR (custom bootstrap) - generate pg_hba.conf
+- block: # PITR (custom bootstrap) - generate pg_hba.conf
     - name: Generate pg_hba.conf (before start patroni)
       ansible.builtin.template:
         src: templates/pg_hba.conf.j2
@@ -820,11 +817,11 @@
         group: postgres
         mode: "0640"
   when: patroni_cluster_bootstrap_method != "initdb" and
-        postgresql_conf_dir != postgresql_data_dir and
-        (existing_pgcluster is not defined or not existing_pgcluster|bool)
+    postgresql_conf_dir != postgresql_data_dir and
+    (existing_pgcluster is not defined or not existing_pgcluster|bool)
   tags: patroni
 
-- block:  # start patroni on master
+- block: # start patroni on master
     - name: Start patroni service on the Master server
       ansible.builtin.systemd:
         daemon_reload: true
@@ -850,7 +847,7 @@
         "select pg_is_in_recovery()"
       register: pg_is_in_recovery
       until: pg_is_in_recovery.stdout == "f"
-      retries: "{{ (cluster_restore_timeout | default(86400)) | int // 30 }}"  # timeout 24 hours
+      retries: "{{ (cluster_restore_timeout | default(86400)) | int // 30 }}" # timeout 24 hours
       delay: 30
       changed_when: false
       failed_when: false
@@ -862,7 +859,7 @@
         status_code: 200
       register: standby_leader_result
       until: standby_leader_result.status == 200
-      retries: "{{ (cluster_restore_timeout | default(86400)) | int // 30 }}"  # timeout 24 hours
+      retries: "{{ (cluster_restore_timeout | default(86400)) | int // 30 }}" # timeout 24 hours
       delay: 30
       environment:
         no_proxy: "{{ inventory_hostname }}"
@@ -896,7 +893,7 @@
   when: is_master | bool
   tags: patroni, patroni_start_master, point_in_time_recovery
 
-- block:  # pg_hba (using a templates/pg_hba.conf.j2)
+- block: # pg_hba (using a templates/pg_hba.conf.j2)
     - name: Prepare PostgreSQL | generate pg_hba.conf
       ansible.builtin.template:
         src: templates/pg_hba.conf.j2
@@ -906,8 +903,8 @@
         mode: "0640"
       register: generate_pg_hba
       when: is_master | bool or
-            ((not is_master | bool and postgresql_conf_dir != postgresql_data_dir)
-            or postgresql_exists | bool)
+        ((not is_master | bool and postgresql_conf_dir != postgresql_data_dir)
+        or postgresql_exists | bool)
 
     - name: Prepare PostgreSQL | reload for apply the pg_hba.conf
       become: true
@@ -915,19 +912,19 @@
       ansible.builtin.command: "{{ postgresql_bin_dir }}/pg_ctl reload -D {{ postgresql_data_dir }}"
       register: pg_ctl_reload_result
       changed_when: pg_ctl_reload_result.rc == 0
-      failed_when: false  # exec 'reload' on all running postgres (to re-run with --tag pg_hba).
+      failed_when: false # exec 'reload' on all running postgres (to re-run with --tag pg_hba).
       when: generate_pg_hba is changed
   when: existing_pgcluster is not defined or not existing_pgcluster|bool
   tags: patroni, pg_hba, pg_hba_generate
 
-- block:  # PITR (custom bootstrap) - password reset for PostgreSQL users
+- block: # PITR (custom bootstrap) - password reset for PostgreSQL users
     - name: Make sure the Master is not in recovery mode
       ansible.builtin.command: >-
         {{ postgresql_bin_dir }}/psql -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc
         "select pg_is_in_recovery()"
       register: pg_is_in_recovery
       until: pg_is_in_recovery.stdout == "f"
-      retries: "{{ (cluster_restore_timeout | default(86400)) | int // 30 }}"  # timeout 24 hours
+      retries: "{{ (cluster_restore_timeout | default(86400)) | int // 30 }}" # timeout 24 hours
       delay: 30
       changed_when: false
       when: is_master | bool
@@ -942,8 +939,12 @@
         port: "{{ postgresql_port }}"
       register: postgresql_user_result
       loop:
-        - { name: '{{ patroni_superuser_username }}', password: '{{ patroni_superuser_password }}', flags: 'SUPERUSER' }
-        - { name: '{{ patroni_replication_username }}', password: '{{ patroni_replication_password }}', flags: 'LOGIN,REPLICATION' }
+        - { name: "{{ patroni_superuser_username }}", password: "{{ patroni_superuser_password }}", flags: "SUPERUSER" }
+        - {
+            name: "{{ patroni_replication_username }}",
+            password: "{{ patroni_replication_password }}",
+            flags: "LOGIN,REPLICATION",
+          }
       loop_control:
         label: "{{ item.name }}"
       when:
@@ -984,13 +985,13 @@
         state: present
       when: hostvars[groups['master'][0]]['postgresql_user_result'] is changed
   when: patroni_cluster_bootstrap_method != "initdb" and
-        (pgbackrest_install|bool or wal_g_install|bool) and
-        (existing_pgcluster is not defined or not existing_pgcluster|bool)
+    (pgbackrest_install|bool or wal_g_install|bool) and
+    (existing_pgcluster is not defined or not existing_pgcluster|bool)
   become: true
   become_user: postgres
   tags: patroni, point_in_time_recovery
 
-- block:  # for add_pgnode.yml
+- block: # for add_pgnode.yml
     - name: Prepare PostgreSQL | fetch pg_hba.conf file from master
       run_once: true
       ansible.builtin.fetch:
@@ -1008,10 +1009,10 @@
         group: postgres
         mode: "0640"
   when: existing_pgcluster is defined and existing_pgcluster|bool
-        and postgresql_conf_dir != postgresql_data_dir
+    and postgresql_conf_dir != postgresql_data_dir
   tags: patroni, pg_hba, pg_hba_generate
 
-- block:  # start patroni on replica
+- block: # start patroni on replica
     - name: Start patroni service on Replica servers
       ansible.builtin.systemd:
         daemon_reload: true
@@ -1034,7 +1035,7 @@
         status_code: 200
       register: replica_result
       until: replica_result.status == 200
-      retries: "{{ (cluster_restore_timeout | default(86400)) | int // 30 }}"  # timeout 24 hours
+      retries: "{{ (cluster_restore_timeout | default(86400)) | int // 30 }}" # timeout 24 hours
       delay: 30
       environment:
         no_proxy: "{{ inventory_hostname }}"
@@ -1048,7 +1049,7 @@
   tags: patroni, custom_wal_dir, point_in_time_recovery
 
 # disable postgresql from autostart
-- block:  # "Debian"
+- block: # "Debian"
     - name: Turning off postgresql autostart from config "start.conf" (will be managed by patroni)
       ansible.builtin.copy:
         dest: "{{ postgresql_conf_dir }}/start.conf"
@@ -1063,7 +1064,7 @@
         enabled: false
         daemon_reload: true
   when: ansible_os_family == "Debian" and
-        postgresql_packages|join(" ") is not search("postgrespro")
+    postgresql_packages|join(" ") is not search("postgrespro")
   tags: patroni, postgresql_disable
 
 # "RedHat"
@@ -1073,7 +1074,7 @@
     enabled: false
     daemon_reload: true
   when: ansible_os_family == "RedHat" and
-        postgresql_packages|join(" ") is not search("postgrespro")
+    postgresql_packages|join(" ") is not search("postgrespro")
   tags: patroni, postgresql_disable
 
 # PostgresPro
@@ -1094,8 +1095,6 @@
     line: "PATRONICTL_CONFIG_FILE=/etc/patroni/patroni.yml"
     owner: root
     group: root
-    mode: '0644'
+    mode: "0644"
   ignore_errors: true
   tags: patroni, patroni_env
-
-...

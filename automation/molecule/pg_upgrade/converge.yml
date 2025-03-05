@@ -27,8 +27,8 @@
     # Only the installation of a binary file is supported
     - name: "Set variables: 'consul_install_from_repo: false' and 'patroni_installation_method: pip'"
       ansible.builtin.set_fact:
-        consul_install_from_repo: false  # whether to install consul from repository as opposed to installing the binary directly
-        patroni_installation_method: "pip"  # the "rpm" method is supported only for consul installed from the repository
+        consul_install_from_repo: false # whether to install consul from repository as opposed to installing the binary directly
+        patroni_installation_method: "pip" # the "rpm" method is supported only for consul installed from the repository
       when:
         - dcs_type == "consul"
         - ansible_distribution == "OracleLinux"

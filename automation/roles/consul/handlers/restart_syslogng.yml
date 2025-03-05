@@ -3,4 +3,4 @@
   ansible.builtin.service:
     name: syslog-ng
     state: restarted
-  listen: 'restart syslog-ng'
+  listen: "restart syslog-ng"

@@ -1,5 +1,4 @@
 ---
-
 - name: "Make sure {{ pg_new_datadir }}/pg_wal is not symlink"
   ansible.builtin.stat:
     path: "{{ pg_new_datadir }}/pg_wal"
@@ -44,5 +43,3 @@
         path: "{{ pg_new_datadir }}/pg_wal_old"
         state: absent
   when: sym.stat.exists and not sym.stat.islnk | bool
-
-...

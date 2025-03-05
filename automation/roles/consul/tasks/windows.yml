@@ -79,7 +79,7 @@
     - name: (Windows) Write gossip encryption key locally for use with new servers
       ansible.builtin.copy:
         content: "{{ consul_raw_key }}"
-        dest: '/tmp/consul_raw.key'
+        dest: "/tmp/consul_raw.key"
         mode: "0600"
       become: false
       vars:
@@ -99,7 +99,7 @@
         - name: (Windows) Write key locally to share with other nodes
           ansible.builtin.copy:
             content: "{{ consul_keygen.stdout }}"
-            dest: '/tmp/consul_raw.key'
+            dest: "/tmp/consul_raw.key"
             mode: "0600"
           become: false
           vars:
@@ -121,7 +121,7 @@
 
     - name: (Windows) Delete gossip encryption key file
       ansible.builtin.file:
-        path: '/tmp/consul_raw.key'
+        path: "/tmp/consul_raw.key"
         state: absent
       become: false
       vars:

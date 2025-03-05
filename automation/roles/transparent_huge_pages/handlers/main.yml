@@ -1,5 +1,4 @@
 ---
-
 - name: Start disable-transparent-huge-pages service
   ansible.builtin.systemd:
     daemon_reload: true
@@ -8,5 +7,3 @@
     enabled: true
   listen: "restart disable-thp"
   when: not ansible_check_mode
-
-...

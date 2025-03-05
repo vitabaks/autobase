@@ -29,7 +29,6 @@
     - consul_node_role == 'server'
 
 - block:
-
     - name: Generate ACL master token
       ansible.builtin.command: "echo {{ lookup('password', '/dev/null length=32 chars=ascii_letters') | to_uuid }}"
       register: consul_acl_master_token_keygen
@@ -75,7 +74,6 @@
     - consul_node_role == 'server'
 
 - block:
-
     - name: Generate ACL replication token
       ansible.builtin.command: "echo {{ lookup('password', '/dev/null length=32 chars=ascii_letters') | to_uuid }}"
       register: consul_acl_replication_token_keygen

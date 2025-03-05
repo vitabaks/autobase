@@ -1,5 +1,4 @@
 ---
-
 - name: Make sure the PostgreSQL schemas are present
   become: true
   become_user: postgres
@@ -14,5 +13,3 @@
   loop: "{{ postgresql_schemas | flatten(1) }}"
   when: postgresql_schemas is defined and postgresql_schemas | length > 0
   tags: postgresql_schemas
-
-...

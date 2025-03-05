@@ -1,5 +1,4 @@
 ---
-
 - name: Make sure the PostgreSQL databases are present
   become: true
   become_user: postgres
@@ -20,5 +19,3 @@
   loop: "{{ postgresql_databases | flatten(1) }}"
   when: postgresql_databases is defined and postgresql_databases | length > 0
   tags: postgresql_databases
-
-...

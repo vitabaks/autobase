@@ -34,7 +34,7 @@
         {{ pg_upper_datadir }}/{{ pg_old_version }} {{ pg_upper_datadir }}/{{ pg_new_version }} {}:{{ pg_upper_datadir }}
       args:
         executable: /bin/bash
-      async: 3600  # run the command asynchronously with a maximum duration of 1 hour
+      async: 3600 # run the command asynchronously with a maximum duration of 1 hour
       poll: 0
       register: rsync_result_1
 
@@ -66,7 +66,7 @@
         {{ pg_old_datadir }} {{ pg_new_datadir }} {}:{{ pg_upper_datadir }}
       args:
         executable: /bin/bash
-      async: 3600  # run the command asynchronously with a maximum duration of 1 hour
+      async: 3600 # run the command asynchronously with a maximum duration of 1 hour
       poll: 0
       register: rsync_result_2
 
@@ -113,7 +113,7 @@
         done
       args:
         executable: /bin/bash
-      async: 3600  # run the command asynchronously with a maximum duration of 1 hour
+      async: 3600 # run the command asynchronously with a maximum duration of 1 hour
       poll: 0
       register: rsync_tablespace_result
 
@@ -130,5 +130,3 @@
     - inventory_hostname in groups['primary']
     - tablespace_location.stdout_lines is defined
     - tablespace_location.stdout_lines | length > 0
-
-...

@@ -4,22 +4,22 @@
 - name: Define supported *nix distributions
   ansible.builtin.set_fact:
     _consul_nix_distros:
-      - 'RedHat'
-      - 'CentOS'
-      - 'Rocky'
-      - 'AlmaLinux'
-      - 'OracleLinux'
-      - 'Fedora'
-      - 'Debian'
-      - 'FreeBSD'
-      - 'SmartOS'
-      - 'Ubuntu'
-      - 'Archlinux'
-      - 'Alpine'
-      - 'Amazon'
-      - 'Flatcar'
-      - 'VMware Photon OS'
-      - 'MacOSX'
+      - "RedHat"
+      - "CentOS"
+      - "Rocky"
+      - "AlmaLinux"
+      - "OracleLinux"
+      - "Fedora"
+      - "Debian"
+      - "FreeBSD"
+      - "SmartOS"
+      - "Ubuntu"
+      - "Archlinux"
+      - "Alpine"
+      - "Amazon"
+      - "Flatcar"
+      - "VMware Photon OS"
+      - "MacOSX"
 
 - name: Check distribution compatibility
   ansible.builtin.fail:

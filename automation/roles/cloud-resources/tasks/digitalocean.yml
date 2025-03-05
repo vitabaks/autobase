@@ -103,7 +103,7 @@
       ansible.builtin.set_fact:
         ssh_key_fingerprint: "{{ [item.fingerprint] }}"
       loop: "{{ ssh_keys.data | lower }}"
-      loop_control:  # do not display the public key
+      loop_control: # do not display the public key
         label: "{{ item.name }}"
       when:
         - ((ssh_key_name | length > 0 and ssh_key_name != (tmp_ssh_key_name | default(''))) or
@@ -124,7 +124,7 @@
       ansible.builtin.set_fact:
         ssh_key_fingerprint: "{{ ssh_key_fingerprint | default([]) + [item.fingerprint] }}"
       loop: "{{ ssh_keys.data | lower }}"
-      loop_control:  # do not display the public key
+      loop_control: # do not display the public key
         label: "{{ item.name }}"
       when:
         - (ssh_key_name | length < 1 or ssh_key_name == (tmp_ssh_key_name | default('')))
@@ -391,7 +391,7 @@
               }
             ] if with_haproxy_load_balancing | bool else []) +
             ([
-             {
+              {
                 'protocol': 'tcp',
                 'ports': pgbouncer_listen_port | default('6432'),
                 'sources': {
@@ -400,7 +400,7 @@
               }
             ] if pgbouncer_install | bool else []) +
             ([
-             {
+              {
                 'protocol': 'tcp',
                 'ports': postgresql_port | default('5432'),
                 'sources': {
@@ -591,9 +591,9 @@
       loop_control:
         label: "{{ patroni_cluster_name }}-{{ item }}"
       when: cloud_load_balancer | bool and
-            (item == 'primary' or
-            (item == 'replica' and server_count | int > 1) or
-            (item in ['sync', 'async'] and server_count | int > 1 and synchronous_mode | bool))
+        (item == 'primary' or
+        (item == 'replica' and server_count | int > 1) or
+        (item in ['sync', 'async'] and server_count | int > 1 and synchronous_mode | bool))
 
     - name: "DigitalOcean: Gather information about load balancers"
       community.digitalocean.digital_ocean_load_balancer_info:
@@ -731,9 +731,9 @@
       loop_control:
         label: "{{ patroni_cluster_name }}-{{ item }}"
       when: cloud_load_balancer | bool and
-            (item == 'primary' or
-            (item == 'replica' and server_count | int > 1) or
-            (item in ['sync', 'async'] and server_count | int > 1 and synchronous_mode | bool))
+        (item == 'primary' or
+        (item == 'replica' and server_count | int > 1) or
+        (item in ['sync', 'async'] and server_count | int > 1 and synchronous_mode | bool))
 
     - name: "DigitalOcean: Delete public firewall"
       community.digitalocean.digital_ocean_firewall:
@@ -760,5 +760,3 @@
         - digital_ocean_spaces_absent | bool
   ignore_errors: true
   when: state == 'absent'
-
-...

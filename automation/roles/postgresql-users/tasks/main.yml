@@ -1,5 +1,4 @@
 ---
-
 - name: Make sure the PostgreSQL users are present
   become: true
   become_user: postgres
@@ -20,8 +19,8 @@
     label: "{{ item.name }}"
   when:
     - postgresql_users | default('') | length > 0
-    - item.password | default('') | length > 0  # Ensure the password is not empty
-    - patroni_standby_cluster.host | default('') | length < 1  # do not perform on the Standby Cluster leader
+    - item.password | default('') | length > 0 # Ensure the password is not empty
+    - patroni_standby_cluster.host | default('') | length < 1 # do not perform on the Standby Cluster leader
   tags: postgresql_users
 
 - name: Grant roles to users
@@ -40,7 +39,5 @@
   when:
     - postgresql_users | default('') | length > 0
     - item.role | default('') | length > 0
-    - patroni_standby_cluster.host | default('') | length < 1  # do not perform on the Standby Cluster leader
+    - patroni_standby_cluster.host | default('') | length < 1 # do not perform on the Standby Cluster leader
   tags: postgresql_users
-
-...

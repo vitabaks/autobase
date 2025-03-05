@@ -41,4 +41,3 @@
         name: patroni
         state: stopped
   when: inventory_hostname in groups['primary']
-...

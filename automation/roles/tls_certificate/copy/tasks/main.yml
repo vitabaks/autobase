@@ -28,7 +28,19 @@
     group: "{{ copy_tls_owner | default(tls_owner | default('postgres')) }}"
     mode: "{{ item.mode }}"
   loop:
-    - { index: 1, path: "{{ copy_tls_cert_path | default(tls_cert_path | default('/etc/tls/server.crt')) }}", mode: "0644" }
-    - { index: 2, path: "{{ copy_tls_ca_cert_path | default(tls_ca_cert_path | default('/etc/tls/ca.crt')) }}", mode: "0644" }
-    - { index: 0, path: "{{ copy_tls_privatekey_path | default(tls_privatekey_path | default('/etc/tls/server.key')) }}", mode: "0400" }
+    - {
+        index: 1,
+        path: "{{ copy_tls_cert_path | default(tls_cert_path | default('/etc/tls/server.crt')) }}",
+        mode: "0644",
+      }
+    - {
+        index: 2,
+        path: "{{ copy_tls_ca_cert_path | default(tls_ca_cert_path | default('/etc/tls/ca.crt')) }}",
+        mode: "0644",
+      }
+    - {
+        index: 0,
+        path: "{{ copy_tls_privatekey_path | default(tls_privatekey_path | default('/etc/tls/server.key')) }}",
+        mode: "0400",
+      }
   tags: tls, tls_cert_copy

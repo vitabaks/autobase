@@ -1,6 +1,5 @@
 ---
-
-- block:  # Debian/Ubuntu
+- block: # Debian/Ubuntu
     - name: Make sure the python3-debian package is present
       ansible.builtin.apt:
         pkg:
@@ -35,7 +34,7 @@
   when: installation_method == "repo" and ansible_os_family == "Debian"
   tags: add_repo
 
-- block:  # RedHat/CentOS
+- block: # RedHat/CentOS
     - name: Add repository GPG key
       ansible.builtin.command: "rpm --import https://repo.almalinux.org/almalinux/RPM-GPG-KEY-AlmaLinux-{{ ansible_distribution_major_version }}"
       when: ansible_distribution == "AlmaLinux"
@@ -165,5 +164,3 @@
 - name: Extensions repository
   ansible.builtin.import_tasks: extensions.yml
   when: installation_method == "repo"
-
-...
