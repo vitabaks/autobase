@@ -17,12 +17,12 @@
         name: "{{ item.name | default(item.repo.split('//')[1].split('/')[0] | replace('.', '-')) }}"
         types: "{{ item.types | default(['deb']) }}"
         uris: "{{ item.uris | default(item.repo.split(' ')[1]) }}"
-        signed_by: '{{ item.signed_by | default(item.key | default(omit)) }}'
+        signed_by: "{{ item.signed_by | default(item.key | default(omit)) }}"
         suites: "{{ item.suites | default(item.repo.split(' ')[2]) }}"
         components: "{{ item.components | default(item.repo.split(' ')[3]) }}"
-        enabled: '{{ item.enabled | default(true) }}'
+        enabled: "{{ item.enabled | default(true) }}"
         state: present
-      loop: '{{ apt_repository }}'
+      loop: "{{ apt_repository }}"
       when: apt_repository | length > 0
 
     - name: Update apt cache
@@ -32,30 +32,30 @@
       until: apt_status is success
       delay: 5
       retries: 3
-  environment: '{{ proxy_env | default({}) }}'
+  environment: "{{ proxy_env | default({}) }}"
   when: installation_method == "repo" and ansible_os_family == "Debian"
   tags: add_repo
 
 - block: # RedHat/CentOS
     - name: Add repository GPG key
-      ansible.builtin.command: 'rpm --import https://repo.almalinux.org/almalinux/RPM-GPG-KEY-AlmaLinux-{{ ansible_distribution_major_version }}'
+      ansible.builtin.command: "rpm --import https://repo.almalinux.org/almalinux/RPM-GPG-KEY-AlmaLinux-{{ ansible_distribution_major_version }}"
       when: ansible_distribution == "AlmaLinux"
 
     - name: Add repository
       ansible.builtin.yum_repository:
-        name: '{{ item.name }}'
-        description: '{{ item.description }}'
-        baseurl: '{{ item.baseurl }}'
-        gpgkey: '{{ item.gpgkey | default(omit) }}'
-        gpgcheck: '{{ item.gpgcheck | default(true) }}'
-        enabled: '{{ item.enabled | default(true) }}'
-      loop: '{{ yum_repository | flatten(1) }}'
+        name: "{{ item.name }}"
+        description: "{{ item.description }}"
+        baseurl: "{{ item.baseurl }}"
+        gpgkey: "{{ item.gpgkey | default(omit) }}"
+        gpgcheck: "{{ item.gpgcheck | default(true) }}"
+        enabled: "{{ item.enabled | default(true) }}"
+      loop: "{{ yum_repository | flatten(1) }}"
       when: yum_repository | length > 0
 
     # Install Epel Repository
     - name: Get epel-release-latest rpm package
       ansible.builtin.get_url:
-        url: 'https://dl.fedoraproject.org/pub/epel/epel-release-latest-{{ ansible_distribution_major_version }}.noarch.rpm'
+        url: "https://dl.fedoraproject.org/pub/epel/epel-release-latest-{{ ansible_distribution_major_version }}.noarch.rpm"
         dest: /tmp/
         timeout: 30
         validate_certs: false
@@ -64,7 +64,7 @@
 
     - name: Install EPEL repository
       ansible.builtin.package:
-        name: '/tmp/epel-release-latest-{{ ansible_distribution_major_version }}.noarch.rpm'
+        name: "/tmp/epel-release-latest-{{ ansible_distribution_major_version }}.noarch.rpm"
         state: present
         disable_gpg_check: true
       register: package_status
@@ -80,15 +80,15 @@
         - name: Enable PowerTools repository
           ansible.builtin.command: dnf config-manager --set-enabled "[Pp]ower[Tt]ools"
           when:
-            - ansible_distribution_major_version is version('8', '==')
+            - ansible_distribution_major_version is version("8", "==")
             - ansible_distribution != "OracleLinux"
-            - ansible_distribution != 'RedHat'
+            - ansible_distribution != "RedHat"
 
         # CodeReady Linux Builder (crb) repository
         - name: Enable CodeReady Linux Builder (crb) repository
           ansible.builtin.command: dnf config-manager --set-enabled crb
           when:
-            - ansible_distribution_major_version is version('9', '>=')
+            - ansible_distribution_major_version is version("9", ">=")
             - ansible_distribution != "OracleLinux"
 
         # CodeReady Builder repository for OracleLinux
@@ -96,16 +96,16 @@
           ansible.builtin.command: dnf config-manager --enable ol{{ ansible_distribution_major_version }}_codeready_builder
           when:
             - ansible_distribution == "OracleLinux"
-            - ansible_distribution_major_version is version('8', '>=')
+            - ansible_distribution_major_version is version("8", ">=")
       vars:
-        pg_devel_package: "postgresql{{ postgresql_version | string | replace('.', '') }}-devel"
+        pg_devel_package: "postgresql{{ postgresql_version | string | replace(".", "") }}-devel"
       when:
         - pg_devel_package in postgresql_packages
 
     # Install PostgreSQL Repository
     - name: Get pgdg-redhat-repo-latest.noarch.rpm
       ansible.builtin.get_url:
-        url: 'https://download.postgresql.org/pub/repos/yum/reporpms/EL-{{ ansible_distribution_major_version }}-{{ pgdg_architecture_map[ansible_architecture]}}/pgdg-redhat-repo-latest.noarch.rpm'
+        url: "https://download.postgresql.org/pub/repos/yum/reporpms/EL-{{ ansible_distribution_major_version }}-{{ pgdg_architecture_map[ansible_architecture]}}/pgdg-redhat-repo-latest.noarch.rpm"
         dest: /tmp/
         timeout: 30
         validate_certs: false
@@ -127,40 +127,40 @@
     # Enable Debuginfo repository
     - block:
         - name: Enable PostgreSQL debuginfo repository
-          when: ansible_architecture in ['x86_64', 'amd64']
+          when: ansible_architecture in ["x86_64", "amd64"]
           ansible.builtin.shell: |
             set -o pipefail;
-            sed -i '/\[pgdg[0-9]*-debuginfo\]/,/^$/ s/enabled=0/enabled=1/' {{ pgdg_redhat_repo_path }}
-            sed -i '/\[pgdg[0-9]*-debuginfo\]/,/^$/ s/gpgcheck=1/gpgcheck=0/' {{ pgdg_redhat_repo_path }}
+            sed -i "/\[pgdg[0-9]*-debuginfo\]/,/^$/ s/enabled=0/enabled=1/" {{ pgdg_redhat_repo_path }}
+            sed -i "/\[pgdg[0-9]*-debuginfo\]/,/^$/ s/gpgcheck=1/gpgcheck=0/" {{ pgdg_redhat_repo_path }}
           vars:
-            pgdg_redhat_repo_path: '/etc/yum.repos.d/pgdg-redhat-all.repo'
+            pgdg_redhat_repo_path: "/etc/yum.repos.d/pgdg-redhat-all.repo"
 
         # Check if the repository entry exists in the file
         - name: Check if pgdg{{ postgresql_version }}-debuginfo exists in repo file
           ansible.builtin.lineinfile:
-            path: '{{ pgdg_redhat_repo_path }}'
+            path: "{{ pgdg_redhat_repo_path }}"
             regexp: '^\[pgdg{{ postgresql_version }}-debuginfo\]'
             state: absent
           check_mode: true
           changed_when: false
           register: repo_check
           vars:
-            pgdg_redhat_repo_path: '/etc/yum.repos.d/pgdg-redhat-all.repo'
+            pgdg_redhat_repo_path: "/etc/yum.repos.d/pgdg-redhat-all.repo"
 
         # If the entry does not exist, try to add the repository
         - name: Add pgdg{{ postgresql_version }}-debuginfo repo if not present
           ansible.builtin.yum_repository:
-            name: 'pgdg{{ postgresql_version }}-debuginfo'
-            description: 'PostgreSQL {{ postgresql_version }} for RHEL {{ ansible_distribution_major_version }} - {{ pgdg_architecture_map[ansible_architecture]}} - Debuginfo'
-            baseurl: 'https://download.postgresql.org/pub/repos/yum/debug/{{ postgresql_version }}/redhat/rhel-{{ ansible_distribution_major_version }}-{{ pgdg_architecture_map[ansible_architecture]}}/'
+            name: "pgdg{{ postgresql_version }}-debuginfo"
+            description: "PostgreSQL {{ postgresql_version }} for RHEL {{ ansible_distribution_major_version }} - {{ pgdg_architecture_map[ansible_architecture]}} - Debuginfo"
+            baseurl: "https://download.postgresql.org/pub/repos/yum/debug/{{ postgresql_version }}/redhat/rhel-{{ ansible_distribution_major_version }}-{{ pgdg_architecture_map[ansible_architecture]}}/"
             gpgcheck: false
             enabled: true
           when: repo_check.found == 0
       when: debuginfo_package in postgresql_packages
       vars:
-        debuginfo_package: 'postgresql{{ postgresql_version }}-debuginfo'
+        debuginfo_package: "postgresql{{ postgresql_version }}-debuginfo"
       tags: install_postgresql_repo, debuginfo
-  environment: '{{ proxy_env | default({}) }}'
+  environment: "{{ proxy_env | default({}) }}"
   when: installation_method == "repo" and ansible_os_family == "RedHat"
   tags: add_repo
 
