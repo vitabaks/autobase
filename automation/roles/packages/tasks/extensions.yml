@@ -310,7 +310,7 @@
           retries: 3
           vars:
             pg_search_repo: "https://github.com/paradedb/paradedb/releases/download/v{{ pg_search_version }}/"
-            pg_search_package: "{{ pg_search_repo }}/postgresql-{{ pg_version | default(postgresql_version) }}-pg-search_{{ pg_search_version }}-1PARADEDB-{{ ansible_distribution_release }}_{{ pg_search_architecture_map[ansible_architecture] }}.deb" # yamllint disable rule:line-length
+            pg_search_package: "{{ pg_search_repo }}/postgresql-{{ pg_version | default(postgresql_version) }}-pg-search_{{ pg_search_version }}-1PARADEDB-{{ ansible_distribution_release }}_{{ paradedb_architecture_map_dep[ansible_architecture] }}.deb" # yamllint disable rule:line-length
           when:
             - ansible_os_family == "Debian"
             - ansible_distribution_release in ['bookworm', 'jammy', 'noble']
@@ -326,7 +326,7 @@
           retries: 3
           vars:
             pg_search_repo: "https://github.com/paradedb/paradedb/releases/download/v{{ pg_search_version }}/"
-            pg_search_package: "{{ pg_search_repo }}/pg_search_{{ pg_version | default(postgresql_version) }}-{{ pg_search_version }}-1PARADEDB.el{{ ansible_distribution_major_version }}.x86_64.rpm" # yamllint disable rule:line-length
+            pg_search_package: "{{ pg_search_repo }}/pg_search_{{ pg_version | default(postgresql_version) }}-{{ pg_search_version }}-1PARADEDB.el{{ ansible_distribution_major_version }}.{{ paradedb_architecture_map_rpm[ansible_architecture] }}.rpm" # yamllint disable rule:line-length
           when:
             - ansible_os_family == "RedHat"
             - ansible_distribution_major_version in ['8', '9']
@@ -354,7 +354,7 @@
           retries: 3
           vars:
             pg_analytics_repo: "https://github.com/paradedb/pg_analytics/releases/download/v{{ pg_analytics_version }}/"
-            pg_analytics_package: "{{ pg_analytics_repo }}/postgresql-{{ pg_version | default(postgresql_version) }}-pg-analytics_{{ pg_analytics_version }}-1PARADEDB-{{ ansible_distribution_release }}_amd64.deb" # yamllint disable rule:line-length
+            pg_analytics_package: "{{ pg_analytics_repo }}/postgresql-{{ pg_version | default(postgresql_version) }}-pg-analytics_{{ pg_analytics_version }}-1PARADEDB-{{ ansible_distribution_release }}_{{ paradedb_architecture_map_dep[ansible_architecture] }}.deb" # yamllint disable rule:line-length
           when:
             - ansible_os_family == "Debian"
             - ansible_distribution_release in ['bookworm', 'jammy', 'noble']
@@ -370,7 +370,7 @@
           retries: 3
           vars:
             pg_analytics_repo: "https://github.com/paradedb/pg_analytics/releases/download/v{{ pg_analytics_version }}/"
-            pg_analytics_package: "{{ pg_analytics_repo }}/pg_analytics_{{ pg_version | default(postgresql_version) }}-{{ pg_analytics_version }}-1PARADEDB.el{{ ansible_distribution_major_version }}.x86_64.rpm" # yamllint disable rule:line-length
+            pg_analytics_package: "{{ pg_analytics_repo }}/pg_analytics_{{ pg_version | default(postgresql_version) }}-{{ pg_analytics_version }}-1PARADEDB.el{{ ansible_distribution_major_version }}.{{ paradedb_architecture_map_rpm[ansible_architecture] }}.rpm" # yamllint disable rule:line-length
           when:
             - ansible_os_family == "RedHat"
             - ansible_distribution_major_version in ['8', '9']

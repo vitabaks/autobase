@@ -19,8 +19,14 @@ pgvectorscale_architecture_map:
   aarch64: arm64
   arm64: arm64
 
-pg_search_architecture_map:
+paradedb_architecture_map_dep:
   x86_64: amd64
   amd64: amd64
   aarch64: arm64
   arm64: arm64
+
+paradedb_architecture_map_rpm:
+  x86_64: x86_64
+  amd64: x86_64
+  aarch64: aarch64
+  arm64: aarch64
