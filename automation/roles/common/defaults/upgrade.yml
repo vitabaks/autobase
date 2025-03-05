@@ -1,0 +1,100 @@
+# yamllint disable rule:line-length
+---
+# Variables for the pg_upgrade.yml playbook
+
+# Note:
+# There is no need to plan additional disk space, because when updating PostgreSQL, hard links are used instead of copying files.
+# However, it is required that the pg_old_datadir and pg_new_datadir are located within the same top-level directory (pg_upper_datadir).
+# https://www.postgresql.org/docs/current/pgupgrade.html
+
+# PostgreSQL versions
+pg_old_version: ""  # specify the current (old) version of PostgreSQL
+pg_new_version: ""  # specify the target version of PostgreSQL for the upgrade
+
+# Paths for old and new PostgreSQL versions
+# Adjust these variables if the paths are different from the default value.
+
+# Directory containing binaries for the old PostgreSQL version.
+pg_old_bindir: "{{ postgresql_bin_dir | regex_replace('(/$)', '') | replace(postgresql_version | string, pg_old_version | string) }}"
+# Data directory path for the old PostgreSQL version.
+pg_old_datadir: "{{ postgresql_data_dir | regex_replace('(/$)', '') | replace(postgresql_version | string, pg_old_version | string) }}"
+# Configuration directory path for the old PostgreSQL version.
+pg_old_confdir: "{{ postgresql_conf_dir | regex_replace('(/$)', '') | replace(postgresql_version | string, pg_old_version | string) }}"
+
+# Directory containing binaries for the new PostgreSQL version.
+pg_new_bindir: "{{ postgresql_bin_dir | regex_replace('(/$)', '') | replace(postgresql_version | string, pg_new_version | string) }}"
+# Data directory path for the new PostgreSQL version.
+pg_new_datadir: "{{ postgresql_data_dir | regex_replace('(/$)', '') | replace(postgresql_version | string, pg_new_version | string) }}"
+# Configuration directory path for the new PostgreSQL version.
+pg_new_confdir: "{{ postgresql_conf_dir | regex_replace('(/$)', '') | replace(postgresql_version | string, pg_new_version | string) }}"
+# Custom WAL directory for the new PostgreSQL version (symlink will be created) [optional].
+pg_new_wal_dir: "{{ postgresql_wal_dir | regex_replace('(/$)', '') | replace(postgresql_version | string, pg_new_version | string) }}"
+
+# pg_upper_datadir: Specifies the top-level directory containing both old and new PostgreSQL data directories.
+# The variable is derived from pg_new_datadir by removing any trailing slash and getting its grandparent directory.
+# Adjust if the data directory location differs from the default.
+# Example: /var/lib/postgresql, /var/lib/pgsql, /pgdata
+pg_upper_datadir: "{{ pg_new_datadir | regex_replace('/$', '') | dirname | dirname }}"
+
+# List of package names for the new PostgreSQL version to be installed.
+# automatically detects the list of packages based on the 'postgresql_packages' variable
+pg_new_packages: "{{ postgresql_packages | replace(postgresql_version | string, pg_new_version | string) }}"
+
+# Alternatively, you can explicitly specify the list of new packages to install.
+# This gives you more control and should be used if the automatic update does not meet your needs.
+# Uncomment and modify the following lines according to your requirements. Example:
+# pg_new_packages:
+#  - postgresql-{{ pg_new_version }}
+#  - postgresql-client-{{ pg_new_version }}
+#  - postgresql-server-dev-{{ pg_new_version }}
+#  - postgresql-contrib-{{ pg_new_version }}
+#  - postgresql-{{ pg_new_version }}-repack"
+
+pg_old_packages_remove: true  # remove old postgresql packages after upgrade
+
+# Timeout (in seconds) to be used when starting/stopping PostgreSQL during the upgrade.
+pg_start_stop_timeout: 1800  # 30 minutes
+
+# Patroni configuration file path.
+patroni_config_file: /etc/patroni/patroni.yml
+
+schema_compatibility_check: true  # If 'true', a compatibility check of the database schema with the new PostgreSQL version will be performed before the upgrade.
+schema_compatibility_check_port: "{{ (postgresql_port | int) + 1 }}"  # Port used to run a temporary PostgreSQL instance for schema compatibility checking.
+schema_compatibility_check_timeout: 3600  # Maximum duration (in seconds) for the compatibility check (using pg_dumpall --schema-only).
+
+update_extensions: true  # if 'true', try to update extensions automatically
+
+vacuumdb_parallel_jobs: "{{ [ansible_processor_vcpus | int // 2, 1] | max }}"  # use 50% CPU cores
+vacuumdb_analyze_timeout: 3600  # seconds. The maximum duration of analyze command (soft limit, exceeding won't halt playbook)
+# terminate active queries that are longer than the specified time (in seconds) during the collection of statistics.
+vacuumdb_analyze_terminate_treshold: 0 # (0 = do not terminate active backends)
+
+# Do not perform an upgrade if
+max_replication_lag_bytes: 10485760  # 10 MiB - Maximum allowed replication lag in bytes
+max_transaction_sec: 15  # Maximum allowed duration for a transactions in seconds
+
+# (optional) Copy any files located in the "files" directory to all servers
+# example for Postgres Full-Text Search (FTS) files
+copy_files_to_all_server: []
+#  - { src: "files/numbers.syn", dest: "/usr/share/postgresql/{{ pg_new_version }}/tsearch_data/numbers.syn", owner: "root", group: "root", mode: "0644" }
+#  - { src: "files/part_of_speech_russian.stop", dest: "/usr/share/postgresql/{{ pg_new_version }}/tsearch_data/part_of_speech_russian.stop", owner: "root", group: "root", mode: "0644" }
+#  - { src: "files/ru_ru.affix", dest: "/usr/share/postgresql/{{ pg_new_version }}/tsearch_data/ru_ru.affix", owner: "root", group: "root", mode: "0644" }
+#  - { src: "files/ru_ru.dict", dest: "/usr/share/postgresql/{{ pg_new_version }}/tsearch_data/ru_ru.dict", owner: "root", group: "root", mode: "0644" }
+
+# if 'pgbouncer_install' is 'true'
+pgbouncer_pool_pause: true  # or 'false' if you don't want to pause pgbouncer pools during upgrade.
+# the maximum waiting time (in seconds) for the pool to be paused. For each iteration of the loop when trying to pause all pools.
+pgbouncer_pool_pause_timeout: 2
+# the time (in seconds) after which instead of waiting for the completion of the active queries, the script terminates the slow active queries.
+pgbouncer_pool_pause_terminate_after: 30
+# the time (in seconds) after which the script exit with an error if it was not possible to pause all pgbouncer pools.
+pgbouncer_pool_pause_stop_after: 60
+# wait for the completion of active queries that are executed longer than the specified time (in milliseconds) before trying to pause the pool.
+pg_slow_active_query_treshold: 1000
+# terminate active queries that longer than the specified time (in milliseconds) after reaching "pgbouncer_pool_pause_terminate_after" before trying to pause the pool.
+pg_slow_active_query_treshold_to_terminate: 100  # (0 = terminate all active backends)
+
+# if 'pgbackrest_install' is 'true'
+pgbackrest_stanza_upgrade: true  # perform the "stanza-upgrade" command after the upgrade.
+
+...

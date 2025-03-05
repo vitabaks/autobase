@@ -1,0 +1,214 @@
+---
+
+# PostgreSQL variables
+postgresql_cluster_name: "main"
+# You can specify custom data dir path. Example: "/pgdata/{{ postgresql_version }}/main"
+postgresql_data_dir: "\
+  {% if cloud_provider | default('') | length > 0 %}\
+    {{ pg_data_mount_path | default('/pgdata') }}/{{ postgresql_version }}/{{ postgresql_cluster_name }}\
+  {% else %}\
+    /var/lib/postgresql/{{ postgresql_version }}/{{ postgresql_cluster_name }}\
+  {% endif %}"
+# Note: When deploying to cloud providers, we create a disk and mount the data directory,
+# along the path defined in the 'pg_data_mount_path' variable (or use '/pgdata' by default).
+
+# You can specify custom WAL dir path. Example: "/pgwal/{{ postgresql_version }}/pg_wal"
+postgresql_wal_dir: ""  # if defined, symlink will be created [optional]
+postgresql_conf_dir: "/etc/postgresql/{{ postgresql_version }}/{{ postgresql_cluster_name }}"
+postgresql_bin_dir: "/usr/lib/postgresql/{{ postgresql_version }}/bin"
+postgresql_log_dir: "/var/log/postgresql"
+postgresql_unix_socket_dir: "/var/run/postgresql"
+postgresql_home_dir: "/var/lib/postgresql"
+
+# stats_temp_directory (mount the statistics directory in tmpfs)
+# if postgresql_version < 15
+postgresql_stats_temp_directory_path: "/var/lib/pgsql_stats_tmp"  # or 'none'
+postgresql_stats_temp_directory_size: "1024m"
+
+# Repository
+apt_repository:
+  - repo: "deb https://apt.postgresql.org/pub/repos/apt/ {{ ansible_distribution_release }}-pgdg main"  # postgresql apt repository
+    key: "https://apt.postgresql.org/pub/repos/apt/ACCC4CF8.asc"  # postgresql apt repository key
+#  - repo: "deb https://deb.debian.org/debian/ {{ ansible_distribution_release }} main"
+#  - repo: "deb https://deb.debian.org/debian/ {{ ansible_distribution_release }}-updates main"
+#  - repo: "deb https://security.debian.org/debian-security/ {{ ansible_distribution_release }}/updates main"
+
+# Packages
+system_packages:
+  - python3
+  - python3-dev
+  - python3-psycopg2
+  - python3-setuptools
+  - python3-pip
+  - curl
+  - less
+  - sudo
+  - vim
+  - gcc
+  - jq
+  - iptables
+  - acl
+  - dnsutils
+  - moreutils
+  - unzip
+  - tar
+  - zstd
+
+install_perf: false  # or 'true' to install "perf" (Linux profiling with performance counters) and "FlameGraph".
+
+postgresql_packages:
+  - postgresql-{{ postgresql_version }}
+  - postgresql-client-{{ postgresql_version }}
+  - postgresql-contrib-{{ postgresql_version }}
+  - postgresql-server-dev-{{ postgresql_version }}
+  - postgresql-{{ postgresql_version }}-dbgsym
+#  - postgresql-{{ postgresql_version }}-repack
+#  - postgresql-{{ postgresql_version }}-cron
+#  - postgresql-{{ postgresql_version }}-pg-stat-kcache
+#  - postgresql-{{ postgresql_version }}-pg-wait-sampling
+#  - postgresql-{{ postgresql_version }}-postgis-3
+#  - postgresql-{{ postgresql_version }}-pgrouting
+#  - postgresql-{{ postgresql_version }}-pgvector
+#  - postgresql-{{ postgresql_version }}-pgaudit
+#  - postgresql-{{ postgresql_version }}-partman
+
+# Extra packages
+etcd_package_repo: "https://github.com/etcd-io/etcd/releases/download/v{{ etcd_version }}/etcd-v{{ etcd_version }}-linux-amd64.tar.gz"
+vip_manager_package_repo:
+  "https://github.com/cybertec-postgresql/vip-manager/releases/download/v{{ vip_manager_version }}/vip-manager_{{ vip_manager_version }}_Linux_x86_64.deb"
+
+installation_method: "repo"  # "repo" (default) or "file"
+
+# The Patroni package will be installed from the deb package by default.
+# You also have the option of choosing an installation method using the pip package.
+patroni_installation_method: "deb"  # "deb" (default) or "pip"
+
+# if patroni_installation_method: "pip"
+patroni_install_version: "latest"  # or a specific version (e.q., '3.3.2')
+
+# if patroni_installation_method: "deb"
+patroni_packages:
+  - patroni
+  - python3-{{ dcs_type }}
+
+# if patroni_installation_method: "deb" (optional)
+# You can preload the patroni deb package to your APT repository, or explicitly specify the path to the package in this variable:
+patroni_deb_package_repo: []
+#  - "https://apt.postgresql.org/pub/repos/apt/pool/main/p/patroni/patroni_3.3.0-1.pgdg22.04%2B1_all.deb"  # (package for Ubuntu 22.04)
+
+# if patroni_installation_method: "pip" (optional)
+# Packages from your repository will be used to install. By default, it is installed from the public pip repository.
+pip_package_repo: "https://bootstrap.pypa.io/get-pip.py"  # latest version pip3 for python3 (or use "pip-<version>.tar.gz").
+patroni_pip_requirements_repo: []
+#  - "http://my-repo.url/setuptools-41.2.0.zip"
+#  - "http://my-repo.url/setuptools_scm-3.3.3.tar.gz"
+#  - "http://my-repo.url/urllib3-1.24.3.tar.gz"
+#  - "http://my-repo.url/PyYAML-5.1.2.tar.gz"
+#  - "http://my-repo.url/chardet-3.0.4.tar.gz"
+#  - "http://my-repo.url/idna-2.8.tar.gz"
+#  - "http://my-repo.url/certifi-2019.9.11.tar.gz"
+#  - "http://my-repo.url/requests-2.22.0.tar.gz"
+#  - "http://my-repo.url/six-1.12.0.tar.gz"
+#  - "http://my-repo.url/kazoo-2.6.1.tar.gz"
+#  - "http://my-repo.url/dnspython-1.16.0.zip"
+#  - "http://my-repo.url/python-etcd-0.4.5.tar.gz"
+#  - "http://my-repo.url/Click-7.0.tar.gz"
+#  - "http://my-repo.url/prettytable-0.7.2.tar.gz"
+#  - "http://my-repo.url/pytz-2019.2.tar.gz"
+#  - "http://my-repo.url/tzlocal-2.0.0.tar.gz"
+#  - "http://my-repo.url/wheel-0.33.6.tar.gz"
+#  - "http://my-repo.url/python-dateutil-2.8.0.tar.gz"
+#  - "http://my-repo.url/psutil-5.6.3.tar.gz"
+#  - "http://my-repo.url/cdiff-1.0.tar.gz"
+patroni_pip_package_repo: []
+# - "http://my-repo.url/patroni-1.6.0.tar.gz"
+
+# if with_haproxy_load_balancing: true
+haproxy_installation_method: "deb"  # "deb" (default) or "src"
+confd_package_repo: "https://github.com/kelseyhightower/confd/releases/download/v0.16.0/confd-0.16.0-linux-amd64"
+
+# if haproxy_installation_method: 'src' (optional)
+haproxy_major: "1.8"
+haproxy_version: "1.8.31"  # version to build from source
+lua_src_repo: "https://www.lua.org/ftp/lua-5.3.5.tar.gz"  # required for build haproxy
+haproxy_src_repo: "https://www.haproxy.org/download/{{ haproxy_major }}/src/haproxy-{{ haproxy_version }}.tar.gz"
+haproxy_compile_requirements:
+  - unzip
+  - gzip
+  - make
+  - gcc
+  - build-essential
+  - libc6-dev
+  - libpcre3-dev
+  - liblua5.3-dev
+  - libreadline-dev
+  - zlib1g-dev
+  - libsystemd-dev
+  - ca-certificates
+  - libssl-dev
+
+
+# ================================================================================================= #
+# Offline installation (if installation_method: "file")
+#
+# You can also download the necessary packages into /autobase/automation/files/ directory.
+# Packages from this directory will be used for installation.
+
+# if installation_method: "file" and patroni_installation_method: "deb"
+patroni_deb_package_file: "patroni_3.3.0-1.pgdg22.04%2B1_all.deb"
+# (package for Ubuntu 22.04) https://apt.postgresql.org/pub/repos/apt/pool/main/p/patroni/
+
+# if installation_method: "file" and patroni_installation_method: "pip"
+pip_package_file: "pip-24.2.tar.gz"  # https://pypi.org/project/pip/#files
+patroni_pip_requirements_file: []
+#  - "setuptools-41.2.0.zip"  # https://pypi.org/project/setuptools/#files
+#  - "setuptools_scm-3.3.3.tar.gz"  # https://pypi.org/project/setuptools-scm/#files
+#  - "urllib3-1.24.3.tar.gz"  # https://pypi.org/project/urllib3/1.24.3/#files
+#  - "PyYAML-5.1.2.tar.gz"  # https://pypi.org/project/PyYAML/#files
+#  - "chardet-3.0.4.tar.gz"  # https://pypi.org/project/chardet/#files # (required for "requests")
+#  - "idna-2.8.tar.gz"  # https://pypi.org/project/idna/#files    # (required for "requests")
+#  - "certifi-2019.9.11.tar.gz"  # https://pypi.org/project/certifi/#files # (required for "requests")
+#  - "requests-2.22.0.tar.gz"  # https://pypi.org/project/requests/#files
+#  - "six-1.12.0.tar.gz"  # https://pypi.org/project/six/#files
+#  - "kazoo-2.6.1.tar.gz"  # https://pypi.org/project/kazoo/#files
+#  - "dnspython-1.16.0.zip"  # https://pypi.org/project/dnspython/#files # (required for "python-etcd")
+#  - "python-etcd-0.4.5.tar.gz"  # https://pypi.org/project/python-etcd/#files
+#  - "Click-7.0.tar.gz"  # https://pypi.org/project/click/#files
+#  - "prettytable-0.7.2.tar.gz"  # https://pypi.org/project/PrettyTable/#files
+#  - "pytz-2019.2.tar.gz"  # https://pypi.org/project/pytz/#files # (required for "tzlocal")
+#  - "tzlocal-2.0.0.tar.gz"  # https://pypi.org/project/tzlocal/#files
+#  - "wheel-0.33.6.tar.gz"  # https://pypi.org/project/wheel/#files
+#  - "python-dateutil-2.8.0.tar.gz"  # https://pypi.org/project/python-dateutil/#files
+#  - "psutil-5.6.3.tar.gz"  # https://pypi.org/project/psutil/#files
+#  - "cdiff-1.0.tar.gz"  # https://pypi.org/project/cdiff/#files
+patroni_pip_package_file: []
+#  - "patroni-3.3.2.tar.gz"  # https://pypi.org/project/patroni/#files
+
+# additional packages
+etcd_package_file: "etcd-v3.5.15-linux-amd64.tar.gz"  # https://github.com/etcd-io/etcd/releases
+vip_manager_package_file: "vip-manager_2.6.0_Linux_x86_64.deb"  # https://github.com/cybertec-postgresql/vip-manager/releases
+wal_g_package_file: "wal-g-pg-ubuntu20.04-aarch64.tar.gz"  # https://github.com/wal-g/wal-g/releases
+
+# if with_haproxy_load_balancing: true
+haproxy_package_file: []
+#  - "haproxy_1.8.25-1~bpo9+1_amd64.deb"
+confd_package_file: "confd-0.16.0-linux-amd64"  # https://github.com/kelseyhightower/confd/releases
+
+# if haproxy_installation_method: 'src' (optional)
+lua_src_file: "lua-5.3.5.tar.gz"  # https://www.lua.org/ftp/lua-5.3.5.tar.gz (required for build haproxy)
+haproxy_src_file: "haproxy-1.8.31.tar.gz"  # http://www.haproxy.org/download/1.8/src/
+
+# ------------------------------------------------------------------------------------------------- #
+# (optional) Specify additional deb packages if required (for any installation_method)
+# this packages will be installed before all other packages.
+packages_from_file: []
+#  - "my-package-name_1_amd64.deb"
+#  - "my-package-name_2_amd64.deb"
+#  - ""
+
+# ----------------------------------------------------------------------------------------------------------------------------------
+# Attention! If you want to use the installation method "file".
+# You need to independently determine all the necessary the dependencies of deb packages for your version of the Linux distribution.
+# ----------------------------------------------------------------------------------------------------------------------------------
+
+...
