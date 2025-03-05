@@ -278,8 +278,8 @@
       retries: 3
   vars:
     pgvectorscale_repo: "https://github.com/timescale/pgvectorscale/releases/download/{{ pgvectorscale_version }}"
-    pgvectorscale_archive: "pgvectorscale-{{ pgvectorscale_version }}-pg{{ pg_version | default(postgresql_version) }}-amd64.zip" # yamllint disable rule:line-length
-    pgvectorscale_package: "pgvectorscale-postgresql-{{ pg_version | default(postgresql_version) }}_{{ pgvectorscale_version }}-Linux_amd64.deb" # yamllint disable rule:line-length
+    pgvectorscale_archive: "pgvectorscale-{{ pgvectorscale_version }}-pg{{ pg_version | default(postgresql_version) }}-{{ pgvectorscale_architecture_map[ansible_architecture] }}.zip" # yamllint disable rule:line-length
+    pgvectorscale_package: "pgvectorscale-postgresql-{{ pg_version | default(postgresql_version) }}_{{ pgvectorscale_version }}-Linux_{{ pgvectorscale_architecture_map[ansible_architecture] }}.deb" # yamllint disable rule:line-length
   when:
     - enable_pgvectorscale | default(false) | bool
     - ansible_os_family == "Debian"

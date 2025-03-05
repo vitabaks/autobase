@@ -72,7 +72,6 @@
         # enable_citus: true  # TODO Postgres 17
         enable_paradedb: "{{ 'false' if ansible_distribution_release == 'bullseye' else 'true' }}"  # pg_search and pg_analytics (no packages for debian 11)
         enable_pgvectorscale: "{{ 'true' if ansible_distribution_release in ['bookworm', 'jammy', 'noble'] else 'false' }}" # only deb packages are available
-        pgvectorscale_version: "0.5.1"  # TODO (v0.6.0 does not contain packages)
         # create extension
         postgresql_schemas:
           - { schema: "paradedb", db: "postgres", owner: "postgres" }  # pg_search must be installed in the paradedb schema.
