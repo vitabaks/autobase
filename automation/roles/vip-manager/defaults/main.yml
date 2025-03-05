@@ -1,6 +1,6 @@
 ---
 
-etcd_architecture_map:
+vip_manager_architecture_map:
   # this first entry seems redundant
   # (but it's required for reasons)
   amd64: x86_64
