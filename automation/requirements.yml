@@ -10,3 +10,7 @@ collections:
     version: "==1.27.0"
   - name: hetzner.hcloud
     version: "==4.2.2"
+  - name: ansible.windows
+    version: "==2.7.0"
+  - name: community.postgresql
+    version: "==3.10.2"
