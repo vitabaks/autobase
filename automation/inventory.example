@@ -54,6 +54,12 @@ replica
 #ansible_user='postgres'
 #ansible_ssh_pass='secretpassword'
 
+[master:vars]
+is_master=true
+
+[replica:vars]
+is_master=false
+
 # Connection settings
 [all:vars]
 ansible_connection='ssh'
