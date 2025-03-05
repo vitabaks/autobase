@@ -126,13 +126,14 @@
 
     # Enable Debuginfo repository
     - block:
-        # - name: Enable PostgreSQL debuginfo repository
-        #   ansible.builtin.shell: |
-        #     set -o pipefail;
-        #     sed -i '/\[pgdg[0-9]*-debuginfo\]/,/^$/ s/enabled=0/enabled=1/' {{ pgdg_redhat_repo_path }}
-        #     sed -i '/\[pgdg[0-9]*-debuginfo\]/,/^$/ s/gpgcheck=1/gpgcheck=0/' {{ pgdg_redhat_repo_path }}
-        #   vars:
-        #     pgdg_redhat_repo_path: '/etc/yum.repos.d/pgdg-redhat-all.repo'
+        - name: Enable PostgreSQL debuginfo repository
+          when: ansible_architecture in ['x86_64', 'amd64']
+          ansible.builtin.shell: |
+            set -o pipefail;
+            sed -i '/\[pgdg[0-9]*-debuginfo\]/,/^$/ s/enabled=0/enabled=1/' {{ pgdg_redhat_repo_path }}
+            sed -i '/\[pgdg[0-9]*-debuginfo\]/,/^$/ s/gpgcheck=1/gpgcheck=0/' {{ pgdg_redhat_repo_path }}
+          vars:
+            pgdg_redhat_repo_path: '/etc/yum.repos.d/pgdg-redhat-all.repo'
 
         # Check if the repository entry exists in the file
         - name: Check if pgdg{{ postgresql_version }}-debuginfo exists in repo file
