@@ -131,7 +131,7 @@
           port: "{{ pgbouncer_listen_port }}"
           superuser: "{{ superuser_username }}"
           password: "{{ superuser_password }}"
-      when: not with_haproxy_load_balancing | bool
+      when: not with_haproxy_load_balancing | bool and pgbouncer_install | bool
 
     # if 'with_haproxy_load_balancing' is 'false' and 'pgbouncer_install' is 'false'
     - name: Connection info
