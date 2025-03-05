@@ -98,14 +98,14 @@
             - ansible_distribution == "OracleLinux"
             - ansible_distribution_major_version is version("8", ">=")
       vars:
-        pg_devel_package: "postgresql{{ postgresql_version | string | replace(".", "") }}-devel"
+        pg_devel_package: "postgresql{{ postgresql_version | string | replace('.', '') }}-devel"
       when:
         - pg_devel_package in postgresql_packages
 
     # Install PostgreSQL Repository
     - name: Get pgdg-redhat-repo-latest.noarch.rpm
       ansible.builtin.get_url:
-        url: "https://download.postgresql.org/pub/repos/yum/reporpms/EL-{{ ansible_distribution_major_version }}-{{ pgdg_architecture_map[ansible_architecture]}}/pgdg-redhat-repo-latest.noarch.rpm"
+        url: "https://download.postgresql.org/pub/repos/yum/reporpms/EL-{{ ansible_distribution_major_version }}-{{ pgdg_architecture_map[ansible_architecture] }}/pgdg-redhat-repo-latest.noarch.rpm"
         dest: /tmp/
         timeout: 30
         validate_certs: false
@@ -130,8 +130,8 @@
           when: ansible_architecture in ["x86_64", "amd64"]
           ansible.builtin.shell: |
             set -o pipefail;
-            sed -i "/\[pgdg[0-9]*-debuginfo\]/,/^$/ s/enabled=0/enabled=1/" {{ pgdg_redhat_repo_path }}
-            sed -i "/\[pgdg[0-9]*-debuginfo\]/,/^$/ s/gpgcheck=1/gpgcheck=0/" {{ pgdg_redhat_repo_path }}
+            sed -i '/\[pgdg[0-9]*-debuginfo\]/,/^$/ s/enabled=0/enabled=1/' {{ pgdg_redhat_repo_path }}
+            sed -i '/\[pgdg[0-9]*-debuginfo\]/,/^$/ s/gpgcheck=1/gpgcheck=0/' {{ pgdg_redhat_repo_path }}
           vars:
             pgdg_redhat_repo_path: "/etc/yum.repos.d/pgdg-redhat-all.repo"
 

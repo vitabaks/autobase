@@ -54,7 +54,7 @@ os_specific_packages:
     - python3-policycoreutils
     - dnf-utils
 system_packages:
-  - "{{ os_specific_packages[ansible_os_family ~ "-" ~ ansible_distribution_major_version] }}"
+  - "{{ os_specific_packages[ansible_os_family ~ '-' ~ ansible_distribution_major_version] }}"
   - python{{ python_version }}
   - python{{ python_version }}-devel
   - python{{ python_version }}-psycopg2
