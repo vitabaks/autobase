@@ -158,10 +158,10 @@ func (s *dbStorage) GetSettingByName(ctx context.Context, name string) (*Setting
 
 func (s *dbStorage) UpdateSetting(ctx context.Context, name string, value interface{}) (*Setting, error) {
 	setting, err := QueryRowToStruct[Setting](ctx, s.db,
-		`update settings set
-				setting_value = $1
-				where setting_name = $2
-				returning *`,
+		`update settings set 
+                    setting_value = $1
+                    where setting_name = $2
+                    returning *`,
 		value, name)
 	if err != nil {
 		return nil, err
@@ -239,11 +239,11 @@ func (s *dbStorage) DeleteProject(ctx context.Context, id int64) error {
 
 func (s *dbStorage) UpdateProject(ctx context.Context, id int64, name, description *string) (*Project, error) {
 	project, err := QueryRowToStruct[Project](ctx, s.db,
-		`update projects set
-			project_name = coalesce($1, project_name),
-			project_description = coalesce($2, project_description)
-			where project_id = $3
-			returning *`,
+		`update projects set 
+                    project_name = coalesce($1, project_name),
+                    project_description = coalesce($2, project_description)
+                    where project_id = $3
+                    returning *`,
 		name, description, id)
 	if err != nil {
 		return nil, err
@@ -448,8 +448,8 @@ func (s *dbStorage) GetExtensions(ctx context.Context, req *GetExtensionsReq) ([
 	}
 
 	subQuery := ` WHERE (e.postgres_min_version IS NULL OR e.postgres_min_version::float <= $1)
-								AND (e.postgres_max_version IS NULL OR e.postgres_max_version::float >= $1)
-								AND ($2 = 'all' OR ($2 = 'contrib' AND e.contrib = true) OR ($2 = 'third_party' AND e.contrib = false))`
+          			AND (e.postgres_max_version IS NULL OR e.postgres_max_version::float >= $1)
+          			AND ($2 = 'all' OR ($2 = 'contrib' AND e.contrib = true) OR ($2 = 'third_party' AND e.contrib = false))`
 
 	count, err := QueryRowToScalar[int64](ctx, s.db, "select count(*) from extensions as e "+subQuery, req.PostgresVersion, req.Type)
 	if err != nil {
@@ -484,8 +484,8 @@ func (s *dbStorage) UpdateCluster(ctx context.Context, req *UpdateClusterReq) (*
 	cluster, err := QueryRowToStruct[Cluster](ctx, s.db,
 		`update clusters
 		set connection_info = coalesce($1, connection_info),
-			cluster_status = coalesce($2, cluster_status),
-			flags = coalesce($3, flags)
+		    cluster_status = coalesce($2, cluster_status),
+		    flags = coalesce($3, flags)
 		where cluster_id = $4 returning *`,
 		req.ConnectionInfo, req.Status, req.Flags, req.ID)
 	if err != nil {
@@ -639,12 +639,12 @@ func (s *dbStorage) DeleteCluster(ctx context.Context, id int64) error {
 
 func (s *dbStorage) DeleteClusterSoft(ctx context.Context, id int64) error {
 	query := `
-		update clusters
-		set
+	  update clusters
+	  set
 		deleted_at = current_timestamp,
 		secret_id = null,
 		cluster_name = cluster_name || '_deleted_' || to_char(current_timestamp, 'yyyymmddhh24miss')
-		where
+	  where
 		cluster_id = $1
 	`
 	_, err := s.db.Exec(ctx, query, id)
@@ -675,7 +675,7 @@ func (s *dbStorage) UpdateOperation(ctx context.Context, req *UpdateOperationReq
 	operation, err := QueryRowToStruct[Operation](ctx, s.db,
 		`update operations
 		set operation_status = coalesce($1, operation_status),
-			operation_log = case when $2::text is null then operation_log else concat(operation_log, CHR(10), $2::text) end
+		    operation_log = case when $2::text is null then operation_log else concat(operation_log, CHR(10), $2::text) end
 		where id = $3 returning id, project_id, cluster_id, docker_code, cid, operation_type, operation_status, null, created_at, updated_at`,
 		req.Status, req.Logs, req.ID)
 	if err != nil {
@@ -761,7 +761,7 @@ func (s *dbStorage) GetOperation(ctx context.Context, id int64) (*Operation, err
 }
 
 func (s *dbStorage) CreateServer(ctx context.Context, req *CreateServerReq) (*Server, error) {
-	server, err := QueryRowToStruct[Server](ctx, s.db, `insert into servers(cluster_id, server_name, server_location, ip_address)
+	server, err := QueryRowToStruct[Server](ctx, s.db, `insert into servers(cluster_id, server_name, server_location, ip_address)	
 			values($1, $2, $3, $4) returning *`, req.ClusterID, req.ServerName, req.ServerLocation, req.IpAddress)
 	if err != nil {
 		return nil, err
@@ -790,15 +790,15 @@ func (s *dbStorage) GetClusterServers(ctx context.Context, clusterID int64) ([]S
 
 func (s *dbStorage) UpdateServer(ctx context.Context, req *UpdateServerReq) (*Server, error) {
 	server, err := QueryRowToStruct[Server](ctx, s.db,
-		`insert into servers(cluster_id, ip_address, server_name, server_role, server_status, timeline, lag, tags, pending_restart)
+		`insert into servers(cluster_id, ip_address, server_name, server_role, server_status, timeline, lag, tags, pending_restart)	
 					values($1, $2, $3, $4, $5, $6, $7, $8, $9) on conflict(cluster_id, ip_address) do update
-						set server_name = case when EXCLUDED.server_name = '' then servers.server_name else EXCLUDED.server_name end,
-							server_role = coalesce(EXCLUDED.server_role, servers.server_role),
-							server_status = coalesce(EXCLUDED.server_status, servers.server_status),
-							timeline = coalesce(EXCLUDED.timeline, servers.timeline),
-							lag = EXCLUDED.lag,
-							tags = coalesce(EXCLUDED.tags, servers.tags),
-							pending_restart = coalesce(EXCLUDED.pending_restart, servers.pending_restart) returning *`,
+					    set server_name = case when EXCLUDED.server_name = '' then servers.server_name else EXCLUDED.server_name end,
+        					server_role = coalesce(EXCLUDED.server_role, servers.server_role),
+        					server_status = coalesce(EXCLUDED.server_status, servers.server_status),
+        					timeline = coalesce(EXCLUDED.timeline, servers.timeline),
+        					lag = EXCLUDED.lag,
+        					tags = coalesce(EXCLUDED.tags, servers.tags),
+        					pending_restart = coalesce(EXCLUDED.pending_restart, servers.pending_restart) returning *`,
 		req.ClusterID, req.IpAddress, req.Name, req.Role, req.Status, req.Timeline, req.Lag, req.Tags, req.PendingRestart)
 	if err != nil {
 		return nil, err

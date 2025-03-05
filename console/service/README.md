@@ -5,30 +5,24 @@ Server-side component for autobase console. This REST service implements the API
 The project is written in `Go` and uses [Swagger](https://github.com/go-swagger/go-swagger) for server-side code generation. The server receives requests from the web to create and manage clusters. Under the hood, the server uses Docker to run `autobase/automation` image with Ansible playbooks for cluster deployment logic.
 
 ## Build
-
 Swagger specification is used for creating the server REST API. First, you need to install the Swagger tool to build the auto-generated Go files.
-
 ```
 export dir=$$(mktemp -d)
 git clone https://github.com/go-swagger/go-swagger "$$dir"
 cd "$$dir"
 go install ./cmd/swagger
 ```
-
 Then, you need to generate the server-side files:
-
 ```
 swagger generate server --name DbConsole --spec api/swagger.yaml --principal interface{} --exclude-main
 ```
 
 After that, you can build the server with the following command:
-
 ```
 go build -o pg-console main.go
 ```
 
 The project also contains a Makefile with all commands, so you can simply run the following steps:
-
 ```
 make swagger_install
 make swagger
@@ -36,9 +30,7 @@ make build
 ```
 
 ## Configuration
-
 Server is configured via the environment. The following environment variables can be used:
-
 ```
 KEY                                   TYPE                DEFAULT                              REQUIRED    DESCRIPTION
 PG_CONSOLE_LOGGER_LEVEL               String              DEBUG                                            Log level. Accepted values: [TRACE, DEBUG, INFO, WARN, ERROR, FATAL, PANIC]
@@ -75,7 +67,6 @@ PG_CONSOLE_CLUSTERWATCHER_POOLSIZE    Integer             4                     
 Note: Be attention to use `TRACE` level of logging. With `TRACE` level some kind of secrets can be present in logs.
 
 ## Project structure
-
 ```
 |-api - Swagger specification
 |-internal - Folder with all internal logic
@@ -95,10 +86,10 @@ Note: Be attention to use `TRACE` level of logging. With `TRACE` level some kind
 | |-watcher - Async watchers
 | | |-log_collector.go - Collecting logs from running Docker containers
 | | |-log_watcher.go - JSON container log parser
-| | |-cluster_watcher.go - Collecting cluster statuses
+| | |-cluster_watcher.go - Collecting cluster statuses  
 | |-xdocker - Basic logic for Docker
 |-middleware - Common REST middleware for the server
-|-migrations - DB migration logic
+|-migrations - DB migration logic   
 |-pkg - Folder with common logic
 | |-patroni - Client for Patroni integration
 | |-tracer - Base structure for tracing
@@ -108,8 +99,7 @@ Note: Be attention to use `TRACE` level of logging. With `TRACE` level some kind
 ```
 
 ## Secrets
-
 The server handles different kinds of secrets, such as:
 
-- Cloud secrets used for cloud connections
-- SSH keys and passwords for connection to own machine servers
+* Cloud secrets used for cloud connections
+* SSH keys and passwords for connection to own machine servers

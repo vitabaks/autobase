@@ -25,14 +25,14 @@ export const useGetConnectionInfoConfig = ({ connectionInfo }: { connectionInfo:
           },
         ]
       : typeof collection === 'object'
-        ? (Object.entries(collection)?.map(([key, value]) => ({
+        ? Object.entries(collection)?.map(([key, value]) => ({
             title: `${defaultLabel} ${key}`,
             children: (
               <ConnectionInfoRowContainer>
                 <Typography>{value}</Typography> <CopyIcon valueToCopy={value} />
               </ConnectionInfoRowContainer>
             ),
-          })) ?? [])
+          })) ?? []
         : [];
   };
 

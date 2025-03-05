@@ -123,18 +123,18 @@ export type GetClustersApiArg = {
   /** Created at till this date */
   createdAtTo?: string;
   /** Sort by fields. Example: sort_by=id,-name,created_at,updated_at
-  Supported values:
-    - id
-    - name
-    - created_at
-    - updated_at
-    - environment
-    - project
-    - status
-    - location
-    - server_count
-    - postgres_version
-  */
+   Supported values:
+   - id
+   - name
+   - created_at
+   - updated_at
+   - environment
+   - project
+   - status
+   - location
+   - server_count
+   - postgres_version
+   */
   sortBy?: string;
 };
 export type GetClustersDefaultNameApiResponse = /** status 200 OK */ ResponseClusterDefaultName;
