@@ -310,7 +310,7 @@
           retries: 3
           vars:
             pg_search_repo: "https://github.com/paradedb/paradedb/releases/download/v{{ pg_search_version }}/"
-            pg_search_package: "{{ pg_search_repo }}/postgresql-{{ pg_version | default(postgresql_version) }}-pg-search_{{ pg_search_version }}-1PARADEDB-{{ ansible_distribution_release }}_amd64.deb" # yamllint disable rule:line-length
+            pg_search_package: "{{ pg_search_repo }}/postgresql-{{ pg_version | default(postgresql_version) }}-pg-search_{{ pg_search_version }}-1PARADEDB-{{ ansible_distribution_release }}_{{ pg_search_architecture_map[ansible_architecture] }}.deb" # yamllint disable rule:line-length
           when:
             - ansible_os_family == "Debian"
             - ansible_distribution_release in ['bookworm', 'jammy', 'noble']
