@@ -1,4 +1,6 @@
 ---
+# yamllint disable rule:line-length
+
 # PostgreSQL variables
 #
 # You can specify custom data dir path. Example: "/pgdata/{{ postgresql_version }}/data"

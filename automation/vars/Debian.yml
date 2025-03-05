@@ -1,4 +1,6 @@
 ---
+# yamllint disable rule:line-length
+
 # PostgreSQL variables
 postgresql_cluster_name: 'main'
 # You can specify custom data dir path. Example: "/pgdata/{{ postgresql_version }}/main"
