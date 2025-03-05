@@ -7,7 +7,16 @@
 - name: Molecule.tests.variables.asserts.vip_manager_package_repo| Common | Setting vip_manager_version
   run_once: true
   ansible.builtin.set_fact:
-    vip_manager_version: "1.0.0"
+    vip_manager_version: "3.0.0"
+
+- name: Molecule.tests.variables.asserts.vip_manager_package_repo| Common | Setting vip_manager_architecture_map
+  ansible.builtin.set_fact:
+    vip_manager_architecture_map:
+      amd64: x86_64
+      x86_64: x86_64
+      aarch64: arm64
+      arm64: arm64
+  when: vip_manager_architecture_map is not defined
 
 # ===============================================
 # 💾 Start Debian-specific operations and tests
