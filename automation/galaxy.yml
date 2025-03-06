@@ -1,3 +1,4 @@
+---
 ### REQUIRED
 namespace: autobase
 
@@ -19,7 +20,7 @@ license:
 # requirements as 'namespace' and 'name'
 tags: ['tools']
 
-dependencies: {}
+dependencies: { }
 
 repository: fixme
 
