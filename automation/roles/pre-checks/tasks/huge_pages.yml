@@ -99,7 +99,7 @@
         - shared_buffers_gb | default(0) | int >= (min_shared_buffers_gb | default(8))
 
     # if huge_pages_auto_conf is true
-    - name: 'HugePages | Specify "vm.nr_hugepages" with value "{{ huge_pages_required }}" in sysctl_conf variable'
+    - name: "HugePages | Specify vm.nr_hugepages with value {{ huge_pages_required }} in sysctl_conf variable"
       ansible.builtin.set_fact:
         sysctl_conf:
           postgres_cluster: >-
