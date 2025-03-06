@@ -100,7 +100,9 @@
         group: root
         state: link
       when: not pgbouncer_bin.stat.exists
-  when: ansible_os_family == "RedHat" and postgresql_packages|join(" ") is search("postgrespro")
+  when:
+    - ansible_os_family == "RedHat"
+    - postgresql_packages|join(" ") is search("postgrespro")
   tags: pgbouncer_service, pgbouncer
 
 - name: Enable log rotation with logrotate
