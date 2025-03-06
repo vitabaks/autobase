@@ -3,19 +3,6 @@
 
 # RedHat
 - name: Install perf
-  ansible.builtin.yum:
-    name: perf
-    state: present
-    disablerepo: "pgdg*"
-  register: package_status
-  until: package_status is success
-  delay: 5
-  retries: 3
-  when:
-    - ansible_os_family == "RedHat"
-    - ansible_distribution_major_version == '7'
-
-- name: Install perf
   ansible.builtin.dnf:
     name: perf
     state: present
@@ -24,9 +11,7 @@
   until: package_status is success
   delay: 5
   retries: 3
-  when:
-    - ansible_os_family == "RedHat"
-    - ansible_distribution_major_version >= '8'
+  when: ansible_os_family == "RedHat"
 
 # Debian
 - name: Install perf
@@ -37,8 +22,7 @@
   until: apt_status is success
   delay: 5
   retries: 3
-  when:
-    - ansible_os_family == "Debian"
+  when: ansible_os_family == "Debian"
 
 # Check if perf is installed correctly, or build a perf from the source code
 - name: Check if perf is installed
