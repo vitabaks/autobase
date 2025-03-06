@@ -378,4 +378,3 @@
   when: (enable_paradedb | default(false) | bool) or (enable_pg_search | default(false) | bool) or (enable_pg_analytics | default(false) | bool)
   tags: paradedb, pg_search, pg_analytics
 # Note: We use the 'pg_version' variable to be able to reuse this code in the upgrade role.
-

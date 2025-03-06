@@ -25,25 +25,26 @@ cd autobase/console/ui
 
 2. **Install dependencies**
 
-`yarn install`
+```yarn install```
 
 3. **Start development server**
 
-`yarn run dev`
+```yarn run dev```
 
 ## Usage
 
 ### Running the App in Development Mode
 
-1. Ensure you have installed all dependencies with `yarn install`.
-2. Start the development server with `yarn run dev`.
-3. Browser with app should open automatically. If this didn't happen open your browser and navigate to http://localhost:5173.
+1. Ensure you have installed all dependencies with ```yarn install```.
+2. Start the development server with ```yarn run dev```.
+3. Browser with app should open automatically. If this didn't happen open your browser and navigate
+   to http://localhost:5173.
 
 ### Building for Production
 
 To create a production build:
 
-`yarn run build`
+```yarn run build```
 
 The optimized build will be output to the `dist` folder. You can then serve this with any static server.
 
@@ -69,13 +70,13 @@ The optimized build will be output to the `dist` folder. You can then serve this
 There are several env variables that configure UI:
 
 | KEY                                          | DEFAULT                      | DESCRIPTION                                                 |
-| -------------------------------------------- | ---------------------------- | ----------------------------------------------------------- |
+|----------------------------------------------|------------------------------|-------------------------------------------------------------|
 | PG_CONSOLE_API_URL                           | http://localhost:8080/api/v1 | Default API URL where frontend will be sending requests to. |
 | PG_CONSOLE_AUTHORIZATION_TOKEN               | auth_token                   | Reference auth token that will be used for login.           |
-| PG_CONSOLE_CLUSTERS_POLLING_INTERVAL         | 60000                        | Clusters table refresh interval in milliseconds.            |
-| PG_CONSOLE_CLUSTER_OVERVIEW_POLLING_INTERVAL | 60000                        | Cluster overview refresh interval in milliseconds.          |
-| PG_CONSOLE_OPERATIONS_POLLING_INTERVAL       | 60000                        | Operations table refresh interval in milliseconds.          |
-| PG_CONSOLE_OPERATION_LOGS_POLLING_INTERVAL   | 10000                        | Operation logs refresh interval in milliseconds.            |
+| PG_CONSOLE_CLUSTERS_POLLING_INTERVAL         | 60000                        | Clusters table refresh interval in milliseconds.                 |
+| PG_CONSOLE_CLUSTER_OVERVIEW_POLLING_INTERVAL | 60000                        | Cluster overview refresh interval in milliseconds.               |
+| PG_CONSOLE_OPERATIONS_POLLING_INTERVAL       | 60000                        | Operations table refresh interval in milliseconds.               |
+| PG_CONSOLE_OPERATION_LOGS_POLLING_INTERVAL   | 10000                        | Operation logs refresh interval in milliseconds.                 |
 
 ## Architecture
 
@@ -89,29 +90,30 @@ responsibility, to promote isolation, reusability, and easy maintenance.
 
 1. **App Layer**
 
-   - Description: This is the top-level layer, responsible for initializing the application, setting up providers (like routers, states, etc.), and global styles.
+   - Description: This is the top-level layer, responsible for initializing the application, setting up providers (like
+     routers, states, etc.), and global styles.
    - Contents:
    - App: Main application component that integrates all providers and initializes the app.
    - providers: Context providers such as Redux Provider, Router, Theme, etc.
    - styles: Global styles and theming.
 
-1. **Pages Layer**
+2. **Pages Layer**
 
    - Description: Represents the application screens or pages. Each page can consist of multiple features and/or entities.
    - Contents: Page components like AddCluster, Login, 404, etc.
 
-1. **Features Layer**
+3. **Features Layer**
 
    - Description: This layer contains interactive components such as buttons, modals, etc.
    - Contents: Feature components like AddSecret, LogoutButton, OperationsTableRowActions, etc.
 
-1. **Entities Layer**
+4. **Entities Layer**
 
    - Description: Contains core business entities of the application. Additionally, reusable form parts are also made
      entities.
    - Contents: Entities like SidebarItem, SecretFormBlock, etc.
 
-1. **Shared Layer**
+5. **Shared Layer**
 
    - Description: This is the foundational layer. It includes utilities, shared components, constants, and other reusable
      elements that can be used across features, entities, or pages.

@@ -321,16 +321,16 @@ paths:
           type: string
           description: "Sort by fields. Example: sort_by=id,-name,created_at,updated_at\n
           Supported values:\n
-            - id\n
-            - name\n
-            - created_at\n
-            - updated_at\n
-            - environment\n
-            - project\n
-            - status\n
-            - location\n
-            - server_count\n
-            - postgres_version\n"
+           - id\n
+           - name\n
+           - created_at\n
+           - updated_at\n
+           - environment\n
+           - project\n
+           - status\n
+           - location\n
+           - server_count\n
+           - postgres_version\n"
       responses:
         '200':
           description: OK
@@ -433,7 +433,6 @@ paths:
           description: Error
           schema:
             $ref: "#/definitions/Response.Error"
-
 
   # TODO: not implemented yet
   /clusters/{id}/reinit:
@@ -835,14 +834,14 @@ paths:
           type: string
           description: "Sort by fields. Example: sort_by=cluster_name,-type,status,id,created_at,updated_at\n
           Supported valuese:\n
-            - id\n
-            - cluster_name\n
-            - type\n
-            - status\n
-            - started_at\n
-            - updated_at\n
-            - cluster\n
-            - environment\n"
+           - id\n
+           - cluster_name\n
+           - type\n
+           - status\n
+           - started_at\n
+           - updated_at\n
+           - cluster\n
+           - environment\n"
         - name: limit
           in: query
           required: false
@@ -1548,7 +1547,6 @@ definitions:
       description:
         type: string
         example: "environment for production"
-
 
   Response.OperationsList:
     type: object

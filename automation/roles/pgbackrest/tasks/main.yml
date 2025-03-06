@@ -7,7 +7,8 @@
     - pgbackrest_auto_conf | default(true) | bool # to be able to disable auto backup settings
   tags: pgbackrest, pgbackrest_conf
 
-- block: # Debian pgdg repo
+- block:
+    # Debian pgdg repo
     - name: Make sure the gnupg, apt-transport-https and python3-debian packages are present
       ansible.builtin.apt:
         pkg:
@@ -46,7 +47,8 @@
     - pgbackrest_install_from_pgdg_repo|bool
   tags: pgbackrest, pgbackrest_repo, pgbackrest_install
 
-- block: # RedHat pgdg repo
+- block:
+    # RedHat pgdg repo
     - name: Get pgdg-redhat-repo-latest.noarch.rpm
       ansible.builtin.get_url:
         url: "https://download.postgresql.org/pub/repos/yum/reporpms/EL-{{ ansible_distribution_major_version }}-x86_64/pgdg-redhat-repo-latest.noarch.rpm"
@@ -232,8 +234,7 @@
 # if 'pgbackrest_repo_host' or 'backup-standby' are specified
 - ansible.builtin.import_tasks: ssh_keys.yml
   when:
-    - (pgbackrest_repo_host is defined and pgbackrest_repo_host | length > 0) or
-      (pgbackrest_conf.global | selectattr('option', 'equalto', 'backup-standby') | map(attribute='value') | list | last | default('') == 'y')
+    - (pgbackrest_repo_host is defined and pgbackrest_repo_host | length > 0) or (pgbackrest_conf.global | selectattr('option', 'equalto', 'backup-standby') | map(attribute='value') | list | last | default('') == 'y')
     - not ansible_check_mode
   tags: pgbackrest, pgbackrest_ssh_keys
 
@@ -248,4 +249,3 @@
 #    - patroni_cluster_bootstrap_method == "pgbackrest"
 #    - "'postgres_cluster' in group_names"
 #  tags: pgbackrest, pgbackrest_bootstrap_script
-

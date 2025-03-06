@@ -7,4 +7,3 @@
   args:
     executable: /bin/bash
   ignore_errors: true # if there is an error, show the message and continue
-

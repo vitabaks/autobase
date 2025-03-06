@@ -63,4 +63,3 @@
     path: "~{{ ssh_key_user }}/.ssh/known_hosts"
   loop: "{{ ssh_known_host_results.results }}"
   no_log: true # don't show public keys
-

@@ -10,6 +10,8 @@ skip_list:
   - package-latest
   - key-order[task]
   - var-naming[no-role-prefix]
+  - yaml[indentation]
+  - yaml[line-length]
   - name[missing]
   - name[template]
   - name[casing] # TODO: All names should start with an uppercase letter.
