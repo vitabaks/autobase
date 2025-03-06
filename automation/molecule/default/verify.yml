@@ -16,7 +16,7 @@
     # Including the dcs_type variable redefined in converge.yml
     - name: Molecule.default.verify | Include dcs_type Variable
       ansible.builtin.include_vars:
-        file: ../../vars/dcs_type.yml
+        file: ../../dcs_type.yml
 
     # 🔄 Including OS-specific variables
     # These variables are specific to the operating system on which the playbook is running

@@ -6,5 +6,5 @@
   tasks:
     - name: Delete dcs_type.yml file
       ansible.builtin.file:
-        path: "../../vars/dcs_type.yml"
+        path: "../../dcs_type.yml"
         state: absent

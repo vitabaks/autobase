@@ -30,7 +30,7 @@
         content: |
           ---
           dcs_type: "{{ dcs_type }}"
-        dest: "../../vars/dcs_type.yml"
+        dest: "../../dcs_type.yml"
       delegate_to: localhost
       run_once: true # noqa run-once
 
