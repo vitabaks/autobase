@@ -93,7 +93,7 @@ If these checks pass, the playbook switches back to the old PostgreSQL paths and
 | `pgbackrest_stanza_upgrade` | Perform the "stanza-upgrade" command after the upgrade (if 'pgbackrest_install' is 'true'). | `true` |
 
 Note: For variables marked as "Derived value", the default value is determined based on other variables. \
-Please see the variable file vars/[upgrade.yml](../../roles/common/defaults/upgrade.yml)
+Please see the [upgrade.yml](../common/defaults/upgrade.yml) variable file.
 
 ---
 
