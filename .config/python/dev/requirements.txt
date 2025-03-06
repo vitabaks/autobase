@@ -12,7 +12,7 @@ click==8.1.7
 cryptography==44.0.0
 filelock==3.16.1
 flake8==7.1.1
-Jinja2==3.1.4
+Jinja2==3.1.6
 jsonschema==4.23.0
 jsonschema-specifications==2024.10.1
 markdown-it-py==3.0.0
