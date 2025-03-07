@@ -34,8 +34,8 @@ RUN apt-get update \
   tree \
   vim \
   wget \
-  && python3 -m pip install --no-cache-dir --upgrade pip \
-  && python3 -m pip install --no-cache-dir virtualenv
+  && python3 -m pip install --no-cache-dir --upgrade pip --break-system-packages \
+  && python3 -m pip install --no-cache-dir virtualenv --break-system-packages
 
 # Install Docker
 FROM builder as docker-installer
