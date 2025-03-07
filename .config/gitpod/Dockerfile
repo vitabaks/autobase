@@ -8,9 +8,9 @@ USER root
 COPY .config/python_version.config /tmp/
 
 # Set a variable for the npm version
-ARG NPM_VERSION=9.6.7
+ARG NPM_VERSION=11.2.0
 # Set a variable for the ungit version
-ARG UNGIT_VERSION=1.5.23
+ARG UNGIT_VERSION=1.5.28
 # Set a variable for the prettier version
 ARG PRETTIER_VERSION=3.5.3
 # Set a variable for the editorconfig-checker version
