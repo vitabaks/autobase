@@ -378,19 +378,19 @@
 
     # optional
     - role: postgresql-users
-      when: is_master | bool and postgresql_users | length > 0
+      when: inventory_hostname == groups['master'][0]
 
     - role: postgresql-databases
-      when: is_master | bool and postgresql_databases | length > 0
+      when: inventory_hostname == groups['master'][0]
 
     - role: postgresql-schemas
-      when: is_master | bool and postgresql_schemas | length > 0
+      when: inventory_hostname == groups['master'][0]
 
     - role: postgresql-privs
-      when: is_master | bool and postgresql_privs | default('') | length > 0
+      when: inventory_hostname == groups['master'][0]
 
     - role: postgresql-extensions
-      when: is_master | bool and postgresql_extensions | length > 0
+      when: inventory_hostname == groups['master'][0]
 
     - role: pgbouncer/config
       when: pgbouncer_install|bool

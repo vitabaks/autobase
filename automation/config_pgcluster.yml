@@ -74,7 +74,6 @@
       ansible.builtin.add_host:
         name: "{{ item }}"
         groups: primary
-        is_master: true
         postgresql_exists: true
       when: hostvars[item]['patroni_leader_result']['status'] == 200
       loop: "{{ groups['postgres_cluster'] }}"
@@ -85,7 +84,6 @@
       ansible.builtin.add_host:
         name: "{{ item }}"
         groups: secondary
-        is_master: false
         postgresql_exists: true
       when: hostvars[item]['patroni_leader_result']['status'] != 200
       loop: "{{ groups['postgres_cluster'] }}"

@@ -491,8 +491,8 @@
             - absent
             - directory
           when: postgresql_wal_dir | default('') | length > 0
-      when: (is_master | bool and patroni_cluster_bootstrap_method != "pgbackrest")
-            or (not is_master | bool and ('pgbackrest' not in patroni_create_replica_methods or new_node | default(false) | bool))
+      when: (inventory_hostname == groups['master'][0] and patroni_cluster_bootstrap_method != "pgbackrest")
+            or (inventory_hostname in groups['replica'] and ('pgbackrest' not in patroni_create_replica_methods or new_node | default(false) | bool))
   when: not postgresql_exists | default(false) | bool or patroni_cluster_bootstrap_method != "initdb"
   tags: patroni, point_in_time_recovery
 
@@ -562,7 +562,7 @@
             state: present
           become: true
           become_user: postgres
-      when: is_master | bool
+      when: inventory_hostname == groups['master'][0]
 
     - name: Prepare PostgreSQL | check PostgreSQL is started
       become: true
@@ -622,13 +622,13 @@
       ansible.builtin.systemd:
         name: patroni
         state: stopped
-      when: not is_master | bool
+      when: inventory_hostname in groups['replica']
 
     - name: Stop patroni service on the Master server (if running)
       ansible.builtin.systemd:
         name: patroni
         state: stopped
-      when: is_master | bool
+      when: inventory_hostname == groups['master'][0]
 
     - name: Check that PostgreSQL is stopped
       become: true
@@ -661,7 +661,7 @@
         patronictl_remove_result.rc != 0
       environment:
         PATH: "{{ ansible_env.PATH }}:/usr/bin:/usr/local/bin"
-      when: is_master | bool
+      when: inventory_hostname == groups['master'][0]
 
     - block:  # for pgbackrest only (for use --delta restore)
         - name: Run "{{ pgbackrest_patroni_cluster_restore_command }}" on Master
@@ -671,7 +671,7 @@
           async: "{{ cluster_restore_timeout | default(86400) }}"  # timeout 24 hours
           poll: 0
           register: pgbackrest_restore_master
-          when: is_master | bool
+          when: inventory_hostname == groups['master'][0]
 
           # if patroni_create_replica_methods: "pgbackrest"
         - name: Run "{{ pgbackrest_patroni_cluster_restore_command }}" on Replica
@@ -681,7 +681,7 @@
           async: "{{ cluster_restore_timeout | default(86400) }}"  # timeout 24 hours
           poll: 0
           register: pgbackrest_restore_replica
-          when: not is_master | bool and 'pgbackrest' in patroni_create_replica_methods
+          when: inventory_hostname in groups['replica'] and 'pgbackrest' in patroni_create_replica_methods
 
         - name: Waiting for restore from backup
           ansible.builtin.async_status:
@@ -717,7 +717,7 @@
           async: "{{ pg_ctl_timeout | default(3600) }}"  # run the command asynchronously
           poll: 0
           register: pg_ctl_start_result
-          when: is_master | bool or (not is_master | bool and 'pgbackrest' in patroni_create_replica_methods)
+          when: inventory_hostname == groups['master'][0] or (inventory_hostname in groups['replica'] and 'pgbackrest' in patroni_create_replica_methods)
 
         - name: Wait for the PostgreSQL start command to complete
           ansible.builtin.async_status:
@@ -726,7 +726,7 @@
           until: pg_ctl_start_job_result.finished
           retries: "{{ (pg_ctl_timeout | default(3600) | int) // 10 }}"
           delay: 10
-          when: is_master | bool or (not is_master | bool and 'pgbackrest' in patroni_create_replica_methods)
+          when: inventory_hostname == groups['master'][0] or (inventory_hostname in groups['replica'] and 'pgbackrest' in patroni_create_replica_methods)
 
         - name: Wait for PostgreSQL recovery to complete (WAL apply)
           ansible.builtin.command: >-
@@ -738,14 +738,14 @@
           delay: 30
           changed_when: false
           failed_when: false
-          when: is_master | bool
+          when: inventory_hostname == groups['master'][0]
 
         - name: Check PostgreSQL recovery log
           ansible.builtin.command: "grep -A2 'recovery stopping' /tmp/pg_recovery_{{ ansible_date_time.date }}.log"
           register: pg_recovery_result
           changed_when: false
           failed_when: false
-          when: is_master | bool
+          when: inventory_hostname == groups['master'][0]
 
         - name: PostgreSQL recovery details
           ansible.builtin.debug:
@@ -893,7 +893,7 @@
       when:
         - (patroni_standby_cluster.host is not defined or patroni_standby_cluster.host | length < 1)
         - not ansible_check_mode
-  when: is_master | bool
+  when: inventory_hostname == groups['master'][0]
   tags: patroni, patroni_start_master, point_in_time_recovery
 
 - block:  # pg_hba (using a templates/pg_hba.conf.j2)
@@ -905,8 +905,8 @@
         group: postgres
         mode: "0640"
       register: generate_pg_hba
-      when: is_master | bool or
-            ((not is_master | bool and postgresql_conf_dir != postgresql_data_dir)
+      when: inventory_hostname == groups['master'][0] or
+            ((inventory_hostname in groups['replica'] and postgresql_conf_dir != postgresql_data_dir)
             or postgresql_exists | default(false) | bool)
 
     - name: Prepare PostgreSQL | reload for apply the pg_hba.conf
@@ -930,7 +930,7 @@
       retries: "{{ (cluster_restore_timeout | default(86400)) | int // 30 }}"  # timeout 24 hours
       delay: 30
       changed_when: false
-      when: is_master | bool
+      when: inventory_hostname == groups['master'][0]
 
     - name: Make sure the superuser and replication users are present, and password does not differ from the specified
       community.postgresql.postgresql_user:
@@ -947,7 +947,7 @@
       loop_control:
         label: "{{ item.name }}"
       when:
-        - is_master | bool
+        - inventory_hostname == groups['master'][0]
         - (patroni_superuser_username and patroni_superuser_password) is defined
         - (patroni_superuser_username and patroni_superuser_password) | length > 0
         - (patroni_replication_username and patroni_replication_password) is defined
@@ -966,7 +966,7 @@
         label: "{{ item.name }}"
       ignore_errors: true
       when:
-        - is_master | bool
+        - inventory_hostname == groups['master'][0]
         - (postgresql_users is defined and postgresql_users | length > 0)
 
     - name: Update postgresql authentication in patroni.yml
@@ -1039,7 +1039,7 @@
       environment:
         no_proxy: "{{ inventory_hostname }}"
       when: not ansible_check_mode
-  when: not is_master | bool
+  when: inventory_hostname in groups['replica']
   tags: patroni, patroni_start_replica, point_in_time_recovery
 
 # create symlink pg_xlog/pg_wal to custom WAL dir

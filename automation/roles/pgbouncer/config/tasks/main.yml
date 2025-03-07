@@ -20,7 +20,7 @@
     index_var: idx
     label: "{{ 'pgbouncer' if idx == 0 else 'pgbouncer-%d' % (idx + 1) }}"
   notify: "reload pgbouncer"
-  when: existing_pgcluster is not defined or not existing_pgcluster|bool
+  when: existing_pgcluster is not defined or not existing_pgcluster | bool
   tags: pgbouncer, pgbouncer_conf
 
 # if pgbouncer_auth_user is 'false'
@@ -48,7 +48,7 @@
         - pg_shadow_result.rc == 0
         - pg_shadow_result.stdout is defined
         - pg_shadow_result.stdout | length > 0
-  when: not pgbouncer_auth_user|bool
+  when: not pgbouncer_auth_user | bool
   tags: pgbouncer, pgbouncer_conf, pgbouncer_generate_userlist
 
 # if pgbouncer_auth_user is 'true'
@@ -60,7 +60,6 @@
         {{ postgresql_bin_dir }}/psql -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d {{ pgbouncer_auth_dbname }} -tAXc
         "select exists(select proname from pg_proc where proname='user_search')"
       register: exists_func_user
-      when: (is_master | bool and patroni_standby_cluster.host | default('') | length < 1) # do not perform on the Standby Cluster leader
       changed_when: false
 
     - name: "Create 'user_search' function for pgbouncer 'auth_query' option"
@@ -75,10 +74,11 @@
         LANGUAGE sql SECURITY DEFINER;
         REVOKE ALL ON FUNCTION user_search(uname TEXT) FROM public;
         GRANT EXECUTE ON FUNCTION user_search(uname TEXT) TO {{ pgbouncer_auth_username }}"
-      when:
-        - (is_master | bool and patroni_standby_cluster.host | default('') | length < 1) # do not perform on the Standby Cluster leader
-        - exists_func_user.stdout == "f"
-  when: pgbouncer_auth_user|bool
+      when: exists_func_user.stdout == "f"
+  when:
+    - pgbouncer_auth_user | bool
+    - patroni_standby_cluster.host | default('') | length < 1 # do not perform on the Standby Cluster leader
+    - inventory_hostname == groups['master'][0] or (groups['primary'] is defined and inventory_hostname in groups['primary'])
   tags: pgbouncer, pgbouncer_conf, pgbouncer_auth_query
 
 ...
