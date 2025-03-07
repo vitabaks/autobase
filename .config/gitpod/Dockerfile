@@ -12,7 +12,9 @@ ARG NPM_VERSION=9.6.7
 # Set a variable for the ungit version
 ARG UNGIT_VERSION=1.5.23
 # Set a variable for the prettier version
-ARG PRETTIER_VERSION=3.1.0
+ARG PRETTIER_VERSION=3.5.3
+# Set a variable for the editorconfig-checker version
+ARG EDITORCONFIG_CHECKER_VERSION=3.2.0
 
 # Update system and install packages
 # hadolint ignore=DL3008,DL3013,DL3009
@@ -51,7 +53,7 @@ RUN curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /
     && apt-get update \
     && apt-get install -y --no-install-recommends docker-ce docker-ce-cli containerd.io
 
-# Install npm, ungit, and prettier
+# Install npm, ungit, prettier, and editorconfig-checker
 FROM docker-installer as npm-installer
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
@@ -61,7 +63,8 @@ RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
   && npm install -g "npm@${NPM_VERSION}" \
   && npm install -g \
   "ungit@${UNGIT_VERSION}" \
-  "prettier@${PRETTIER_VERSION}"
+  "prettier@${PRETTIER_VERSION}" \
+  "editorconfig-checker@${EDITORCONFIG_CHECKER_VERSION}"
 
 # Cleanup
 FROM npm-installer as cleanup
