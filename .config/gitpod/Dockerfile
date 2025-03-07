@@ -1,5 +1,5 @@
 # First stage: Install build-time dependencies
-FROM ubuntu:jammy as builder
+FROM ubuntu:focal as builder
 
 # hadolint ignore=DL3002
 USER root
