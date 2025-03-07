@@ -17,6 +17,6 @@ collections:
   - name: community.general
     version: "==10.3.0"
   - name: ansible.posix
-    version: "== 1.6.2"
+    version: "==1.6.2"
   - name: ansible.utils
-    version: "== 5.1.2"
+    version: "==5.1.2"
