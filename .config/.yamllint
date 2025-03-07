@@ -3,7 +3,7 @@ extends: default
 
 rules:
   line-length:
-    max: 300
+    max: 160
   comments-indentation: disable
   comments:
     min-spaces-from-content: 1
