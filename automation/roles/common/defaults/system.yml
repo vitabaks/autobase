@@ -245,6 +245,7 @@ post_deploy_command_print: true # Print the command in the ansible log
 post_deploy_command_print_result: true # Print the result of the command execution to the ansible log
 post_deploy_command_log: "/var/tmp/post_deploy_command.log"
 
+# (internal) Supported Linux Distributions
 os_valid_distributions:
   - RedHat
   - CentOS
