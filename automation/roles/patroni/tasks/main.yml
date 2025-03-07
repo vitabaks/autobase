@@ -493,7 +493,7 @@
           when: postgresql_wal_dir | default('') | length > 0
       when: (is_master | bool and patroni_cluster_bootstrap_method != "pgbackrest")
             or (not is_master | bool and ('pgbackrest' not in patroni_create_replica_methods or new_node | default(false) | bool))
-  when: not postgresql_exists | bool or patroni_cluster_bootstrap_method != "initdb"
+  when: not postgresql_exists | default(false) | bool or patroni_cluster_bootstrap_method != "initdb"
   tags: patroni, point_in_time_recovery
 
 - block:  # when postgresql exists
@@ -598,7 +598,7 @@
       register: pg_ctl_stop_result
       failed_when: pg_ctl_stop_result.rc != 3
       changed_when: false
-  when: postgresql_exists | bool and patroni_cluster_bootstrap_method == "initdb"
+  when: postgresql_exists | default(false) | bool and patroni_cluster_bootstrap_method == "initdb"
   tags: patroni, patroni_start_master
 
 - block:  # PITR (custom bootstrap)
@@ -907,7 +907,7 @@
       register: generate_pg_hba
       when: is_master | bool or
             ((not is_master | bool and postgresql_conf_dir != postgresql_data_dir)
-            or postgresql_exists | bool)
+            or postgresql_exists | default(false) | bool)
 
     - name: Prepare PostgreSQL | reload for apply the pg_hba.conf
       become: true
