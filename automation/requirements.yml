@@ -1,9 +1,9 @@
 ---
 collections:
   - name: amazon.aws
-    version: "==9.1.0"
+    version: "==9.1.1"
   - name: google.cloud
-    version: "==1.4.1"
+    version: "==1.5.1"
   - name: azure.azcollection
     version: "==3.1.0"
   - name: community.digitalocean
@@ -12,3 +12,7 @@ collections:
     version: "==4.2.2"
   - name: community.postgresql
     version: "==3.10.2"
+  - name: community.docker
+    version: "==4.3.1"
+  - name: community.general
+    version: "==10.3.0"
