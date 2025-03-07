@@ -115,10 +115,7 @@
         backrefs: true
       loop:
         - { regexp: "^nodename:", line: 'nodename: "{{ ansible_hostname }}"' }
-        - {
-            regexp: "^iface:",
-            line: "iface: {{ vip_manager_iface }} # interface to which the virtual ip will be added",
-          }
+        - { regexp: "^iface:", line: "iface: {{ vip_manager_iface }} # interface to which the virtual ip will be added" }
       loop_control:
         label: "{{ item.line }}"
       notify: "restart vip-manager"

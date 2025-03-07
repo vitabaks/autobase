@@ -10,8 +10,7 @@
 - name: Molecule.tests.variables.asserts.system_info | Set CPU Model Test Data (valid)
   run_once: true
   ansible.builtin.set_fact:
-    ansible_processor:
-      ["GenuineIntel", "Intel(R) Core(TM) i7-8700 CPU @ 3.20GHz", "Intel(R) Core(TM) i7-8700 CPU @ 3.20GHz"]
+    ansible_processor: ["GenuineIntel", "Intel(R) Core(TM) i7-8700 CPU @ 3.20GHz", "Intel(R) Core(TM) i7-8700 CPU @ 3.20GHz"]
     ansible_processor_count: 6
     ansible_processor_cores: 12
 

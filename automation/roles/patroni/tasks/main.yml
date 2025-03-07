@@ -940,11 +940,7 @@
       register: postgresql_user_result
       loop:
         - { name: "{{ patroni_superuser_username }}", password: "{{ patroni_superuser_password }}", flags: "SUPERUSER" }
-        - {
-            name: "{{ patroni_replication_username }}",
-            password: "{{ patroni_replication_password }}",
-            flags: "LOGIN,REPLICATION",
-          }
+        - { name: "{{ patroni_replication_username }}", password: "{{ patroni_replication_password }}", flags: "LOGIN,REPLICATION" }
       loop_control:
         label: "{{ item.name }}"
       when:

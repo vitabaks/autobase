@@ -332,8 +332,7 @@
             region: "{{ server_location[:-2] if server_location[-2:] | regex_search('-[a-z]$') else server_location }}"
             zone: "{{ server_location + '-b' if not server_location is match('.*-[a-z]$') else server_location }}" # add "-b" if the zone is not defined
             # The module only works if selfLink is set manually, issue: https://github.com/ansible-collections/google.cloud/issues/614
-            instances_selflink:
-              >- # TODO: use "{{ server_result.results | map(attribute='selfLink') | map('community.general.dict_kv', 'selfLink') | list }}"
+            instances_selflink: >- # TODO: use "{{ server_result.results | map(attribute='selfLink') | map('community.general.dict_kv', 'selfLink') | list }}"
               [
                 {% for i in range(1, (server_count | int) + 1) %}
                   {

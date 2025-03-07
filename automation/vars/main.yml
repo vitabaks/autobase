@@ -157,10 +157,7 @@ consul_services:
     tags: ["replica"]
     port: "{{ pgbouncer_listen_port }}"
     checks:
-      - {
-          http: "http://{{ inventory_hostname }}:{{ patroni_restapi_port }}/replica?lag={{ patroni_maximum_lag_on_replica }}",
-          interval: "2s",
-        }
+      - { http: "http://{{ inventory_hostname }}:{{ patroni_restapi_port }}/replica?lag={{ patroni_maximum_lag_on_replica }}", interval: "2s" }
       - { args: ["systemctl", "status", "pgbouncer"], interval: "5s" }
 #  - name: "{{ patroni_cluster_name }}"
 #    id: "{{ patroni_cluster_name }}-sync-replica"
@@ -342,34 +339,10 @@ postgresql_pg_hba:
   - { type: "local", database: "all", user: "{{ patroni_superuser_username }}", address: "", method: "trust" }
   - { type: "local", database: "all", user: "{{ pgbouncer_auth_username }}", address: "", method: "trust" } # required for pgbouncer auth_user
   - { type: "local", database: "replication", user: "{{ patroni_replication_username }}", address: "", method: "trust" }
-  - {
-      type: "local",
-      database: "all",
-      user: "all",
-      address: "",
-      method: "{{ postgresql_password_encryption_algorithm }}",
-    }
-  - {
-      type: "host",
-      database: "all",
-      user: "all",
-      address: "127.0.0.1/32",
-      method: "{{ postgresql_password_encryption_algorithm }}",
-    }
-  - {
-      type: "host",
-      database: "all",
-      user: "all",
-      address: "::1/128",
-      method: "{{ postgresql_password_encryption_algorithm }}",
-    }
-  - {
-      type: "{{ host_type }}",
-      database: "all",
-      user: "all",
-      address: "0.0.0.0/0",
-      method: "{{ postgresql_password_encryption_algorithm }}",
-    }
+  - { type: "local", database: "all", user: "all", address: "", method: "{{ postgresql_password_encryption_algorithm }}" }
+  - { type: "host", database: "all", user: "all", address: "127.0.0.1/32", method: "{{ postgresql_password_encryption_algorithm }}" }
+  - { type: "host", database: "all", user: "all", address: "::1/128", method: "{{ postgresql_password_encryption_algorithm }}" }
+  - { type: "{{ host_type }}", database: "all", user: "all", address: "0.0.0.0/0", method: "{{ postgresql_password_encryption_algorithm }}" }
 #  - { type: "{{ host_type }}", database: "mydatabase", user: "mydb-user", address: "192.168.0.0/24", method: "{{ postgresql_password_encryption_algorithm }}" }
 #  - { type: "{{ host_type }}", database: "all", user: "all", address: "192.168.0.0/24", method: "ident", options: "map=main" }  # use pg_ident
 
