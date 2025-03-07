@@ -6,7 +6,7 @@
 - name: Molecule.tests.roles.swap.conditions.delete | Load System Variables
   run_once: true
   ansible.builtin.include_vars:
-    file: ../../../../../vars/system.yml
+    file: ../../../../../roles/common/defaults/system.yml
 
 # 📝 Setting up test data for swap file existence and size
 # Here, we assume that a 1MB swap file exists
