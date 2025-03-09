@@ -1,5 +1,4 @@
 ---
-
 - name: Create systemd service "disable-transparent-huge-pages.service"
   ansible.builtin.blockinfile:
     path: /etc/systemd/system/disable-transparent-huge-pages.service
@@ -21,10 +20,8 @@
   notify: "restart disable-thp"
   when:
     - (disable_thp is defined and disable_thp|bool)
-    - ansible_virtualization_type not in ['container', 'docker', 'lxc', 'podman']  # exclude for containers to prevent test failures in CI.
+    - ansible_virtualization_type not in ['container', 'docker', 'lxc', 'podman'] # exclude for containers to prevent test failures in CI.
   tags: disable_thp, transparent_huge_pages
 
 - name: Make sure handlers are flushed immediately
   ansible.builtin.meta: flush_handlers
-
-...

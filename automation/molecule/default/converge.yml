@@ -46,8 +46,8 @@
     # Only the installation of a binary file is supported
     - name: "Set variables: 'consul_install_from_repo: false' and 'patroni_installation_method: pip'"
       ansible.builtin.set_fact:
-        consul_install_from_repo: false  # whether to install consul from repository as opposed to installing the binary directly
-        patroni_installation_method: "pip"  # the "rpm" method is supported only for consul installed from the repository
+        consul_install_from_repo: false # whether to install consul from repository as opposed to installing the binary directly
+        patroni_installation_method: "pip" # the "rpm" method is supported only for consul installed from the repository
       when:
         - dcs_type == "consul"
         - ansible_distribution == "OracleLinux"
@@ -70,12 +70,12 @@
         enable_pg_wait_sampling: true
         enable_pg_partman: true
         # enable_citus: true  # TODO Postgres 17
-        enable_paradedb: "{{ 'false' if ansible_distribution_release == 'bullseye' else 'true' }}"  # pg_search and pg_analytics (no packages for debian 11)
+        enable_paradedb: "{{ 'false' if ansible_distribution_release == 'bullseye' else 'true' }}" # pg_search and pg_analytics (no packages for debian 11)
         enable_pgvectorscale: "{{ 'true' if ansible_distribution_release in ['bookworm', 'jammy', 'noble'] else 'false' }}" # only deb packages are available
-        pgvectorscale_version: "0.5.1"  # TODO (v0.6.0 does not contain packages)
+        pgvectorscale_version: "0.5.1" # TODO (v0.6.0 does not contain packages)
         # create extension
         postgresql_schemas:
-          - { schema: "paradedb", db: "postgres", owner: "postgres" }  # pg_search must be installed in the paradedb schema.
+          - { schema: "paradedb", db: "postgres", owner: "postgres" } # pg_search must be installed in the paradedb schema.
         postgresql_extensions:
           - { ext: "vector", db: "postgres" }
           - { ext: "vectorscale", db: "postgres" }

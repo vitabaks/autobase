@@ -5,11 +5,11 @@
     regexp: "{{ item.regexp }}"
     replace: "{{ item.replace }}"
   loop:
-    - { regexp: 'noloadbalance: true', replace: 'noloadbalance: false' }
-    - { regexp: 'nosync: true', replace: 'nosync: false' }
-    - { regexp: 'nofailover: true', replace: 'nofailover: false' }
+    - { regexp: "noloadbalance: true", replace: "noloadbalance: false" }
+    - { regexp: "nosync: true", replace: "nosync: false" }
+    - { regexp: "nofailover: true", replace: "nofailover: false" }
   loop_control:
-    label: '{{ item.replace }}'
+    label: "{{ item.replace }}"
 
 - name: Reload patroni service
   ansible.builtin.systemd:
@@ -37,5 +37,3 @@
     - (reboot_result.rebooted is defined and reboot_result.rebooted)
     - (reboot_host_post_delay is defined and reboot_host_post_delay | int > 0)
     - (inventory_hostname in groups['secondary'] and groups['secondary'] | length > 1)
-
-...

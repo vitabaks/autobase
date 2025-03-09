@@ -5,7 +5,7 @@
 # Installing latest version pip3 for python3
 
 # install pip package from repo (installation_method: "repo")
-- block:  # with get-pip.py
+- block: # with get-pip.py
     - name: pip | get-pip.py
       ansible.builtin.get_url:
         url: "{{ pip_package_repo }}"
@@ -37,11 +37,11 @@
       when: get_pip_result.changed
   environment: "{{ proxy_env | default({}) }}"
   when: installation_method == "repo" and
-        patroni_installation_method == "pip" and
-        pip_package_repo is search("get-pip.py")
+    patroni_installation_method == "pip" and
+    pip_package_repo is search("get-pip.py")
   tags: pip_install, pip
 
-- block:  # with tar.gz
+- block: # with tar.gz
     - name: pip | download pip package
       ansible.builtin.get_url:
         url: "{{ item }}"
@@ -66,7 +66,7 @@
         chdir: "/tmp/{{ pip_package_repo.split('.tar.gz')[0] | basename }}"
       when: pip_package_result.changed
   when: installation_method == "repo" and
-        pip_package_repo is search("tar.gz")
+    pip_package_repo is search("tar.gz")
   tags: pip_install, pip
 
 # install pip package from file (installation_method: "file")
@@ -85,7 +85,5 @@
         chdir: "/tmp/{{ pip_package_file.split('.tar.gz')[0] | basename }}"
       when: pip_package_result.changed
   when: installation_method == "file" and
-        pip_package_file | length > 0
+    pip_package_file | length > 0
   tags: pip_install, pip
-
-...

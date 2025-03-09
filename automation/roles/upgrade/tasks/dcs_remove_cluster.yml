@@ -1,5 +1,4 @@
 ---
-
 - name: Remove existing cluster "{{ patroni_cluster_name }}" from DCS
   ansible.builtin.expect:
     command: "patronictl -c {{ patroni_config_file }} remove {{ patroni_cluster_name }}"
@@ -10,5 +9,3 @@
     PATH: "{{ ansible_env.PATH }}:/usr/bin:/usr/local/bin"
   when:
     - inventory_hostname in groups['primary']
-
-...

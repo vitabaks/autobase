@@ -8,4 +8,3 @@
     mode: "0640"
   notify: "reload postgres"
   tags: pg_hba, pg_hba_generate
-...

@@ -8,8 +8,8 @@
 
 - name: "Wait for port {{ patroni_restapi_port }} to become open on the host"
   ansible.builtin.wait_for:
-    port: '{{ patroni_restapi_port }}'
-    host: '{{ hostvars[inventory_hostname][''inventory_hostname''] }}'
+    port: "{{ patroni_restapi_port }}"
+    host: "{{ hostvars[inventory_hostname]['inventory_hostname'] }}"
     state: started
     timeout: 60
     delay: 10
@@ -34,4 +34,3 @@
   retries: 30
   delay: 2
   changed_when: false
-...

@@ -1,5 +1,5 @@
 # First stage: Install build-time dependencies
-FROM ubuntu:jammy as builder
+FROM ubuntu:noble as builder
 
 # hadolint ignore=DL3002
 USER root
@@ -8,11 +8,15 @@ USER root
 COPY .config/python_version.config /tmp/
 
 # Set a variable for the npm version
-ARG NPM_VERSION=9.6.7
+ARG NPM_VERSION=11.2.0
 # Set a variable for the ungit version
-ARG UNGIT_VERSION=1.5.23
+ARG UNGIT_VERSION=1.5.28
+# Set a variable for the prettier version
+ARG PRETTIER_VERSION=3.5.3
+# Set a variable for the editorconfig-checker version
+ARG EDITORCONFIG_CHECKER_VERSION=3.2.0
 
-# Update system and install packages*
+# Update system and install packages
 # hadolint ignore=DL3008,DL3013,DL3009
 RUN PYTHON_VERSION=$(cut -d '=' -f 2 /tmp/python_version.config) \
     && apt-get update \
@@ -36,8 +40,7 @@ RUN PYTHON_VERSION=$(cut -d '=' -f 2 /tmp/python_version.config) \
         tree \
         vim \
         wget \
-    && python3 -m pip install --no-cache-dir --upgrade pip \
-    && python3 -m pip install --no-cache-dir virtualenv
+      && python3 -m pip install --no-cache-dir virtualenv --break-system-packages
 
 # Install Docker
 FROM builder as docker-installer
@@ -50,16 +53,19 @@ RUN curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /
     && apt-get update \
     && apt-get install -y --no-install-recommends docker-ce docker-ce-cli containerd.io
 
-# Install npm and ungit
+# Install npm, ungit, prettier, editorconfig-checker, and sql-formatter
 FROM docker-installer as npm-installer
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 # hadolint ignore=DL3008
 RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
-    && apt-get install  -y --no-install-recommends nodejs \
-    && npm install -g "npm@${NPM_VERSION}" \
-    && npm install -g \
-        "ungit@${UNGIT_VERSION}"
+  && apt-get install -y --no-install-recommends nodejs \
+  && npm install -g "npm@${NPM_VERSION}" \
+  && npm install -g \
+  "ungit@${UNGIT_VERSION}" \
+  "prettier@${PRETTIER_VERSION}" \
+  "editorconfig-checker@${EDITORCONFIG_CHECKER_VERSION}" \
+  "sql-formatter@latest"
 
 # Cleanup
 FROM npm-installer as cleanup

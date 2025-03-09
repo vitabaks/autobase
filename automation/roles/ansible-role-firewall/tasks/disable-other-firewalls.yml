@@ -58,5 +58,3 @@
     - ansible_distribution == "Archlinux"
     - firewall_disable_ufw
     - ufw_installed.rc == 0
-
-...

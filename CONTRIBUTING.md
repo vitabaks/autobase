@@ -25,9 +25,26 @@ Clone your fork locally and make the necessary changes:
 git clone git@github.com:YOURNAMESPACE/autobase.git
 ```
 
-### 4. Test your changes (Optional)
+### 4. Test your changes
 
-#### 4.1 Gitpod
+#### 4.1 Desktop
+
+Install [make](https://www.gnu.org/software/make/), [Python3.12](https://www.python.org/), [venv](https://packaging.python.org/en/latest/guides/installing-using-pip-and-virtual-environments/), and [docker](https://docs.docker.com/engine/install/ubuntu/).
+
+Run `make` for Makefile help.
+
+1. Initialize virtualenv and install dependencies with: `make bootstrap-dev`
+2. Run Prettier formatting: `make prettier`
+3. Lint your code with `make lint`
+4. Test your changes with: `make tests` or `make molecule-converge`
+
+To test a specific distribution, set `distro`, `tag`, and `namespace`:
+
+```bash
+IMAGE_NAMESPACE=geerlingguy IMAGE_DISTRO=debian12 make molecule-converge
+```
+
+#### 4.2 Gitpod
 
 Use Gitpod for a cloud-based development environment:
 
@@ -36,27 +53,12 @@ Use Gitpod for a cloud-based development environment:
 3. Open your fork in Gitpod: `https://gitpod.io/#https://github.com/username/autobase`
 4. Create a new branch: `git checkout -b my-feature-branch`
 5. Make your changes and commit: `git add .` and `git commit -m "Description of changes"`
-6. Test with Molecule: `make tests` or `make tests-fast`
+6. Run Prettier formatting: `make prettier`
 7. Test with linters: `make lint`
-8. Push your changes: `git push origin my-feature-branch`
-9. Create a pull request on GitHub
-10. Wait for a review
+8. Test with Molecule: `make tests` or `make molecule-converge`
+9. Push your changes: `git push origin my-feature-branch`
 
 Keep your Gitpod workspace synced with the main repository.
-
-#### 4.2 Desktop
-
-Install [make](https://www.gnu.org/software/make/), [Python3.10](https://www.python.org/), [venv](https://packaging.python.org/en/latest/guides/installing-using-pip-and-virtual-environments/), and [docker](https://docs.docker.com/engine/install/ubuntu/).
-
-Run `make` for Makefile help. Initialize virtualenv and install dependencies with `make reinitialization-dev` or `make bootstrap-dev`. Test your changes with `make tests` or `make molecule-converge`.
-
-To test a specific distribution, set `distro`, `tag`, and `namespace`:
-
-You can lint with `make lint`
-
-```bash
-IMAGE_NAMESPACE=geerlingguy IMAGE_DISTRO=debian10 make molecule-converge
-```
 
 ### 5. Submit a pull request
 
@@ -64,6 +66,6 @@ IMAGE_NAMESPACE=geerlingguy IMAGE_DISTRO=debian10 make molecule-converge
 
 ### 6. Wait
 
-Your pull request will be reviewed, and you'll receive feedback. Thanks for contributing!
+Your pull request will be reviewed, and you’ll receive feedback. Thanks for contributing!
 
 Consider sponsoring the maintainer via [GitHub](https://github.com/sponsors/vitabaks) or [Patreon](https://patreon.com/vitabaks).

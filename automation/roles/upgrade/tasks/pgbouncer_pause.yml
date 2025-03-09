@@ -137,5 +137,3 @@
           - "on the {{ hostvars[groups['primary'][0]]['ansible_hostname'] }} server."
       run_once: true
   when: hostvars[groups['primary'][0]].pgbouncer_pool_pause_result is failed
-
-...

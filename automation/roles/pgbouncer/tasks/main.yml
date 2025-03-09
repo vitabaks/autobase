@@ -1,5 +1,4 @@
 ---
-
 # Debian
 - name: Install pgbouncer package
   ansible.builtin.package:
@@ -86,7 +85,8 @@
     label: "{{ 'pgbouncer' if idx == 0 else 'pgbouncer-%d' % (idx + 1) }}"
   tags: pgbouncer_service, pgbouncer
 
-- block:  # workaround for pgbouncer from postgrespro repo
+- block:
+    # workaround for pgbouncer from postgrespro repo
     - name: Check that /usr/bin/pgbouncer is exists
       ansible.builtin.stat:
         path: /usr/bin/pgbouncer
@@ -100,22 +100,23 @@
         group: root
         state: link
       when: not pgbouncer_bin.stat.exists
-  when: ansible_os_family == "RedHat" and
-        postgresql_packages|join(" ") is search("postgrespro")
+  when:
+    - ansible_os_family == "RedHat"
+    - postgresql_packages|join(" ") is search("postgrespro")
   tags: pgbouncer_service, pgbouncer
 
 - name: Enable log rotation with logrotate
   ansible.builtin.copy:
     content: |
       {{ pgbouncer_log_dir }}/pgbouncer{{ '-%d' % (idx + 1) if idx > 0 else '' }}.log {
-             daily
-             rotate 7
-             copytruncate
-             delaycompress
-             compress
-             notifempty
-             missingok
-             su root root
+        daily
+        rotate 7
+        copytruncate
+        delaycompress
+        compress
+        notifempty
+        missingok
+        su root root
       }
     dest: "/etc/logrotate.d/pgbouncer{{ '-%d' % (idx + 1) if idx > 0 else '' }}"
   loop: "{{ range(0, (pgbouncer_processes | default(1) | int)) | list }}"
@@ -151,7 +152,8 @@
     - not pgbouncer_auth_user|bool
   tags: pgbouncer
 
-- block:  # for add_pgnode.yml
+- block:
+    # for add_pgnode.yml
     - name: Fetch pgbouncer.ini file from master
       run_once: true
       ansible.builtin.fetch:
@@ -220,8 +222,8 @@
     - name: Prepare pgbouncer.ini conf file (replace "listen_addr")
       ansible.builtin.lineinfile:
         path: "{{ pgbouncer_conf_dir }}/pgbouncer{{ '-%d' % (idx + 1) if idx > 0 else '' }}.ini"
-        regexp: '^listen_addr ='
-        line: 'listen_addr = {{ pgbouncer_listen_addr }}'
+        regexp: "^listen_addr ="
+        line: "listen_addr = {{ pgbouncer_listen_addr }}"
         backrefs: true
       loop: "{{ range(0, (pgbouncer_processes | default(1) | int)) | list }}"
       loop_control:
@@ -231,5 +233,3 @@
       when: pgbouncer_listen_addr != "0.0.0.0"
   when: existing_pgcluster is defined and existing_pgcluster|bool
   tags: pgbouncer_conf, pgbouncer
-
-...

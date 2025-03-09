@@ -1,6 +1,5 @@
 # yamllint disable rule:line-length
 ---
-
 # AWS S3 bucket (if 'cloud_provider=aws')
 - name: "Set variable 'wal_g_json' for backup in AWS S3 bucket"
   ansible.builtin.set_fact:
@@ -21,7 +20,7 @@
       - { option: "PGUSER", value: "{{ patroni_superuser_username | default('postgres') }}" }
   delegate_to: localhost
   run_once: true # noqa run-once
-  no_log: true  # do not output contents to the ansible log
+  no_log: true # do not output contents to the ansible log
   when: cloud_provider | default('') | lower == 'aws'
 
 # GCS Bucket (if 'cloud_provider=gcp')
@@ -41,7 +40,7 @@
           - { option: "PGHOST", value: "{{ postgresql_unix_socket_dir | default('/var/run/postgresql') }}" }
           - { option: "PGPORT", value: "{{ postgresql_port | default('5432') }}" }
           - { option: "PGUSER", value: "{{ patroni_superuser_username | default('postgres') }}" }
-      no_log: true  # do not output contents to the ansible log
+      no_log: true # do not output contents to the ansible log
 
     # if 'gcs_key_file' is not defined, copy GCS key file from GCP_SERVICE_ACCOUNT_CONTENTS environment variable.
     - block:
@@ -50,16 +49,16 @@
             gcp_service_account_contents: "{{ lookup('ansible.builtin.env', 'GCP_SERVICE_ACCOUNT_CONTENTS') }}"
           delegate_to: localhost
           run_once: true # noqa run-once
-          no_log: true  # do not output GCP service account contents to the ansible log
+          no_log: true # do not output GCP service account contents to the ansible log
 
         - name: "Copy GCP service account contents to {{ WALG_GS_KEY | default(postgresql_home_dir + '/gcs-key.json') }}"
           ansible.builtin.copy:
             content: "{{ gcp_service_account_contents }}"
             dest: "{{ WALG_GS_KEY | default(postgresql_home_dir + '/gcs-key.json') }}"
-            mode: '0600'
+            mode: "0600"
             owner: "postgres"
             group: "postgres"
-          no_log: true  # do not output GCP service account contents to the ansible log
+          no_log: true # do not output GCP service account contents to the ansible log
       when: gcs_key_file is not defined
 
     # if 'gcs_key_file' is defined, copy this GCS key file.
@@ -67,10 +66,10 @@
       ansible.builtin.copy:
         src: "{{ gcs_key_file }}"
         dest: "{{ WALG_GS_KEY | default(postgresql_home_dir + '/gcs-key.json') }}"
-        mode: '0600'
+        mode: "0600"
         owner: "postgres"
         group: "postgres"
-      no_log: true  # do not output GCP service account contents to the ansible log
+      no_log: true # do not output GCP service account contents to the ansible log
       when: gcs_key_file is defined and gcs_key_file | length > 0
   when: cloud_provider | default('') | lower == 'gcp'
 
@@ -78,9 +77,18 @@
 - name: "Set variable 'wal_g_json' for backup in Azure Blob Storage"
   ansible.builtin.set_fact:
     wal_g_json:
-      - { option: "AZURE_STORAGE_ACCOUNT", value: "{{ WALG_AZURE_STORAGE_ACCOUNT | default(azure_blob_storage_account_name | default(patroni_cluster_name | lower | replace('-', '') | truncate(24, true, ''))) }}" }
-      - { option: "AZURE_STORAGE_ACCESS_KEY", value: "{{ WALG_AZURE_STORAGE_ACCESS_KEY | default(hostvars['localhost']['azure_storage_account_key'] | default('')) }}" }
-      - { option: "WALG_AZ_PREFIX", value: "{{ WALG_AZ_PREFIX | default('azure://' + (azure_blob_storage_name | default(patroni_cluster_name + '-backup'))) }}" }
+      - {
+          option: "AZURE_STORAGE_ACCOUNT",
+          value: "{{ WALG_AZURE_STORAGE_ACCOUNT | default(azure_blob_storage_account_name | default(patroni_cluster_name | lower | replace('-', '') | truncate(24, true, ''))) }}",
+        }
+      - {
+          option: "AZURE_STORAGE_ACCESS_KEY",
+          value: "{{ WALG_AZURE_STORAGE_ACCESS_KEY | default(hostvars['localhost']['azure_storage_account_key'] | default('')) }}",
+        }
+      - {
+          option: "WALG_AZ_PREFIX",
+          value: "{{ WALG_AZ_PREFIX | default('azure://' + (azure_blob_storage_name | default(patroni_cluster_name + '-backup'))) }}",
+        }
       - { option: "WALG_COMPRESSION_METHOD", value: "{{ WALG_COMPRESSION_METHOD | default('brotli') }}" }
       - { option: "WALG_DELTA_MAX_STEPS", value: "{{ WALG_DELTA_MAX_STEPS | default('6') }}" }
       - { option: "WALG_DOWNLOAD_CONCURRENCY", value: "{{ WALG_DOWNLOAD_CONCURRENCY | default([ansible_processor_vcpus | int // 2, 1] | max) }}" }
@@ -91,7 +99,7 @@
       - { option: "PGHOST", value: "{{ postgresql_unix_socket_dir | default('/var/run/postgresql') }}" }
       - { option: "PGPORT", value: "{{ postgresql_port | default('5432') }}" }
       - { option: "PGUSER", value: "{{ patroni_superuser_username | default('postgres') }}" }
-  no_log: true  # do not output contents to the ansible log
+  no_log: true # do not output contents to the ansible log
   when: cloud_provider | default('') | lower == 'azure'
 
 # DigitalOcean Spaces Object Storage (if 'cloud_provider=digitalocean')
@@ -101,7 +109,10 @@
     wal_g_json:
       - { option: "AWS_ACCESS_KEY_ID", value: "{{ WALG_AWS_ACCESS_KEY_ID | default(AWS_ACCESS_KEY_ID | default('')) }}" }
       - { option: "AWS_SECRET_ACCESS_KEY", value: "{{ WALG_AWS_SECRET_ACCESS_KEY | default(AWS_SECRET_ACCESS_KEY | default('')) }}" }
-      - { option: "AWS_ENDPOINT", value: "{{ WALG_S3_ENDPOINT | default('https://' + (digital_ocean_spaces_region | default(server_location)) + '.digitaloceanspaces.com') }}" }
+      - {
+          option: "AWS_ENDPOINT",
+          value: "{{ WALG_S3_ENDPOINT | default('https://' + (digital_ocean_spaces_region | default(server_location)) + '.digitaloceanspaces.com') }}",
+        }
       - { option: "AWS_REGION", value: "{{ WALG_S3_REGION | default(digital_ocean_spaces_region | default(server_location)) }}" }
       - { option: "AWS_S3_FORCE_PATH_STYLE", value: "{{ AWS_S3_FORCE_PATH_STYLE | default(true) }}" }
       - { option: "WALG_S3_PREFIX", value: "{{ WALG_S3_PREFIX | default('s3://' + (digital_ocean_spaces_name | default(patroni_cluster_name + '-backup'))) }}" }
@@ -115,7 +126,7 @@
       - { option: "PGHOST", value: "{{ postgresql_unix_socket_dir | default('/var/run/postgresql') }}" }
       - { option: "PGPORT", value: "{{ postgresql_port | default('5432') }}" }
       - { option: "PGUSER", value: "{{ patroni_superuser_username | default('postgres') }}" }
-  no_log: true  # do not output contents to the ansible log
+  no_log: true # do not output contents to the ansible log
   when: cloud_provider | default('') | lower == 'digitalocean'
 
 # Hetzner Object Storage (if 'cloud_provider=hetzner')
@@ -124,10 +135,16 @@
     wal_g_json:
       - { option: "AWS_ACCESS_KEY_ID", value: "{{ WALG_AWS_ACCESS_KEY_ID | default(hetzner_object_storage_access_key | default('')) }}" }
       - { option: "AWS_SECRET_ACCESS_KEY", value: "{{ WALG_AWS_SECRET_ACCESS_KEY | default(hetzner_object_storage_secret_key | default('')) }}" }
-      - { option: "AWS_ENDPOINT", value: "{{ WALG_S3_ENDPOINT | default(hetzner_object_storage_endpoint | default('https://' + (hetzner_object_storage_region | default(server_location)) + '.your-objectstorage.com')) }}" }
+      - {
+          option: "AWS_ENDPOINT",
+          value: "{{ WALG_S3_ENDPOINT | default(hetzner_object_storage_endpoint | default('https://' + (hetzner_object_storage_region | default(server_location)) + '.your-objectstorage.com')) }}",
+        }
       - { option: "AWS_S3_FORCE_PATH_STYLE", value: "{{ AWS_S3_FORCE_PATH_STYLE | default(true) }}" }
       - { option: "AWS_REGION", value: "{{ WALG_S3_REGION | default(hetzner_object_storage_region | default(server_location)) }}" }
-      - { option: "WALG_S3_PREFIX", value: "{{ WALG_S3_PREFIX | default('s3://' + (hetzner_object_storage_name | default(patroni_cluster_name + '-backup'))) }}" }
+      - {
+          option: "WALG_S3_PREFIX",
+          value: "{{ WALG_S3_PREFIX | default('s3://' + (hetzner_object_storage_name | default(patroni_cluster_name + '-backup'))) }}",
+        }
       - { option: "WALG_COMPRESSION_METHOD", value: "{{ WALG_COMPRESSION_METHOD | default('brotli') }}" }
       - { option: "WALG_DELTA_MAX_STEPS", value: "{{ WALG_DELTA_MAX_STEPS | default('6') }}" }
       - { option: "WALG_DOWNLOAD_CONCURRENCY", value: "{{ WALG_DOWNLOAD_CONCURRENCY | default([ansible_processor_vcpus | int // 2, 1] | max) }}" }
@@ -140,7 +157,5 @@
       - { option: "PGUSER", value: "{{ patroni_superuser_username | default('postgres') }}" }
   delegate_to: localhost
   run_once: true # noqa run-once
-  no_log: true  # do not output contents to the ansible log
+  no_log: true # do not output contents to the ansible log
   when: cloud_provider | default('') | lower == 'hetzner'
-
-...

@@ -1,5 +1,4 @@
 ---
-
 target: postgres # Defines the target for the update. Available values: 'postgres', 'patroni', 'system'
 
 update_extensions: true # Attempt will be made to automatically update all PostgreSQL extensions in all databases.

@@ -1,5 +1,4 @@
 ---
-
 - block:
     - name: Get system username
       become: false
@@ -12,7 +11,7 @@
         user: "{{ system_user.stdout }}"
         key: "{{ item }}"
         state: present
-      loop: "{{ ssh_public_keys_list | map('replace', '\"', '') | map('replace', \"'\", \"\") | list }}"
+      loop: '{{ ssh_public_keys_list | map(''replace'', ''"'', '''') | map(''replace'', "''", "") | list }}'
       vars:
         ssh_public_keys_list: >-
           {{
@@ -27,5 +26,3 @@
     - ssh_public_keys is defined
     - ssh_public_keys | length > 0
   tags: ssh_public_keys
-
-...

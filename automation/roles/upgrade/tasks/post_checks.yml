@@ -1,5 +1,4 @@
 ---
-
 - name: Make sure that physical replication is active
   ansible.builtin.command: >-
     {{ pg_new_bindir }}/psql -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc
@@ -7,7 +6,7 @@
     where application_name != 'pg_basebackup'"
   register: pg_replication_state
   until: pg_replication_state.stdout | int > 0
-  retries: 30  # max wait time: 1 minute
+  retries: 30 # max wait time: 1 minute
   delay: 2
   changed_when: false
   failed_when: false
@@ -21,7 +20,7 @@
       - "No active replication connections found."
       - "Please check the replication status and PostgreSQL logs."
   failed_when: pg_replication_state.stdout | int == 0
-  ignore_errors: true  # show the error and continue the playbook execution
+  ignore_errors: true # show the error and continue the playbook execution
   when:
     - inventory_hostname in groups['primary']
     - pg_replication_state.stdout | int == 0
@@ -35,7 +34,7 @@
   until: create_table_result is success
   delay: 5
   retries: 3
-  ignore_errors: true  # show the error and continue the playbook execution
+  ignore_errors: true # show the error and continue the playbook execution
   when:
     - inventory_hostname in groups['primary']
 
@@ -45,7 +44,7 @@
     "select count(*) from test_replication"
   register: count_test
   until: count_test.stdout | int == 10000
-  retries: 60  # max wait time: 2 minutes
+  retries: 60 # max wait time: 2 minutes
   delay: 2
   changed_when: false
   failed_when: false
@@ -79,10 +78,8 @@
       - "The number of records in the test_replication table does not match the Primary ({{ count_test.stdout }} rows)."
       - "Please check the replication status and PostgreSQL logs."
   failed_when: count_test.stdout | int != 10000
-  ignore_errors: true  # show the error and continue the playbook execution
+  ignore_errors: true # show the error and continue the playbook execution
   when:
     - inventory_hostname in groups['secondary']
     - count_test.stdout is defined
     - count_test.stdout | int != 10000
-
-...

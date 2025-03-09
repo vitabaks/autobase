@@ -1,5 +1,4 @@
 ---
-
 # Create a stanza locally (if "pgbackrest_repo_host" is not set)
 - block:
     - name: Get repo1-path and repo1_type value
@@ -25,7 +24,7 @@
         - stanza_create_result.rc == 0
         - stanza_create_result.stdout is not search("already exists")
       when: repo1_type | lower == 'posix' or
-            (repo1_type | lower != 'posix' and inventory_hostname == groups['master'][0])  # run only on master if it's not posix
+        (repo1_type | lower != 'posix' and inventory_hostname == groups['master'][0]) # run only on master if it's not posix
   when:
     - pgbackrest_repo_host | length < 1
     - "'postgres_cluster' in group_names"
@@ -67,5 +66,3 @@
   when:
     - pgbackrest_repo_host | length > 0
   tags: pgbackrest, pgbackrest_stanza_create
-
-...

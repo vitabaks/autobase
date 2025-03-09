@@ -91,9 +91,9 @@
     - name: "Set variable: ssh_key_content"
       ansible.builtin.set_fact:
         ssh_key_content: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
-      no_log: true  # do not display the public key
+      no_log: true # do not display the public key
       when: ssh_key_content is not defined or
-            ssh_key_content | length < 1
+        ssh_key_content | length < 1
 
     # if server_network is not specified, use default network
     - name: "Set variable: gcp_network_name"
@@ -259,7 +259,7 @@
         auth_kind: "serviceaccount"
         service_account_contents: "{{ gcp_service_account_contents }}"
         project: "{{ gcp_project | default(project_info.resources[0].projectNumber) }}"
-        zone: "{{ server_location + '-b' if not server_location is match('.*-[a-z]$') else server_location }}"  # add "-b" if the zone is not defined
+        zone: "{{ server_location + '-b' if not server_location is match('.*-[a-z]$') else server_location }}" # add "-b" if the zone is not defined
         name: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}"
         machine_type: "{{ server_type }}"
         disks:
@@ -269,7 +269,7 @@
             initialize_params:
               disk_name: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}-system"
               source_image: "{{ server_image }}"
-              disk_size_gb: "{{ system_volume_size | default('80') }}"  # system disk size
+              disk_size_gb: "{{ system_volume_size | default('80') }}" # system disk size
               disk_type: "{{ system_volume_type | default('pd-ssd', true) }}"
           - device_name: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}-storage"
             auto_delete: true
@@ -330,9 +330,9 @@
             state: present
           vars:
             region: "{{ server_location[:-2] if server_location[-2:] | regex_search('-[a-z]$') else server_location }}"
-            zone: "{{ server_location + '-b' if not server_location is match('.*-[a-z]$') else server_location }}"  # add "-b" if the zone is not defined
+            zone: "{{ server_location + '-b' if not server_location is match('.*-[a-z]$') else server_location }}" # add "-b" if the zone is not defined
             # The module only works if selfLink is set manually, issue: https://github.com/ansible-collections/google.cloud/issues/614
-            instances_selflink: >-  # TODO: use "{{ server_result.results | map(attribute='selfLink') | map('community.general.dict_kv', 'selfLink') | list }}"
+            instances_selflink: >- # TODO: use "{{ server_result.results | map(attribute='selfLink') | map('community.general.dict_kv', 'selfLink') | list }}"
               [
                 {% for i in range(1, (server_count | int) + 1) %}
                   {
@@ -368,8 +368,8 @@
             label: "{{ patroni_cluster_name }}-{{ item }}-hc"
           register: health_check
           when: item == 'primary' or
-                (item == 'replica' and server_count | int > 1) or
-                (item in ['sync', 'async'] and server_count | int > 1 and synchronous_mode | bool)
+            (item == 'replica' and server_count | int > 1) or
+            (item in ['sync', 'async'] and server_count | int > 1 and synchronous_mode | bool)
 
         - name: "GCP: [Load Balancer] Create backend service"
           google.cloud.gcp_compute_backend_service:
@@ -392,7 +392,7 @@
               enable: "{{ gcp_compute_backend_service_log_enable | default(false) }}"
             state: present
           vars:
-            zone: "{{ server_location + '-b' if not server_location is match('.*-[a-z]$') else server_location }}"  # add "-b" if the zone is not defined
+            zone: "{{ server_location + '-b' if not server_location is match('.*-[a-z]$') else server_location }}" # add "-b" if the zone is not defined
           loop:
             - "primary"
             - "replica"
@@ -403,8 +403,8 @@
           # Ignore error if resource already exists on re-run
           failed_when: backend_service is failed and 'resource.fingerprint' not in (backend_service.msg | default(''))
           when: item == 'primary' or
-                (item == 'replica' and server_count | int > 1) or
-                (item in ['sync', 'async'] and server_count | int > 1 and synchronous_mode | bool)
+            (item == 'replica' and server_count | int > 1) or
+            (item in ['sync', 'async'] and server_count | int > 1 and synchronous_mode | bool)
 
         - name: "GCP: [Load Balancer] Create target TCP proxy"
           google.cloud.gcp_compute_target_tcp_proxy:
@@ -425,8 +425,8 @@
             label: "{{ patroni_cluster_name }}-{{ item }}-proxy"
           register: target_tcp_proxy
           when: item == 'primary' or
-                (item == 'replica' and server_count | int > 1) or
-                (item in ['sync', 'async'] and server_count | int > 1 and synchronous_mode | bool)
+            (item == 'replica' and server_count | int > 1) or
+            (item in ['sync', 'async'] and server_count | int > 1 and synchronous_mode | bool)
 
         - name: "GCP: [Load Balancer] Reserve static IP address"
           google.cloud.gcp_compute_global_address:
@@ -446,8 +446,8 @@
             label: "{{ patroni_cluster_name }}-{{ item }}-ip"
           register: load_balancer_ip
           when: item == 'primary' or
-                (item == 'replica' and server_count | int > 1) or
-                (item in ['sync', 'async'] and server_count | int > 1 and synchronous_mode | bool)
+            (item == 'replica' and server_count | int > 1) or
+            (item in ['sync', 'async'] and server_count | int > 1 and synchronous_mode | bool)
 
         - name: "GCP: [Load Balancer] Create forwarding rule"
           google.cloud.gcp_compute_global_forwarding_rule:
@@ -470,8 +470,8 @@
             label: "{{ patroni_cluster_name }}-{{ item }}-fr"
           register: gcp_load_balancer
           when: item == 'primary' or
-                (item == 'replica' and server_count | int > 1) or
-                (item in ['sync', 'async'] and server_count | int > 1 and synchronous_mode | bool)
+            (item == 'replica' and server_count | int > 1) or
+            (item in ['sync', 'async'] and server_count | int > 1 and synchronous_mode | bool)
       when: cloud_load_balancer | bool
 
     # GCS Bucket (Backups)
@@ -494,7 +494,7 @@
     host: "{{ item.networkInterfaces[0].accessConfigs[0].natIP }}"
     port: 22
     delay: 5
-    timeout: "{{ 1800 if server_type is search('metal') else 300 }}"  # timeout 30 minutes for bare metal instances and 5 minutes for regular VMs
+    timeout: "{{ 1800 if server_type is search('metal') else 300 }}" # timeout 30 minutes for bare metal instances and 5 minutes for regular VMs
   loop: "{{ server_result.results }}"
   loop_control:
     label: "{{ item.networkInterfaces[0].accessConfigs[0].natIP | default('N/A') }}"
@@ -551,7 +551,7 @@
         auth_kind: "serviceaccount"
         service_account_contents: "{{ gcp_service_account_contents }}"
         project: "{{ gcp_project | default(project_info.resources[0].projectNumber) }}"
-        zone: "{{ server_location + '-b' if not server_location is match('.*-[a-z]$') else server_location }}"  # add "-b" if the zone is not defined
+        zone: "{{ server_location + '-b' if not server_location is match('.*-[a-z]$') else server_location }}" # add "-b" if the zone is not defined
         name: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}"
         state: absent
       loop: "{{ range(0, server_count | int) | list }}"
@@ -574,8 +574,8 @@
       loop_control:
         label: "{{ patroni_cluster_name }}-{{ item }}-fr"
       when: item == 'primary' or
-           (item == 'replica' and server_count | int > 1) or
-           (item in ['sync', 'async'] and server_count | int > 1 and synchronous_mode | bool)
+        (item == 'replica' and server_count | int > 1) or
+        (item in ['sync', 'async'] and server_count | int > 1 and synchronous_mode | bool)
 
     - name: "GCP: [Load Balancer] Delete static IP address"
       google.cloud.gcp_compute_global_address:
@@ -593,8 +593,8 @@
       loop_control:
         label: "{{ patroni_cluster_name }}-{{ item }}-ip"
       when: item == 'primary' or
-           (item == 'replica' and server_count | int > 1) or
-           (item in ['sync', 'async'] and server_count | int > 1 and synchronous_mode | bool)
+        (item == 'replica' and server_count | int > 1) or
+        (item in ['sync', 'async'] and server_count | int > 1 and synchronous_mode | bool)
 
     - name: "GCP: [Load Balancer] Delete target TCP proxy"
       google.cloud.gcp_compute_target_tcp_proxy:
@@ -612,8 +612,8 @@
       loop_control:
         label: "{{ patroni_cluster_name }}-{{ item }}-proxy"
       when: item == 'primary' or
-           (item == 'replica' and server_count | int > 1) or
-           (item in ['sync', 'async'] and server_count | int > 1 and synchronous_mode | bool)
+        (item == 'replica' and server_count | int > 1) or
+        (item in ['sync', 'async'] and server_count | int > 1 and synchronous_mode | bool)
 
     - name: "GCP: [Load Balancer] Delete backend service"
       google.cloud.gcp_compute_backend_service:
@@ -629,8 +629,8 @@
       loop_control:
         label: "{{ patroni_cluster_name }}-{{ item }}"
       when: item == 'primary' or
-           (item == 'replica' and server_count | int > 1) or
-           (item in ['sync', 'async'] and server_count | int > 1 and synchronous_mode | bool)
+        (item == 'replica' and server_count | int > 1) or
+        (item in ['sync', 'async'] and server_count | int > 1 and synchronous_mode | bool)
 
     - name: "GCP: [Load Balancer] Delete health check"
       google.cloud.gcp_compute_health_check:
@@ -646,8 +646,8 @@
       loop_control:
         label: "{{ patroni_cluster_name }}-{{ item }}-hc"
       when: item == 'primary' or
-           (item == 'replica' and server_count | int > 1) or
-           (item in ['sync', 'async'] and server_count | int > 1 and synchronous_mode | bool)
+        (item == 'replica' and server_count | int > 1) or
+        (item in ['sync', 'async'] and server_count | int > 1 and synchronous_mode | bool)
 
     - name: "GCP: [Load Balancer] Delete instance group"
       google.cloud.gcp_compute_instance_group:
@@ -710,5 +710,3 @@
         - (pgbackrest_install | bool or wal_g_install | bool)
         - gcp_bucket_absent | bool
   when: state == 'absent'
-
-...

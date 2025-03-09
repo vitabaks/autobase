@@ -122,7 +122,7 @@
     - name: "Set variable: ssh_key_content"
       ansible.builtin.set_fact:
         ssh_key_content: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
-      no_log: true  # do not display the public key
+      no_log: true # do not display the public key
       when: ssh_key_content is not defined or ssh_key_content | length < 1
 
     - name: "Azure: Create resource group"
@@ -289,7 +289,7 @@
           sku: "{{ azure_vm_image_sku | default('22_04-lts-gen2') }}"
           version: "{{ azure_vm_image_version | default('latest') }}"
         os_type: Linux
-        os_disk_size_gb: "{{ system_volume_size | default('80') }}"  # system disk size
+        os_disk_size_gb: "{{ system_volume_size | default('80') }}" # system disk size
         managed_disk_type: "{{ system_volume_type | default('StandardSSD_LRS', true) }}"
         data_disks:
           - lun: 0
@@ -318,9 +318,9 @@
         label: "{{ patroni_cluster_name }}-{{ item }}-public-ip"
       register: azure_load_balancer_public_ip
       when: database_public_access | bool and cloud_load_balancer | bool and
-            (item == 'primary' or
-            (item == 'replica' and server_count | int > 1) or
-            (item in ['sync', 'async'] and server_count | int > 1 and synchronous_mode | bool))
+        (item == 'primary' or
+        (item == 'replica' and server_count | int > 1) or
+        (item in ['sync', 'async'] and server_count | int > 1 and synchronous_mode | bool))
 
     - name: "Azure: Create or modify Load Balancer"
       azure.azcollection.azure_rm_loadbalancer:
@@ -348,7 +348,7 @@
             backend_port: "{{ pgbouncer_listen_port | default('6432') if pgbouncer_install | bool else postgresql_port | default('5432') }}"
             probe: "{{ patroni_cluster_name }}-{{ item }}-health-probe"
             protocol: "Tcp"
-            idle_timeout: 10  # in minutes
+            idle_timeout: 10 # in minutes
             enable_floating_ip: false
             disable_outbound_snat: true
         sku: "Standard"
@@ -360,9 +360,9 @@
         label: "{{ patroni_cluster_name }}-{{ item }}"
       register: azure_load_balancer
       when: cloud_load_balancer | bool and
-            (item == 'primary' or
-            (item == 'replica' and server_count | int > 1) or
-            (item in ['sync', 'async'] and server_count | int > 1 and synchronous_mode | bool))
+        (item == 'primary' or
+        (item == 'replica' and server_count | int > 1) or
+        (item in ['sync', 'async'] and server_count | int > 1 and synchronous_mode | bool))
 
     - name: Extract virtual machine private IPs
       ansible.builtin.set_fact:
@@ -396,9 +396,9 @@
       loop_control:
         label: "{{ patroni_cluster_name }}-{{ item }}-backend"
       when: cloud_load_balancer | bool and
-            (item == 'primary' or
-            (item == 'replica' and server_count | int > 1) or
-            (item in ['sync', 'async'] and server_count | int > 1 and synchronous_mode | bool))
+        (item == 'primary' or
+        (item == 'replica' and server_count | int > 1) or
+        (item in ['sync', 'async'] and server_count | int > 1 and synchronous_mode | bool))
 
     # Azure Blob Storage (Backups)
     - block:
@@ -418,13 +418,13 @@
             resource_group: "{{ azure_resource_group | default('postgres-cluster-resource-group' ~ '-' ~ server_location) }}"
             name: "{{ azure_blob_storage_account_name }}"
             show_connection_string: true
-          no_log: true  # do not output storage account contents to the ansible log
+          no_log: true # do not output storage account contents to the ansible log
           register: azure_storage_account_info
 
         - name: "Set variable: azure_storage_account_key"
           ansible.builtin.set_fact:
             azure_storage_account_key: "{{ azure_storage_account_info.storageaccounts[0].primary_endpoints.key }}"
-          no_log: true  # do not output storage account contents to the ansible log
+          no_log: true # do not output storage account contents to the ansible log
 
         - name: "Azure: Create Blob Storage container '{{ azure_blob_storage_name }}'"
           azure.azcollection.azure_rm_storageblob:
@@ -549,9 +549,9 @@
       loop_control:
         label: "{{ patroni_cluster_name }}-{{ item }}"
       when: cloud_load_balancer | bool and
-            (item == 'primary' or
-            (item == 'replica' and server_count | int > 1) or
-            (item in ['sync', 'async'] and server_count | int > 1 and synchronous_mode | bool))
+        (item == 'primary' or
+        (item == 'replica' and server_count | int > 1) or
+        (item in ['sync', 'async'] and server_count | int > 1 and synchronous_mode | bool))
 
     - name: "Azure: Delete Load Balancer public IP address"
       azure.azcollection.azure_rm_publicipaddress:
@@ -565,9 +565,9 @@
       loop_control:
         label: "{{ patroni_cluster_name }}-{{ item }}-public-ip"
       when: database_public_access | bool and cloud_load_balancer | bool and
-            (item == 'primary' or
-            (item == 'replica' and server_count | int > 1) or
-            (item in ['sync', 'async'] and server_count | int > 1 and synchronous_mode | bool))
+        (item == 'primary' or
+        (item == 'replica' and server_count | int > 1) or
+        (item in ['sync', 'async'] and server_count | int > 1 and synchronous_mode | bool))
 
     - name: "Azure: Delete Security Group"
       azure.azcollection.azure_rm_securitygroup:
@@ -592,5 +592,3 @@
       ignore_errors: true
       when: (pgbackrest_install | bool or wal_g_install | bool) and azure_blob_storage_absent | bool
   when: state == 'absent'
-
-...

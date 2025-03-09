@@ -1,6 +1,5 @@
 ---
-
-- block:  # patroni cluster bootstrap script
+- block: # patroni cluster bootstrap script
     - name: Make sure the pgbackrest bootstrap script directory exist
       ansible.builtin.file:
         dest: /etc/patroni
@@ -20,5 +19,3 @@
     - patroni_cluster_bootstrap_method == "pgbackrest"
     - "'postgres_cluster' in group_names"
   tags: pgbackrest, pgbackrest_bootstrap_script
-
-...

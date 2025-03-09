@@ -99,5 +99,3 @@
     (update_patroni_package_rhel is defined and update_patroni_package_rhel is failed) or
     (update_patroni_package_deb is defined and update_patroni_package_deb is failed) or
     (update_patroni_package_rpm is defined and update_patroni_package_rpm is failed)
-
-...

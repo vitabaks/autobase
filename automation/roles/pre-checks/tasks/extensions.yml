@@ -47,8 +47,8 @@
   when:
     - (enable_paradedb | default(false) | bool) or (enable_pg_search | default(false) | bool) or (enable_pg_analytics | default(false) | bool)
     - not (
-        (ansible_os_family == "Debian" and ansible_distribution_release in ['bookworm', 'jammy', 'noble']) or
-        (ansible_os_family == "RedHat" and ansible_distribution_major_version in ['8', '9'])
+      (ansible_os_family == "Debian" and ansible_distribution_release in ['bookworm', 'jammy', 'noble']) or
+      (ansible_os_family == "RedHat" and ansible_distribution_major_version in ['8', '9'])
       )
 
 # shared_preload_libraries
@@ -101,5 +101,3 @@
       }}
   loop: "{{ extensions | default([]) | unique }}"
   when: extensions | default([]) | length > 0
-
-...

@@ -1,5 +1,4 @@
 ---
-
 - name: Get the current shared_preload_libraries settings
   ansible.builtin.command: >-
     {{ pg_old_bindir }}/psql -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc
@@ -38,7 +37,7 @@
     {% endif %}
     -c config_file='{{ pg_new_confdir }}/postgresql.conf'"
     start -w -t {{ pg_start_stop_timeout }} -l /tmp/pg_tmp_start.log
-  async: "{{ pg_start_stop_timeout }}"  # run the command asynchronously
+  async: "{{ pg_start_stop_timeout }}" # run the command asynchronously
   poll: 0
   register: pg_ctl_start_result
   when:
@@ -71,7 +70,7 @@
     > /tmp/pg_schema_compatibility_check.log 2>&1
   args:
     executable: /bin/bash
-  async: "{{ schema_compatibility_check_timeout }}"  # run the command asynchronously
+  async: "{{ schema_compatibility_check_timeout }}" # run the command asynchronously
   poll: 0
   register: pg_dumpall_result
   when:
@@ -139,5 +138,3 @@
   ansible.builtin.include_tasks: "{{ role_path }}/tasks/initdb.yml"
   when:
     - inventory_hostname in groups['primary']
-
-...

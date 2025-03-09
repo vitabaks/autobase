@@ -1,5 +1,4 @@
 ---
-
 - name: Restart haproxy service
   ansible.builtin.systemd:
     daemon_reload: true
@@ -17,5 +16,3 @@
     delay: 10
   ignore_errors: false
   listen: "restart haproxy"
-
-...

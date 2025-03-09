@@ -5,4 +5,4 @@
 - name: reload consul configuration on unix
   ansible.builtin.command: "pkill --pidfile '{{ consul_run_path }}/consul.pid' --signal SIGHUP"
   when: ansible_os_family != "Windows"
-  listen: 'reload consul configuration'
+  listen: "reload consul configuration"

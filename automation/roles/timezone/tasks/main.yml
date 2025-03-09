@@ -1,5 +1,4 @@
 ---
-
 - block:
     - name: Make sure that the tzdata package is installed
       become: true
@@ -17,5 +16,3 @@
         name: "{{ timezone }}"
   when: timezone is defined and timezone | length > 0
   tags: timezone
-
-...

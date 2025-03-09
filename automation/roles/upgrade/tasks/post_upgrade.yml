@@ -1,5 +1,4 @@
 ---
-
 - name: Ensure the current data directory is the new data directory
   ansible.builtin.command: >-
     {{ pg_new_bindir }}/psql -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc
@@ -9,7 +8,7 @@
   delay: 5
   retries: 3
   changed_when: false
-  ignore_errors: true  # show the error and continue the playbook execution
+  ignore_errors: true # show the error and continue the playbook execution
 
 # RedHat based
 - name: Delete the old PostgreSQL data directory
@@ -53,7 +52,7 @@
   until: package_remove is success
   delay: 5
   retries: 3
-  ignore_errors: true  # show the error and continue the playbook execution
+  ignore_errors: true # show the error and continue the playbook execution
   when:
     - item | string is search(pg_old_version | string)
     - pg_old_packages_remove | bool
@@ -72,7 +71,7 @@
   until: apt_remove is success
   delay: 5
   retries: 3
-  ignore_errors: true  # show the error and continue the playbook execution
+  ignore_errors: true # show the error and continue the playbook execution
   when:
     - item | string is search(pg_old_version | string)
     - pg_old_packages_remove | bool
@@ -88,7 +87,7 @@
 
     - name: Update the PostgreSQL configuration
       ansible.builtin.command: "{{ pg_new_bindir }}/pg_ctl reload -D {{ pg_new_datadir }}"
-  ignore_errors: true  # show the error and continue the playbook execution
+  ignore_errors: true # show the error and continue the playbook execution
   when:
     - socket_access_result.stderr is defined
     - "'no pg_hba.conf entry' in socket_access_result.stderr"
@@ -103,8 +102,8 @@
     - name: pgbackrest | Update pg-path in pgbackrest.conf
       ansible.builtin.replace:
         path: "{{ pgbackrest_conf_file }}"
-        regexp: '^pg{{ idx + 1 }}-path=.*$'
-        replace: 'pg{{ idx + 1 }}-path={{ pg_new_datadir }}'
+        regexp: "^pg{{ idx + 1 }}-path=.*$"
+        replace: "pg{{ idx + 1 }}-path={{ pg_new_datadir }}"
       loop: "{{ range(0, pg_path_count.stdout | int) | list }}"
       loop_control:
         index_var: idx
@@ -116,7 +115,7 @@
       when: pg_path_count.stdout | int > 0 and pgbackrest_stanza_upgrade | bool and pgbackrest_repo_host | length < 1
   become: true
   become_user: postgres
-  ignore_errors: true  # show the error and continue the playbook execution
+  ignore_errors: true # show the error and continue the playbook execution
   when:
     - pgbackrest_install | bool
 
@@ -134,8 +133,8 @@
       run_once: true
       ansible.builtin.replace:
         path: "{{ pgbackrest_conf_file | dirname }}/conf.d/{{ pgbackrest_stanza }}.conf"
-        regexp: '^pg{{ idx + 1 }}-path=.*$'
-        replace: 'pg{{ idx + 1 }}-path={{ pg_new_datadir }}'
+        regexp: "^pg{{ idx + 1 }}-path=.*$"
+        replace: "pg{{ idx + 1 }}-path={{ pg_new_datadir }}"
       loop: "{{ range(0, pg_path_count.stdout | int) | list }}"
       loop_control:
         index_var: idx
@@ -149,7 +148,7 @@
       when: pg_path_count.stdout | int > 0 and pgbackrest_stanza_upgrade | bool
   become: true
   become_user: "{{ pgbackrest_repo_user }}"
-  ignore_errors: true  # show the error and continue the playbook execution
+  ignore_errors: true # show the error and continue the playbook execution
   when:
     - pgbackrest_install | bool
     - pgbackrest_repo_host | length > 0
@@ -169,7 +168,7 @@
         replace: "{{ postgresql_data_dir | replace(postgresql_version | string, pg_new_version | string) }}"
   become: true
   become_user: root
-  ignore_errors: true  # show the error and continue the playbook execution
+  ignore_errors: true # show the error and continue the playbook execution
   when: wal_g_install | bool
 
 # Wait for the analyze to complete
@@ -178,9 +177,9 @@
     jid: "{{ vacuumdb_analyze.ansible_job_id }}"
   register: vacuumdb_analyze_job_result
   until: vacuumdb_analyze_job_result.finished
-  retries: "{{ (vacuumdb_analyze_timeout | int) // 10 }}"  # max wait time
+  retries: "{{ (vacuumdb_analyze_timeout | int) // 10 }}" # max wait time
   delay: 10
-  ignore_errors: true  # ignore errors if the task runs for over an vacuumdb_analyze_timeout
+  ignore_errors: true # ignore errors if the task runs for over an vacuumdb_analyze_timeout
   when:
     - vacuumdb_analyze is defined
     - vacuumdb_analyze.ansible_job_id is defined
@@ -197,9 +196,9 @@
     done < /tmp/pg_terminator.pid
   args:
     executable: /bin/bash
-  ignore_errors: true  # show the error and continue the playbook execution
+  ignore_errors: true # show the error and continue the playbook execution
   when: (pg_terminator_analyze is defined and pg_terminator_analyze is changed) or
-        (pg_terminator_long_transactions is defined and pg_terminator_long_transactions is changed)
+    (pg_terminator_long_transactions is defined and pg_terminator_long_transactions is changed)
 
 # finish (info)
 - name: Check the Patroni cluster state
@@ -238,5 +237,3 @@
       - "PostgreSQL upgrade completed."
       - "Current version: {{ postgres_version.stdout }}"
   when: postgres_version.stdout is defined
-
-...

@@ -1,5 +1,4 @@
 ---
-
 - block:
     # Try to detect an empty disk (if 'cloud_provider' is defined)
     - name: Detect empty volume
@@ -28,7 +27,7 @@
       when:
         - (lsblk_disk.stdout is defined and lsblk_disk.stdout | length > 0)
         - ((pg_data_mount_fstype is defined and pg_data_mount_fstype != 'zfs') or
-           (pg_data_mount_fstype is not defined and mount[0].fstype != 'zfs'))
+          (pg_data_mount_fstype is not defined and mount[0].fstype != 'zfs'))
 
     # UUID
     - name: Get UUID of the disk "/dev/{{ lsblk_disk.stdout }}"
@@ -42,7 +41,7 @@
       when:
         - (lsblk_disk.stdout is defined and lsblk_disk.stdout | length > 0)
         - ((pg_data_mount_fstype is defined and pg_data_mount_fstype != 'zfs') or
-           (pg_data_mount_fstype is not defined and mount[0].fstype != 'zfs'))
+          (pg_data_mount_fstype is not defined and mount[0].fstype != 'zfs'))
 
     - name: "Set mount variables"
       ansible.builtin.set_fact:
@@ -64,7 +63,7 @@
       when:
         - (item.src | length > 0 and item.path | length > 0)
         - ((pg_data_mount_fstype is defined and pg_data_mount_fstype != 'zfs') or
-           (pg_data_mount_fstype is not defined and item.fstype != 'zfs'))
+          (pg_data_mount_fstype is not defined and item.fstype != 'zfs'))
 
     # ZFS Pool (if fstype is 'zfs')
     - block:
@@ -143,7 +142,5 @@
       when:
         - (mount[0].src | length > 0 or lsblk_disk.stdout | default('') | length > 0)
         - ((pg_data_mount_fstype is defined and pg_data_mount_fstype == 'zfs') or
-           (pg_data_mount_fstype is not defined and mount[0].fstype == 'zfs'))
+          (pg_data_mount_fstype is not defined and mount[0].fstype == 'zfs'))
   tags: mount, zpool
-
-...

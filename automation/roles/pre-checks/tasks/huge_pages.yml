@@ -34,7 +34,7 @@
           Current shared_buffers size: {{ shared_buffers }} (less than {{ min_shared_buffers_gb | default(8) }}GB).
           No HugePages configuration is required.
       when:
-        - inventory_hostname == groups['master'][0]  # display only once
+        - inventory_hostname == groups['master'][0] # display only once
         - (shared_buffers_gb | default(0) | int) < (min_shared_buffers_gb | default(8) | int)
 
     - name: "HugePages | Get Hugepagesize value from /proc/meminfo"
@@ -99,7 +99,7 @@
         - shared_buffers_gb | default(0) | int >= (min_shared_buffers_gb | default(8))
 
     # if huge_pages_auto_conf is true
-    - name: "HugePages | Specify \"vm.nr_hugepages\" with value \"{{ huge_pages_required }}\" in sysctl_conf variable"
+    - name: "HugePages | Specify vm.nr_hugepages with value {{ huge_pages_required }} in sysctl_conf variable"
       ansible.builtin.set_fact:
         sysctl_conf:
           postgres_cluster: >-
@@ -134,7 +134,7 @@
         - huge_pages_total.stdout | default(0) | int < huge_pages_required | int
         - not sysctl_conf_vm_nr_hugepages_sufficient | default(false)
         - (not huge_pages_auto_conf | bool or (not sysctl_set | bool and
-            (postgresql_parameters | selectattr('option', 'equalto', 'huge_pages') | map(attribute='value') | first | default('try')) == 'on'))
+          (postgresql_parameters | selectattr('option', 'equalto', 'huge_pages') | map(attribute='value') | first | default('try')) == 'on'))
   when:
     - (postgresql_parameters | selectattr('option', 'equalto', 'huge_pages') | map(attribute='value') | first | default('try')) != 'off'
     - (sysctl_set | bool or (postgresql_parameters | selectattr('option', 'equalto', 'huge_pages') | map(attribute='value') | first | default('try')) == 'on')

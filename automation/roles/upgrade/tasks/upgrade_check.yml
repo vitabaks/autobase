@@ -1,5 +1,4 @@
 ---
-
 - name: Get the current shared_preload_libraries settings
   ansible.builtin.command: >-
     {{ pg_old_bindir }}/psql -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc
@@ -9,7 +8,7 @@
   when:
     - inventory_hostname in groups['primary']
 
-- name: 'Set the variable: pg_shared_preload_libraries_value'
+- name: "Set the variable: pg_shared_preload_libraries_value"
   ansible.builtin.set_fact:
     pg_shared_preload_libraries_value: "{{ pg_shared_preload_libraries_result.stdout }}"
   when:
@@ -34,7 +33,7 @@
     chdir: "/tmp"
   vars:
     shared_preload_libraries: "-c shared_preload_libraries='{{ pg_shared_preload_libraries_value }}'"
-    timescaledb_restoring: "{{ \"-c timescaledb.restoring='on'\" if 'timescaledb' in pg_shared_preload_libraries_value else '' }}"
+    timescaledb_restoring: '{{ "-c timescaledb.restoring=''on''" if ''timescaledb'' in pg_shared_preload_libraries_value else '''' }}'
   failed_when: false
   register: pg_upgrade_check_result
   when:
@@ -46,5 +45,3 @@
   failed_when: "'Clusters are compatible' not in pg_upgrade_check_result.stdout"
   when:
     - inventory_hostname in groups['primary']
-
-...

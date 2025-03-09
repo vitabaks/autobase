@@ -53,9 +53,9 @@
   ansible.builtin.set_fact:
     ansible_mounts:
       - mount: "/"
-        size_total: "53687091200"  # 50 GB
+        size_total: "53687091200" # 50 GB
       - mount: "/home"
-        size_total: "107374182400"  # 100 GB
+        size_total: "107374182400" # 100 GB
 
 # 📝 Establishing test data for Disk space total
 - name: Molecule.tests.variables.asserts.system_info | Establish Disk space total Test Data
