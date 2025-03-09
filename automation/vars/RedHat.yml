@@ -9,7 +9,7 @@ postgresql_data_dir: "\
   /var/lib/pgsql/{{ postgresql_version }}/data\
   {% endif %}"
 # Note: When deploying to cloud providers, we create a disk and mount the data directory,
-# along the path defined in the 'pg_data_mount_path' variable (or use '/pgdata' by default).
+# along the path defined in the "pg_data_mount_path" variable (or use "/pgdata" by default).
 
 # You can specify custom WAL dir path. Example: "/pgwal/{{ postgresql_version }}/pg_wal"
 postgresql_wal_dir: "" # if defined, symlink will be created [optional]
@@ -86,7 +86,7 @@ postgresql_packages:
   - postgresql{{ postgresql_version }}-server
   - postgresql{{ postgresql_version }}-contrib
   - postgresql{{ postgresql_version }}-devel
-  - postgresql{{ postgresql_version }}-debuginfo
+# - postgresql{{ postgresql_version }}-debuginfo
 #  - pg_repack_{{ postgresql_version }}
 #  - pg_cron_{{ postgresql_version }}
 #  - pg_stat_kcache_{{ postgresql_version }}
@@ -151,7 +151,7 @@ patroni_pip_package_repo: []
 haproxy_installation_method: "rpm" # "rpm" (default) or "src"
 confd_package_repo: "https://github.com/kelseyhightower/confd/releases/download/v0.16.0/confd-0.16.0-linux-amd64"
 
-# if haproxy_installation_method: 'src' (optional)
+# if haproxy_installation_method: "src" (optional)
 haproxy_major: "1.8"
 haproxy_version: "1.8.31" # version to build from source
 lua_src_repo: "https://www.lua.org/ftp/lua-5.3.5.tar.gz" # required for build haproxy
@@ -215,6 +215,8 @@ wal_g_package_file: "wal-g.linux-amd64.tar.gz" # https://github.com/wal-g/wal-g/
 haproxy_package_file: []
 #  - "rh-haproxy18-runtime-3.1-2.el7.x86_64.rpm"
 #  - "rh-haproxy18-haproxy-1.8.31-1.el7.x86_64.rpm"
+
+# if haproxy_installation_method: "src" (optional)
 confd_package_file: "confd-0.16.0-linux-amd64" # https://github.com/kelseyhightower/confd/releases
 
 # if haproxy_installation_method: 'src' (optional)
