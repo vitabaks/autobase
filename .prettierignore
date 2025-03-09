@@ -1,2 +1,2 @@
-console/
-*.sql
+console/service
+console/ui

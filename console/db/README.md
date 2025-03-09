@@ -7,6 +7,7 @@ This project uses [Goose](https://github.com/pressly/goose) for versioning and m
 For more information on using Goose, see the [Goose documentation](https://github.com/pressly/goose).
 
 ### Database Migrations
+
 Database migrations are SQL scripts that modify the schema of the database. Each migration script should be placed in the `console/db/migrations` directory and follow Goose's naming convention to ensure they are applied in the correct order.
 
 **Naming Convention**
@@ -17,6 +18,7 @@ Goose uses a specific naming convention to order and apply migrations:
   - Note: You can use the following command `goose create mogration_file_name sql` to create a new migration file.
 
 Example migrations:
+
 ```shell
 goose -dir ./console/db/migrations postgres \
 "host=<host> port=5432 user=postgres password=<password> dbname=<database>" \
@@ -26,6 +28,7 @@ up
 ### Validating Migrations
 
 To check the status of migrations, run:
+
 ```shell
 goose -dir ./console/db/migrations postgres \
 "host=<host> port=5432 user=postgres password=<password> dbname=<database>" \
@@ -33,6 +36,7 @@ status
 ```
 
 Output example:
+
 ```
 status
 
@@ -44,6 +48,7 @@ status
 ### Database Schema
 
 #### Tables:
+
 - `cloud_providers`
   - Table containing cloud providers information
 - `cloud_regions`
@@ -72,20 +77,22 @@ status
   - The table stores information about Postgres extensions, including name, description, supported Postgres version range, and whether the extension is a contrib module or third-party.
   - 'postgres_min_version' and 'postgres_max_version' define the range of Postgres versions supported by extensions. If the postgres_max_version is NULL, it is assumed that the extension is still supported by new versions of Postgres.
 - `operations`
-   - Table containing logs of operations performed on cluster.
-     - Note: The migration includes a DO block that checks for the presence of the timescaledb extension. If the extension is installed, the operations table is converted into a hypertable with monthly partitioning. Additionally, the block checks the timescaledb license. If the license is a Community license (timescale), a hypertable compression policy is created for partitions older than one month.
+  - Table containing logs of operations performed on cluster.
+    - Note: The migration includes a DO block that checks for the presence of the timescaledb extension. If the extension is installed, the operations table is converted into a hypertable with monthly partitioning. Additionally, the block checks the timescaledb license. If the license is a Community license (timescale), a hypertable compression policy is created for partitions older than one month.
 - `postgres_versions`
   - Table containing the major PostgreSQL versions supported by the autobase
 - `settings`
   - Table containing configuration parameters, including console and other component settings
 
 #### Views:
+
 - `v_secrets_list`
   - Displays a list of secrets (without revealing secret values) along with additional metadata such as creation and update timestamps. It also includes information about whether each secret is in use and, if so, provides details on which clusters and servers are utilizing the secret.
 - `v_operations`
   - Displays a list of operations, with additional columns such as the name of the cluster and environment.
 
 #### Functions:
+
 - `update_server_count`
   - Function to update the server_count column in the clusters table.
     - Note: This function calculates the number of servers associated with a specific cluster and updates the server_count accordingly. The trigger `update_server_count_trigger` is automatically executed whenever there are INSERT, UPDATE, or DELETE operations on the servers table. This ensures that the server_count in the clusters table is always accurate and up-to-date.
