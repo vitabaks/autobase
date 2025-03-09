@@ -324,8 +324,7 @@ alter table only public.cloud_instances
 
 -- this trigger will set the "updated_at" column to the current timestamp for every update
 create trigger handle_updated_at
-  before update on public.cloud_instances
-  for each row
+  before update on public.cloud_instances for each row
   execute function extensions.moddatetime (updated_at);
 
 -- cloud_volumes
@@ -385,8 +384,7 @@ alter table only public.cloud_volumes
   add constraint cloud_volumes_cloud_provider_fkey foreign key (cloud_provider) references public.cloud_providers (provider_name);
 
 create trigger handle_updated_at
-  before update on public.cloud_volumes
-  for each row
+  before update on public.cloud_volumes for each row
   execute function extensions.moddatetime (updated_at);
 
 -- cloud_images
@@ -463,8 +461,7 @@ alter table only public.cloud_images
   add constraint cloud_images_cloud_provider_fkey foreign key (cloud_provider) references public.cloud_providers (provider_name);
 
 create trigger handle_updated_at
-  before update on public.cloud_images
-  for each row
+  before update on public.cloud_images for each row
   execute function extensions.moddatetime (updated_at);
 
 -- Projects
@@ -487,8 +484,7 @@ comment on column public.projects.created_at is 'The timestamp when the project 
 comment on column public.projects.updated_at is 'The timestamp when the project was last updated';
 
 create trigger handle_updated_at
-  before update on public.projects
-  for each row
+  before update on public.projects for each row
   execute function extensions.moddatetime (updated_at);
 
 insert into public.projects (project_name)
@@ -514,8 +510,7 @@ comment on column public.environments.created_at is 'The timestamp when the envi
 comment on column public.environments.updated_at is 'The timestamp when the environment was last updated';
 
 create trigger handle_updated_at
-  before update on public.environments
-  for each row
+  before update on public.environments for each row
   execute function extensions.moddatetime (updated_at);
 
 create index environments_name_idx on public.environments (environment_name);
@@ -561,8 +556,7 @@ comment on column public.secrets.created_at is 'The timestamp when the secret wa
 comment on column public.secrets.updated_at is 'The timestamp when the secret was last updated';
 
 create trigger handle_updated_at
-  before update on public.secrets
-  for each row
+  before update on public.secrets for each row
   execute function extensions.moddatetime (updated_at);
 
 create index secrets_type_name_idx on public.secrets (secret_type, secret_name);
@@ -723,8 +717,7 @@ comment on column public.clusters.deleted_at is 'The timestamp when the cluster 
 comment on column public.clusters.flags is 'Bitmask field for storing various status flags related to the cluster';
 
 create trigger handle_updated_at
-  before update on public.clusters
-  for each row
+  before update on public.clusters for each row
   execute function extensions.moddatetime (updated_at);
 
 create index clusters_id_project_id_idx on public.clusters (cluster_id, project_id);
@@ -808,8 +801,7 @@ comment on column public.servers.created_at is 'The timestamp when the server wa
 comment on column public.servers.updated_at is 'The timestamp when the server was last updated';
 
 create trigger handle_updated_at
-  before update on public.servers
-  for each row
+  before update on public.servers for each row
   execute function extensions.moddatetime (updated_at);
 
 create unique index servers_cluster_id_ip_address_idx on public.servers (cluster_id, ip_address);
@@ -839,8 +831,7 @@ language plpgsql;
 
 -- Trigger to update server_count on changes in servers
 create trigger update_server_count_trigger
-  after insert or update or delete on public.servers
-  for each row
+  after insert or update or delete on public.servers for each row
   execute function update_server_count ();
 
 -- Secrets view
@@ -1048,8 +1039,7 @@ comment on column public.operations.created_at is 'The timestamp when the operat
 comment on column public.operations.updated_at is 'The timestamp when the operation was last updated';
 
 create trigger handle_updated_at
-  before update on public.operations
-  for each row
+  before update on public.operations for each row
   execute function extensions.moddatetime (updated_at);
 
 -- add created_at as part of the primary key to be able to create a hypertable
@@ -1081,7 +1071,7 @@ begin
   -- Check if the license allows compression policy
   if current_setting('timescaledb.license', true) = 'timescale' then
     -- Enable compression on the operations hypertable, segmenting by project_id and cluster_id
-    alter table public.operations set (timescaledb.compress, timescaledb.compress_orderby = 'created_at DESC, id DESC, operation_type, operation_status', timescaledb.compress_segmentby = 'project_id, cluster_id');
+    alter table public.operations set (timescaledb.compress, timescaledb.compress_orderby = 'created_at desc, id desc, operation_type, operation_status', timescaledb.compress_segmentby = 'project_id, cluster_id');
     -- Compressing chunks older than one month
     perform
       add_compression_policy ('public.operations', interval '1 month');
@@ -1156,8 +1146,7 @@ comment on column public.settings.created_at is 'The timestamp when the setting 
 comment on column public.settings.updated_at is 'The timestamp when the setting was last updated';
 
 create trigger handle_updated_at
-  before update on public.settings
-  for each row
+  before update on public.settings for each row
   execute function extensions.moddatetime (updated_at);
 
 create index settings_name_idx on public.settings (setting_name);
