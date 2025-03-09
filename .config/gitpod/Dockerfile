@@ -53,7 +53,7 @@ RUN curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /
     && apt-get update \
     && apt-get install -y --no-install-recommends docker-ce docker-ce-cli containerd.io
 
-# Install npm, ungit, prettier, and editorconfig-checker
+# Install npm, ungit, prettier, editorconfig-checker, and sql-formatter
 FROM docker-installer as npm-installer
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
@@ -64,7 +64,8 @@ RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
   && npm install -g \
   "ungit@${UNGIT_VERSION}" \
   "prettier@${PRETTIER_VERSION}" \
-  "editorconfig-checker@${EDITORCONFIG_CHECKER_VERSION}"
+  "editorconfig-checker@${EDITORCONFIG_CHECKER_VERSION}" \
+  "sql-formatter@latest"
 
 # Cleanup
 FROM npm-installer as cleanup
