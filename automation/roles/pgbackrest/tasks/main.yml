@@ -51,7 +51,7 @@
     # RedHat pgdg repo
     - name: Get pgdg-redhat-repo-latest.noarch.rpm
       ansible.builtin.get_url:
-        url: "https://download.postgresql.org/pub/repos/yum/reporpms/EL-{{ ansible_distribution_major_version }}-{{ pgdg_architecture_map[ansible_architecture]}}/pgdg-redhat-repo-latest.noarch.rpm" # yamllint disable rule:line-length
+        url: "https://download.postgresql.org/pub/repos/yum/reporpms/EL-{{ ansible_distribution_major_version }}-{{ pgdg_architecture_map[ansible_architecture] }}/pgdg-redhat-repo-latest.noarch.rpm" # yamllint disable rule:line-length
         dest: /tmp/
         timeout: 30
         validate_certs: false
