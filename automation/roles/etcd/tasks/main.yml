@@ -1,5 +1,4 @@
 ---
-
 - name: Make sure handlers are flushed immediately
   ansible.builtin.meta: flush_handlers
 
@@ -16,7 +15,7 @@
   environment: "{{ proxy_env | default({}) }}"
   tags: etcd, etcd_install
 
-- block:  # install etcd package from repo
+- block: # install etcd package from repo
     - name: Download "etcd" package
       ansible.builtin.get_url:
         url: "{{ item }}"
@@ -50,7 +49,7 @@
     - not ansible_check_mode
   tags: etcd, etcd_install
 
-- block:  # install etcd package from file
+- block: # install etcd package from file
     - name: Extract "etcd" into /tmp
       ansible.builtin.unarchive:
         src: "{{ etcd_package_file }}"
@@ -164,5 +163,3 @@
           else etcd_health_result.stderr }}
   when: not ansible_check_mode
   tags: etcd, etcd_start, etcd_status
-
-...

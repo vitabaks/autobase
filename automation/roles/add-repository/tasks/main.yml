@@ -1,6 +1,4 @@
 ---
-# yamllint disable rule:line-length
-
 - block: # Debian/Ubuntu
     - name: Make sure the python3-debian package is present
       ansible.builtin.apt:

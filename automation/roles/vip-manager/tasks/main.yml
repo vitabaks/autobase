@@ -1,6 +1,5 @@
 ---
-
-- block:  # install vip-manager package from repo
+- block: # install vip-manager package from repo
     - name: Get vip-manager package
       ansible.builtin.get_url:
         url: "{{ item }}"
@@ -39,7 +38,7 @@
     - not postgresql_cluster_maintenance | default(false) | bool
   tags: vip, vip_manager, vip_manager_install
 
-- block:  # install vip-manager package from file
+- block: # install vip-manager package from file
     - name: Copy vip-manager package into /tmp
       ansible.builtin.copy:
         src: "{{ vip_manager_package_file }}"
@@ -92,7 +91,7 @@
   when: existing_pgcluster is not defined or not existing_pgcluster|bool
   tags: vip, vip_manager, vip_manager_conf
 
-- block:  # for add_pgnode.yml
+- block: # for add_pgnode.yml
     - name: Fetch "{{ vip_manager_conf | basename }}" conf file from master
       run_once: true
       ansible.builtin.fetch:
@@ -115,8 +114,8 @@
         line: "{{ item.line }}"
         backrefs: true
       loop:
-        - { regexp: '^nodename:', line: 'nodename: "{{ ansible_hostname }}"' }
-        - { regexp: '^iface:', line: 'iface: {{ vip_manager_iface }} # interface to which the virtual ip will be added' }
+        - { regexp: "^nodename:", line: 'nodename: "{{ ansible_hostname }}"' }
+        - { regexp: "^iface:", line: "iface: {{ vip_manager_iface }} # interface to which the virtual ip will be added" }
       loop_control:
         label: "{{ item.line }}"
       notify: "restart vip-manager"
@@ -135,5 +134,3 @@
 
 - name: Make sure handlers are flushed immediately
   ansible.builtin.meta: flush_handlers
-
-...

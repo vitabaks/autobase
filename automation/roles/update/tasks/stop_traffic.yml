@@ -5,11 +5,11 @@
     regexp: "{{ item.regexp }}"
     replace: "{{ item.replace }}"
   loop:
-    - { regexp: 'noloadbalance: false', replace: 'noloadbalance: true' }
-    - { regexp: 'nosync: false', replace: 'nosync: true' }
-    - { regexp: 'nofailover: false', replace: 'nofailover: true' }
+    - { regexp: "noloadbalance: false", replace: "noloadbalance: true" }
+    - { regexp: "nosync: false", replace: "nosync: true" }
+    - { regexp: "nofailover: false", replace: "nofailover: true" }
   loop_control:
-    label: '{{ item.replace }}'
+    label: "{{ item.replace }}"
 
 - name: Reload patroni service
   ansible.builtin.systemd:
@@ -44,4 +44,3 @@
   retries: 300
   delay: 2
   changed_when: false
-...

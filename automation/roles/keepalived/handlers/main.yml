@@ -1,5 +1,4 @@
 ---
-
 - name: Restart keepalived service
   ansible.builtin.systemd:
     daemon_reload: true
@@ -16,7 +15,7 @@
     host: "{{ cluster_vip }}"
     port: "{{ target_port }}"
     state: started
-    timeout: 15  # max wait time: 30 seconds
+    timeout: 15 # max wait time: 30 seconds
     delay: 2
   vars:
     target_port: >-
@@ -27,7 +26,5 @@
           ansible_ssh_port | default(22)
         )
       }}
-  ignore_errors: true  # noqa ignore-errors # show the error and continue the playbook execution
+  ignore_errors: true # noqa ignore-errors # show the error and continue the playbook execution
   listen: "restart keepalived"
-
-...

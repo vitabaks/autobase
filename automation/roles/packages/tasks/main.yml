@@ -1,5 +1,4 @@
 ---
-
 # Install packages from files
 - block:
     - name: Copy packages into /tmp
@@ -55,7 +54,7 @@
   ansible.builtin.dnf:
     name: "{{ item }}"
     state: present
-    disablerepo: 'pgdg*'
+    disablerepo: "pgdg*"
   loop: "{{ system_packages | list }}"
   register: package_status
   until: package_status is success
@@ -131,12 +130,12 @@
 # RedHat
 - block: # Preparing to install PostgreSQL
     - name: PostgreSQL | check if appstream module is enabled
-      ansible.builtin.command: 'dnf -y -C module list postgresql'
+      ansible.builtin.command: "dnf -y -C module list postgresql"
       register: postgresql_module_result
       changed_when: false
 
     - name: PostgreSQL | disable appstream module
-      ansible.builtin.command: 'dnf -y -C module disable postgresql'
+      ansible.builtin.command: "dnf -y -C module disable postgresql"
       when: "'[x] ' not in postgresql_module_result.stdout"
   when:
     - installation_method == "repo"
@@ -191,12 +190,12 @@
 # PostgreSQL prepare for install (for RHEL)
 - block:
     - name: PostgreSQL | check if appstream module is enabled
-      ansible.builtin.command: 'dnf -y -C module list postgresql'
+      ansible.builtin.command: "dnf -y -C module list postgresql"
       register: postgresql_module_result
       changed_when: false
 
     - name: PostgreSQL | disable appstream module
-      ansible.builtin.command: 'dnf -y -C module disable postgresql'
+      ansible.builtin.command: "dnf -y -C module disable postgresql"
       when: "'[x] ' not in postgresql_module_result.stdout"
   when: installation_method == "repo" and ansible_os_family == "RedHat"
   ignore_errors: true
@@ -248,5 +247,3 @@
   ansible.builtin.import_tasks: perf.yml
   when: install_perf | bool
   tags: install_packages, install_perf, perf
-
-...

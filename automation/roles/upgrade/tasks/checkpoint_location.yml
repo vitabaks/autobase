@@ -78,5 +78,3 @@
     # it means that the 'pg_checkpoint_location_match' is not 'True' for all nodes,
     # and the block of tasks is executed, including cleanup and throwing an error.
     - groups['secondary'] | map('extract', hostvars, 'pg_checkpoint_location_match') | select('equalto', False) | list | length > 0
-
-...

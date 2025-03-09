@@ -1,6 +1,5 @@
 # yamllint disable rule:line-length
 ---
-
 - name: Make sure handlers are flushed immediately
   ansible.builtin.meta: flush_handlers
 
@@ -9,8 +8,7 @@
   run_once: true
   become: true
   become_user: postgres
-  ansible.builtin.command:
-    "{{ postgresql_bin_dir }}/psql -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -Xc '\\du'"
+  ansible.builtin.command: "{{ postgresql_bin_dir }}/psql -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -Xc '\\du'"
   register: users_result
   delegate_to: "{{ groups.master[0] }}"
   changed_when: false
@@ -21,8 +19,7 @@
   run_once: true
   become: true
   become_user: postgres
-  ansible.builtin.command:
-    "{{ postgresql_bin_dir }}/psql -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -Xc '\\l'"
+  ansible.builtin.command: "{{ postgresql_bin_dir }}/psql -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -Xc '\\l'"
   register: dbs_result
   delegate_to: "{{ groups.master[0] }}"
   changed_when: false
@@ -131,7 +128,7 @@
           port: "{{ pgbouncer_listen_port }}"
           superuser: "{{ superuser_username }}"
           password: "{{ superuser_password }}"
-      when: not with_haproxy_load_balancing | bool
+      when: not with_haproxy_load_balancing | bool and pgbouncer_install | bool
 
     # if 'with_haproxy_load_balancing' is 'false' and 'pgbouncer_install' is 'false'
     - name: Connection info
@@ -304,5 +301,3 @@
     superuser_password: "{{ '********' if mask_password | default(false) | bool else patroni_superuser_password }}"
   when: cloud_provider | default('') | lower == 'hetzner' and cloud_load_balancer | default(true) | bool
   tags: conn_info, cluster_info, cluster_status
-
-...

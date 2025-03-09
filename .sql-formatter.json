@@ -1,0 +1,14 @@
+{
+  "language": "postgresql",
+  "keywordCase": "lower",
+  "dataTypeCase": "lower",
+  "functionCase": "lower",
+  "identifierCase": "lower",
+  "tabWidth": 2,
+  "useTabs": false,
+  "linesBetweenQueries": 1,
+  "logicalOperatorNewline": true,
+  "expressionWidth": 160,
+  "denseOperators": false,
+  "newlineBeforeSemicolon": false
+}

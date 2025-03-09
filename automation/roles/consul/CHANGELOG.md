@@ -2,15 +2,15 @@
 
 - Update CONTRIBUTORS
 - Prevent gathering facts for the same servers in loop. (thanks Pavel Zinchuk)
-- Update consul\_systemd.service.j2 (thanks Han Sooloo)
+- Update consul_systemd.service.j2 (thanks Han Sooloo)
 - Allow "Connect" for any and all nodes (#401) (thanks adawalli)
 - Increment to 1.7.3 (#395) (thanks Stuart Low)
 - fix: Stop sending logs to syslog through systemd (#393) (thanks Samuel Mutel)
-- Don't create TLS folder if consul\_tls\_copy\_keys is false (#369) (thanks Samuel Mutel)
+- Don't create TLS folder if consul_tls_copy_keys is false (#369) (thanks Samuel Mutel)
 - Setup the role to be used in check mode (thanks Louis Paret)
-- Use consul\_node\_name as empty by default to use hostname (#373) (thanks Louis Paret)
+- Use consul_node_name as empty by default to use hostname (#373) (thanks Louis Paret)
 - Corrected version Fedora dropped libselinux-python. (#385) (thanks jebas)
-- add leave\_on\_terminate (thanks Le Minh Duc)
+- add leave_on_terminate (thanks Le Minh Duc)
 - Allow consul connect on bootstrap nodes (thanks Robert Edström)
 - Fix unarchive consul package to run_once (thanks schaltiemi)
 
@@ -136,14 +136,14 @@
 - fixed multiarch deployment race condition (thanks @lanefu)
 - Switched from systemctl command to systemd module [lint]
 - Update for E504 use 'delegate_to: localhost' [lint]
- - asserts
- - install
- - encrypt_gossip
+- asserts
+- install
+- encrypt_gossip
 - Update for E104 in with_fileglob for install_remote [lint]
 - Update for E601 in syslog [lint]
 - Update for E602 in tasks [lint]
- - acl
- - main
+- acl
+- main
 - Update example site playbook roles format
 - Support install on Debian Testing (thanks @gfeun)
 - Fix consul_bind_address (thanks @danielkucera)
@@ -179,8 +179,8 @@
 ## v2.3.0
 
 - The role no longer attempts to install the unzip binary locally onto
- the Ansible control host; it is now a hard dependency and role execution
- will fail if unzip is not in the PATH on the control host.
+  the Ansible control host; it is now a hard dependency and role execution
+  will fail if unzip is not in the PATH on the control host.
 - Snapshot agent installation and configuration (thanks @drewmullen)
 - Delegate Consul datacenter DNS domain to Consul (thanks @teralype)
 - Allow DNSmasq binding to particular interfaces (thanks @teralype)
@@ -310,13 +310,13 @@
 ## v1.30.1
 
 - Add performance tuning configuration (thanks @t0k4rt)
- - Set raft multiplier to 1
+- Set raft multiplier to 1
 - Conditionally install Python dependency baed on virtualenv or --user
- Addresses https://github.com/brianshumate/ansible-consul/issues/129#issuecomment-356095611
+  Addresses https://github.com/brianshumate/ansible-consul/issues/129#issuecomment-356095611
 - Update includes to import_tasks and include_tasks
 - Remove invalid consul_version key from configuration
 - Update Vagrantfile
- - Set client address to 0.0.0.0 so Vagrant based deploy checks now pass
+- Set client address to 0.0.0.0 so Vagrant based deploy checks now pass
 - Update documentation
 
 ## v1.30.0
@@ -341,7 +341,6 @@
 
 - Consul 1.0!
 - Fix python3 compatibility for meta data (thanks @groggemans)
-
 
 ## v1.27.0
 
@@ -510,11 +509,11 @@ Do not enable a default set of ACL policies
 ## v1.18.0
 
 - Add new vars
- - `consul_run_path` for the PID file
+- `consul_run_path` for the PID file
 - Add bootstrap-expect toggle option (thanks @groggemans)
 - Use directory variables in dirs tasks
 - Do not attempt to install Consul binary if already found on consul_bin_path
- - Fixes #60
+- Fixes #60
 - Rename intermediate `boostrap_marker` var
 - Formatting on CONTRIBUTING
 - Update CONTRIBUTORS
@@ -530,7 +529,7 @@ Do not enable a default set of ACL policies
 ## v1.17.3
 
 - Revert local_action tasks
- - Ansible generally spazzes out with "no action detected in task"
+- Ansible generally spazzes out with "no action detected in task"
   for any variation of local_task I tried
 
 ## v1.17.2
@@ -545,9 +544,9 @@ Do not enable a default set of ACL policies
 ## v1.17.0
 
 - Updated configuration directory structure (thanks @groggemans)
- - Updated `consul_config_path` to point to `/etc/consul`
- - Added `consul_configd_path` defaulting to `/etc/consul.d`
-- Added `consul_debug` variable - defaults to *no* (thanks @groggemans)
+- Updated `consul_config_path` to point to `/etc/consul`
+- Added `consul_configd_path` defaulting to `/etc/consul.d`
+- Added `consul_debug` variable - defaults to _no_ (thanks @groggemans)
 - Moved all config related tasks to `tasks/config.yml` (thanks @groggemans)
 - Added ACL and TLS parameters to the main `config.json` (thanks @groggemans)
 - Now using `/etc/consul/config.json` for all consul roles (thanks @groggemans)
@@ -563,13 +562,13 @@ Do not enable a default set of ACL policies
 ## v1.16.2
 
 - Standing corrected - put node_role back into defaults as it will still be
- overridden by host vars (sorry @groggemans)
+  overridden by host vars (sorry @groggemans)
 - Update documentation
 
 ## v1.16.1
 
 - Revert node_role addition to default vars so clusters will still properly
- come up since we basically lost access the bootstrap role
+  come up since we basically lost access the bootstrap role
 
 ## v1.16.0
 
@@ -591,24 +590,24 @@ Do not enable a default set of ACL policies
 
 - Add option to download binaries directly to remotes (thanks @jonhatalla)
 - Add environment variable overrides for the following default variables:
- - `consul_bind_address`
- - `consul_datacenter`
- - `consul_domain`
- - `consul_group_name`
- - `consul_log_level`
- - `consul_syslog_enable`
- - `consul_acl_default_policy`
- - `consul_acl_down_policy`
- - Rename `consul_src_files` variable
- - Rename `consul_copy_keys` variable
- - Rename `consul_ca_crt` variable
- - Rename `consul_server_crt` variable
- - Rename `consul_tls_server_key` variable
- - Rename `consul_verify_outgoing` variable
- - Rename `consul_verify_server_hostname` variable
- - Move `consul_iface` default to value of `hostvars.consul_iface`
-  - Override with elsewhere or with `CONSUL_IFACE` environment variable
-  - Closes #40
+- `consul_bind_address`
+- `consul_datacenter`
+- `consul_domain`
+- `consul_group_name`
+- `consul_log_level`
+- `consul_syslog_enable`
+- `consul_acl_default_policy`
+- `consul_acl_down_policy`
+- Rename `consul_src_files` variable
+- Rename `consul_copy_keys` variable
+- Rename `consul_ca_crt` variable
+- Rename `consul_server_crt` variable
+- Rename `consul_tls_server_key` variable
+- Rename `consul_verify_outgoing` variable
+- Rename `consul_verify_server_hostname` variable
+- Move `consul_iface` default to value of `hostvars.consul_iface`
+- Override with elsewhere or with `CONSUL_IFACE` environment variable
+- Closes #40
 - Update documentation
 
 ## v1.14.0
@@ -645,7 +644,6 @@ Do not enable a default set of ACL policies
 - Fix documentation formatting issues
 - Add support for Ubuntu 15.04
 
-
 ## v1.11.1
 
 - Updated known good versions
@@ -657,22 +655,21 @@ Do not enable a default set of ACL policies
 
 - File permission updates (thanks @arledesma)
 - Explicit consul_user/consul_group ownership of configurations
- (thanks @arledesma)
+  (thanks @arledesma)
 - Use consul_bin_path throughout (thanks @arledesma)
-
 
 ## v1.10.5
 
 - Additional fixes to debian init
 - Add consul_config_custom for role users to specify new or overwrite
- existing configuration (thanks @arledesma)
+  existing configuration (thanks @arledesma)
 
 ## v1.10.4
 
 - Corrections to config_debianint.j2 for #34
 - Update main task to prefer open Consul HTTP API port over PID file
 - Update package cache before installing OS packages
- (watch for and refuse reversion of this as it's occurred once now)
+  (watch for and refuse reversion of this as it's occurred once now)
 
 ## v1.10.3
 
@@ -696,13 +693,13 @@ Do not enable a default set of ACL policies
 - Initial FreeBSD support
 - Vagrantfile updated for FreeBSD
 - Added checks for interface addresses for differences (obj vs. literal list)
- in ipv4 addresses as returned by Linux vs. BSD/SmartOS
+  in ipv4 addresses as returned by Linux vs. BSD/SmartOS
 - New `consul_os` var gets operating system name as lowercase string
 - Add AMD64 pass-through/kludge to consul_architecture_map configuration
 - Update Vagrantfile
- - Decrease RAM to 1024MB
- - Add FreeBSD specific checks in inline script
- - Add FreeBSD hard requirements (explicit MAC address, disable share, shell)
+- Decrease RAM to 1024MB
+- Add FreeBSD specific checks in inline script
+- Add FreeBSD hard requirements (explicit MAC address, disable share, shell)
 - Update documentation
 
 ## v1.9.7
@@ -761,9 +758,9 @@ Do not enable a default set of ACL policies
 
 - Consul 0.7.5
 - BREAKING CHANGE: Deprecate read/write of ACL tokens from file system
- functionality and prefer setting tokens from existing cluster nodes with
- `CONSUL_ACL_MASTER_TOKEN` and `CONSUL_ACL_REPLICATION_TOKEN` environment
- variables instead
+  functionality and prefer setting tokens from existing cluster nodes with
+  `CONSUL_ACL_MASTER_TOKEN` and `CONSUL_ACL_REPLICATION_TOKEN` environment
+  variables instead
 - Update documentation
 
 ## v1.7.4
@@ -793,7 +790,7 @@ Do not enable a default set of ACL policies
 ## v1.6.2
 
 - Stop reconfiguring bootstrap node as it's not really necessary and
- spurious races cause failure to re-establish cluster quorum when doing so
+  spurious races cause failure to re-establish cluster quorum when doing so
 - CONSUL_VERSION environment variable
 - Deprecated default variables cleanup
 
@@ -809,7 +806,7 @@ Do not enable a default set of ACL policies
 - Update documentation
 - Fixing bug with deleting file. Better regex. Formatting. (Thanks @violuke)
 - Remember ACL master/replication tokens between runs.
- Actually set replication token. (Thanks @violuke)
+  Actually set replication token. (Thanks @violuke)
 - Typo fix (Thanks @violuke)
 - Allowing re-running to add new nodes. More HA too. (Thanks @violuke)
 
@@ -844,7 +841,7 @@ Do not enable a default set of ACL policies
 ## v1.5.1
 
 - Fail when ethernet interface specified by consul_iface not found on
- the system (addresses #13)
+  the system (addresses #13)
 
 ## v1.5.0
 
@@ -965,7 +962,7 @@ Do not enable a default set of ACL policies
 
 - Updated README
 - Undo 125bd4bb369bb85f58a09b5dc81839e2779bd29f as dots in node_name breaks
- DNS API (without recursor option) and also breaks dnsmasq option
+  DNS API (without recursor option) and also breaks dnsmasq option
 
 ## v1.2.3
 
@@ -988,11 +985,11 @@ Do not enable a default set of ACL policies
 ## v1.1.0
 
 - Bare role now installs and bootstraps cluster; included site.yml will also
- reconfigure bootstrap node as server and optionally enable dnsmasq
- forwarding for all cluster agents
+  reconfigure bootstrap node as server and optionally enable dnsmasq
+  forwarding for all cluster agents
 - Remove bad client_addr bind in favor of default (localhost)
- Some weirdness was occurring whereby the client APIs were listening on
- TCP6/UDP6 sockets but not TCP4/UDP4 when client_addr set to 0.0.0.0
+  Some weirdness was occurring whereby the client APIs were listening on
+  TCP6/UDP6 sockets but not TCP4/UDP4 when client_addr set to 0.0.0.0
 - Adjust timeouts for cluster UI check
 - Default configurable domain to "consul" so that examples from docs work, etc.
 - Combine all OS vars into main (addresses undefined var warnings)
@@ -1016,7 +1013,7 @@ Do not enable a default set of ACL policies
 
 - Add initial dnsmasq front end bits
 - Reconfigure bootstrap node for normal operation (remove bootstrap-expect)
- after initial cluster formation and restart bootstrap node
+  after initial cluster formation and restart bootstrap node
 
 ## v1.0.12
 
@@ -1058,7 +1055,7 @@ Do not enable a default set of ACL policies
 
 - Updated defaults and Consul version (thanks @bscott)
 - Made cluster bootable and switch to become_user + other Ansibel best
- practices (thanks @Rodjers)
+  practices (thanks @Rodjers)
 - Updated minimum Ansible version required in meta
 
 ## v1.0.4

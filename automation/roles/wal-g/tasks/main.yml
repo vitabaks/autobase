@@ -1,11 +1,10 @@
 ---
-
 # Automatic setup of the backup configuration based on the selected cloud provider.
 # if 'cloud_provider' is 'aws', 'gcp', 'azure', 'digitalocean'.
 - ansible.builtin.import_tasks: auto_conf.yml
   when:
     - cloud_provider | default('') | length > 0
-    - wal_g_auto_conf | default(true) | bool  # to be able to disable auto backup settings
+    - wal_g_auto_conf | default(true) | bool # to be able to disable auto backup settings
   tags: wal-g, wal_g, wal_g_conf
 
 # Pre-check
@@ -129,8 +128,8 @@
       changed_when: false
       register: go_latest_version
 
-    - block:  # Install latest Go compiler
-        - name: "Download Go v{{ go_latest_version.stdout }}"
+    - block: # Install latest Go compiler
+        - name: "Download Go v{{ wal_g_latest_version.stdout }}"
           ansible.builtin.get_url:
             url: "https://go.dev/dl/go{{ go_latest_version.stdout }}.linux-{{ go_architecture_map[ansible_architecture] }}.tar.gz"
             dest: /tmp/
@@ -145,7 +144,6 @@
               - --no-same-owner
             remote_src: true
       when: go_installed_version.stderr is search("command not found") or
-            go_installed_version.stdout is version(go_latest_version.stdout, '<')
 
     - name: "Download WAL-G v{{ wal_g_version | string | replace('v', '') }} source code"
       ansible.builtin.git:
@@ -251,7 +249,7 @@
     - installation_method == "file"
     - wal_g_version is version('1.0', '>=')
     - (wal_g_installed_version.stderr is search("command not found") or
-       wal_g_installed_version.stdout != wal_g_version)
+      wal_g_installed_version.stdout != wal_g_version)
     - (wal_g_package_file is defined and wal_g_package_file | length > 0)
   tags: wal-g, wal_g, wal_g_install
 
@@ -275,7 +273,7 @@
     - installation_method == "file"
     - wal_g_version is version('0.2.19', '<=')
     - (wal_g_installed_version.stderr is search("command not found") or
-       wal_g_installed_version.stdout != wal_g_version)
+      wal_g_installed_version.stdout != wal_g_version)
     - wal_g_package_file == "wal-g.linux-amd64.tar.gz"
   tags: wal-g, wal_g, wal_g_install
 
@@ -286,7 +284,7 @@
     state: directory
     owner: postgres
     group: postgres
-    mode: '0740'
+    mode: "0740"
   when: wal_g_prefetch_dir_create | default(true) | bool
   tags: wal-g, wal_g, wal_g_install
 
@@ -305,5 +303,3 @@
     - wal_g_cron_jobs is defined
     - wal_g_cron_jobs | length > 0
   tags: wal-g, wal_g, wal_g_cron
-
-...

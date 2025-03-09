@@ -28,8 +28,8 @@ white=$(shell tput setaf 7)
 
 define HEADER
 How to use me:
- make && make bootstrap
- make ${cyan}<target>${reset}
+	make && make bootstrap
+	make ${cyan}<target>${reset}
 
 endef
 export HEADER

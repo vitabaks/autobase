@@ -9,15 +9,15 @@
       tags: always
     # set_fact: 'pgbackrest_install' to configure Postgres backups (TODO: Add the ability to configure backups in the UI)
     # Note: Applicable only for "aws", "gcp", "azure", because:
-      # "digitalocean" - requires the Spaces access keys "AWS_ACCESS_KEY_ID" and "AWS_SECRET_ACCESS_KEY"
-      # "hetzner" - currently, Hetzner Cloud does not provide S3 storage
+    # "digitalocean" - requires the Spaces access keys ("AWS_ACCESS_KEY_ID" and "AWS_SECRET_ACCESS_KEY" variables)
+    # "hetzner" - requires the S3 credentials ("hetzner_object_storage_access_key" and "hetzner_object_storage_secret_key" variables).
     - name: "Set variable: 'pgbackrest_install' to configure Postgres backups"
       ansible.builtin.set_fact:
         pgbackrest_install: true
       when:
         - not (pgbackrest_install | bool or wal_g_install | bool)
         - cloud_provider | default('') | lower in ['aws', 'gcp', 'azure']
-        - pgbackrest_auto_conf | default(true) | bool  # to be able to disable auto backup settings
+        - pgbackrest_auto_conf | default(true) | bool # to be able to disable auto backup settings
       tags: always
   roles:
     - role: cloud-resources
@@ -80,7 +80,7 @@
       when:
         - not (pgbackrest_install | bool or wal_g_install | bool)
         - cloud_provider | default('') | lower in ['aws', 'gcp', 'azure']
-        - pgbackrest_auto_conf | default(true) | bool  # to be able to disable auto backup settings
+        - pgbackrest_auto_conf | default(true) | bool # to be able to disable auto backup settings
       tags: always
 
     - name: Clean dnf cache
@@ -145,7 +145,7 @@
           register: pre_deploy_result
           delegate_to: "{{ item }}"
           loop: "{{ pre_deploy_command_hosts.split(',') | map('extract', groups) | list | flatten }}"
-          async: "{{ pre_deploy_command_timeout }}"  # run the command asynchronously
+          async: "{{ pre_deploy_command_timeout }}" # run the command asynchronously
           poll: 0
 
         - name: Wait for the pre-deploy command to complete
@@ -311,7 +311,7 @@
       when:
         - not (pgbackrest_install | bool or wal_g_install | bool)
         - cloud_provider | default('') | lower in ['aws', 'gcp', 'azure']
-        - pgbackrest_auto_conf | default(true) | bool  # to be able to disable auto backup settings
+        - pgbackrest_auto_conf | default(true) | bool # to be able to disable auto backup settings
       tags: always
   roles:
     - role: pgbackrest
@@ -347,7 +347,7 @@
       when:
         - not (pgbackrest_install | bool or wal_g_install | bool)
         - cloud_provider | default('') | lower in ['aws', 'gcp', 'azure']
-        - pgbackrest_auto_conf | default(true) | bool  # to be able to disable auto backup settings
+        - pgbackrest_auto_conf | default(true) | bool # to be able to disable auto backup settings
       tags: always
 
   roles:
@@ -415,7 +415,7 @@
           register: post_deploy_result
           delegate_to: "{{ item }}"
           loop: "{{ post_deploy_command_hosts.split(',') | map('extract', groups) | list | flatten }}"
-          async: "{{ post_deploy_command_timeout }}"  # run the command asynchronously
+          async: "{{ post_deploy_command_timeout }}" # run the command asynchronously
           poll: 0
 
         - name: Wait for the post-deploy command to complete
@@ -459,5 +459,3 @@
       run_once: true # noqa run-once
       when: post_deploy_command | default('') | length > 0
       tags: post_deploy, post_deploy_command
-
-...

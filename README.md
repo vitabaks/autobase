@@ -62,6 +62,7 @@ For non-cloud environments, such as when deploying on Your Own Machines, the HAP
 > Your application must have support sending read requests to a custom port 5001, and write requests to port 5000.
 
 List of ports when using HAProxy:
+
 - port 5000 (read / write) master
 - port 5001 (read only) all replicas
 - port 5002 (read only) synchronous replica only
@@ -69,12 +70,12 @@ List of ports when using HAProxy:
 
 ##### Components of HAProxy load balancing:
 
-- [**HAProxy**](https://www.haproxy.org/) is a free, very fast and reliable solution offering high availability, load balancing, and proxying for TCP and HTTP-based applications. 
+- [**HAProxy**](https://www.haproxy.org/) is a free, very fast and reliable solution offering high availability, load balancing, and proxying for TCP and HTTP-based applications.
 
 - [**confd**](https://github.com/kelseyhightower/confd) manage local application configuration files using templates and data from etcd or consul. Used to automate HAProxy configuration file management.
 
-- [**Keepalived**](https://github.com/acassen/keepalived)  (_optional, if the `cluster_vip` variable is specified_) provides a virtual high-available IP address (VIP) and single entry point for databases access.
-Implementing VRRP (Virtual Router Redundancy Protocol) for Linux. In our configuration keepalived checks the status of the HAProxy service and in case of a failure delegates the VIP to another server in the cluster.
+- [**Keepalived**](https://github.com/acassen/keepalived) (_optional, if the `cluster_vip` variable is specified_) provides a virtual high-available IP address (VIP) and single entry point for databases access.
+  Implementing VRRP (Virtual Router Redundancy Protocol) for Linux. In our configuration keepalived checks the status of the HAProxy service and in case of a failure delegates the VIP to another server in the cluster.
 
 #### 3. PostgreSQL High-Availability with Consul Service Discovery
 
@@ -94,9 +95,10 @@ Example: `replica.postgres-cluster.service.dc1.consul`, `replica.postgres-cluste
 It requires the installation of a consul in client mode on each application server for service DNS resolution (or use [forward DNS](https://developer.hashicorp.com/consul/tutorials/networking/dns-forwarding?utm_source=docs) to the remote consul server instead of installing a local consul client).
 
 ## Compatibility
-RedHat and Debian based distros (x86_64, arm64)
+RedHat and Debian based distros (x86_64)
 
 ###### Supported Linux Distributions:
+
 - **Debian**: 11, 12
 - **Ubuntu**: 22.04, 24.04
 - **CentOS Stream**: 9
@@ -105,6 +107,7 @@ RedHat and Debian based distros (x86_64, arm64)
 - **AlmaLinux**: 8, 9
 
 ###### PostgreSQL versions:
+
 all supported PostgreSQL versions
 
 :white_check_mark: tested, works fine: PostgreSQL 10, 11, 12, 13, 14, 15, 16, 17
@@ -112,8 +115,8 @@ all supported PostgreSQL versions
 _Table of results of daily automated testing of cluster deployment:_
 | Distribution | Test result |
 |--------------|:----------:|
-| Debian 11    | [![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/vitabaks/autobase/schedule_pg_debian11.yml?branch=master)](https://github.com/vitabaks/autobase/actions/workflows/schedule_pg_debian11.yml) |
-| Debian 12    | [![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/vitabaks/autobase/schedule_pg_debian11.yml?branch=master)](https://github.com/vitabaks/autobase/actions/workflows/schedule_pg_debian12.yml) |
+| Debian 11 | [![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/vitabaks/autobase/schedule_pg_debian11.yml?branch=master)](https://github.com/vitabaks/autobase/actions/workflows/schedule_pg_debian11.yml) |
+| Debian 12 | [![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/vitabaks/autobase/schedule_pg_debian11.yml?branch=master)](https://github.com/vitabaks/autobase/actions/workflows/schedule_pg_debian12.yml) |
 | Ubuntu 22.04 | [![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/vitabaks/autobase/schedule_pg_ubuntu2204.yml?branch=master)](https://github.com/vitabaks/autobase/actions/workflows/schedule_pg_ubuntu2204.yml) |
 | Ubuntu 24.04 | [![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/vitabaks/autobase/schedule_pg_ubuntu2204.yml?branch=master)](https://github.com/vitabaks/autobase/actions/workflows/schedule_pg_ubuntu2404.yml) |
 | CentOS Stream 9 | [![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/vitabaks/autobase/schedule_pg_centosstream9.yml?branch=master)](https://github.com/vitabaks/autobase/actions/workflows/schedule_pg_centosstream9.yml) |
@@ -146,11 +149,11 @@ Refer to the [Deployment](https://autobase.tech/docs/category/deployment) sectio
 If you find our project helpful, consider giving it a star on GitHub! Your support helps us grow and motivates us to keep improving. Starring the project is a simple yet effective way to show your appreciation and help others discover it.
 
 <a href="https://star-history.com/#vitabaks/autobase&Date">
- <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=vitabaks/autobase&type=Date&theme=dark" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=vitabaks/autobase&type=Date" />
-   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=vitabaks/autobase&type=Date" />
- </picture>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=vitabaks/autobase&type=Date&theme=dark" />
+    <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=vitabaks/autobase&type=Date" />
+    <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=vitabaks/autobase&type=Date" />
+  </picture>
 </a>
 
 ## Sponsor this project
@@ -168,11 +171,14 @@ Support our work through [Patreon](https://www.patreon.com/vitabaks)
 [![Support me on Patreon](https://img.shields.io/endpoint.svg?url=https%3A%2F%2Fshieldsio-patreon.vercel.app%2Fapi%3Fusername%3Dvitabaks%26type%3Dpatrons&style=for-the-badge)](https://patreon.com/vitabaks)
 
 ## License
+
 Licensed under the MIT License. See the [LICENSE](./LICENSE) file for details.
 
 ## Author
+
 Vitaliy Kukharik (PostgreSQL DBA) \
 vitaliy@autobase.tech
 
 ## Feedback, bug-reports, requests, ...
+
 Are [welcome](https://github.com/vitabaks/autobase/issues)!

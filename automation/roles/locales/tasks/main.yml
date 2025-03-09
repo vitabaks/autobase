@@ -1,5 +1,4 @@
 ---
-
 - block:
     # Debian
     - name: Generate locales
@@ -28,11 +27,11 @@
         line: "{{ item.line }}"
         owner: root
         group: root
-        mode: '0644'
+        mode: "0644"
       loop:
-        - { regexp: '^LANG=', line: 'LANG={{ locale }}' }
-        - { regexp: '^LANGUAGE=', line: 'LANGUAGE={{ locale }}' }
-        - { regexp: '^LC_ALL=', line: 'LC_ALL={{ locale }}' }
+        - { regexp: "^LANG=", line: "LANG={{ locale }}" }
+        - { regexp: "^LANGUAGE=", line: "LANGUAGE={{ locale }}" }
+        - { regexp: "^LC_ALL=", line: "LC_ALL={{ locale }}" }
       loop_control:
         label: "{{ item.line }}"
       when: ansible_os_family == "Debian"
@@ -50,10 +49,10 @@
         line: "{{ item.line }}"
         owner: root
         group: root
-        mode: '0644'
+        mode: "0644"
       loop:
-        - { regexp: '^LANG=', line: 'LANG={{ locale }}' }
-        - { regexp: '^LC_ALL=', line: 'LC_ALL={{ locale }}' }
+        - { regexp: "^LANG=", line: "LANG={{ locale }}" }
+        - { regexp: "^LC_ALL=", line: "LC_ALL={{ locale }}" }
       loop_control:
         label: "{{ item.line }}"
       when: ansible_os_family == "RedHat" and locale_conf.stat.exists
@@ -65,15 +64,13 @@
         line: "{{ item.line }}"
         owner: root
         group: root
-        mode: '0644'
+        mode: "0644"
       loop:
-        - { regexp: 'LANG=', line: 'export LANG={{ locale }}' }
-        - { regexp: 'LC_ALL=', line: 'export LC_ALL={{ locale }}' }
+        - { regexp: "LANG=", line: "export LANG={{ locale }}" }
+        - { regexp: "LC_ALL=", line: "export LC_ALL={{ locale }}" }
       loop_control:
         label: "{{ item.line }}"
       when: ansible_os_family == "RedHat"
   ignore_errors: true
   when: locale is defined and locale | length > 0
   tags: locales, locale_env
-
-...

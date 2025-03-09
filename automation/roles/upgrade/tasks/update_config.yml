@@ -19,15 +19,15 @@
     regexp: "{{ item.regexp }}"
     replace: "{{ item.replace }}"
   loop:
-    - { regexp: 'data_dir: {{ pg_old_datadir }}', replace: 'data_dir: {{ pg_new_datadir }}' }
-    - { regexp: 'bin_dir: {{ pg_old_bindir }}', replace: 'bin_dir: {{ pg_new_bindir }}' }
-    - { regexp: 'config_dir: {{ pg_old_confdir }}', replace: 'config_dir: {{ pg_new_confdir }}' }
+    - { regexp: "data_dir: {{ pg_old_datadir }}", replace: "data_dir: {{ pg_new_datadir }}" }
+    - { regexp: "bin_dir: {{ pg_old_bindir }}", replace: "bin_dir: {{ pg_new_bindir }}" }
+    - { regexp: "config_dir: {{ pg_old_confdir }}", replace: "config_dir: {{ pg_new_confdir }}" }
   loop_control:
-    label: '{{ item.replace }}'
+    label: "{{ item.replace }}"
 
 # Prepare the parameters for PostgreSQL (removed or renamed parameters).
 
-- block:  # replacement_sort_tuples (removed in the PG 11)
+- block: # replacement_sort_tuples (removed in the PG 11)
     # check if the replacement_sort_tuples parameter is specified in the patroni.yml
     - name: "Edit patroni.yml | check if the 'replacement_sort_tuples' parameter is specified"
       ansible.builtin.command: grep replacement_sort_tuples {{ patroni_config_file }}
@@ -45,7 +45,7 @@
   when:
     - pg_old_version|int <= 10 and pg_new_version|int >= 11
 
-- block:  # default_with_oids (removed in the PG 12)
+- block: # default_with_oids (removed in the PG 12)
     # check if the default_with_oids parameter is specified in the patroni.yml
     - name: "Edit patroni.yml | check if the 'default_with_oids' parameter is specified"
       ansible.builtin.command: grep default_with_oids {{ patroni_config_file }}
@@ -63,7 +63,7 @@
   when:
     - pg_old_version|int <= 11 and pg_new_version|int >= 12
 
-- block:  # wal_keep_segments (removed in the PG 13)
+- block: # wal_keep_segments (removed in the PG 13)
     # check if the wal_keep_segments parameter is specified in the patroni.yml
     - name: "Edit patroni.yml | check if the 'wal_keep_segments' parameter is specified"
       ansible.builtin.shell: >
@@ -79,13 +79,13 @@
     - name: "Edit patroni.yml | replace parameter: 'wal_keep_segments' to 'wal_keep_size'"
       ansible.builtin.replace:
         path: "{{ patroni_config_file }}"
-        regexp: 'wal_keep_segments: ([0-9]+)'
+        regexp: "wal_keep_segments: ([0-9]+)"
         replace: "wal_keep_size: {{ (wal_keep_segments_output.stdout | int * 16) | string + 'MB' }}"
       when: wal_keep_segments_output.stdout|int > 0
   when:
     - pg_old_version|int <= 12 and pg_new_version|int >= 13
 
-- block:  # operator_precedence_warning (removed in the PG 14)
+- block: # operator_precedence_warning (removed in the PG 14)
     # check if the operator_precedence_warning parameter is specified in the patroni.yml
     - name: "Edit patroni.yml | check if the 'operator_precedence_warning' parameter is specified"
       ansible.builtin.command: grep operator_precedence_warning {{ patroni_config_file }}
@@ -103,7 +103,7 @@
   when:
     - pg_old_version|int <= 13 and pg_new_version|int >= 14
 
-- block:  # vacuum_cleanup_index_scale_factor (removed in the PG 14)
+- block: # vacuum_cleanup_index_scale_factor (removed in the PG 14)
     # check if the vacuum_cleanup_index_scale_factor parameter is specified in the patroni.yml
     - name: "Edit patroni.yml | check if the 'vacuum_cleanup_index_scale_factor' parameter is specified"
       ansible.builtin.command: grep vacuum_cleanup_index_scale_factor {{ patroni_config_file }}
@@ -121,7 +121,7 @@
   when:
     - pg_old_version|int <= 13 and pg_new_version|int >= 14
 
-- block:  # stats_temp_directory (removed in the PG 15)
+- block: # stats_temp_directory (removed in the PG 15)
     # check if the stats_temp_directory parameter is specified in the patroni.yml
     - name: "Edit patroni.yml | check if the 'stats_temp_directory' parameter is specified"
       ansible.builtin.command: grep stats_temp_directory {{ patroni_config_file }}
@@ -139,7 +139,7 @@
   when:
     - pg_old_version|int <= 14 and pg_new_version|int >= 15
 
-- block:  # force_parallel_mode (removed in the PG 16)
+- block: # force_parallel_mode (removed in the PG 16)
     # check if the force_parallel_mode parameter is specified in the patroni.yml
     - name: "Edit patroni.yml | check if the 'force_parallel_mode' parameter is specified"
       ansible.builtin.command: grep force_parallel_mode {{ patroni_config_file }}
@@ -157,7 +157,7 @@
   when:
     - pg_old_version|int <= 15 and pg_new_version|int >= 16
 
-- block:  # promote_trigger_file (removed in the PG 16)
+- block: # promote_trigger_file (removed in the PG 16)
     # check if the promote_trigger_file parameter is specified in the patroni.yml
     - name: "Edit patroni.yml | check if the 'promote_trigger_file' parameter is specified"
       ansible.builtin.command: grep promote_trigger_file {{ patroni_config_file }}
@@ -175,7 +175,7 @@
   when:
     - pg_old_version|int <= 15 and pg_new_version|int >= 16
 
-- block:  # vacuum_defer_cleanup_age (removed in the PG 16)
+- block: # vacuum_defer_cleanup_age (removed in the PG 16)
     # check if the vacuum_defer_cleanup_age parameter is specified in the patroni.yml
     - name: "Edit patroni.yml | check if the 'vacuum_defer_cleanup_age' parameter is specified"
       ansible.builtin.command: grep vacuum_defer_cleanup_age {{ patroni_config_file }}
@@ -193,7 +193,7 @@
   when:
     - pg_old_version|int <= 15 and pg_new_version|int >= 16
 
-- block:  # db_user_namespace (removed in the PG 17)
+- block: # db_user_namespace (removed in the PG 17)
     # check if the db_user_namespace parameter is specified in the patroni.yml
     - name: "Edit patroni.yml | check if the 'db_user_namespace' parameter is specified"
       ansible.builtin.command: grep db_user_namespace {{ patroni_config_file }}
@@ -211,7 +211,7 @@
   when:
     - pg_old_version|int <= 16 and pg_new_version|int >= 17
 
-- block:  # old_snapshot_threshold (removed in the PG 17)
+- block: # old_snapshot_threshold (removed in the PG 17)
     # check if the old_snapshot_threshold parameter is specified in the patroni.yml
     - name: "Edit patroni.yml | check if the 'old_snapshot_threshold' parameter is specified"
       ansible.builtin.command: grep old_snapshot_threshold {{ patroni_config_file }}
@@ -229,7 +229,7 @@
   when:
     - pg_old_version|int <= 16 and pg_new_version|int >= 17
 
-- block:  # trace_recovery_messages (removed in the PG 17)
+- block: # trace_recovery_messages (removed in the PG 17)
     # check if the trace_recovery_messages parameter is specified in the patroni.yml
     - name: "Edit patroni.yml | check if the 'trace_recovery_messages' parameter is specified"
       ansible.builtin.command: grep trace_recovery_messages {{ patroni_config_file }}
@@ -254,7 +254,7 @@
   ansible.builtin.replace:
     path: "{{ patroni_config_file }}"
     regexp: '^\s*standby_cluster:[^\n]*\n(.|\n)*?initdb:'
-    replace: '  initdb:'
+    replace: "  initdb:"
 
 - name: "Remove 'standby_cluster' parameter from DCS (if exists)"
   ansible.builtin.command: patronictl -c {{ patroni_config_file }} edit-config -s standby_cluster=null --force
@@ -268,8 +268,6 @@
     src: "{{ pg_old_confdir }}/pg_hba.conf"
     dest: "{{ pg_new_confdir }}"
     owner: postgres
-    mode: '0600'
+    mode: "0600"
     force: true
     remote_src: true
-
-...

@@ -41,5 +41,3 @@
     - pgbackrest_install | bool
     - pgbackrest_repo_host | default('') | length > 0
     - groups['pgbackrest'] | default([]) | length > 0
-
-...

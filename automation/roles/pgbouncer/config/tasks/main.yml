@@ -80,5 +80,3 @@
         - exists_func_user.stdout == "f"
   when: pgbouncer_auth_user|bool
   tags: pgbouncer, pgbouncer_conf, pgbouncer_auth_query
-
-...

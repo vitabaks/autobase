@@ -375,9 +375,9 @@
         label: "{{ patroni_cluster_name }}-{{ item }}"
       register: aws_elb_classic_lb
       when: cloud_load_balancer | bool and
-            (item == 'primary' or
-            (item == 'replica' and server_count | int > 1) or
-            (item in ['sync', 'async'] and server_count | int > 1 and synchronous_mode | bool))
+        (item == 'primary' or
+        (item == 'replica' and server_count | int > 1) or
+        (item in ['sync', 'async'] and server_count | int > 1 and synchronous_mode | bool))
 
     # S3 bucket (Backups)
     - name: "AWS: Create S3 bucket '{{ aws_s3_bucket_name }}'"
@@ -493,8 +493,8 @@
       loop_control:
         label: "{{ patroni_cluster_name }}-{{ item }}"
       when: item == 'primary' or
-            (item == 'replica' and server_count | int > 1) or
-            (item in ['sync', 'async'] and server_count | int > 1 and synchronous_mode | bool)
+        (item == 'replica' and server_count | int > 1) or
+        (item in ['sync', 'async'] and server_count | int > 1 and synchronous_mode | bool)
 
     - name: "AWS: Delete Security Group"
       amazon.aws.ec2_security_group:
@@ -518,5 +518,3 @@
         - (pgbackrest_install | bool or wal_g_install | bool)
         - aws_s3_bucket_absent | default(false) | bool
   when: state == 'absent'
-
-...

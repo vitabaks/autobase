@@ -1,7 +1,6 @@
 ---
-
 # PostgreSQL variables
-postgresql_version: "12"  # major version
+postgresql_version: "12" # major version
 postgrespro_minor_version: "{{ postgresql_version }}.4.1"
 
 postgresql_data_dir: "/var/lib/pgpro/std-{{ postgresql_version }}/data"
@@ -26,9 +25,9 @@ apt_repository_keys:
   - key: "https://repo.postgrespro.ru/keys/GPG-KEY-POSTGRESPRO"
 apt_repository:
   - repo: >-
-        {{ 'deb https://repo.postgrespro.ru//pgpro-archive/pgpro-' ~
-        postgrespro_minor_version ~ '/' ~ (ansible_distribution | lower) ~ '/' ~
-        ' ' ~ ansible_distribution_release ~ ' main' }}
+      {{ 'deb https://repo.postgrespro.ru//pgpro-archive/pgpro-' ~
+      postgrespro_minor_version ~ '/' ~ (ansible_distribution | lower) ~ '/' ~
+      ' ' ~ ansible_distribution_release ~ ' main' }}
 
 install_postgresql_repo: false
 
@@ -43,5 +42,3 @@ postgresql_packages:
   - postgrespro-std-{{ postgresql_version }}-client
   - postgrespro-std-{{ postgresql_version }}-contrib
   - "{{ os_specific_pgpro_packages[ansible_os_family] }}"
-
-...

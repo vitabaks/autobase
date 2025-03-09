@@ -61,7 +61,7 @@
         common_name: PostgreSQL CA
         use_common_name_for_san: false
         basic_constraints:
-          - 'CA:TRUE'
+          - "CA:TRUE"
         basic_constraints_critical: true
         key_usage:
           - keyCertSign

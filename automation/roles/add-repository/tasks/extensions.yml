@@ -46,18 +46,16 @@
 
     # RedHat based
     # TODO: Tests have shown that distributions such as Rocky Linux, AlmaLinux, Oracle Linux, and CentOS Stream are not yet supported.
-#    - name: Add Citus repository
-#      ansible.builtin.yum_repository:
-#        name: "citusdata"
-#        description: "Citus Repository"
-#        baseurl: "https://repos.citusdata.com/community/yum/{{ ansible_distribution_major_version }}/x86_64" # no arm64 support
-#        gpgkey: "https://repos.citusdata.com/community/gpgkey"
-#        gpgcheck: "no"
-#      when: ansible_os_family == "RedHat"
+  #    - name: Add Citus repository
+  #      ansible.builtin.yum_repository:
+  #        name: "citusdata"
+  #        description: "Citus Repository"
+  #        baseurl: "https://repos.citusdata.com/community/yum/{{ ansible_distribution_major_version }}/x86_64"
+  #        gpgkey: "https://repos.citusdata.com/community/gpgkey"
+  #        gpgcheck: "no"
+  #      when: ansible_os_family == "RedHat"
   environment: "{{ proxy_env | default({}) }}"
   when:
     - enable_citus | default(false) | bool
     - postgresql_version | int >= 11
   tags: add_repo, citus
-
-...

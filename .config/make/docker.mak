@@ -3,7 +3,7 @@ TAG ?= local
 DOCKER_REGISTRY ?= autobase
 
 .PHONY: docker-lint docker-lint-console-ui docker-lint-console-api docker-lint-console-db docker-lint-console
-docker-lint: docker-lint-automation docker-lint-console-ui docker-lint-console-api docker-lint-console-db docker-lint-console ## Lint all Dockerfiles 
+docker-lint: docker-lint-automation docker-lint-console-ui docker-lint-console-api docker-lint-console-db docker-lint-console ## Lint all Dockerfiles
 
 docker-lint-automation: ## Lint automation Dockerfile
 	@echo "Lint automation container Dockerfile"

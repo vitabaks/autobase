@@ -1,5 +1,4 @@
 ---
-
 keepalived_instances:
   - name: VI_1
     state: BACKUP

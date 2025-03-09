@@ -31,7 +31,7 @@
 
   become: true
   become_user: root
-  ignore_errors: true  # show the error and continue the playbook execution
+  ignore_errors: true # show the error and continue the playbook execution
   when:
     - groups.balancers | default([]) | length > 0
     - with_haproxy_load_balancing | bool
@@ -43,7 +43,7 @@
     - name: Update vip-manager service file (uncomment 'ExecStopPost')
       ansible.builtin.replace:
         path: /etc/systemd/system/vip-manager.service
-        regexp: '#ExecStopPost=/sbin/ip addr del {{ vip_manager_ip }}/{{ vip_manager_mask }} dev {{ vip_manager_iface }}'
+        regexp: "#ExecStopPost=/sbin/ip addr del {{ vip_manager_ip }}/{{ vip_manager_mask }} dev {{ vip_manager_iface }}"
         replace: "ExecStopPost=/sbin/ip addr del {{ vip_manager_ip }}/{{ vip_manager_mask }} dev {{ vip_manager_iface }}"
 
     - name: Start vip-manager service
@@ -61,11 +61,9 @@
         delay: 2
   become: true
   become_user: root
-  ignore_errors: true  # show the error and continue the playbook execution
+  ignore_errors: true # show the error and continue the playbook execution
   when:
     - not with_haproxy_load_balancing | bool
     - cluster_vip | length > 0
     - pgbouncer_install | bool
     - pgbouncer_pool_pause | bool
-
-...

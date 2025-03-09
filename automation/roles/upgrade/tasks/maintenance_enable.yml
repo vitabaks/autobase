@@ -66,7 +66,7 @@
     - name: Update vip-manager service file (comment out 'ExecStopPost')
       ansible.builtin.replace:
         path: /etc/systemd/system/vip-manager.service
-        regexp: 'ExecStopPost=/sbin/ip addr del {{ vip_manager_ip }}/{{ vip_manager_mask }} dev {{ vip_manager_iface }}'
+        regexp: "ExecStopPost=/sbin/ip addr del {{ vip_manager_ip }}/{{ vip_manager_mask }} dev {{ vip_manager_iface }}"
         replace: "#ExecStopPost=/sbin/ip addr del {{ vip_manager_ip }}/{{ vip_manager_mask }} dev {{ vip_manager_iface }}"
 
     - name: Stop vip-manager service
@@ -108,11 +108,9 @@
     PATH: "{{ ansible_env.PATH }}:/usr/bin:/usr/local/bin"
   register: patronictl_result
   until: patronictl_result.stdout|int == 0
-  retries: 30  # max duration 5 minutes
+  retries: 30 # max duration 5 minutes
   delay: 10
   changed_when: false
   failed_when: false
   when:
     - inventory_hostname in groups['primary']
-
-...

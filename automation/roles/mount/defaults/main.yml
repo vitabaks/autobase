@@ -8,5 +8,3 @@ mount:
     fstype: ""
     opts: ""
     state: ""
-
-...

@@ -6,6 +6,4 @@
   ansible.builtin.shell: kill -SIGUSR2 $(pidof pgbouncer)
   args:
     executable: /bin/bash
-  ignore_errors: true  # if there is an error, show the message and continue
-
-...
+  ignore_errors: true # if there is an error, show the message and continue

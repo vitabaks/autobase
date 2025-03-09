@@ -1,12 +1,11 @@
 ---
-
 - name: Ensure swap exists
   ansible.builtin.command: swapon --show=SIZE --bytes --noheadings
   register: swap_exists
   changed_when: false
   when:
     - swap_file_create | bool
-    - ansible_virtualization_type not in ['container', 'docker', 'lxc', 'podman']  # exclude for containers to prevent test failures in CI.
+    - ansible_virtualization_type not in ['container', 'docker', 'lxc', 'podman'] # exclude for containers to prevent test failures in CI.
   tags: swap, swap_create, swap_remove
 
 - name: Swap exists
@@ -24,14 +23,14 @@
       ansible.builtin.lineinfile:
         path: /etc/fstab
         state: absent
-        regexp: ' swap '
+        regexp: " swap "
 
     - name: Remove swap file (if exists)
       ansible.builtin.file:
         path: "{{ swap_file_path }}"
         state: absent
   when: (swap_exists.stdout is defined and swap_exists.stdout | length > 1) and
-        ((swap_exists.stdout_lines|map('trim')|map('int')|sum / 1024 / 1024)|round|int != swap_file_size_mb|int)
+    ((swap_exists.stdout_lines|map('trim')|map('int')|sum / 1024 / 1024)|round|int != swap_file_size_mb|int)
   tags: swap, swap_remove
 
 # if the swap does not exist
@@ -67,5 +66,3 @@
     (swap_exists.stdout_lines is defined and
     (swap_exists.stdout_lines | map('trim') | map('int') | sum / 1024 / 1024) | round | int != swap_file_size_mb|int)
   tags: swap, swap_create
-
-...

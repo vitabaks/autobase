@@ -26,7 +26,7 @@
 - name: Include Dnsmasq configuration directory
   ansible.builtin.lineinfile:
     dest: /usr/local/etc/dnsmasq.conf
-    line: 'conf-dir=/usr/local/etc/dnsmasq.d/,*.conf'
+    line: "conf-dir=/usr/local/etc/dnsmasq.d/,*.conf"
   become: true
   notify: restart dnsmasq
   when: ansible_os_family == "FreeBSD"
@@ -43,8 +43,8 @@
   notify: restart dnsmasq
   when: "{{ dnsmasq_item.when }}" # noqa no-jinja-when
   loop:
-    - { dest: '/etc/dnsmasq.d/10-consul', group: 'root', when: ansible_os_family|lower != "freebsd" }
-    - { dest: '/usr/local/etc/dnsmasq.d/consul.conf', group: 'wheel', when: ansible_os_family|lower == "freebsd" }
+    - { dest: "/etc/dnsmasq.d/10-consul", group: "root", when: ansible_os_family|lower != "freebsd" }
+    - { dest: "/usr/local/etc/dnsmasq.d/consul.conf", group: "wheel", when: ansible_os_family|lower == "freebsd" }
   loop_control:
     loop_var: dnsmasq_item
   tags: dnsmasq
@@ -52,7 +52,6 @@
 - name: Disable systemd-resolved
   when: ansible_service_mgr == "systemd"
   block:
-
     - name: Check if systemd-resolved service exists
       ansible.builtin.stat:
         path: /lib/systemd/system/systemd-resolved.service
@@ -90,7 +89,7 @@
             path: /etc/resolv.conf
             regexp: "^nameserver 127.0.0.1"
             line: "nameserver 127.0.0.1"
-            unsafe_writes: true  # to prevent failures in CI
+            unsafe_writes: true # to prevent failures in CI
       become: true
       when:
         - resolv_dot_conf.stat.islnk is defined

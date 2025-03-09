@@ -35,10 +35,10 @@
         done
       args:
         executable: /bin/bash
-      async: "{{ vacuumdb_analyze_timeout }}"  # run the command asynchronously with a maximum duration
+      async: "{{ vacuumdb_analyze_timeout }}" # run the command asynchronously with a maximum duration
       poll: 0
       register: pg_terminator_analyze
-      ignore_errors: true  # ignore errors if the task runs for over an 'vacuumdb_analyze_timeout'.
+      ignore_errors: true # ignore errors if the task runs for over an 'vacuumdb_analyze_timeout'.
       when: pg_new_version | string is version('9.6', '>=')
 
     # Monitor long-running transactions and terminate them (for more than 'vacuumdb_analyze_terminate_treshold')
@@ -62,10 +62,10 @@
         done
       args:
         executable: /bin/bash
-      async: "{{ vacuumdb_analyze_timeout }}"  # run the command asynchronously with a maximum duration
+      async: "{{ vacuumdb_analyze_timeout }}" # run the command asynchronously with a maximum duration
       poll: 0
       register: pg_terminator_long_transactions
-      ignore_errors: true  # ignore errors if the task runs for over an 'vacuumdb_analyze_timeout'.
+      ignore_errors: true # ignore errors if the task runs for over an 'vacuumdb_analyze_timeout'.
       vars:
         max_tx_sec: "{{ vacuumdb_analyze_terminate_treshold }}"
       when: pg_new_version | string is version('10', '>=') and vacuumdb_analyze_terminate_treshold | int > 0
@@ -75,10 +75,8 @@
       ansible.builtin.command: >
         {{ pg_new_bindir }}/vacuumdb -p {{ postgresql_port }}
         --all --analyze-in-stages --jobs={{ vacuumdb_parallel_jobs }}
-      async: "{{ vacuumdb_analyze_timeout }}"  # run the command asynchronously with a maximum duration
+      async: "{{ vacuumdb_analyze_timeout }}" # run the command asynchronously with a maximum duration
       poll: 0
       register: vacuumdb_analyze
-      ignore_errors: true  # ignore errors if the task runs for over an 'vacuumdb_analyze_timeout'.
+      ignore_errors: true # ignore errors if the task runs for over an 'vacuumdb_analyze_timeout'.
   when: inventory_hostname in groups['primary']
-
-...

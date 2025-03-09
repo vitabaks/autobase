@@ -72,5 +72,3 @@
     label: "{{ item.public_ip }}"
   changed_when: false
   when: dcs_type == "consul"
-
-...

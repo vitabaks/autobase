@@ -1,5 +1,4 @@
 ---
-
 # Stop, if pg_old_version, pg_new_version are not defined
 - name: Make sure that the required variables are specified
   run_once: true
@@ -21,7 +20,7 @@
   when: (pg_old_datadir == pg_new_datadir) or (pg_old_confdir == pg_new_confdir)
 
 # required to perform the dcs_remove_cluster.yml
-- name: '[Pre-Check] Make sure the ansible required Python library is installed'
+- name: "[Pre-Check] Make sure the ansible required Python library is installed"
   ansible.builtin.pip:
     name: "{{ item }}"
     state: present
@@ -34,7 +33,7 @@
     PATH: "{{ ansible_env.PATH }}:/usr/local/bin:/usr/bin"
     PIP_BREAK_SYSTEM_PACKAGES: "1"
 
-- name: '[Pre-Check] Test PostgreSQL database access using a unix socket'
+- name: "[Pre-Check] Test PostgreSQL database access using a unix socket"
   ansible.builtin.command: >
     {{ pg_old_bindir }}/psql -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc 'select 1'
   register: socket_access_result
@@ -58,7 +57,7 @@
     - socket_access_result.stderr is defined
     - "'no pg_hba.conf entry' in socket_access_result.stderr"
 
-- name: '[Pre-Check] Check the current version of PostgreSQL'
+- name: "[Pre-Check] Check the current version of PostgreSQL"
   ansible.builtin.command: >-
     {{ pg_old_bindir }}/psql -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc
     "select setting::integer/10000 from pg_settings where name = 'server_version_num'"
@@ -69,7 +68,7 @@
     - pg_old_version | string is version('10', '>=')
 
 # for compatibility with Postgres 9.x
-- name: '[Pre-Check] Check the current version of PostgreSQL'
+- name: "[Pre-Check] Check the current version of PostgreSQL"
   ansible.builtin.command: >-
     {{ pg_old_bindir }}/psql -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc
     "select substring(setting from '^[0-9]+\.[0-9]+') from pg_settings where name = 'server_version'"
@@ -108,7 +107,7 @@
 # This check is necessary to avoid the risk of deleting the current data directory
 # the current directory must not be equal to the path specified in the pg_new_datadir variable
 # which will later be cleaned up before executing initdb for a new version of PostgreSQL
-- name: '[Pre-Check] Ensure new data directory is different from the current one'
+- name: "[Pre-Check] Ensure new data directory is different from the current one"
   ansible.builtin.command: >-
     {{ pg_old_bindir }}/psql -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc
     "show data_directory"
@@ -136,11 +135,10 @@
     - inventory_hostname in groups['primary']
     - pg_new_wal_dir | length > 0 and pg_new_wal_dir == postgresql_wal_dir
 
-- name: '[Pre-Check] Make sure that physical replication is active'
+- name: "[Pre-Check] Make sure that physical replication is active"
   ansible.builtin.command: >-
     {{ pg_old_bindir }}/psql -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc
-    "select count(*) from pg_stat_replication
-     where application_name != 'pg_basebackup'"
+    "select count(*) from pg_stat_replication where application_name != 'pg_basebackup'"
   register: pg_replication_state
   changed_when: false
   when:
@@ -154,7 +152,7 @@
     - inventory_hostname in groups['primary']
     - pg_replication_state.stdout | int == 0
 
-- name: '[Pre-Check] Make sure there is no high replication lag (more than {{ max_replication_lag_bytes | human_readable }})'
+- name: "[Pre-Check] Make sure there is no high replication lag (more than {{ max_replication_lag_bytes | human_readable }})"
   ansible.builtin.command: >-
     {{ pg_old_bindir }}/psql -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc
     "select pg_wal_lsn_diff(pg_current_wal_lsn(),replay_lsn) as pg_lag_bytes
@@ -181,7 +179,7 @@
     - pg_lag_bytes.stdout|int >= max_replication_lag_bytes|int
 
 # for compatibility with Postgres 9.x
-- name: '[Pre-Check] Make sure there is no high replication lag (more than {{ max_replication_lag_bytes | human_readable }})'
+- name: "[Pre-Check] Make sure there is no high replication lag (more than {{ max_replication_lag_bytes | human_readable }})"
   ansible.builtin.command: >-
     {{ pg_old_bindir }}/psql -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc
     "select pg_xlog_location_diff(pg_current_xlog_location(),replay_location) as pg_lag_bytes
@@ -207,7 +205,7 @@
     - pg_lag_bytes_9x.stdout is defined
     - pg_lag_bytes_9x.stdout|int >= max_replication_lag_bytes|int
 
-- name: '[Pre-Check] Make sure there are no long-running transactions (more than {{ max_transaction_sec }} seconds)'
+- name: "[Pre-Check] Make sure there are no long-running transactions (more than {{ max_transaction_sec }} seconds)"
   ansible.builtin.command: >-
     {{ pg_old_bindir }}/psql -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc
     "select pid, usename, client_addr, clock_timestamp() - xact_start as xact_age,
@@ -240,7 +238,7 @@
     - pg_long_transactions.stdout | length > 0
 
 # for compatibility with Postgres 9.x
-- name: '[Pre-Check] Make sure there are no long-running transactions (more than {{ max_transaction_sec }} seconds)'
+- name: "[Pre-Check] Make sure there are no long-running transactions (more than {{ max_transaction_sec }} seconds)"
   ansible.builtin.command: >-
     {{ pg_old_bindir }}/psql -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc
     "select pid, usename, client_addr, clock_timestamp() - xact_start as xact_age,
@@ -271,13 +269,13 @@
     - pg_long_transactions_9x.stdout | length > 0
 
 # SSH Keys (required for upgrade replicas with rsync)
-- name: '[Pre-Check] Make sure that SSH key-based authentication is configured between cluster nodes'
+- name: "[Pre-Check] Make sure that SSH key-based authentication is configured between cluster nodes"
   ansible.builtin.include_tasks: ssh-keys.yml
   vars:
     ssh_key_user: postgres
 
 # if pg_new_wal_dir is defined (for synchronize wal dir)
-- name: '[Pre-Check] Make sure that the sshpass package are installed'
+- name: "[Pre-Check] Make sure that the sshpass package are installed"
   become: true
   become_user: root
   ansible.builtin.package:
@@ -290,7 +288,7 @@
   when: pg_new_wal_dir | length > 0
 
 # Rsync Checks
-- name: '[Pre-Check] Make sure that the rsync package are installed'
+- name: "[Pre-Check] Make sure that the rsync package are installed"
   become: true
   become_user: root
   ansible.builtin.package:
@@ -301,7 +299,7 @@
   delay: 5
   retries: 3
 
-- name: '[Pre-Check] Rsync Checks: create testrsync file on Primary'
+- name: "[Pre-Check] Rsync Checks: create testrsync file on Primary"
   become: true
   become_user: postgres
   ansible.builtin.file:
@@ -310,7 +308,7 @@
   when:
     - inventory_hostname in groups['primary']
 
-- name: '[Pre-Check] Rsync Checks: test rsync and ssh key access'
+- name: "[Pre-Check] Rsync Checks: test rsync and ssh key access"
   become: true
   become_user: postgres
   ansible.builtin.shell: >
@@ -330,7 +328,7 @@
     state: absent
 
 # Tablespaces
-- name: '[Pre-Check] Check if PostgreSQL tablespaces exist'
+- name: "[Pre-Check] Check if PostgreSQL tablespaces exist"
   ansible.builtin.command: >-
     {{ pg_old_bindir }}/psql -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc
     "select pg_tablespace_location(oid) as tablespace_location
@@ -372,7 +370,7 @@
     - pgbouncer_pool_pause | bool
 
 # Test access via unix socket to be able to perform 'PAUSE' command
-- name: '[Pre-Check] Test PgBouncer access via unix socket'
+- name: "[Pre-Check] Test PgBouncer access via unix socket"
   ansible.builtin.command: >-
     {{ pg_old_bindir }}/psql -h /var/run/pgbouncer{{ '-%d' % (idx + 1) if idx > 0 else '' }}
     -p {{ pgbouncer_listen_port }}
@@ -394,10 +392,8 @@
     host: "{{ cluster_vip }}"
     port: "{{ pgbouncer_listen_port if pgbouncer_install | bool else postgresql_port }}"
     state: started
-    timeout: 15  # max wait time: 30 seconds
+    timeout: 15 # max wait time: 30 seconds
     delay: 2
-  ignore_errors: true  # show the error and continue the playbook execution
+  ignore_errors: true # show the error and continue the playbook execution
   when:
     - cluster_vip | length > 0
-
-...

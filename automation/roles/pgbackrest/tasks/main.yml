@@ -1,14 +1,14 @@
 ---
-
 # Automatic setup of the backup configuration based on the selected cloud provider.
 # if 'cloud_provider' is 'aws', 'gcp', 'azure', 'digitalocean'.
 - ansible.builtin.import_tasks: auto_conf.yml
   when:
     - cloud_provider | default('') | length > 0
-    - pgbackrest_auto_conf | default(true) | bool  # to be able to disable auto backup settings
+    - pgbackrest_auto_conf | default(true) | bool # to be able to disable auto backup settings
   tags: pgbackrest, pgbackrest_conf
 
-- block:  # Debian pgdg repo
+- block:
+    # Debian pgdg repo
     - name: Make sure the gnupg, apt-transport-https and python3-debian packages are present
       ansible.builtin.apt:
         pkg:
@@ -47,7 +47,8 @@
     - pgbackrest_install_from_pgdg_repo|bool
   tags: pgbackrest, pgbackrest_repo, pgbackrest_install
 
-- block:  # RedHat pgdg repo
+- block:
+    # RedHat pgdg repo
     - name: Get pgdg-redhat-repo-latest.noarch.rpm
       ansible.builtin.get_url:
         url: "https://download.postgresql.org/pub/repos/yum/reporpms/EL-{{ ansible_distribution_major_version }}-{{ pgdg_architecture_map[ansible_architecture]}}/pgdg-redhat-repo-latest.noarch.rpm" # yamllint disable rule:line-length
@@ -215,13 +216,9 @@
     - pgbackrest_cron_jobs is defined
     - pgbackrest_cron_jobs | length > 0
   tags: pgbackrest, pgbackrest_cron
-
 # - import_tasks: bootstrap_script.yml
 #  when:
 #    - patroni_cluster_bootstrap_method is defined
 #    - patroni_cluster_bootstrap_method == "pgbackrest"
 #    - "'postgres_cluster' in group_names"
 #  tags: pgbackrest, pgbackrest_bootstrap_script
-
-
-...

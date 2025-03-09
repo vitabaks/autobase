@@ -16,19 +16,20 @@ Specify the current (old) version of PostgreSQL in the `pg_old_version` variable
 
 1. Before upgrading to a new major version, it's recommended to update PostgreSQL and its extensions. Additionally, consider updating Patroni and the entire system.
 
-    To achieve this, use the `update_pgcluster.yml` playbook. More details can be found [here](../update/README.md).
+   To achieve this, use the `update_pgcluster.yml` playbook. More details can be found [here](../update/README.md).
 
 2. Before moving forward, execute preliminary checks to ensure that your database schema is compatible with the upcoming PostgreSQL version and that the cluster is ready for the upgrade.
-   
-    To do this, run the `pg_upgrade.yml` playbook using the tags '`pre-checks,upgrade-check`'.
 
-    If any errors arise, such as schema object incompatibilities, resolve these issues and repeat the checks.
-    
-    Once the playbook completes the pre-checks without any errors, you should see the following messages in the Ansible log: 
-    - "`The database schema is compatible with PostgreSQL <new_version>`"
-    - "`Clusters are compatible`"
+   To do this, run the `pg_upgrade.yml` playbook using the tags '`pre-checks,upgrade-check`'.
 
-    Upon seeing these messages, proceed to run the playbook without any tags to initiate the upgrade.
+   If any errors arise, such as schema object incompatibilities, resolve these issues and repeat the checks.
+
+   Once the playbook completes the pre-checks without any errors, you should see the following messages in the Ansible log:
+
+   - "`The database schema is compatible with PostgreSQL <new_version>`"
+   - "`Clusters are compatible`"
+
+   Upon seeing these messages, proceed to run the playbook without any tags to initiate the upgrade.
 
 ### Upgrade
 
@@ -46,7 +47,7 @@ On average, the PgBouncer pause duration is approximately 30 seconds. However, f
 
 This playbook performs a rollback of a PostgreSQL upgrade.
 
-Note: In some scenarios, if errors occur, the pg_upgrade.yml playbook may automatically initiate a rollback. Alternatively, if the automatic rollback does not occur, you can manually execute the pg_upgrade_rollback.yml playbook to revert the changes. 
+Note: In some scenarios, if errors occur, the pg_upgrade.yml playbook may automatically initiate a rollback. Alternatively, if the automatic rollback does not occur, you can manually execute the pg_upgrade_rollback.yml playbook to revert the changes.
 
 ```bash
 ansible-playbook pg_upgrade_rollback.yml
@@ -59,38 +60,38 @@ If these checks pass, the playbook switches back to the old PostgreSQL paths and
 
 ### Variables
 
-| Variable Name | Description | Default Value |
-|---------------|-------------|--------------:|
-| `pg_old_version` | Current (old) version of PostgreSQL. | `""` |
-| `pg_new_version` | Target version of PostgreSQL for the upgrade. | `""` |
-| `pg_old_bindir` | Directory containing binaries for the old PostgreSQL version. | Derived value |
-| `pg_old_datadir` | Data directory path for the old PostgreSQL version. | Derived value |
-| `pg_old_confdir` | Configuration directory path for the old PostgreSQL version. | Derived value |
-| `pg_new_bindir` | Directory containing binaries for the new PostgreSQL version. | Derived value |
-| `pg_new_datadir` | Data directory path for the new PostgreSQL version. | Derived value |
-| `pg_new_confdir` | Configuration directory path for the new PostgreSQL version. | Derived value |
-| `pg_new_wal_dir` | Custom WAL directory for the new PostgreSQL version. | Derived value |
-| `pg_upper_datadir` | Top-level directory containing both old and new PostgreSQL data directories. | Derived value |
-| `pg_new_packages` | List of package names for the new PostgreSQL version to be installed. | Derived value |
-| `pg_old_packages_remove` | Whether to remove old PostgreSQL packages after the upgrade. | `true` |
-| `pg_start_stop_timeout` | Timeout when starting/stopping PostgreSQL during the upgrade (in seconds). | `1800` |
-| `schema_compatibility_check` | Check database schema compatibility with the new PostgreSQL version before upgrading. | `true` |
-| `schema_compatibility_check_port` | Port for temporary PostgreSQL instance for schema compatibility checking. | Derived value |
-| `schema_compatibility_check_timeout` | Max duration for compatibility check (pg_dumpall --schema-only) in seconds. | `3600` |
-| `vacuumdb_parallel_jobs` | Execute the analyze command in parallel by running `njobs` commands simultaneously. This option may reduce the processing time but it also increases the load on the database server. | all CPU cores |
-| `vacuumdb_analyze_timeout` | Max duration of analyze command in seconds. | `3600` |
-| `vacuumdb_analyze_terminate_treshold` | Terminate active queries that are longer than the specified time (in seconds) during the collection of statistics (0 = do not terminate active backends). | `0` |
-| `update_extensions` | Automatically update all PostgreSQL extensions. | `true` |
-| `max_replication_lag_bytes` | Maximum allowed replication lag in bytes. | `10485760` |
-| `max_transaction_sec` | Maximum allowed duration for a transaction in seconds. | `15` |
-| `copy_files_to_all_server` | Copy files located in the "files" directory to all servers. (optional) | `[]` |
-| `pgbouncer_pool_pause` | Pause pgbouncer pools during upgrade. | `true` |
-| `pgbouncer_pool_pause_timeout` | The maximum waiting time (in seconds) for the pool to be paused. For each iteration of the loop when trying to pause all pools. | `2` |
-| `pgbouncer_pool_pause_terminate_after` | Time in seconds after which script terminates slow active queries. | `30` |
-| `pgbouncer_pool_pause_stop_after` | Time in seconds after which the script exits with an error if unable to pause all pgbouncer pools. | `60` |
-| `pg_slow_active_query_treshold` | Time in milliseconds to wait for active queries before trying to pause the pool. | `1000` |
-| `pg_slow_active_query_treshold_to_terminate` | Time in milliseconds after reaching "pgbouncer_pool_pause_terminate_after" before the script terminates active queries. | `100` |
-| `pgbackrest_stanza_upgrade` | Perform the "stanza-upgrade" command after the upgrade (if 'pgbackrest_install' is 'true'). | `true` |
+| Variable Name                                | Description                                                                                                                                                                           | Default Value |
+| -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------: |
+| `pg_old_version`                             | Current (old) version of PostgreSQL.                                                                                                                                                  |          `""` |
+| `pg_new_version`                             | Target version of PostgreSQL for the upgrade.                                                                                                                                         |          `""` |
+| `pg_old_bindir`                              | Directory containing binaries for the old PostgreSQL version.                                                                                                                         | Derived value |
+| `pg_old_datadir`                             | Data directory path for the old PostgreSQL version.                                                                                                                                   | Derived value |
+| `pg_old_confdir`                             | Configuration directory path for the old PostgreSQL version.                                                                                                                          | Derived value |
+| `pg_new_bindir`                              | Directory containing binaries for the new PostgreSQL version.                                                                                                                         | Derived value |
+| `pg_new_datadir`                             | Data directory path for the new PostgreSQL version.                                                                                                                                   | Derived value |
+| `pg_new_confdir`                             | Configuration directory path for the new PostgreSQL version.                                                                                                                          | Derived value |
+| `pg_new_wal_dir`                             | Custom WAL directory for the new PostgreSQL version.                                                                                                                                  | Derived value |
+| `pg_upper_datadir`                           | Top-level directory containing both old and new PostgreSQL data directories.                                                                                                          | Derived value |
+| `pg_new_packages`                            | List of package names for the new PostgreSQL version to be installed.                                                                                                                 | Derived value |
+| `pg_old_packages_remove`                     | Whether to remove old PostgreSQL packages after the upgrade.                                                                                                                          |        `true` |
+| `pg_start_stop_timeout`                      | Timeout when starting/stopping PostgreSQL during the upgrade (in seconds).                                                                                                            |        `1800` |
+| `schema_compatibility_check`                 | Check database schema compatibility with the new PostgreSQL version before upgrading.                                                                                                 |        `true` |
+| `schema_compatibility_check_port`            | Port for temporary PostgreSQL instance for schema compatibility checking.                                                                                                             | Derived value |
+| `schema_compatibility_check_timeout`         | Max duration for compatibility check (pg_dumpall --schema-only) in seconds.                                                                                                           |        `3600` |
+| `vacuumdb_parallel_jobs`                     | Execute the analyze command in parallel by running `njobs` commands simultaneously. This option may reduce the processing time but it also increases the load on the database server. | all CPU cores |
+| `vacuumdb_analyze_timeout`                   | Max duration of analyze command in seconds.                                                                                                                                           |        `3600` |
+| `vacuumdb_analyze_terminate_treshold`        | Terminate active queries that are longer than the specified time (in seconds) during the collection of statistics (0 = do not terminate active backends).                             |           `0` |
+| `update_extensions`                          | Automatically update all PostgreSQL extensions.                                                                                                                                       |        `true` |
+| `max_replication_lag_bytes`                  | Maximum allowed replication lag in bytes.                                                                                                                                             |    `10485760` |
+| `max_transaction_sec`                        | Maximum allowed duration for a transaction in seconds.                                                                                                                                |          `15` |
+| `copy_files_to_all_server`                   | Copy files located in the "files" directory to all servers. (optional)                                                                                                                |          `[]` |
+| `pgbouncer_pool_pause`                       | Pause pgbouncer pools during upgrade.                                                                                                                                                 |        `true` |
+| `pgbouncer_pool_pause_timeout`               | The maximum waiting time (in seconds) for the pool to be paused. For each iteration of the loop when trying to pause all pools.                                                       |           `2` |
+| `pgbouncer_pool_pause_terminate_after`       | Time in seconds after which script terminates slow active queries.                                                                                                                    |          `30` |
+| `pgbouncer_pool_pause_stop_after`            | Time in seconds after which the script exits with an error if unable to pause all pgbouncer pools.                                                                                    |          `60` |
+| `pg_slow_active_query_treshold`              | Time in milliseconds to wait for active queries before trying to pause the pool.                                                                                                      |        `1000` |
+| `pg_slow_active_query_treshold_to_terminate` | Time in milliseconds after reaching "pgbouncer_pool_pause_terminate_after" before the script terminates active queries.                                                               |         `100` |
+| `pgbackrest_stanza_upgrade`                  | Perform the "stanza-upgrade" command after the upgrade (if 'pgbackrest_install' is 'true').                                                                                           |        `true` |
 
 Note: For variables marked as "Derived value", the default value is determined based on other variables. \
 Please see the variable file vars/[upgrade.yml](../../vars/upgrade.yml)
@@ -100,6 +101,7 @@ Please see the variable file vars/[upgrade.yml](../../vars/upgrade.yml)
 ### Upgrade Plan:
 
 #### 1. PRE-UPGRADE: Perform Pre-Checks
+
 - **Make sure that the required variables are specified**
   - Notes: `pg_old_version` and `pg_new_version` variables
   - Stop, if one or more required variables have empty values.
@@ -142,12 +144,14 @@ Please see the variable file vars/[upgrade.yml](../../vars/upgrade.yml)
   - Notes: if 'cluster_vip' is defined
 
 #### 2. PRE-UPGRADE: Install new PostgreSQL packages
+
 - Clean yum/dnf cache (for RedHat based) or Update apt cache for (Debian based)
 - Install new PostgreSQL packages
 - Install TimescaleDB package for new PostgreSQL
   - Note: if 'enable_timescale' is 'true'
 
 #### 3. PRE-UPGRADE: Initialize new db, schema compatibility check, and pg_upgrade --check
+
 - **Initialize new PostgreSQL**
   - Make sure new PostgreSQL data directory exists
   - Make sure new PostgreSQL data directory is not initialized
@@ -160,7 +164,7 @@ Please see the variable file vars/[upgrade.yml](../../vars/upgrade.yml)
     - for Debain based: on all database servers to create default config files
     - for RedHat based: on the Primary only
 - **Copy files specified in the `copy_files_to_all_server` variable** (vars/upgrade.yml), [optional]
-    - Notes: for example, it may be necessary for Postgres Full-Text Search (FTS) files 
+  - Notes: for example, it may be necessary for Postgres Full-Text Search (FTS) files
 - **Schema compatibility check**
   - Get the current `shared_preload_libraries` settings
   - Get the current `cron.database_name` settings
@@ -184,6 +188,7 @@ Please see the variable file vars/[upgrade.yml](../../vars/upgrade.yml)
   - Print the result of the pg_upgrade check
 
 #### 4. PRE-UPGRADE: Prepare the Patroni configuration
+
 - Backup the patroni.yml configuration file
 - Edit the patroni.yml configuration file
   - **Update parameters**: `data_dir`, `bin_dir`, `config_dir`
@@ -195,6 +200,7 @@ Please see the variable file vars/[upgrade.yml](../../vars/upgrade.yml)
   - Notes: to save pg_hba rules
 
 #### 5. UPGRADE: Upgrade PostgreSQL
+
 - **Enable maintenance mode for Patroni cluster** (pause)
 - **Enable maintenance mode for HAProxy** (for 'Type A' scheme)
   - Notes: if 'pgbouncer_install' is 'true' and 'pgbouncer_pool_pause' is 'true'
@@ -279,6 +285,7 @@ Please see the variable file vars/[upgrade.yml](../../vars/upgrade.yml)
   - Make sure that the cluster ip address (VIP) is running
 
 #### 6. POST-UPGRADE: Analyze a PostgreSQL database (update optimizer statistics) and Post-Upgrade tasks
+
 - **Run vacuumdb to analyze the PostgreSQL databases**
   - Note: Uses parallel processes equal to 50% of CPU cores ('`vacuumdb_parallel_jobs`' variable)
   - Note: Before collecting statistics, the 'pg_terminator' script is launched to monitor and terminate any 'ANALYZE' blockers. Once statistics collection is complete, the script is stopped.
@@ -294,37 +301,37 @@ Please see the variable file vars/[upgrade.yml](../../vars/upgrade.yml)
     - Notes: if there are no old extensions, print message:
       - "The extension versions are up-to-date for the database. No update is required."
 - **Perform Post-Checks**
-    - Make sure that physical replication is active
-      - Note: if no active replication connections found, print error message: "No active replication connections found. Please check the replication status and PostgreSQL logs."
-      - Create a table "test_replication" with 10000 rows on the Primary
-      - Wait until the PostgreSQL replica is synchronized (max wait time: 2 minutes)
-      - Drop a table "test_replication"
-      - Print the result of checking the number of records
-      - if the number of rows match, print info message: "The PostgreSQL Replication is OK. The number of records in the 'test_replication' table the same as the Primary."
-      - if the number of rows does not match, print error message: "The number of records in the 'test_replication' table does not match the Primary. Please check the replication status and PostgreSQL logs."
+  - Make sure that physical replication is active
+    - Note: if no active replication connections found, print error message: "No active replication connections found. Please check the replication status and PostgreSQL logs."
+    - Create a table "test_replication" with 10000 rows on the Primary
+    - Wait until the PostgreSQL replica is synchronized (max wait time: 2 minutes)
+    - Drop a table "test_replication"
+    - Print the result of checking the number of records
+    - if the number of rows match, print info message: "The PostgreSQL Replication is OK. The number of records in the 'test_replication' table the same as the Primary."
+    - if the number of rows does not match, print error message: "The number of records in the 'test_replication' table does not match the Primary. Please check the replication status and PostgreSQL logs."
 - **Perform Post-Upgrade tasks**
-    - **Ensure the current data directory is the new data directory**
-      - Notes: to prevent deletion the old directory if it is used
-    - **Delete the old PostgreSQL data directory**
-      - Notes: perform pg_dropcluster for Debian based
-    - **Delete the old PostgreSQL WAL directory**
-      - Notes: if 'pg_new_wal_dir' is defined
-    - **Remove old PostgreSQL packages**
-      - Notes: if 'pg_old_packages_remove' is 'true'
-    - **Remove temporary local access rule from pg_hba.conf**
-      - Notes: if it has been changed
-      - Update the PostgreSQL configuration
-    - **pgBackRest** (if 'pgbackrest_install' is 'true')
-      - Check pg-path option
-      - Update pg-path in pgbackrest.conf
-      - Upgrade stanza
-    - **WAL-G** (if 'wal_g_install' is 'true')
-      - Update PostgreSQL data directory path in .walg.json
-      - Update PostgreSQL data directory path in cron jobs
-    - **Wait for the analyze to complete.**
-      - Notes: max wait time: 1 hour ('`vacuumdb_analyze_timeout`' variable)
-    - **Check the Patroni cluster state**
-    - **Check the current PostgreSQL version**
-    - **Print info messages**
-      - List the Patroni cluster members
-      - Upgrade completed
+  - **Ensure the current data directory is the new data directory**
+    - Notes: to prevent deletion the old directory if it is used
+  - **Delete the old PostgreSQL data directory**
+    - Notes: perform pg_dropcluster for Debian based
+  - **Delete the old PostgreSQL WAL directory**
+    - Notes: if 'pg_new_wal_dir' is defined
+  - **Remove old PostgreSQL packages**
+    - Notes: if 'pg_old_packages_remove' is 'true'
+  - **Remove temporary local access rule from pg_hba.conf**
+    - Notes: if it has been changed
+    - Update the PostgreSQL configuration
+  - **pgBackRest** (if 'pgbackrest_install' is 'true')
+    - Check pg-path option
+    - Update pg-path in pgbackrest.conf
+    - Upgrade stanza
+  - **WAL-G** (if 'wal_g_install' is 'true')
+    - Update PostgreSQL data directory path in .walg.json
+    - Update PostgreSQL data directory path in cron jobs
+  - **Wait for the analyze to complete.**
+    - Notes: max wait time: 1 hour ('`vacuumdb_analyze_timeout`' variable)
+  - **Check the Patroni cluster state**
+  - **Check the current PostgreSQL version**
+  - **Print info messages**
+    - List the Patroni cluster members
+    - Upgrade completed

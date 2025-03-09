@@ -1,5 +1,4 @@
 ---
-
 - name: Restart pgbouncer service
   ansible.builtin.systemd:
     name: pgbouncer{{ '-%d' % (idx + 1) if idx > 0 else '' }}
@@ -34,6 +33,4 @@
     index_var: idx
     label: "{{ 'pgbouncer' if idx == 0 else 'pgbouncer-%d' % (idx + 1) }}"
   listen: "reload pgbouncer"
-  ignore_errors: true  # Added to prevent test failures in CI.
-
-...
+  ignore_errors: true # Added to prevent test failures in CI.

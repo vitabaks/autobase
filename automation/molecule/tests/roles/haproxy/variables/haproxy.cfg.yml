@@ -53,16 +53,16 @@
     line: "{{ bind_config_with_vip_item.line }}"
     backrefs: true
   loop:
-    - regexp: '^.*bind.*:{{ haproxy_listen_port.stats }}$'
-      line: '    bind {{ inventory_hostname }}:{{ haproxy_listen_port.stats }}'
-    - regexp: '^.*bind.*:{{ haproxy_listen_port.master }}$'
-      line: '    bind {{ cluster_vip }}:{{ haproxy_listen_port.master }}'
-    - regexp: '^.*bind.*:{{ haproxy_listen_port.replicas }}$'
-      line: '    bind {{ cluster_vip }}:{{ haproxy_listen_port.replicas }}'
-    - regexp: '^.*bind.*:{{ haproxy_listen_port.replicas_sync }}$'
-      line: '    bind {{ cluster_vip }}:{{ haproxy_listen_port.replicas_sync }}'
-    - regexp: '^.*bind.*:{{ haproxy_listen_port.replicas_async }}$'
-      line: '    bind {{ cluster_vip }}:{{ haproxy_listen_port.replicas_async }}'
+    - regexp: "^.*bind.*:{{ haproxy_listen_port.stats }}$"
+      line: "    bind {{ inventory_hostname }}:{{ haproxy_listen_port.stats }}"
+    - regexp: "^.*bind.*:{{ haproxy_listen_port.master }}$"
+      line: "    bind {{ cluster_vip }}:{{ haproxy_listen_port.master }}"
+    - regexp: "^.*bind.*:{{ haproxy_listen_port.replicas }}$"
+      line: "    bind {{ cluster_vip }}:{{ haproxy_listen_port.replicas }}"
+    - regexp: "^.*bind.*:{{ haproxy_listen_port.replicas_sync }}$"
+      line: "    bind {{ cluster_vip }}:{{ haproxy_listen_port.replicas_sync }}"
+    - regexp: "^.*bind.*:{{ haproxy_listen_port.replicas_async }}$"
+      line: "    bind {{ cluster_vip }}:{{ haproxy_listen_port.replicas_async }}"
   loop_control:
     loop_var: bind_config_with_vip_item
     label: "{{ bind_config_with_vip_item.line }}"
@@ -122,16 +122,16 @@
     line: "{{ bind_config_without_vip_item.line }}"
     backrefs: true
   loop:
-    - regexp: '^.*bind.*:{{ haproxy_listen_port.stats }}$'
-      line: '    bind {{ inventory_hostname }}:{{ haproxy_listen_port.stats }}'
-    - regexp: '^.*bind.*:{{ haproxy_listen_port.master }}$'
-      line: '    bind {{ inventory_hostname }}:{{ haproxy_listen_port.master }}'
-    - regexp: '^.*bind.*:{{ haproxy_listen_port.replicas }}$'
-      line: '    bind {{ inventory_hostname }}:{{ haproxy_listen_port.replicas }}'
-    - regexp: '^.*bind.*:{{ haproxy_listen_port.replicas_sync }}$'
-      line: '    bind {{ inventory_hostname }}:{{ haproxy_listen_port.replicas_sync }}'
-    - regexp: '^.*bind.*:{{ haproxy_listen_port.replicas_async }}$'
-      line: '    bind {{ inventory_hostname }}:{{ haproxy_listen_port.replicas_async }}'
+    - regexp: "^.*bind.*:{{ haproxy_listen_port.stats }}$"
+      line: "    bind {{ inventory_hostname }}:{{ haproxy_listen_port.stats }}"
+    - regexp: "^.*bind.*:{{ haproxy_listen_port.master }}$"
+      line: "    bind {{ inventory_hostname }}:{{ haproxy_listen_port.master }}"
+    - regexp: "^.*bind.*:{{ haproxy_listen_port.replicas }}$"
+      line: "    bind {{ inventory_hostname }}:{{ haproxy_listen_port.replicas }}"
+    - regexp: "^.*bind.*:{{ haproxy_listen_port.replicas_sync }}$"
+      line: "    bind {{ inventory_hostname }}:{{ haproxy_listen_port.replicas_sync }}"
+    - regexp: "^.*bind.*:{{ haproxy_listen_port.replicas_async }}$"
+      line: "    bind {{ inventory_hostname }}:{{ haproxy_listen_port.replicas_async }}"
   loop_control:
     loop_var: bind_config_without_vip_item
     label: "{{ bind_config_without_vip_item.line }}"

@@ -1,5 +1,4 @@
 ---
-
 # Update dnf cache
 - name: Update dnf cache
   ansible.builtin.shell: dnf clean all && dnf -y makecache
@@ -38,5 +37,3 @@
   ansible.builtin.import_tasks: "../../packages/tasks/extensions.yml"
   vars:
     pg_version: "{{ pg_new_version }}"
-
-...

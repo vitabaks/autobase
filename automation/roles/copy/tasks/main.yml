@@ -1,5 +1,4 @@
 ---
-
 - name: Fetch files from the master
   become: true
   become_user: root
@@ -30,5 +29,3 @@
     - copy_files_to_all_server is defined
     - copy_files_to_all_server | length > 0
   tags: copy_files
-
-...

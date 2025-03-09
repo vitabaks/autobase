@@ -1,5 +1,4 @@
 ---
-
 - name: Get a list of databases
   ansible.builtin.command: >-
     {{ pg_new_bindir }}/psql -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc
@@ -9,7 +8,7 @@
   delay: 5
   retries: 3
   changed_when: false
-  ignore_errors: true  # show the error and continue the playbook execution
+  ignore_errors: true # show the error and continue the playbook execution
   when:
     - inventory_hostname in groups['primary']
 
@@ -22,5 +21,3 @@
     - databases_list is success
     - databases_list.stdout_lines is defined
     - databases_list.stdout_lines | length > 0
-
-...

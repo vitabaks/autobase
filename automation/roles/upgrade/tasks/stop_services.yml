@@ -1,9 +1,8 @@
 ---
-
 - name: "Execute CHECKPOINT before stopping PostgreSQL"
   ansible.builtin.command: >
     {{ pg_old_bindir }}/psql -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc "CHECKPOINT"
-  async: "{{ pg_start_stop_timeout | int }}"  # run the command asynchronously
+  async: "{{ pg_start_stop_timeout | int }}" # run the command asynchronously
   poll: 0
   register: checkpoint_result
 
@@ -23,7 +22,7 @@
       from pg_stat_replication"
   register: pg_lag_bytes
   until: pg_lag_bytes.stdout|int < max_replication_lag_bytes|int
-  retries: 60  # max wait time: 2 minutes
+  retries: 60 # max wait time: 2 minutes
   delay: 2
   changed_when: false
   failed_when: false
@@ -56,7 +55,7 @@
       from pg_stat_replication"
   register: pg_lag_bytes_9x
   until: pg_lag_bytes_9x.stdout|int < max_replication_lag_bytes|int
-  retries: 60  # max wait time: 2 minutes
+  retries: 60 # max wait time: 2 minutes
   delay: 2
   changed_when: false
   failed_when: false
@@ -127,5 +126,3 @@
   when:
     - pg_ctl_status_new_result is defined
     - pg_ctl_status_new_result.rc == 0
-
-...

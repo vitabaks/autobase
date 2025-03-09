@@ -1,5 +1,4 @@
 ---
-
 - name: Restart ntp service
   ansible.builtin.systemd:
     name: ntp
@@ -20,5 +19,3 @@
     enabled: true
     state: restarted
   listen: "restart chronyd"
-
-...

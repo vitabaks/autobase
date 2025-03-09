@@ -19,5 +19,3 @@
         state: present
         labels:
           owner: molecule
-
-...

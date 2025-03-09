@@ -1,5 +1,4 @@
 ---
-
 # if nopasswd = "yes"
 - name: Add user to /etc/sudoers.d/
   ansible.builtin.copy:
@@ -8,7 +7,7 @@
       {{ item.name }}  ALL=(ALL)  NOPASSWD: ALL
     force: true
   when: item.nopasswd == "yes" and
-        ( item.commands is not defined or item.commands == "ALL")
+    ( item.commands is not defined or item.commands == "ALL")
   loop: "{{ sudo_users | list }}"
   tags: sudo
 
@@ -20,7 +19,7 @@
       {{ item.name }}  ALL=(ALL)  NOPASSWD: {{ item.commands }}
     force: true
   when: item.nopasswd == "yes" and
-        ( item.commands is defined and item.commands != "ALL" )
+    ( item.commands is defined and item.commands != "ALL" )
   loop: "{{ sudo_users | list }}"
   tags: sudo
 
@@ -32,7 +31,7 @@
       {{ item.name }}  ALL=(ALL)  ALL
     force: true
   when: item.nopasswd != "yes" and
-        ( item.commands is not defined or item.commands == "ALL" )
+    ( item.commands is not defined or item.commands == "ALL" )
   loop: "{{ sudo_users | list }}"
   tags: sudo
 
@@ -44,8 +43,6 @@
       {{ item.name }}  ALL=(ALL)  {{ item.commands }}
     force: true
   when: item.nopasswd != "yes" and
-        ( item.commands is defined and item.commands != "ALL" )
+    ( item.commands is defined and item.commands != "ALL" )
   loop: "{{ sudo_users | list }}"
   tags: sudo
-
-...

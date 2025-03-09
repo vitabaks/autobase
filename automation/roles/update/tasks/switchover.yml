@@ -24,4 +24,3 @@
   delay: 2
   environment:
     no_proxy: "{{ inventory_hostname }}"
-...

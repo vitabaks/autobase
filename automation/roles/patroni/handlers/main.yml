@@ -1,5 +1,4 @@
 ---
-
 - name: Reload patroni service
   ansible.builtin.systemd:
     daemon_reload: true
@@ -14,7 +13,5 @@
   ansible.builtin.command: "{{ postgresql_bin_dir }}/pg_ctl reload -D {{ postgresql_data_dir }}"
   register: pg_ctl_reload_result
   changed_when: pg_ctl_reload_result.rc == 0
-  failed_when: false  # exec 'reload' on all running postgres (to re-run with --tag pg_hba).
+  failed_when: false # exec 'reload' on all running postgres (to re-run with --tag pg_hba).
   listen: "reload postgres"
-
-...

@@ -1,5 +1,4 @@
 ---
-
 # This task sets the value for max_connections from the provided variables, defaulting to 100 if not explicitly set.
 # It loops through the 'postgresql_parameters' list and, if 'max_connections' is found in the option, it sets the 'max_connections' value accordingly.
 - name: Set max_connections from vars or use default
@@ -18,13 +17,13 @@
 - name: PgBouncer | Calculate pool_size
   ansible.builtin.set_fact:
     pgbouncer_pool_size: "{{
-        (pgbouncer_pool_size | default(0) | int)
-        +
-        (pool_item.pool_parameters
-         | regex_search('pool_size=(\\d+)', multiline=False)
-         | regex_replace('[^0-9]', '')
-         | default(pgbouncer_default_pool_size | default(0), true)
-         | int)
+      (pgbouncer_pool_size | default(0) | int)
+      +
+      (pool_item.pool_parameters
+      | regex_search('pool_size=(\\d+)', multiline=False)
+      | regex_replace('[^0-9]', '')
+      | default(pgbouncer_default_pool_size | default(0), true)
+      | int)
       }}"
   loop: "{{ pgbouncer_pools | default([]) }}"
   loop_control:
