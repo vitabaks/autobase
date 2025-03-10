@@ -216,7 +216,6 @@ haproxy_package_file: []
 #  - "rh-haproxy18-runtime-3.1-2.el7.x86_64.rpm"
 #  - "rh-haproxy18-haproxy-1.8.31-1.el7.x86_64.rpm"
 
-# if haproxy_installation_method: "src" (optional)
 confd_package_file: "confd-0.16.0-linux-amd64" # https://github.com/kelseyhightower/confd/releases
 
 # if haproxy_installation_method: 'src' (optional)
