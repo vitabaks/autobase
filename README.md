@@ -95,6 +95,7 @@ Example: `replica.postgres-cluster.service.dc1.consul`, `replica.postgres-cluste
 It requires the installation of a consul in client mode on each application server for service DNS resolution (or use [forward DNS](https://developer.hashicorp.com/consul/tutorials/networking/dns-forwarding?utm_source=docs) to the remote consul server instead of installing a local consul client).
 
 ## Compatibility
+
 RedHat and Debian based distros (x86_64)
 
 ###### Supported Linux Distributions:
