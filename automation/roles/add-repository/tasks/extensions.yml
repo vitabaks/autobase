@@ -24,7 +24,7 @@
         baseurl: "https://packagecloud.io/timescale/timescaledb/el/{{ ansible_distribution_major_version }}/x86_64" # no arm64 support
         gpgkey: "https://packagecloud.io/timescale/timescaledb/gpgkey"
         gpgcheck: "no"
-      when: ansible_os_family == "RedHat"
+      when: ansible_os_family == "RedHat" and ansible_architecture in ["x86_64", "amd64"]
   environment: "{{ proxy_env | default({}) }}"
   when: (enable_timescale | default(false) | bool) or (enable_timescaledb | default(false) | bool)
   tags: add_repo, timescaledb, timescale
