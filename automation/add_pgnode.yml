@@ -13,6 +13,10 @@
       ansible.builtin.include_vars: "vars/main.yml"
       tags: always
 
+    - name: Include vault variables
+      ansible.builtin.include_vars: "vars/vault.yml"
+      tags: always
+
     - name: Include system variables
       ansible.builtin.include_vars: "vars/system.yml"
       tags: always
@@ -155,6 +159,10 @@
       ansible.builtin.include_vars: "vars/main.yml"
       tags: always
 
+    - name: Include vault variables
+      ansible.builtin.include_vars: "vars/vault.yml"
+      tags: always
+
     - name: Include system variables
       ansible.builtin.include_vars: "vars/system.yml"
       tags: always
@@ -197,6 +205,10 @@
       ansible.builtin.include_vars: "vars/main.yml"
       tags: always
 
+    - name: Include vault variables
+      ansible.builtin.include_vars: "vars/vault.yml"
+      tags: always
+
     - name: Include OS-specific variables
       ansible.builtin.include_vars: "vars/{{ ansible_os_family }}.yml"
       tags: always
@@ -222,6 +234,10 @@
   pre_tasks:
     - name: Include main variables
       ansible.builtin.include_vars: "vars/main.yml"
+      tags: always
+
+    - name: Include vault variables
+      ansible.builtin.include_vars: "vars/vault.yml"
       tags: always
 
     - name: Include system variables

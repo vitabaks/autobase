@@ -1,0 +1,9 @@
+---
+# Sensitive variables - Ansible Vault
+vault:
+  # Minio S3 secrets
+  minio:
+    backup:
+      key: superkey
+      key_secret: supersecret
+      endpoint: "https://s3.yourdomain.com"
