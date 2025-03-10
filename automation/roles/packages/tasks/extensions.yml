@@ -29,8 +29,10 @@
   loop: "{{ citus_package }}"
   vars:
     citus_package: >-
-      [{% if ansible_os_family == 'Debian' and pg_version | default(postgresql_version) | int >= 14 %}
-      "postgresql-{{ pg_version | default(postgresql_version) }}-citus-{{ citus_version | default('12.1') }}"
+      [{% if ansible_os_family == 'Debian' and pg_version | default(postgresql_version) | int >= 15 %}
+      "postgresql-{{ pg_version | default(postgresql_version) }}-citus-{{ citus_version | default('13.0') }}"
+      {% elif ansible_os_family == 'Debian' and pg_version | default(postgresql_version) | int == 14 %}
+      "postgresql-{{ pg_version | default(postgresql_version) }}-citus-12.1"
       {% elif ansible_os_family == 'Debian' and pg_version | default(postgresql_version) | int == 13 %}
       "postgresql-{{ pg_version | default(postgresql_version) }}-citus-11.3"
       {% elif ansible_os_family == 'Debian' and pg_version | default(postgresql_version) | int == 12 %}
