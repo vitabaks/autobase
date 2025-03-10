@@ -129,7 +129,7 @@
       register: go_latest_version
 
     - block: # Install latest Go compiler
-        - name: "Download Go v{{ wal_g_latest_version.stdout }}"
+        - name: "Download Go v{{ go_latest_version.stdout }}"
           ansible.builtin.get_url:
             url: "https://go.dev/dl/go{{ go_latest_version.stdout }}.linux-{{ go_architecture_map[ansible_architecture] }}.tar.gz"
             dest: /tmp/
@@ -144,6 +144,7 @@
               - --no-same-owner
             remote_src: true
       when: go_installed_version.stderr is search("command not found") or
+        go_installed_version.stdout is version(go_latest_version.stdout, '<')
 
     - name: "Download WAL-G v{{ wal_g_version | string | replace('v', '') }} source code"
       ansible.builtin.git:
