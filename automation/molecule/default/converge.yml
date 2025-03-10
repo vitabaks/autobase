@@ -69,7 +69,7 @@
         enable_pg_stat_kcache: true
         enable_pg_wait_sampling: true
         enable_pg_partman: true
-        # enable_citus: true  # TODO Postgres 17
+        enable_citus: true
         enable_paradedb: "{{ 'false' if ansible_distribution_release == 'bullseye' else 'true' }}" # pg_search and pg_analytics (no packages for debian 11)
         enable_pgvectorscale: "{{ 'true' if ansible_distribution_release in ['bookworm', 'jammy', 'noble'] else 'false' }}" # only deb packages are available
         # create extension
