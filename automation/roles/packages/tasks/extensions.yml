@@ -48,6 +48,7 @@
     - enable_citus | default(false) | bool
     - (ansible_os_family == 'Debian' and pg_version | default(postgresql_version) | int >= 11) or
       (ansible_os_family == 'RedHat' and pg_version | default(postgresql_version) | int >= 12)
+    - ansible_architecture in ["x86_64", "amd64"] # no arm64 support
   tags: citus
 
 # pg_repack (if 'enable_pg_repack' is 'true')
