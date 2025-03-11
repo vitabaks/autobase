@@ -11,6 +11,10 @@
       ansible.builtin.include_vars: "vars/main.yml"
       tags: always
 
+    - name: Include vault variables
+      ansible.builtin.include_vars: "vars/vault.yml"
+      tags: always
+
     - name: Include system variables
       ansible.builtin.include_vars: "vars/system.yml"
       tags: always

@@ -5,6 +5,8 @@
   pre_tasks:
     - name: Include main variables
       ansible.builtin.include_vars: "vars/main.yml"
+    - name: Include vault variables
+      ansible.builtin.include_vars: "vars/vault.yml"
     - name: Include OS-specific variables
       ansible.builtin.include_vars: "vars/{{ ansible_os_family }}.yml"
   tasks:
@@ -39,6 +41,8 @@
   pre_tasks:
     - name: Include main variables
       ansible.builtin.include_vars: "vars/main.yml"
+    - name: Include vault variables
+      ansible.builtin.include_vars: "vars/vault.yml"
   tasks:
     - block:
         - name: Stop Consul service
@@ -63,6 +67,8 @@
   pre_tasks:
     - name: Include main variables
       ansible.builtin.include_vars: "vars/main.yml"
+    - name: Include vault variables
+      ansible.builtin.include_vars: "vars/vault.yml"
   tasks:
     - block:
         - name: Stop Etcd service
