@@ -1,0 +1,13 @@
+---
+wal_g_architecture_map:
+  amd64: amd64
+  x86_64: amd64
+  aarch64: aarch64
+  arm64: aarch64
+
+# if 'wal_g_installation_method' is 'src'
+go_architecture_map:
+  amd64: amd64
+  x86_64: amd64
+  aarch64: arm64
+  arm64: arm64

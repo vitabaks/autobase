@@ -1,4 +1,6 @@
 ---
+# yamllint disable rule:line-length
+
 # PostgreSQL variables
 #
 # You can specify custom data dir path. Example: "/pgdata/{{ postgresql_version }}/data"
@@ -9,7 +11,7 @@ postgresql_data_dir: "\
   /var/lib/pgsql/{{ postgresql_version }}/data\
   {% endif %}"
 # Note: When deploying to cloud providers, we create a disk and mount the data directory,
-# along the path defined in the 'pg_data_mount_path' variable (or use '/pgdata' by default).
+# along the path defined in the "pg_data_mount_path" variable (or use "/pgdata" by default).
 
 # You can specify custom WAL dir path. Example: "/pgwal/{{ postgresql_version }}/pg_wal"
 postgresql_wal_dir: "" # if defined, symlink will be created [optional]
@@ -86,7 +88,7 @@ postgresql_packages:
   - postgresql{{ postgresql_version }}-server
   - postgresql{{ postgresql_version }}-contrib
   - postgresql{{ postgresql_version }}-devel
-  - postgresql{{ postgresql_version }}-debuginfo
+# - postgresql{{ postgresql_version }}-debuginfo
 #  - pg_repack_{{ postgresql_version }}
 #  - pg_cron_{{ postgresql_version }}
 #  - pg_stat_kcache_{{ postgresql_version }}
@@ -98,8 +100,8 @@ postgresql_packages:
 #  - pg_partman_{{ postgresql_version }}
 
 # Extra packages
-etcd_package_repo: "https://github.com/etcd-io/etcd/releases/download/v{{ etcd_version }}/etcd-v{{ etcd_version }}-linux-amd64.tar.gz"
-vip_manager_package_repo: "https://github.com/cybertec-postgresql/vip-manager/releases/download/v{{ vip_manager_version }}/vip-manager_{{ vip_manager_version }}_Linux_x86_64.rpm" # yamllint disable rule:line-length
+etcd_package_repo: "https://github.com/etcd-io/etcd/releases/download/v{{ etcd_version }}/etcd-v{{ etcd_version }}-linux-{{ etcd_architecture_map[ansible_architecture] }}.tar.gz"
+vip_manager_package_repo: "https://github.com/cybertec-postgresql/vip-manager/releases/download/v{{ vip_manager_version }}/vip-manager_{{ vip_manager_version }}_Linux_{{ vip_manager_architecture_map[ansible_architecture] }}.rpm"
 
 installation_method: "repo" # "repo" (default) or "file"
 
@@ -149,9 +151,9 @@ patroni_pip_package_repo: []
 
 # if with_haproxy_load_balancing: true
 haproxy_installation_method: "rpm" # "rpm" (default) or "src"
-confd_package_repo: "https://github.com/kelseyhightower/confd/releases/download/v0.16.0/confd-0.16.0-linux-amd64"
+confd_package_repo: "https://github.com/kelseyhightower/confd/releases/download/v0.16.0/confd-0.16.0-linux-{{ confd_architecture_map[ansible_architecture] }}"
 
-# if haproxy_installation_method: 'src' (optional)
+# if haproxy_installation_method: "src" (optional)
 haproxy_major: "1.8"
 haproxy_version: "1.8.31" # version to build from source
 lua_src_repo: "https://www.lua.org/ftp/lua-5.3.5.tar.gz" # required for build haproxy
@@ -207,14 +209,15 @@ patroni_pip_package_file: []
 #  - "patroni-3.3.2.tar.gz"  # https://pypi.org/project/patroni/#files
 
 # additional packages
-etcd_package_file: "etcd-v3.5.15-linux-amd64.tar.gz" # https://github.com/etcd-io/etcd/releases
-vip_manager_package_file: "vip-manager-1.0.2-1.x86_64.rpm" # https://github.com/cybertec-postgresql/vip-manager/releases
-wal_g_package_file: "wal-g.linux-amd64.tar.gz" # https://github.com/wal-g/wal-g/releases
+etcd_package_file: "etcd-v3.5.17-linux-{{ etcd_architecture_map[ansible_architecture] }}.tar.gz" # https://github.com/etcd-io/etcd/releases
+vip_manager_package_file: "vip-manager_3.0.0_Linux_{{ vip_manager_architecture_map[ansible_architecture] }}.rpm" # https://github.com/cybertec-postgresql/vip-manager/releases
+wal_g_package_file: "wal-g-pg-ubuntu-20.04-{{ wal_g_architecture_map[ansible_architecture] }}.tar.gz" # https://github.com/wal-g/wal-g/releases
 
 # if with_haproxy_load_balancing: true
 haproxy_package_file: []
 #  - "rh-haproxy18-runtime-3.1-2.el7.x86_64.rpm"
 #  - "rh-haproxy18-haproxy-1.8.31-1.el7.x86_64.rpm"
+
 confd_package_file: "confd-0.16.0-linux-amd64" # https://github.com/kelseyhightower/confd/releases
 
 # if haproxy_installation_method: 'src' (optional)
