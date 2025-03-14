@@ -7,7 +7,7 @@ USER root
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 # Copy autobase repository
-COPY automation /autobase/automation
+COPY . /autobase/automation
 
 # Install required packages, Python dependencies, Ansible requirements, and perform cleanup
 RUN apt-get clean && rm -rf /var/lib/apt/lists/partial \

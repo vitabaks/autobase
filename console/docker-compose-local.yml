@@ -1,0 +1,57 @@
+services:
+
+  custom-automation:
+    build:
+      context: ../automation
+      dockerfile: Dockerfile
+    container_name: custom-automation
+    networks:
+      - autobase
+
+  autobase-console-api:
+    image: autobase/console_api:latest
+    container_name: autobase-console-api
+    restart: unless-stopped
+    ports:
+      - "8080:8080"  # Exposes the API on localhost:8080
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /tmp/ansible:/tmp/ansible
+    environment:
+      - PG_CONSOLE_AUTHORIZATION_TOKEN=${AUTH_TOKEN}
+      - PG_CONSOLE_DB_HOST=autobase-console-db
+      - PG_CONSOLE_LOGGER_LEVEL=${PG_CONSOLE_LOGGER_LEVEL:-INFO}
+      - PG_CONSOLE_DOCKER_IMAGE=console-custom-automation:latest 
+    depends_on:
+      - custom-automation
+    networks:
+      - autobase
+
+  autobase-console-ui:
+    image: autobase/console_ui:latest
+    container_name: autobase-console-ui
+    restart: unless-stopped
+    ports:
+      - "3000:80"  # Exposes the UI on localhost:3000
+    environment:
+      - PG_CONSOLE_API_URL=http://localhost:8080/api/v1
+      - PG_CONSOLE_AUTHORIZATION_TOKEN=${AUTH_TOKEN}
+    networks:
+      - autobase
+
+  autobase-console-db:
+    image: autobase/console_db:latest
+    container_name: autobase-console-db
+    restart: unless-stopped
+    volumes:
+      - console_postgres:/var/lib/postgresql
+    networks:
+      - autobase
+
+volumes:
+  console_postgres:
+    name: console_postgres
+
+networks:
+  autobase:
+    name: autobase
