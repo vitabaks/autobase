@@ -1,0 +1,19 @@
+- name: Import tasks for aws
+  ansible.builtin.import_tasks: aws.yml
+  when: backup_provider == 'aws'
+
+- name: Import tasks for azure
+  ansible.builtin.import_tasks: azure.yml
+  when: backup_provider == 'azure'
+
+- name: Import tasks for digitalocean
+  ansible.builtin.import_tasks: digitalocean.yml
+  when: backup_provider == 'digitalocean'
+
+- name: Import tasks for gcp
+  ansible.builtin.import_tasks: gcp.yml
+  when: backup_provider == 'gcp'
+
+- name: Import tasks for hetzner
+  ansible.builtin.import_tasks: hetzner.yml
+  when: backup_provider == 'hetzner'

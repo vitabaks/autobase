@@ -443,26 +443,6 @@
       when:
         - cloud_firewall | bool
 
-    # Object Storage (S3 bucket for backups)
-    - name: "Hetzner Cloud: Create Object Storage (S3 bucket) '{{ hetzner_object_storage_name }}'"
-      amazon.aws.s3_bucket:
-        endpoint_url: "{{ hetzner_object_storage_endpoint }}"
-        ceph: true
-        aws_access_key: "{{ hetzner_object_storage_access_key }}"
-        aws_secret_key: "{{ hetzner_object_storage_secret_key }}"
-        name: "{{ hetzner_object_storage_name }}"
-        region: "{{ hetzner_object_storage_region }}"
-        requester_pays: false
-        state: present
-      register: s3_bucket_result
-      failed_when: s3_bucket_result.failed and not "GetBucketRequestPayment" in s3_bucket_result.msg
-      # TODO: https://github.com/ansible-collections/amazon.aws/issues/2447
-      when:
-        - (pgbackrest_install | bool or wal_g_install | bool)
-        - hetzner_object_storage_create | bool
-        - hetzner_object_storage_access_key | length > 0
-        - hetzner_object_storage_secret_key | length > 0
-
     # Server and volume
     - name: "Hetzner Cloud: Create or modify server"
       hetzner.hcloud.server:
