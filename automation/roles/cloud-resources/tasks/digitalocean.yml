@@ -601,18 +601,6 @@
       register: digitalocean_load_balancer
       when: cloud_load_balancer | bool
 
-    # Spaces Object Storage (Backups)
-    - name: "DigitalOcean: Create Spaces Bucket '{{ digital_ocean_spaces_name }}'"
-      community.digitalocean.digital_ocean_spaces:
-        oauth_token: "{{ lookup('ansible.builtin.env', 'DO_API_TOKEN') }}"
-        name: "{{ digital_ocean_spaces_name }}"
-        region: "{{ digital_ocean_spaces_region }}"
-        aws_access_key_id: "{{ AWS_ACCESS_KEY_ID }}"
-        aws_secret_access_key: "{{ AWS_SECRET_ACCESS_KEY }}"
-        state: present
-      when:
-        - (pgbackrest_install | bool or wal_g_install | bool)
-        - digital_ocean_spaces_create | bool
   when: state == 'present'
 
 - name: Wait for host to be available via SSH

@@ -400,42 +400,6 @@
         (item == 'replica' and server_count | int > 1) or
         (item in ['sync', 'async'] and server_count | int > 1 and synchronous_mode | bool))
 
-    # Azure Blob Storage (Backups)
-    - block:
-        - name: "Azure: Create Storage Account '{{ azure_blob_storage_account_name }}'"
-          azure.azcollection.azure_rm_storageaccount:
-            resource_group: "{{ azure_resource_group | default('postgres-cluster-resource-group' ~ '-' ~ server_location) }}"
-            name: "{{ azure_blob_storage_account_name }}"
-            account_type: "{{ azure_blob_storage_account_type }}"
-            kind: "{{ azure_blob_storage_account_kind }}"
-            access_tier: "{{ azure_blob_storage_account_access_tier }}"
-            public_network_access: "{{ azure_blob_storage_account_public_network_access }}"
-            allow_blob_public_access: "{{ azure_blob_storage_account_allow_blob_public_access }}"
-            state: present
-
-        - name: "Azure: Get Storage Account info"
-          azure.azcollection.azure_rm_storageaccount_info:
-            resource_group: "{{ azure_resource_group | default('postgres-cluster-resource-group' ~ '-' ~ server_location) }}"
-            name: "{{ azure_blob_storage_account_name }}"
-            show_connection_string: true
-          no_log: true # do not output storage account contents to the ansible log
-          register: azure_storage_account_info
-
-        - name: "Set variable: azure_storage_account_key"
-          ansible.builtin.set_fact:
-            azure_storage_account_key: "{{ azure_storage_account_info.storageaccounts[0].primary_endpoints.key }}"
-          no_log: true # do not output storage account contents to the ansible log
-
-        - name: "Azure: Create Blob Storage container '{{ azure_blob_storage_name }}'"
-          azure.azcollection.azure_rm_storageblob:
-            resource_group: "{{ azure_resource_group | default('postgres-cluster-resource-group' ~ '-' ~ server_location) }}"
-            account_name: "{{ azure_blob_storage_account_name }}"
-            container: "{{ azure_blob_storage_name }}"
-            blob_type: "{{ azure_blob_storage_blob_type }}"
-            state: present
-      when:
-        - (pgbackrest_install | bool or wal_g_install | bool)
-        - azure_blob_storage_create | bool
   when: state == 'present'
 
 - name: "Wait for host to be available via SSH"

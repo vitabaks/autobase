@@ -1,0 +1,16 @@
+    # S3 bucket (Backups)
+    - name: "AWS: Create S3 bucket '{{ aws_s3_bucket_name }}'"
+      amazon.aws.s3_bucket:
+        access_key: "{{ lookup('ansible.builtin.env', 'AWS_ACCESS_KEY_ID') }}"
+        secret_key: "{{ lookup('ansible.builtin.env', 'AWS_SECRET_ACCESS_KEY') }}"
+        name: "{{ aws_s3_bucket_name }}"
+        region: "{{ aws_s3_bucket_region }}"
+        object_lock_enabled: "{{ aws_s3_bucket_object_lock_enabled }}"
+        encryption: "{{ aws_s3_bucket_encryption }}"
+        public_access:
+          block_public_acls: "{{ aws_s3_bucket_block_public_acls }}"
+          ignore_public_acls: "{{ aws_s3_bucket_ignore_public_acls }}"
+        state: present
+      when:
+        - (pgbackrest_install | bool or wal_g_install | bool)
+        - aws_s3_bucket_create | bool
