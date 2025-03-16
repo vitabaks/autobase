@@ -1,19 +1,24 @@
 - name: Import tasks for aws
   ansible.builtin.import_tasks: aws.yml
   when: backup_provider == 'aws'
+  tags: pgbackrest, wal-g, wal_g
 
 - name: Import tasks for azure
   ansible.builtin.import_tasks: azure.yml
   when: backup_provider == 'azure'
+  tags: pgbackrest, wal-g, wal_g
 
 - name: Import tasks for digitalocean
   ansible.builtin.import_tasks: digitalocean.yml
   when: backup_provider == 'digitalocean'
+  tags: pgbackrest, wal-g, wal_g
 
 - name: Import tasks for gcp
   ansible.builtin.import_tasks: gcp.yml
   when: backup_provider == 'gcp'
+  tags: pgbackrest, wal-g, wal_g
 
 - name: Import tasks for hetzner
   ansible.builtin.import_tasks: hetzner.yml
   when: backup_provider == 'hetzner'
+  tags: pgbackrest, wal-g, wal_g
