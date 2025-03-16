@@ -1,0 +1,8 @@
+---
+vip_manager_architecture_map:
+  amd64: x86_64
+  x86_64: x86_64
+  aarch64: arm64
+  arm64: arm64
+  32-bit: "i386"
+  64-bit: x86_64

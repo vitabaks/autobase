@@ -42,7 +42,7 @@
       check_mode: false
       vars:
         wal_g_repo: "https://github.com/wal-g/wal-g/releases/download/v{{ wal_g_version | string | replace('v', '') }}"
-        wal_g_archive: "wal-g-pg-ubuntu-20.04-amd64.tar.gz"
+        wal_g_archive: "wal-g-pg-ubuntu-20.04-{{ wal_g_architecture_map[ansible_architecture] }}.tar.gz"
       environment: "{{ proxy_env | default({}) }}"
 
     # Note: We are using a precompiled binary on Ubuntu 20.04,
@@ -50,7 +50,7 @@
 
     - name: Extract WAL-G into /tmp
       ansible.builtin.unarchive:
-        src: "/tmp/wal-g-pg-ubuntu-20.04-amd64.tar.gz"
+        src: "/tmp/wal-g-pg-ubuntu-20.04-{{ wal_g_architecture_map[ansible_architecture] }}.tar.gz"
         dest: /tmp/
         extra_opts:
           - --no-same-owner
@@ -59,7 +59,7 @@
 
     - name: Copy WAL-G binary file to "{{ wal_g_path.split(' ')[0] }}"
       ansible.builtin.copy:
-        src: "/tmp/wal-g-pg-ubuntu-20.04-amd64"
+        src: "/tmp/wal-g-pg-ubuntu-20.04-{{ wal_g_architecture_map[ansible_architecture] }}"
         dest: "{{ wal_g_path.split(' ')[0] }}"
         mode: u+x,g+x,o+x
         remote_src: true
@@ -126,25 +126,25 @@
       args:
         executable: /bin/bash
       changed_when: false
-      register: wal_g_latest_version
+      register: go_latest_version
 
     - block: # Install latest Go compiler
-        - name: "Download Go v{{ wal_g_latest_version.stdout }}"
+        - name: "Download Go v{{ go_latest_version.stdout }}"
           ansible.builtin.get_url:
-            url: "https://go.dev/dl/go{{ wal_g_latest_version.stdout }}.linux-amd64.tar.gz"
+            url: "https://go.dev/dl/go{{ go_latest_version.stdout }}.linux-{{ go_architecture_map[ansible_architecture] }}.tar.gz"
             dest: /tmp/
             timeout: 60
             validate_certs: false
 
         - name: Install Go
           ansible.builtin.unarchive:
-            src: "/tmp/go{{ wal_g_latest_version.stdout }}.linux-amd64.tar.gz"
+            src: "/tmp/go{{ go_latest_version.stdout }}.linux-{{ go_architecture_map[ansible_architecture] }}.tar.gz"
             dest: /usr/local/
             extra_opts:
               - --no-same-owner
             remote_src: true
       when: go_installed_version.stderr is search("command not found") or
-        go_installed_version.stdout is version(wal_g_latest_version.stdout, '<')
+        go_installed_version.stdout is version(go_latest_version.stdout, '<')
 
     - name: "Download WAL-G v{{ wal_g_version | string | replace('v', '') }} source code"
       ansible.builtin.git:

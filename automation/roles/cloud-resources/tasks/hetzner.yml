@@ -655,6 +655,7 @@
       until: hetzner_load_balancer is success
       delay: 5
       retries: 3
+      when: cloud_load_balancer | bool
   when: state == 'present'
 
 - name: Wait for host to be available via SSH

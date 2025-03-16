@@ -69,10 +69,9 @@
         enable_pg_stat_kcache: true
         enable_pg_wait_sampling: true
         enable_pg_partman: true
-        # enable_citus: true  # TODO Postgres 17
+        enable_citus: "{{ 'false' if ansible_distribution_release == 'noble' else 'true' }}" # no packages for Ubuntu 24.04 (TODO)
         enable_paradedb: "{{ 'false' if ansible_distribution_release == 'bullseye' else 'true' }}" # pg_search and pg_analytics (no packages for debian 11)
         enable_pgvectorscale: "{{ 'true' if ansible_distribution_release in ['bookworm', 'jammy', 'noble'] else 'false' }}" # only deb packages are available
-        pgvectorscale_version: "0.5.1" # TODO (v0.6.0 does not contain packages)
         # create extension
         postgresql_schemas:
           - { schema: "paradedb", db: "postgres", owner: "postgres" } # pg_search must be installed in the paradedb schema.

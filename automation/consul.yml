@@ -128,6 +128,14 @@
         consul_dnsmasq_servers: "{{ consul_dnsmasq_servers | reject('equalto', '127.0.0.1') | list }}"
       when: dcs_type == "consul" and consul_dnsmasq_enable | bool and ('127.0.0.1' in (consul_dnsmasq_servers | default([])))
 
+    # Setting variables for Consul during cloud deployment
+    - name: Redefine the consul_node_role and consul_bootstrap_expect variables
+      ansible.builtin.set_fact:
+        consul_node_role: "{{ 'server' if not dcs_exists else 'client' }}"
+        consul_bootstrap_expect: "{{ not dcs_exists }}"
+        consul_datacenter: "{{ server_location | default('dc1') }}"
+      when: cloud_provider | default('') | length > 0
+
   roles:
     - role: ansible-role-firewall
       vars:
