@@ -103,9 +103,6 @@
   run_once: true # noqa run-once
   no_log: true # do not output contents to the ansible log
 
-- name: debug
-  debug:
-    var: pgbackrest_conf
 # Hetzner Object Storage (if 'cloud_provider=hetzner')
 - name: "Set variable 'wal_g_json' for backup in AWS S3 bucket"
   ansible.builtin.set_fact:
