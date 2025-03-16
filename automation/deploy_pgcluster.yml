@@ -281,6 +281,8 @@
     - role: ntp
     - role: ssh-keys
     - role: copy
+    - role: backup
+      when: wal_g_install | bool or pgbackrest_install | bool
 
 - name: deploy_pgcluster.yml | Deploy balancers
   ansible.builtin.import_playbook: balancers.yml
@@ -314,6 +316,8 @@
         - pgbackrest_auto_conf | default(true) | bool # to be able to disable auto backup settings
       tags: always
   roles:
+    - role: backup
+      when: pgbackrest_install | bool
     - role: pgbackrest
       when: pgbackrest_install | bool
 
@@ -351,6 +355,9 @@
       tags: always
 
   roles:
+    - role: backup
+      when: (wal_g_install | bool) or (pgbackrest_install | bool)
+
     - role: wal-g
       when: wal_g_install|bool
 
