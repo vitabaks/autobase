@@ -85,6 +85,49 @@
     state: directory
   tags: etcd, etcd_conf
 
+# TLS
+- block:
+    # if 'etcd_on_dedicated_nodes' is 'false'
+    - name: Copy etcd TLS certificate, key and CA from the master node
+      ansible.builtin.include_role:
+        name: ../roles/tls_certificate/copy
+      vars:
+        tls_group_name: "master"
+        copy_tls_owner: "etcd"
+        copy_tls_ca_cert_path: "{{ etcd_tls_ca_crt | default('/etc/etcd/tls/ca.crt') }}"
+        copy_tls_cert_path: "{{ etcd_tls_server_crt | default('/etc/etcd/tls/server.crt') }}"
+        copy_tls_privatekey_path: "{{ etcd_tls_server_key | default('/etc/etcd/tls/server.key') }}"
+      when: not etcd_on_dedicated_nodes | default(false) | bool
+
+    # if 'etcd_on_dedicated_nodes' is 'true'
+    - name: Generate etcd TLS certificate
+      ansible.builtin.include_role:
+        name: ../roles/tls_certificate/generate
+      vars:
+        tls_group_name: "etcd_cluster"
+        generate_tls_owner: "etcd"
+        generate_tls_ca_key_path: "{{ etcd_tls_ca_key | default('/etc/etcd/tls/ca.key') }}"
+        generate_tls_ca_cert_path: "{{ etcd_tls_ca_crt | default('/etc/etcd/tls/ca.crt') }}"
+        generate_tls_cert_path: "{{ etcd_tls_server_crt | default('/etc/etcd/tls/server.crt') }}"
+        generate_tls_privatekey_path: "{{ etcd_tls_server_key | default('/etc/etcd/tls/server.key') }}"
+      when: etcd_on_dedicated_nodes | default(false) | bool
+
+    - name: Copy etcd TLS files to all etcd nodes
+      ansible.builtin.include_role:
+        name: ../roles/tls_certificate/copy
+      vars:
+        tls_group_name: "etcd_cluster"
+        fetch_tls_ca_cert_path: "{{ etcd_tls_ca_crt | default('/etc/etcd/tls/ca.crt') }}"
+        fetch_tls_cert_path: "{{ etcd_tls_server_crt | default('/etc/etcd/tls/server.crt') }}"
+        fetch_tls_privatekey_path: "{{ etcd_tls_server_key | default('/etc/etcd/tls/server.key') }}"
+        copy_tls_ca_cert_path: "{{ etcd_tls_ca_crt | default('/etc/etcd/tls/ca.crt') }}"
+        copy_tls_cert_path: "{{ etcd_tls_server_crt | default('/etc/etcd/tls/server.crt') }}"
+        copy_tls_privatekey_path: "{{ etcd_tls_server_key | default('/etc/etcd/tls/server.key') }}"
+        copy_tls_owner: "etcd"
+      when: etcd_on_dedicated_nodes | default(false) | bool
+  when: tls_cert_generate | default(true) | bool
+  tags: etcd, etcd_conf
+
 - name: Create etcd data directory
   ansible.builtin.file:
     path: "{{ etcd_data_dir }}"
