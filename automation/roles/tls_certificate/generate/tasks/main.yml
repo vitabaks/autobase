@@ -112,6 +112,5 @@
       ansible.builtin.copy:
         dest: "{{ generate_tls_cert_path | default(tls_cert_path | default('/etc/tls/server.crt')) }}"
         content: "{{ certificate.certificate }}"
-  delegate_to: "{{ groups[tls_group_name | default('master')][0] }}"
-  run_once: true
+  when: inventory_hostname == groups[tls_group_name | default('master')][0]
   tags: tls, tls_cert_generate
