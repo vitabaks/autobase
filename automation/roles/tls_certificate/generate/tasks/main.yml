@@ -1,23 +1,24 @@
 ---
-- name: Make sure that the python3-cryptography package is present
-  ansible.builtin.package:
-    name: python3-cryptography
-    state: present
-  register: pack_status
-  until: pack_status is success
-  delay: 5
-  retries: 3
-  tags: tls, tls_cert_generate
+- block:
+    - name: Make sure that the python3-cryptography package is present
+      ansible.builtin.package:
+        name: python3-cryptography
+        state: present
+      register: pack_status
+      until: pack_status is success
+      delay: 5
+      retries: 3
 
-- name: Clean up existing certificates (if any)
-  ansible.builtin.file:
-    path: "{{ item }}"
-    state: absent
-  loop:
-    - "{{ generate_tls_privatekey_path | default(tls_privatekey_path | default('/etc/tls/server.key')) }}"
-    - "{{ generate_tls_cert_path | default(tls_cert_path | default('/etc/tls/server.crt')) }}"
-    - "{{ generate_tls_ca_cert_path | default(tls_ca_cert_path | default('/etc/tls/ca.crt')) }}"
-    - "{{ generate_tls_ca_key_path | default(tls_ca_key_path | default('/etc/tls/ca.key')) }}"
+    - name: Clean up existing certificates (if any)
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - "{{ generate_tls_privatekey_path | default(tls_privatekey_path | default('/etc/tls/server.key')) }}"
+        - "{{ generate_tls_cert_path | default(tls_cert_path | default('/etc/tls/server.crt')) }}"
+        - "{{ generate_tls_ca_cert_path | default(tls_ca_cert_path | default('/etc/tls/ca.crt')) }}"
+        - "{{ generate_tls_ca_key_path | default(tls_ca_key_path | default('/etc/tls/ca.key')) }}"
+  when: inventory_hostname in groups[tls_group_name | default('postgres_cluster')]
   tags: tls, tls_cert_generate
 
 - block:
