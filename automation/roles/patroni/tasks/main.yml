@@ -273,6 +273,22 @@
     mode: "0750"
   tags: patroni, patroni_conf
 
+# TLS
+- name: Copy etcd cert files for patroni
+  ansible.builtin.include_role:
+    name: ../roles/tls_certificate/copy
+  vars:
+    tls_group_name: "etcd_cluster"
+    copy_tls_owner: "postgres"
+    copy_tls_ca_cert_path: "{{ patroni_etcd_cacert | default('/etc/patroni/tls/etcd_ca.crt') }}"
+    copy_tls_cert_path: "{{ patroni_etcd_cert | default('/etc/patroni/tls/etcd_server.crt') }}"
+    copy_tls_privatekey_path: "{{ patroni_etcd_key | default('/etc/patroni/tls/etcd_server.key') }}"
+  when:
+    - tls_cert_generate | bool
+    - dcs_type == "etcd"
+    - not dcs_exists | bool
+  tags: patroni, patroni_conf
+
 - name: Generate conf file "/etc/patroni/patroni.yml"
   ansible.builtin.template:
     src: templates/patroni.yml.j2

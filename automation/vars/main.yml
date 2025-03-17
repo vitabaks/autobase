@@ -105,8 +105,7 @@ etcd_data_dir: "/var/lib/etcd"
 etcd_cluster_name: "etcd-{{ patroni_cluster_name }}" # ETCD_INITIAL_CLUSTER_TOKEN
 etcd_on_dedicated_nodes: "{{ groups['etcd_cluster'] | intersect(groups['postgres_cluster']) | length == 0 }}" # 'true' or 'false'
 # TLS
-# Enables TLS encryption using a self-signed certificate (if 'tls_cert_generate' is 'true'),
-# or allows using custom certificates by copying them to Patroni servers via the 'copy_files_to_all_server' variable.
+# Enables TLS encryption using a self-signed certificate (if 'tls_cert_generate' is 'true')
 etcd_tls_enable: "{{ tls_cert_generate | default(true) }}"
 etcd_tls_ca_crt: "/etc/etcd/tls/ca.crt"
 etcd_tls_ca_key: "/etc/etcd/tls/ca.key"
