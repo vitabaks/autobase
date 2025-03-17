@@ -359,13 +359,13 @@
 
     - role: cron
 
+    - role: tls_certificate/copy
+      when: tls_cert_generate|bool
+
     - role: pgbouncer
       when: pgbouncer_install|bool
 
     - role: pgpass
-
-    - role: tls_certificate/copy
-      when: tls_cert_generate|bool
 
     - role: patroni
 
