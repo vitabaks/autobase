@@ -49,7 +49,7 @@
     - name: "Generate CA private key"
       community.crypto.openssl_privatekey:
         path: "{{ generate_tls_ca_key_path | default(tls_ca_key_path | default('/etc/tls/ca.key')) }}"
-        size: "{{ generate_tls_privatekey_size | default(tls_privatekey_size | default(4096)} }}"
+        size: "{{ generate_tls_privatekey_size | default(tls_privatekey_size | default(4096)) }}"
         type: "{{ generate_tls_privatekey_type | default(tls_privatekey_type | default('RSA')) }}"
 
     - name: "Create CSR for CA certificate"
@@ -70,14 +70,14 @@
         path: "{{ generate_tls_ca_cert_path | default(tls_ca_cert_path | default('/etc/tls/ca.crt')) }}"
         csr_content: "{{ ca_csr.csr }}"
         privatekey_path: "{{ generate_tls_ca_key_path | default(tls_ca_key_path | default('/etc/tls/ca.key')) }}"
-        provider: "{{ generate_tls_cert_provider | default( tls_cert_provider | default('selfsigned')) }}"
+        provider: "{{ generate_tls_cert_provider | default(tls_cert_provider | default('selfsigned')) }}"
         entrust_not_after: "+{{ generate_tls_cert_valid_days | default(tls_cert_valid_days | default(3650)) }}d"
 
     ######## Generate Server cert/key ########
     - name: "Create server private key"
       community.crypto.openssl_privatekey:
         path: "{{ generate_tls_privatekey_path | default(tls_privatekey_path | default('/etc/tls/server.key')) }}"
-        size: "{{ generate_tls_privatekey_size | default(tls_privatekey_size | default(4096)} }}"
+        size: "{{ generate_tls_privatekey_size | default(tls_privatekey_size | default(4096)) }}"
         type: "{{ generate_tls_privatekey_type | default(tls_privatekey_type | default('RSA')) }}"
 
     - name: "Create server CSR"
