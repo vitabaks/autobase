@@ -1,5 +1,5 @@
 ---
-- name: "Fetch TLS certificate, key and CA from the {{ groups[tls_group_name | default('master')][0] }} node"
+- name: "Fetch TLS certificate, key and CA from {{ groups[tls_group_name | default('master')][0] }}"
   run_once: true
   ansible.builtin.slurp:
     src: "{{ item }}"
