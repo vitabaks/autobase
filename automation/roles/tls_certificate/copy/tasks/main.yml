@@ -20,7 +20,7 @@
     mode: "0755"
   tags: tls, tls_cert_copy
 
-- name: Copy PostgreSQL TLS certificate, key and CA to all nodes
+- name: Copy TLS certificate, key and CA to all nodes
   ansible.builtin.copy:
     content: "{{ tls_files.results[item.index].content | b64decode }}"
     dest: "{{ item.path }}"
