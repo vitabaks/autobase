@@ -87,7 +87,7 @@ vip_manager_ip: "{{ cluster_vip }}" # the virtual ip address to manage
 vip_manager_mask: "24" # netmask for the virtual ip
 vip_manager_dcs_type: "{{ dcs_type }}" # etcd, consul or patroni
 
-# TLS certificate (for PostgreSQL, PgBouncer and etcd)
+# TLS certificate
 tls_cert_generate: "{{ tls_enable | default(true) }}" # or 'false' if you do not want to generate a self-signed certificate.
 tls_cert_valid_days: 3650
 tls_cert_path: "/etc/tls/server.crt"
@@ -125,6 +125,9 @@ patroni_etcd_namespace: "service" # (optional) etcd namespace (prefix)
 patroni_etcd_username: "" # (optional) username for etcd authentication
 patroni_etcd_password: "" # (optional) password for etcd authentication
 patroni_etcd_protocol: "{{ 'https' if etcd_tls_enable | bool else 'http' }}"
+patroni_etcd_cacert: "/etc/patroni/tls/etcd/ca.crt"
+patroni_etcd_cert: "/etc/patroni/tls/etcd/server.crt"
+patroni_etcd_key: "/etc/patroni/tls/etcd/server.key"
 
 # more options you can specify in the roles/patroni/templates/patroni.yml.j2
 # https://patroni.readthedocs.io/en/latest/yaml_configuration.html#etcd
@@ -390,13 +393,13 @@ pgbouncer_auth_user: true # or 'false' if you want to manage the list of users f
 pgbouncer_auth_username: pgbouncer # user who can query the database via the user_search function
 pgbouncer_auth_password: "" # If not defined, a password will be generated automatically during deployment
 pgbouncer_auth_dbname: "postgres"
-pgbouncer_client_tls_sslmode: "require"
+pgbouncer_client_tls_sslmode: "{{ 'require' if tls_cert_generate | bool else 'disable' }}"
 pgbouncer_client_tls_key_file: "{{ tls_privatekey_path }}"
 pgbouncer_client_tls_cert_file: "{{ tls_cert_path }}"
 pgbouncer_client_tls_ca_file: "{{ tls_ca_cert_path }}"
 pgbouncer_client_tls_protocols: "secure" # allowed values: tlsv1.0, tlsv1.1, tlsv1.2, tlsv1.3, all, secure (tlsv1.2,tlsv1.3)
 pgbouncer_client_tls_ciphers: "secure" # allowed values: default, secure, fast, normal, all (not recommended)
-pgbouncer_server_tls_sslmode: "require"
+pgbouncer_server_tls_sslmode: "{{ 'require' if tls_cert_generate | bool else 'disable' }}"
 pgbouncer_server_tls_protocols: "secure"
 pgbouncer_server_tls_ciphers: "secure"
 pgbouncer_server_tls_key_file: "{{ tls_privatekey_path }}"
