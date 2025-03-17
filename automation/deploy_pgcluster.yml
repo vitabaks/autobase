@@ -362,6 +362,16 @@
     - role: tls_certificate/copy
       when: tls_cert_generate|bool
 
+    # Copy TLS cert files from dedicated etcd node (if 'etcd_on_dedicated_nodes' is 'true')
+    - role: tls_certificate/copy
+      vars:
+        tls_group_name: "etcd_cluster"
+        copy_tls_owner: "postgres"
+        copy_tls_ca_cert_path: "{{ etcd_tls_ca_crt | default('/etc/etcd/tls/ca.crt') }}"
+        copy_tls_cert_path: "{{ etcd_tls_server_crt | default('/etc/etcd/tls/server.crt') }}"
+        copy_tls_privatekey_path: "{{ etcd_tls_server_key | default('/etc/etcd/tls/server.key') }}"
+      when: tls_cert_generate | bool and etcd_on_dedicated_nodes | bool
+
     - role: pgbouncer
       when: pgbouncer_install|bool
 

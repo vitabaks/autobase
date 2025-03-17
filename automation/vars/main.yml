@@ -87,14 +87,35 @@ vip_manager_ip: "{{ cluster_vip }}" # the virtual ip address to manage
 vip_manager_mask: "24" # netmask for the virtual ip
 vip_manager_dcs_type: "{{ dcs_type }}" # etcd, consul or patroni
 
+# TLS certificate (for PostgreSQL, PgBouncer and etcd)
+tls_cert_generate: "{{ tls_enable | default(true) }}" # or 'false' if you do not want to generate a self-signed certificate.
+tls_cert_valid_days: 3650
+tls_cert_path: "/etc/tls/server.crt"
+tls_privatekey_path: "/etc/tls/server.key"
+tls_ca_cert_path: "/etc/tls/ca.crt"
+tls_ca_key_path: "/etc/tls/ca.key"
+
 # DCS (Distributed Consensus Store)
-dcs_exists: false # or 'true' if you don't want to deploy a new etcd cluster
 dcs_type: "etcd" # or 'consul'
+dcs_exists: false # or 'true' if you do not want Autobase to deploy and manage etcd cluster and prefer to manage it yourself.
 
 # if dcs_type: "etcd" and dcs_exists: false
 etcd_version: "3.5.17" # version for deploy etcd cluster
 etcd_data_dir: "/var/lib/etcd"
 etcd_cluster_name: "etcd-{{ patroni_cluster_name }}" # ETCD_INITIAL_CLUSTER_TOKEN
+etcd_on_dedicated_nodes: "{{ groups['etcd_cluster'] | intersect(groups['postgres_cluster']) | length == 0 }}" # 'true' or 'false'
+# TLS
+# Enables TLS encryption using a self-signed certificate (if 'tls_cert_generate' is 'true'),
+# or allows using custom certificates by copying them to Patroni servers via the 'copy_files_to_all_server' variable.
+etcd_tls_enable: "{{ tls_cert_generate | default(true) }}"
+etcd_tls_ca_crt: "/etc/etcd/tls/ca.crt"
+etcd_tls_ca_key: "/etc/etcd/tls/ca.key"
+etcd_tls_server_crt: "/etc/etcd/tls/server.crt"
+etcd_tls_server_key: "/etc/etcd/tls/server.key"
+etcd_client_cert_auth: "{{ 'true' if not etcd_on_dedicated_nodes | bool else 'false' }}"
+# We disable client certificate authentication when etcd runs on dedicated nodes.
+# This allows Patroni to connect without requiring a client certificate, ensuring secure encrypted communication
+# using only the CA certificate while avoiding the need to regenerate etcd certificates when adding new Patroni clusters.
 
 # if dcs_type: "etcd" and dcs_exists: true
 patroni_etcd_hosts: [] # list of servers of an existing etcd cluster
@@ -104,7 +125,7 @@ patroni_etcd_hosts: [] # list of servers of an existing etcd cluster
 patroni_etcd_namespace: "service" # (optional) etcd namespace (prefix)
 patroni_etcd_username: "" # (optional) username for etcd authentication
 patroni_etcd_password: "" # (optional) password for etcd authentication
-patroni_etcd_protocol: "{{ 'https' if tls_cert_generate | bool else 'http' }}"
+patroni_etcd_protocol: "{{ 'https' if etcd_tls_enable | bool else 'http' }}"
 
 # more options you can specify in the roles/patroni/templates/patroni.yml.j2
 # https://patroni.readthedocs.io/en/latest/yaml_configuration.html#etcd
@@ -173,17 +194,6 @@ consul_services:
 #    checks:
 #      - { http: "http://{{ inventory_hostname }}:{{ patroni_restapi_port }}/async?lag={{ patroni_maximum_lag_on_replica }}", interval: "2s" }
 #      - { args: ["systemctl", "status", "pgbouncer"], interval: "5s" }
-
-# TLS certificate (for PostgreSQL, PgBouncer and etcd)
-tls_cert_generate: true
-tls_cert_valid_days: 3650
-tls_cert_path: "/etc/tls/server.crt"
-tls_privatekey_path: "/etc/tls/server.key"
-tls_ca_cert_path: "/etc/tls/ca.crt"
-tls_owner: "postgres"
-tls_etcd_cert_path: "/etc/etcd/tls/server.crt"
-tls_etcd_ca_cert_path: "/etc/etcd/tls/ca.crt"
-tls_etcd_privatekey_path: "/etc/etcd/tls/server.key"
 
 # PostgreSQL variables
 postgresql_version: 17

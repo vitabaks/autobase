@@ -1,14 +1,14 @@
 ---
-- name: Fetch TLS certificate, key and CA from the master node into memory
+- name: "Fetch TLS certificate, key and CA from the {{ groups[tls_group_name | default('master')][0] }} node"
   run_once: true
   ansible.builtin.slurp:
     src: "{{ item }}"
-  delegate_to: "{{ groups.master[0] }}"
+  delegate_to: "{{ groups[tls_group_name | default('master')][0] }}"
   register: tls_files
   loop:
-    - "{{ tls_privatekey_path | default('/etc/tls/server.key') }}"
-    - "{{ tls_cert_path | default('/etc/tls/server.crt') }}"
-    - "{{ tls_ca_cert_path | default('/etc/tls/ca.crt') }}"
+    - "{{ copy_tls_privatekey_path | default(tls_privatekey_path | default('/etc/tls/server.key')) }}"
+    - "{{ copy_tls_cert_path | default(tls_cert_path | default('/etc/tls/server.crt')) }}"
+    - "{{ opy_tls_ca_cert_path | default(tls_ca_cert_path | default('/etc/tls/ca.crt')) }}"
   tags: tls, tls_cert_copy
 
 - name: Create directory {{ copy_tls_privatekey_path | default(tls_privatekey_path | default('/etc/tls/server.key')) | dirname }}
