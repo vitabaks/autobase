@@ -72,7 +72,7 @@
     - role: timezone
     - role: ntp
 
-    # Gererate TLS certificate on dedicated etcd node
+    # Gererate TLS certificate on dedicated etcd node (if 'etcd_on_dedicated_nodes' is 'true')
     - role: tls_certificate/generate
       vars:
         tls_group_name: "etcd_cluster"
@@ -83,14 +83,26 @@
         generate_tls_privatekey_path: "{{ etcd_tls_server_key | default('/etc/etcd/tls/server.key') }}"
       when: tls_cert_generate | bool and etcd_on_dedicated_nodes | bool
 
-    # Copy TLS certificate to all dedicated etcd nodes
     - role: tls_certificate/copy
       vars:
         tls_group_name: "etcd_cluster"
         copy_tls_owner: "etcd"
+        fetch_tls_ca_cert_path: "{{ etcd_tls_ca_crt | default('/etc/etcd/tls/ca.crt') }}"
+        fetch_tls_cert_path: "{{ etcd_tls_server_crt | default('/etc/etcd/tls/server.crt') }}"
+        fetch_tls_privatekey_path: "{{ etcd_tls_server_key | default('/etc/etcd/tls/server.key') }}"
         copy_tls_ca_cert_path: "{{ etcd_tls_ca_crt | default('/etc/etcd/tls/ca.crt') }}"
         copy_tls_cert_path: "{{ etcd_tls_server_crt | default('/etc/etcd/tls/server.crt') }}"
         copy_tls_privatekey_path: "{{ etcd_tls_server_key | default('/etc/etcd/tls/server.key') }}"
       when: tls_cert_generate | bool and etcd_on_dedicated_nodes | bool
+
+    # Copy TLS cert files to all etcd nodes (if 'etcd_on_dedicated_nodes' is 'false')
+    - role: tls_certificate/copy
+      vars:
+        tls_group_name: "master"
+        copy_tls_owner: "etcd"
+        copy_tls_ca_cert_path: "{{ etcd_tls_ca_crt | default('/etc/etcd/tls/ca.crt') }}"
+        copy_tls_cert_path: "{{ etcd_tls_server_crt | default('/etc/etcd/tls/server.crt') }}"
+        copy_tls_privatekey_path: "{{ etcd_tls_server_key | default('/etc/etcd/tls/server.key') }}"
+      when: tls_cert_generate | bool
 
     - role: etcd
