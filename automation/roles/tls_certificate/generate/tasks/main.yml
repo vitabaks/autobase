@@ -9,6 +9,7 @@
       delay: 5
       retries: 3
 
+    # For the possibility of re-generation of certificates
     - name: Clean up existing certificates (if any)
       ansible.builtin.file:
         path: "{{ item }}"
@@ -24,19 +25,20 @@
 - block:
     - name: "Generate subjectAltName entries for all hosts"
       ansible.builtin.set_fact:
-        subject_alt_name: >-
+        generated_subject_alt_name: >-
           {{
             (
               ansible_play_hosts | map('extract', hostvars, 'ansible_hostname') | map('regex_replace', '^', 'DNS:') | list +
               ansible_play_hosts | map('extract', hostvars, 'ansible_fqdn') | map('regex_replace', '^', 'DNS:') | list +
-              ansible_play_hosts | map('extract', hostvars, 'inventory_hostname') | map('regex_replace', '^', 'IP:') | list +
+              ansible_play_hosts | map('extract', hostvars, ['ansible_default_ipv4', 'address']) | map('regex_replace', '^', 'IP:') | list +
               ['DNS:localhost', 'IP:127.0.0.1']
             ) | unique | join(',')
           }}
+      when: tls_subject_alt_name | default('') | length < 1
 
     - name: "Display Certificate subjectAltName future value"
       ansible.builtin.debug:
-        var: subject_alt_name
+        msg: "SubjectAltName = {{ tls_subject_alt_name | default(generated_subject_alt_name) }}"
 
     ######## Generate CA ########
     - name: "Ensure TLS directory exist"
@@ -56,7 +58,7 @@
     - name: "Create CSR for CA certificate"
       community.crypto.openssl_csr_pipe:
         privatekey_path: "{{ generate_tls_ca_key_path | default(tls_ca_key_path | default('/etc/tls/ca.key')) }}"
-        common_name: PostgreSQL CA
+        common_name: "{{ generate_tls_ca_common_name | default(tls_ca_common_name | default('Autobase CA')) }}"
         use_common_name_for_san: false
         basic_constraints:
           - "CA:TRUE"
@@ -72,7 +74,8 @@
         csr_content: "{{ ca_csr.csr }}"
         privatekey_path: "{{ generate_tls_ca_key_path | default(tls_ca_key_path | default('/etc/tls/ca.key')) }}"
         provider: "{{ generate_tls_cert_provider | default(tls_cert_provider | default('selfsigned')) }}"
-        entrust_not_after: "+{{ generate_tls_cert_valid_days | default(tls_cert_valid_days | default(3650)) }}d"
+        selfsigned_not_after: "+{{ generate_tls_cert_valid_days | default(tls_cert_valid_days | default(3650)) }}d"
+        selfsigned_not_before: "-1d"
 
     ######## Generate Server cert/key ########
     - name: "Create server private key"
@@ -84,7 +87,7 @@
     - name: "Create server CSR"
       community.crypto.openssl_csr_pipe:
         privatekey_path: "{{ generate_tls_privatekey_path | default(tls_privatekey_path | default('/etc/tls/server.key')) }}"
-        common_name: "{{ patroni_cluster_name }}"
+        common_name: "{{ generate_tls_common_name | default(tls_common_name | default(patroni_cluster_name)) }}"
         key_usage:
           - digitalSignature
           - keyEncipherment
@@ -93,10 +96,8 @@
           - clientAuth
           - serverAuth
         subject:
-          C: "AL"
-          O: "autobase"
-          CN: "{{ patroni_cluster_name }}"
-        subject_alt_name: "{{ subject_alt_name }}"
+          O: "Autobase"
+        subject_alt_name: "{{ tls_subject_alt_name | default(generated_subject_alt_name) }}"
       register: csr
 
     - name: "Sign server certificate with the CA"
