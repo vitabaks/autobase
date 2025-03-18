@@ -103,7 +103,7 @@ dcs_exists: false # or 'true' if you do not want Autobase to deploy and manage e
 etcd_version: "3.5.17" # version for deploy etcd cluster
 etcd_data_dir: "/var/lib/etcd"
 etcd_cluster_name: "etcd-{{ patroni_cluster_name }}" # ETCD_INITIAL_CLUSTER_TOKEN
-etcd_on_dedicated_nodes: "{{ groups['etcd_cluster'] | intersect(groups['postgres_cluster']) | length == 0 }}" # 'true' or 'false'
+etcd_on_dedicated_nodes: "{{ groups['etcd_cluster'] | difference(groups['postgres_cluster']) | length > 0 }}" # 'true' or 'false'
 # TLS
 # Enables TLS encryption using a self-signed certificate (if 'tls_cert_generate' is 'true')
 etcd_tls_enable: "{{ tls_cert_generate | default(true) }}"
