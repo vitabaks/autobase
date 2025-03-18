@@ -106,6 +106,7 @@
       vars:
         tls_group_name: "etcd_cluster"
         generate_tls_owner: "etcd"
+        generate_tls_common_name: "etcd"
         generate_tls_ca_key_path: "{{ etcd_tls_ca_key | default('/etc/etcd/tls/ca.key') }}"
         generate_tls_ca_cert_path: "{{ etcd_tls_ca_crt | default('/etc/etcd/tls/ca.crt') }}"
         generate_tls_cert_path: "{{ etcd_tls_server_crt | default('/etc/etcd/tls/server.crt') }}"
