@@ -49,9 +49,9 @@ etcd3:
 
   {% if etcd_tls_enable | default(false) | bool %}
   protocol: https
-  cacert: {{ patroni_etcd_cacert | default('/etc/patroni/tls/etcd_ca.crt') }}
-  cert: {{ patroni_etcd_cert | default('/etc/patroni/tls/etcd_server.crt') }}
-  key: {{ patroni_etcd_key | default('/etc/patroni/tls/etcd_server.key') }}
+  cacert: {{ patroni_etcd_cacert | default('/etc/patroni/tls/etcd/ca.crt') }}
+  cert: {{ patroni_etcd_cert | default('/etc/patroni/tls/etcd/server.crt') }}
+  key: {{ patroni_etcd_key | default('/etc/patroni/tls/etcd/server.key') }}
   {% endif %}
   {% if patroni_etcd_username | default('') | length > 0 %}
   username: {{ patroni_etcd_username | default('') }}
