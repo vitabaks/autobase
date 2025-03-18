@@ -19,13 +19,19 @@
         - "{{ generate_tls_cert_path | default(tls_cert_path | default('/etc/tls/server.crt')) }}"
         - "{{ generate_tls_ca_cert_path | default(tls_ca_cert_path | default('/etc/tls/ca.crt')) }}"
         - "{{ generate_tls_ca_key_path | default(tls_ca_key_path | default('/etc/tls/ca.key')) }}"
-  when: inventory_hostname in groups[tls_group_name | default('postgres_cluster')]
+  vars:
+    selected_group: >-
+      {{
+        groups[tls_group_name]
+        if (tls_group_name | default('') | length > 0 and tls_group_name in groups)
+        else groups['postgres_cluster']
+      }}
+  when: inventory_hostname in selected_group
   tags: tls, tls_cert_generate
 
 - block:
-    # Generate a list of Subject Alternative Names (SAN) for TLS certificates if 'tls_subject_alt_name' is not set.
-    # Uses `tls_group_name` to restrict the scope to a specific group; otherwise, applies to all playbook hosts.
-    # Ensures unique DNS and IP entries, including localhost.
+    # Generates a list of Subject Alternative Names (SAN) for TLS certificates if 'tls_subject_alt_name' is not set.
+    # Uses `tls_group_name` if it is defined, non-empty, and exists in `groups`; otherwise, applies to all playbook hosts.
     - name: "Generate subjectAltName entries for all hosts"
       ansible.builtin.set_fact:
         generated_subject_alt_name: >-
@@ -38,7 +44,12 @@
             ) | unique | join(',')
           }}
       vars:
-        tls_hosts: "{{ groups[tls_group_name] if tls_group_name | default('') | length > 0 else ansible_play_hosts }}"
+        tls_hosts: >-
+          {{
+            groups[tls_group_name]
+            if (tls_group_name | default('') | length > 0 and tls_group_name in groups)
+            else ansible_play_hosts
+          }}
       when: tls_subject_alt_name | default('') | length < 1
 
     - name: "Display Certificate subjectAltName future value"
@@ -119,5 +130,12 @@
       ansible.builtin.copy:
         dest: "{{ generate_tls_cert_path | default(tls_cert_path | default('/etc/tls/server.crt')) }}"
         content: "{{ certificate.certificate }}"
-  when: inventory_hostname == groups[tls_group_name | default('master')][0]
+  vars:
+    selected_group: >-
+      {{
+        [groups[tls_group_name][0]]
+        if (tls_group_name | default('') | length > 0 and tls_group_name in groups)
+        else [groups['master'][0]]
+      }}
+  when: inventory_hostname in selected_group
   tags: tls, tls_cert_generate
