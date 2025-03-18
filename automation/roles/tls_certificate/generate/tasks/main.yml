@@ -30,7 +30,7 @@
             (
               ansible_play_hosts | map('extract', hostvars, 'ansible_hostname') | map('regex_replace', '^', 'DNS:') | list +
               ansible_play_hosts | map('extract', hostvars, 'ansible_fqdn') | map('regex_replace', '^', 'DNS:') | list +
-              ansible_play_hosts | map('extract', hostvars, ['ansible_default_ipv4', 'address']) | map('regex_replace', '^', 'IP:') | list +
+              ansible_play_hosts | map('extract', hostvars, 'inventory_hostname') | map('regex_replace', '^', 'IP:') | list +
               ['DNS:localhost', 'IP:127.0.0.1']
             ) | unique | join(',')
           }}
