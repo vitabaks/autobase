@@ -129,10 +129,6 @@ patroni_etcd_cacert: "/etc/patroni/tls/etcd/ca.crt"
 patroni_etcd_cert: "/etc/patroni/tls/etcd/server.crt"
 patroni_etcd_key: "/etc/patroni/tls/etcd/server.key"
 
-# more options you can specify in the roles/patroni/templates/patroni.yml.j2
-# https://patroni.readthedocs.io/en/latest/yaml_configuration.html#etcd
-# https://patroni.readthedocs.io/en/latest/yaml_configuration.html#consul
-
 # if dcs_type: "consul"
 consul_version: "latest" # or a specific version (e.q., '1.18.2') if 'consul_install_from_repo' is 'false'
 consul_install_from_repo: true # specify 'false' only if patroni_installation_method: "pip" is used
