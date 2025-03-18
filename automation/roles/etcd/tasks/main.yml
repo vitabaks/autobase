@@ -92,7 +92,7 @@
       ansible.builtin.include_role:
         name: ../roles/tls_certificate/copy
       vars:
-        tls_group_name: "master"
+        tls_group_name: "postgres_cluster"
         copy_tls_owner: "etcd"
         copy_tls_ca_cert_path: "{{ etcd_tls_ca_crt | default('/etc/etcd/tls/ca.crt') }}"
         copy_tls_cert_path: "{{ etcd_tls_server_crt | default('/etc/etcd/tls/server.crt') }}"

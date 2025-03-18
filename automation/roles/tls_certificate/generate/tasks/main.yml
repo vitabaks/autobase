@@ -23,17 +23,22 @@
   tags: tls, tls_cert_generate
 
 - block:
+    # Generate a list of Subject Alternative Names (SAN) for TLS certificates if 'tls_subject_alt_name' is not set.
+    # Uses `tls_group_name` to restrict the scope to a specific group; otherwise, applies to all playbook hosts.
+    # Ensures unique DNS and IP entries, including localhost.
     - name: "Generate subjectAltName entries for all hosts"
       ansible.builtin.set_fact:
         generated_subject_alt_name: >-
           {{
             (
-              ansible_play_hosts | map('extract', hostvars, 'ansible_hostname') | map('regex_replace', '^', 'DNS:') | list +
-              ansible_play_hosts | map('extract', hostvars, 'ansible_fqdn') | map('regex_replace', '^', 'DNS:') | list +
-              ansible_play_hosts | map('extract', hostvars, 'inventory_hostname') | map('regex_replace', '^', 'IP:') | list +
+              tls_hosts | map('extract', hostvars, 'ansible_hostname') | map('regex_replace', '^', 'DNS:') | list +
+              tls_hosts | map('extract', hostvars, 'ansible_fqdn') | map('regex_replace', '^', 'DNS:') | list +
+              tls_hosts | map('extract', hostvars, 'inventory_hostname') | map('regex_replace', '^', 'IP:') | list +
               ['DNS:localhost', 'IP:127.0.0.1']
             ) | unique | join(',')
           }}
+      vars:
+        tls_hosts: "{{ groups[tls_group_name] if tls_group_name | default('') | length > 0 else ansible_play_hosts }}"
       when: tls_subject_alt_name | default('') | length < 1
 
     - name: "Display Certificate subjectAltName future value"
