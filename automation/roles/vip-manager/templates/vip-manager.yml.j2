@@ -64,12 +64,12 @@ etcd-user: {{ patroni_etcd_username | default("") }}
 {% if patroni_etcd_password | default("") | length > 0 %}
 etcd-password: {{ patroni_etcd_password | default("") }}
 {% endif %}
-{% if tls_cert_generate | default(false) | bool %}
+{% if etcd_tls_enable | default(false) | bool %}
 # when etcd-ca-file is specified, TLS connections to the etcd endpoints will be used.
-etcd-ca-file: {{ tls_ca_cert_path | default('/etc/tls/ca.crt') }}
+etcd-ca-file: {{ patroni_etcd_cacert | default('/etc/patroni/tls/etcd/ca.crt') }}
 # when etcd-cert-file and etcd-key-file are specified, we will authenticate at the etcd endpoints using this certificate and key.
-etcd-cert-file: {{ tls_cert_path | default('/etc/tls/server.crt') }}
-etcd-key-file: {{ tls_privatekey_path | default('/etc/tls/server.key') }}
+etcd-cert-file: {{ patroni_etcd_cert | default('/etc/patroni/tls/etcd/server.crt') }}
+etcd-key-file: {{ patroni_etcd_key | default('/etc/patroni/tls/etcd/server.key') }}
 {% endif %}
 {% endif %}
 
