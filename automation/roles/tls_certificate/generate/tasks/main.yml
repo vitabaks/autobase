@@ -10,20 +10,22 @@
       retries: 3
 
     # Check if certificates already exist
-    - name: Check if TLS CA cert already exists
-      ansible.builtin.stat:
-        path: "{{ generate_tls_ca_cert_path | default(tls_ca_cert_path | default('/etc/tls/ca.crt')) }}"
-      register: ca_cert
+    - block:
+        - name: Check if TLS CA cert already exists
+          ansible.builtin.stat:
+            path: "{{ generate_tls_ca_cert_path | default(tls_ca_cert_path | default('/etc/tls/ca.crt')) }}"
+          register: ca_cert
 
-    - name: Check if TLS server cert already exists
-      ansible.builtin.stat:
-        path: "{{ generate_tls_cert_path | default(tls_cert_path | default('/etc/tls/server.crt')) }}"
-      register: server_cert
+        - name: Check if TLS server cert already exists
+          ansible.builtin.stat:
+            path: "{{ generate_tls_cert_path | default(tls_cert_path | default('/etc/tls/server.crt')) }}"
+          register: server_cert
 
-    - name: Check if TLS server key already exists
-      ansible.builtin.stat:
-        path: "{{ generate_tls_privatekey_path | default(tls_privatekey_path | default('/etc/tls/server.key')) }}"
-      register: server_key
+        - name: Check if TLS server key already exists
+          ansible.builtin.stat:
+            path: "{{ generate_tls_privatekey_path | default(tls_privatekey_path | default('/etc/tls/server.key')) }}"
+          register: server_key
+      when: not tls_cert_regenerate | default(false) | bool
 
     # Skip generation if certificates already exist and tls_cert_regenerate is false
     - name: Skip certificate generation
