@@ -1,14 +1,21 @@
 ---
-- name: Fetch TLS certificate, key and CA from the master node into memory
+- name: "Fetch TLS certificate, key and CA from {{ selected_group[0] }}"
   run_once: true
   ansible.builtin.slurp:
     src: "{{ item }}"
-  delegate_to: "{{ groups.master[0] }}"
+  delegate_to: "{{ selected_group[0] }}"
   register: tls_files
   loop:
-    - "{{ tls_privatekey_path | default('/etc/tls/server.key') }}"
-    - "{{ tls_cert_path | default('/etc/tls/server.crt') }}"
-    - "{{ tls_ca_cert_path | default('/etc/tls/ca.crt') }}"
+    - "{{ fetch_tls_privatekey_path | default(tls_privatekey_path | default('/etc/tls/server.key')) }}"
+    - "{{ fetch_tls_cert_path | default(tls_cert_path | default('/etc/tls/server.crt')) }}"
+    - "{{ fetch_tls_ca_cert_path | default(tls_ca_cert_path | default('/etc/tls/ca.crt')) }}"
+  vars:
+    selected_group: >-
+      {{
+        groups[tls_group_name]
+        if (tls_group_name | default('') | length > 0 and tls_group_name in groups)
+        else groups['master']
+      }}
   tags: tls, tls_cert_copy
 
 - name: Create directory {{ copy_tls_privatekey_path | default(tls_privatekey_path | default('/etc/tls/server.key')) | dirname }}
@@ -20,7 +27,7 @@
     mode: "0755"
   tags: tls, tls_cert_copy
 
-- name: Copy PostgreSQL TLS certificate, key and CA to all nodes
+- name: Copy TLS certificate, key and CA to all nodes
   ansible.builtin.copy:
     content: "{{ tls_files.results[item.index].content | b64decode }}"
     dest: "{{ item.path }}"
