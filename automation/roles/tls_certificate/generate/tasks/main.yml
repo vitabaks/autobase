@@ -34,13 +34,13 @@
               - "To force regeneration, set '{{ variable_name }}: true'"
           vars:
             variable_name: >-
-              {% if tls_group_name == 'etcd_cluster' and etcd_on_dedicated_nodes | default(false) | bool %}
-                etcd_tls_cert_regenerate
-              {% elif tls_group_name == 'postgres_cluster' and etcd_on_dedicated_nodes | default(false) | bool %}
-                patroni_tls_cert_regenerate
-              {% else %}
-                tls_cert_regenerate
-              {% endif %}
+              {%- if tls_group_name == 'etcd_cluster' and etcd_on_dedicated_nodes | default(false) | bool -%}
+              etcd_tls_cert_regenerate
+              {%- elif tls_group_name == 'postgres_cluster' and etcd_on_dedicated_nodes | default(false) | bool -%}
+              patroni_tls_cert_regenerate
+              {%- else -%}
+              tls_cert_regenerate
+              {%- endif -%}
           when:
             - ca_cert.stat.exists | default(false)
             - server_key.stat.exists | default(false)
