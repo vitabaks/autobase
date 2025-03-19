@@ -9,8 +9,34 @@
       delay: 5
       retries: 3
 
-    # For the possibility of re-generation of certificates
-    - name: Clean up existing certificates (if any)
+    # Check if certificates already exist
+    - name: Check if TLS CA cert already exists
+      ansible.builtin.stat:
+        path: "{{ generate_tls_ca_cert_path | default(tls_ca_cert_path | default('/etc/tls/ca.crt')) }}"
+      register: ca_cert
+
+    - name: Check if TLS server cert already exists
+      ansible.builtin.stat:
+        path: "{{ generate_tls_cert_path | default(tls_cert_path | default('/etc/tls/server.crt')) }}"
+      register: server_cert
+
+    - name: Check if TLS server key already exists
+      ansible.builtin.stat:
+        path: "{{ generate_tls_privatekey_path | default(tls_privatekey_path | default('/etc/tls/server.key')) }}"
+      register: server_key
+
+    # Skip generation if certificates already exist and tls_cert_regenerate is false
+    - name: Skip certificate generation
+      ansible.builtin.debug:
+        msg:
+          - "TLS certificates already exist. Skipping certificate generation."
+          - "To force regeneration, set 'tls_cert_regenerate: true'"
+      when:
+        - (ca_cert.stat.exists and server_key.stat.exists and server_cert.stat.exists)
+        - not tls_cert_regenerate | default(false) | bool
+
+    # Clean up existing certificates if tls_cert_regenerate is true
+    - name: Clean up existing certificates
       ansible.builtin.file:
         path: "{{ item }}"
         state: absent
@@ -19,6 +45,7 @@
         - "{{ generate_tls_cert_path | default(tls_cert_path | default('/etc/tls/server.crt')) }}"
         - "{{ generate_tls_ca_cert_path | default(tls_ca_cert_path | default('/etc/tls/ca.crt')) }}"
         - "{{ generate_tls_ca_key_path | default(tls_ca_key_path | default('/etc/tls/ca.key')) }}"
+      when: tls_cert_regenerate | default(false)| bool
   vars:
     selected_group: >-
       {{
@@ -29,6 +56,8 @@
   when: inventory_hostname in selected_group
   tags: tls, tls_cert_generate
 
+# Generate new certificates
+# if 'tls_cert_regenerate' is 'true' or if at least one certificate or key is not found.
 - block:
     # Generates a list of Subject Alternative Names (SAN) for TLS certificates if 'tls_subject_alt_name' is not set.
     # Uses `tls_group_name` if it is defined, non-empty, and exists in `groups`; otherwise, applies to all playbook hosts.
@@ -137,5 +166,8 @@
         if (tls_group_name | default('') | length > 0 and tls_group_name in groups)
         else [groups['master'][0]]
       }}
-  when: inventory_hostname in selected_group
+  when:
+    - inventory_hostname in selected_group
+    - tls_cert_regenerate | default(false) | bool or
+      (not ca_cert.stat.exists or not server_key.stat.exists or not server_cert.stat.exists)
   tags: tls, tls_cert_generate
