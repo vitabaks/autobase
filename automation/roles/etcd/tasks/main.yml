@@ -111,7 +111,7 @@
         generate_tls_ca_cert_path: "{{ etcd_tls_ca_crt | default('/etc/etcd/tls/ca.crt') }}"
         generate_tls_cert_path: "{{ etcd_tls_server_crt | default('/etc/etcd/tls/server.crt') }}"
         generate_tls_privatekey_path: "{{ etcd_tls_server_key | default('/etc/etcd/tls/server.key') }}"
-        tls_cert_regenerate: "{{ etcd_tls_cert_regenerate | default(false) }}" # Do not generate new certificates if they already exist.
+        tls_cert_regenerate: "{{ etcd_tls_cert_regenerate | default(tls_cert_regenerate | default(false)) }}"
       when: etcd_on_dedicated_nodes | default(false) | bool
 
     - name: Copy etcd TLS files to all etcd nodes
