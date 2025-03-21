@@ -105,7 +105,7 @@ etcd_data_dir: "/var/lib/etcd"
 etcd_cluster_name: "etcd-{{ patroni_cluster_name }}" # ETCD_INITIAL_CLUSTER_TOKEN
 etcd_on_dedicated_nodes: "{{ groups['etcd_cluster'] | difference(groups['postgres_cluster']) | length > 0 }}" # 'true' or 'false'
 # TLS
-# Enables TLS encryption using a self-signed certificate (if 'tls_cert_generate' is 'true')
+# Enables TLS encryption with a self-signed certificate if 'tls_cert_generate' is true.
 etcd_tls_enable: "{{ tls_cert_generate | default(true) }}"
 etcd_tls_ca_crt: "/etc/etcd/tls/ca.crt"
 etcd_tls_ca_key: "/etc/etcd/tls/ca.key"
@@ -145,9 +145,12 @@ consul_syslog_enable: true # Enable logging to syslog
 consul_iface: "{{ ansible_default_ipv4.interface }}" # specify the interface name with a Private IP (ex. "enp7s0")
 consul_client_address: "127.0.0.1" # Client address. Affects DNS, HTTP, HTTPS, and gRPC client interfaces.
 # TLS
-# You can enable TLS encryption by dropping a CA certificate, server certificate, and server key in roles/consul/files/
-consul_tls_enable: false
+# Enables TLS encryption with a self-signed certificate if 'tls_cert_generate' is true.
+# If 'tls_cert_generate' is false, you must provide your own CA certificate, server certificate, and server key in the 'files/' directory.
+consul_tls_enable: "{{ tls_cert_generate | default(true) }}"
+consul_tls_dir: "/etc/consul/tls"
 consul_tls_ca_crt: "ca.crt"
+consul_tls_ca_key: "ca.key"
 consul_tls_server_crt: "server.crt"
 consul_tls_server_key: "server.key"
 # DNS
