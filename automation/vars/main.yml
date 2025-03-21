@@ -144,6 +144,7 @@ consul_ui: false # Enable the consul UI?
 consul_syslog_enable: true # Enable logging to syslog
 consul_iface: "{{ ansible_default_ipv4.interface }}" # specify the interface name with a Private IP (ex. "enp7s0")
 consul_client_address: "127.0.0.1" # Client address. Affects DNS, HTTP, HTTPS, and gRPC client interfaces.
+consul_on_dedicated_nodes: "{{ groups['consul_instances'] | difference(groups['postgres_cluster']) | length > 0 }}" # 'true' or 'false'
 # TLS
 # Enables TLS encryption with a self-signed certificate if 'tls_cert_generate' is true.
 # If 'tls_cert_generate' is false, you must provide your own CA certificate, server certificate, and server key in the 'files/' directory.
