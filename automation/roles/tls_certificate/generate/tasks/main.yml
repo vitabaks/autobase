@@ -38,6 +38,8 @@
               etcd_tls_cert_regenerate
               {%- elif tls_group_name == 'postgres_cluster' and etcd_on_dedicated_nodes | default(false) | bool -%}
               patroni_tls_cert_regenerate
+              {%- elif tls_group_name == 'consul_instances' and consul_on_dedicated_nodes | default(false) | bool -%}
+              consul_tls_cert_regenerate
               {%- else -%}
               tls_cert_regenerate
               {%- endif -%}
@@ -132,7 +134,7 @@
       community.crypto.x509_certificate:
         path: "{{ tls_directory }}/{{ generate_tls_ca_cert | default(tls_ca_cert | default('ca.crt')) }}"
         csr_content: "{{ ca_csr.csr }}"
-        privatekey_path: "{{ generate_tls_ca_key | default(tls_ca_key | default('ca.key')) }}"
+        privatekey_path: "{{ tls_directory }}/{{ generate_tls_ca_key | default(tls_ca_key | default('ca.key')) }}"
         provider: "{{ generate_tls_cert_provider | default(tls_cert_provider | default('selfsigned')) }}"
         selfsigned_not_after: "+{{ generate_tls_cert_valid_days | default(tls_cert_valid_days | default(3650)) }}d"
         selfsigned_not_before: "-1d"
