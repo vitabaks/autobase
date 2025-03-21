@@ -122,6 +122,7 @@
             server_network: "{{ default_vpc_subnet_info.subnets[0].id }}"
       when: server_network | length < 1
 
+    # Security Group (Firewall)
     - name: "AWS: Create or modify Security Group"
       amazon.aws.ec2_security_group:
         name: "{{ patroni_cluster_name }}-security-group"
