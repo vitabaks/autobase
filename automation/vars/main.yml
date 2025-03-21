@@ -90,10 +90,11 @@ vip_manager_dcs_type: "{{ dcs_type }}" # etcd, consul or patroni
 # TLS certificate
 tls_cert_generate: "{{ tls_enable | default(true) }}" # or 'false' if you do not want to generate a self-signed certificate.
 tls_cert_valid_days: 3650
-tls_cert_path: "/etc/tls/server.crt"
-tls_privatekey_path: "/etc/tls/server.key"
-tls_ca_cert_path: "/etc/tls/ca.crt"
-tls_ca_key_path: "/etc/tls/ca.key"
+tls_dir: "/etc/tls"
+tls_cert: "server.crt"
+tls_privatekey: "server.key"
+tls_ca_cert: "ca.crt"
+tls_ca_key: "ca.key"
 
 # DCS (Distributed Consensus Store)
 dcs_type: "etcd" # or 'consul'
@@ -107,10 +108,11 @@ etcd_on_dedicated_nodes: "{{ groups['etcd_cluster'] | difference(groups['postgre
 # TLS
 # Enables TLS encryption with a self-signed certificate if 'tls_cert_generate' is true.
 etcd_tls_enable: "{{ tls_cert_generate | default(true) }}"
-etcd_tls_ca_crt: "/etc/etcd/tls/ca.crt"
-etcd_tls_ca_key: "/etc/etcd/tls/ca.key"
-etcd_tls_server_crt: "/etc/etcd/tls/server.crt"
-etcd_tls_server_key: "/etc/etcd/tls/server.key"
+etcd_tls_dir: "/etc/etcd/tls"
+etcd_tls_ca_crt: "ca.crt"
+etcd_tls_ca_key: "ca.key"
+etcd_tls_server_crt: "server.crt"
+etcd_tls_server_key: "server.key"
 etcd_client_cert_auth: "{{ 'true' if not etcd_on_dedicated_nodes | bool else 'false' }}"
 # We disable client certificate authentication when etcd runs on dedicated nodes.
 # This allows Patroni to connect without requiring a client certificate, ensuring secure encrypted communication
@@ -257,9 +259,9 @@ postgresql_parameters:
   - { option: "password_encryption", value: "{{ postgresql_password_encryption_algorithm }}" }
   - { option: "ssl", value: "{{ 'on' if tls_cert_generate | bool else 'off' }}" }
   - { option: "ssl_prefer_server_ciphers", value: "{{ 'on' if tls_cert_generate | bool else 'off' }}" }
-  - { option: "ssl_cert_file", value: "{{ tls_cert_path | default('') }}" }
-  - { option: "ssl_key_file", value: "{{ tls_privatekey_path | default('') }}" }
-  - { option: "ssl_ca_file", value: "{{ tls_ca_cert_path | default('') }}" }
+  - { option: "ssl_cert_file", value: "{{ tls_dir }}/{{ tls_cert }}" }
+  - { option: "ssl_key_file", value: "{{ tls_dir }}/{{ tls_privatekey }}" }
+  - { option: "ssl_ca_file", value: "{{ tls_dir }}/{{ tls_ca_cert }}" }
   - { option: "ssl_min_protocol_version", value: "TLSv1.2" }
   - { option: "max_locks_per_transaction", value: "512" }
   - { option: "max_prepared_transactions", value: "0" }
@@ -393,18 +395,19 @@ pgbouncer_auth_user: true # or 'false' if you want to manage the list of users f
 pgbouncer_auth_username: pgbouncer # user who can query the database via the user_search function
 pgbouncer_auth_password: "" # If not defined, a password will be generated automatically during deployment
 pgbouncer_auth_dbname: "postgres"
+pgbouncer_tls_dir: "{{ tls_dir }}"
 pgbouncer_client_tls_sslmode: "{{ 'require' if tls_cert_generate | bool else 'disable' }}"
-pgbouncer_client_tls_key_file: "{{ tls_privatekey_path }}"
-pgbouncer_client_tls_cert_file: "{{ tls_cert_path }}"
-pgbouncer_client_tls_ca_file: "{{ tls_ca_cert_path }}"
+pgbouncer_client_tls_key_file: "{{ tls_privatekey }}"
+pgbouncer_client_tls_cert_file: "{{ tls_cert }}"
+pgbouncer_client_tls_ca_file: "{{ tls_ca_cert }}"
 pgbouncer_client_tls_protocols: "secure" # allowed values: tlsv1.0, tlsv1.1, tlsv1.2, tlsv1.3, all, secure (tlsv1.2,tlsv1.3)
 pgbouncer_client_tls_ciphers: "secure" # allowed values: default, secure, fast, normal, all (not recommended)
 pgbouncer_server_tls_sslmode: "{{ 'require' if tls_cert_generate | bool else 'disable' }}"
 pgbouncer_server_tls_protocols: "secure"
 pgbouncer_server_tls_ciphers: "secure"
-pgbouncer_server_tls_key_file: "{{ tls_privatekey_path }}"
-pgbouncer_server_tls_cert_file: "{{ tls_cert_path }}"
-pgbouncer_server_tls_ca_file: "{{ tls_ca_cert_path }}"
+pgbouncer_server_tls_key_file: "{{ tls_privatekey }}"
+pgbouncer_server_tls_cert_file: "{{ tls_cert }}"
+pgbouncer_server_tls_ca_file: "{{ tls_ca_cert }}"
 
 pgbouncer_pools:
   - { name: "postgres", dbname: "postgres", pool_parameters: "" }

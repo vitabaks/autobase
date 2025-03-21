@@ -38,17 +38,17 @@ so_reuseport = 1
 {% if tls_cert_generate | default(false) | bool %}
 {% if pgbouncer_client_tls_sslmode | default('require') != 'disable' %}
 client_tls_sslmode = {{ pgbouncer_client_tls_sslmode | default('require') }}
-client_tls_key_file = {{ pgbouncer_client_tls_key_file | default(tls_privatekey_path | default('/etc/tls/server.key')) }}
-client_tls_cert_file = {{ pgbouncer_client_tls_cert_file | default(tls_cert_path | default('/etc/tls/server.crt')) }}
-client_tls_ca_file = {{ pgbouncer_client_tls_ca_file | default(tls_ca_cert_path | default('/etc/tls/ca.crt')) }}
+client_tls_key_file = {{ pgbouncer_tls_dir | default('/etc/tls') }}/{{ pgbouncer_client_tls_key_file | default(tls_privatekey | default('server.key')) }}
+client_tls_cert_file = {{ pgbouncer_tls_dir | default('/etc/tls') }}/{{ pgbouncer_client_tls_cert_file | default(tls_cert | default('server.crt')) }}
+client_tls_ca_file = {{ pgbouncer_tls_dir | default('/etc/tls') }}/{{ pgbouncer_client_tls_ca_file | default(tls_ca_cert | default('ca.crt')) }}
 client_tls_protocols = {{ pgbouncer_client_tls_protocols | default('secure') }}
 client_tls_ciphers = {{ pgbouncer_client_tls_ciphers | default('secure') }}
 {% endif %}
 {% if pgbouncer_server_tls_sslmode | default('require') != 'disable' %}
 server_tls_sslmode = {{ pgbouncer_server_tls_sslmode | default('require') }}
-server_tls_key_file = {{ pgbouncer_server_tls_key_file | default(tls_privatekey_path | default('/etc/tls/server.key')) }}
-server_tls_cert_file = {{ pgbouncer_server_tls_cert_file | default(tls_cert_path | default('/etc/tls/server.crt')) }}
-server_tls_ca_file = {{ pgbouncer_server_tls_ca_file | default(tls_ca_cert_path | default('/etc/tls/ca.crt')) }}
+server_tls_key_file = {{ pgbouncer_tls_dir | default('/etc/tls') }}/{{ pgbouncer_server_tls_key_file | default(tls_privatekey | default('server.key')) }}
+server_tls_cert_file = {{ pgbouncer_tls_dir | default('/etc/tls') }}/{{ pgbouncer_server_tls_cert_file | default(tls_cert | default('server.crt')) }}
+server_tls_ca_file = {{ pgbouncer_tls_dir | default('/etc/tls') }}/{{ pgbouncer_server_tls_ca_file | default(tls_ca_cert | default('ca.crt')) }}
 server_tls_protocols = {{ pgbouncer_server_tls_protocols | default('secure') }}
 server_tls_ciphers = {{ pgbouncer_server_tls_ciphers | default('secure') }}
 {% endif %}

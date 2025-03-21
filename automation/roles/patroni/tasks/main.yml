@@ -279,12 +279,8 @@
     name: ../roles/tls_certificate/copy
   vars:
     tls_group_name: "etcd_cluster"
-    fetch_tls_ca_cert_path: "{{ etcd_tls_ca_crt | default('/etc/etcd/tls/ca.crt') }}"
-    fetch_tls_cert_path: "{{ etcd_tls_server_crt | default('/etc/etcd/tls/server.crt') }}"
-    fetch_tls_privatekey_path: "{{ etcd_tls_server_key | default('/etc/etcd/tls/server.key') }}"
-    copy_tls_ca_cert_path: "{{ patroni_etcd_cacert | default('/etc/patroni/tls/etcd/ca.crt') }}"
-    copy_tls_cert_path: "{{ patroni_etcd_cert | default('/etc/patroni/tls/etcd/server.crt') }}"
-    copy_tls_privatekey_path: "{{ patroni_etcd_key | default('/etc/patroni/tls/etcd/server.key') }}"
+    fetch_tls_dir: "{{ etcd_tls_dir | default('/etc/etcd/tls') }}"
+    copy_tls_dir: "{{ patroni_etcd_tls_dir | default('/etc/patroni/tls/etcd') }}"
     copy_tls_owner: "postgres"
   when:
     - tls_cert_generate | bool

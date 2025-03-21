@@ -13,9 +13,9 @@ nodes = [
 ]
 {% if etcd_tls_enable | default(false) | bool %}
 scheme = "https"
-client_cakeys = "{{ confd_etcd_client_cakey | default('/etc/confd/tls/etcd/ca.crt') }}"
-client_cert = "{{ confd_etcd_client_cert | default('/etc/confd/tls/etcd/server.crt') }}"
-client_key = "{{ confd_etcd_client_key | default('/etc/confd/tls/etcd/server.key') }}"
+client_cakeys = "{{ confd_etcd_tls_dir | default('/etc/confd/tls/etcd') }}/{{ confd_etcd_client_cakey | default('ca.crt') }}"
+client_cert = "{{ confd_etcd_tls_dir | default('/etc/confd/tls/etcd') }}/{{ confd_etcd_client_cert | default('server.crt') }}"
+client_key = "{{ confd_etcd_tls_dir | default('/etc/confd/tls/etcd') }}/{{ confd_etcd_client_key | default('server.key') }}"
 {% endif %}
 {% if patroni_etcd_username | default('') | length > 0 %}
 basic_auth = true

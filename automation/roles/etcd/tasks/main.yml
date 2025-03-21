@@ -93,10 +93,8 @@
         name: ../roles/tls_certificate/copy
       vars:
         tls_group_name: "postgres_cluster"
+        copy_tls_dir: "{{ etcd_tls_dir | default('/etc/etcd/tls') }}"
         copy_tls_owner: "etcd"
-        copy_tls_ca_cert_path: "{{ etcd_tls_ca_crt | default('/etc/etcd/tls/ca.crt') }}"
-        copy_tls_cert_path: "{{ etcd_tls_server_crt | default('/etc/etcd/tls/server.crt') }}"
-        copy_tls_privatekey_path: "{{ etcd_tls_server_key | default('/etc/etcd/tls/server.key') }}"
       when: not etcd_on_dedicated_nodes | default(false) | bool
 
     # if 'etcd_on_dedicated_nodes' is 'true'
@@ -107,10 +105,7 @@
         tls_group_name: "etcd_cluster"
         generate_tls_owner: "etcd"
         generate_tls_common_name: "etcd"
-        generate_tls_ca_key_path: "{{ etcd_tls_ca_key | default('/etc/etcd/tls/ca.key') }}"
-        generate_tls_ca_cert_path: "{{ etcd_tls_ca_crt | default('/etc/etcd/tls/ca.crt') }}"
-        generate_tls_cert_path: "{{ etcd_tls_server_crt | default('/etc/etcd/tls/server.crt') }}"
-        generate_tls_privatekey_path: "{{ etcd_tls_server_key | default('/etc/etcd/tls/server.key') }}"
+        generate_tls_dir: "{{ etcd_tls_dir | default('/etc/etcd/tls') }}"
         tls_cert_regenerate: "{{ etcd_tls_cert_regenerate | default(false) }}" # Do not generate new certificates if they already exist.
       when: etcd_on_dedicated_nodes | default(false) | bool
 
@@ -119,12 +114,8 @@
         name: ../roles/tls_certificate/copy
       vars:
         tls_group_name: "etcd_cluster"
-        fetch_tls_ca_cert_path: "{{ etcd_tls_ca_crt | default('/etc/etcd/tls/ca.crt') }}"
-        fetch_tls_cert_path: "{{ etcd_tls_server_crt | default('/etc/etcd/tls/server.crt') }}"
-        fetch_tls_privatekey_path: "{{ etcd_tls_server_key | default('/etc/etcd/tls/server.key') }}"
-        copy_tls_ca_cert_path: "{{ etcd_tls_ca_crt | default('/etc/etcd/tls/ca.crt') }}"
-        copy_tls_cert_path: "{{ etcd_tls_server_crt | default('/etc/etcd/tls/server.crt') }}"
-        copy_tls_privatekey_path: "{{ etcd_tls_server_key | default('/etc/etcd/tls/server.key') }}"
+        fetch_tls_dir: "{{ etcd_tls_dir | default('/etc/etcd/tls') }}"
+        copy_tls_dir: "{{ etcd_tls_dir | default('/etc/etcd/tls') }}"
         copy_tls_owner: "etcd"
       when: etcd_on_dedicated_nodes | default(false) | bool
   when: tls_cert_generate | default(true) | bool
@@ -174,9 +165,9 @@
         /usr/local/bin/etcdctl endpoint health
         --endpoints={{ patroni_etcd_protocol | default('http', true) }}://{{ inventory_hostname }}:2379
         {% if etcd_tls_enable | default(false) | bool %}
-        --cacert={{ etcd_tls_ca_crt | default('/etc/etcd/tls/ca.crt') }}
-        --cert={{ etcd_tls_server_crt | default('/etc/etcd/tls/server.crt') }}
-        --key={{ etcd_tls_server_key | default('/etc/etcd/tls/server.key') }}
+        --cacert={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_ca_crt | default('ca.crt') }}
+        --cert={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_server_crt | default('server.crt') }}
+        --key={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_server_key | default('server.key') }}
         {% endif %}
       environment:
         ETCDCTL_API: "3"
