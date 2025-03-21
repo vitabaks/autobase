@@ -4,7 +4,7 @@
 # Enables TLS encryption with a self-signed certificate if 'tls_cert_generate' is 'true'.
 - block:
     # if 'consul_on_dedicated_nodes' is 'false'
-    - name: Copy etcd TLS certificate, key and CA from the master node
+    - name: Copy Consul TLS certificate, key and CA from the master node
       ansible.builtin.include_role:
         name: ../roles/tls_certificate/copy
       vars:
@@ -14,7 +14,7 @@
       when: not consul_on_dedicated_nodes | default(false) | bool
 
     # if 'consul_on_dedicated_nodes' is 'true'
-    - name: Generate etcd TLS certificate
+    - name: Generate Consul TLS certificate
       ansible.builtin.include_role:
         name: ../roles/tls_certificate/generate
       vars:
@@ -25,12 +25,12 @@
         tls_cert_regenerate: "{{ consul_tls_cert_regenerate | default(false) }}" # Do not generate new certificates if they already exist.
       when: consul_on_dedicated_nodes | default(false) | bool
 
-    - name: Copy etcd TLS files to all etcd nodes
+    - name: Copy Consul TLS files to all nodes
       ansible.builtin.include_role:
         name: ../roles/tls_certificate/copy
       vars:
         tls_group_name: "consul_instances"
-        fetch_tls_dir: "{{ consul_tls_dir | default('/etc/etcd/tls') }}"
+        fetch_tls_dir: "{{ consul_tls_dir | default('/etc/consul/tls') }}"
         copy_tls_dir: "{{ consul_tls_dir | default('/etc/consul/tls') }}"
         copy_tls_owner: "{{ consul_user }}"
       when: consul_on_dedicated_nodes | default(false) | bool
