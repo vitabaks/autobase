@@ -130,20 +130,152 @@ _Table of results of daily automated testing of cluster deployment:_
 
 ## Getting Started
 
-You have the option to easily deploy Postgres clusters using the Console (UI), command line, or GitOps.
+You have the option to deploy Postgres clusters using the Console (UI), command line, or GitOps.
 
 > [!TIP]
-> 📩 **Contact us at info@autobase.tech**, and our team will provide you with detailed deployment instructions and help you implement Autobase into your infrastructure.
+> 📩 Contact us at info@autobase.tech, and our team will help you implement Autobase into your infrastructure.
 
-Deploying and managing PostgreSQL clusters can be challenging, especially without a dedicated database administrator (DBA).
-With **Autobase**, it becomes simpler: alongside powerful automation tools, you get **DBA as a Service (DBAaaS)**.
-This means access to PostgreSQL experts who will assist with deployment, maintenance, and optimization, ensuring your clusters run smoothly.
 
-Explore our [support packages](https://autobase.tech/docs/support) to find a plan that fits your needs.
+### Console (UI)
+
+The Autobase Console (UI) is the recommended method for most users. It is designed to be user-friendly, minimizing the risk of errors and making it easier than ever to set up your PostgreSQL clusters. This method is suitable for both beginners and those who prefer a visual interface for managing their PostgreSQL clusters.
+
+To run the autobase console, execute the following command:
+
+```
+docker run -d --name autobase-console \
+  --publish 80:80 \
+  --publish 8080:8080 \
+  --env PG_CONSOLE_API_URL=http://localhost:8080/api/v1 \
+  --env PG_CONSOLE_AUTHORIZATION_TOKEN=secret_token \
+  --env PG_CONSOLE_DOCKER_IMAGE=autobase/automation:latest \
+  --volume console_postgres:/var/lib/postgresql \
+  --volume /var/run/docker.sock:/var/run/docker.sock \
+  --volume /tmp/ansible:/tmp/ansible \
+  --restart=unless-stopped \
+  autobase/console:latest
+```
+
+> [!NOTE]
+> If you are running the console on a dedicated server (rather than on your laptop), replace `localhost` with the server’s IP address in the `PG_CONSOLE_API_URL` variable.
+
+> [!TIP]
+> It is recommended to run the console in the same network as your database servers to enable monitoring of the cluster status.
+
+
+**Open the Console UI**:
+
+Go to http://localhost:80 (or the address of your server) and use `secret_token` for authorization.
 
 ![Cluster creation demo](images/autobase_create_cluster_demo.gif)
 
 Refer to the [Deployment](https://autobase.tech/docs/category/deployment) section to learn more about the different deployment methods.
+
+### Command line
+
+<details><summary>Click here to expand... if you prefer the command line.</summary><p>
+
+The command line mode is suitable for advanced users who require greater flexibility and control over the deployment and management of their PostgreSQL clusters.
+While the Console (UI) is designed for ease of use and is suitable for most users, the command line provides powerful options for those experienced in automation and configuration.
+
+0. [Install Ansible](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html) on one control node (which could easily be a laptop)
+
+```
+sudo apt update && sudo apt install -y python3-pip sshpass git
+pip3 install ansible
+```
+
+1. Download or clone this repository
+
+```
+git clone https://github.com/vitabaks/autobase.git
+```
+
+2. Go to the automation directory
+
+```
+cd autobase/automation
+```
+
+3. Install requirements on the control node
+
+```
+ansible-galaxy install --force -r requirements.yml 
+```
+
+Note: If you plan to use Consul (`dcs_type: consul`), install the consul role requirements
+```
+ansible-galaxy install -r roles/consul/requirements.yml
+```
+
+4. Edit the inventory file
+
+Specify (non-public) IP addresses and connection settings (`ansible_user`, `ansible_ssh_pass` or `ansible_ssh_private_key_file` for your environment
+
+```
+nano inventory
+```
+
+5. Edit the variable file vars/[main.yml](./automation/vars/main.yml)
+
+```
+nano vars/main.yml
+```
+
+Minimum set of variables: 
+- `proxy_env` to download packages in environments without direct internet access (optional)
+- `patroni_cluster_name`
+- `postgresql_version`
+- `postgresql_data_dir`
+- `cluster_vip` to provide a single entry point for client access to databases in the cluster (optional)
+- `with_haproxy_load_balancing` to enable load balancing (optional)
+- `dcs_type` "etcd" (default) or "consul"
+
+See the vars/[main.yml](./automation/vars/main.yml), [system.yml](./automation/vars/system.yml) and ([Debian.yml](./automation/vars/Debian.yml) or [RedHat.yml](./automation/vars/RedHat.yml)) files for more details.
+
+6. Try to connect to hosts
+
+```
+ansible all -m ping
+```
+
+7. Run playbook:
+
+```
+ansible-playbook deploy_pgcluster.yml
+```
+
+#### Deploy Cluster with TimescaleDB
+
+To deploy a PostgreSQL High-Availability Cluster with the [TimescaleDB](https://github.com/timescale/timescaledb) extension, add the `enable_timescale` variable:
+
+Example:
+```
+ansible-playbook deploy_pgcluster.yml -e "enable_timescale=true"
+```
+
+[![asciicast](https://asciinema.org/a/251019.svg)](https://asciinema.org/a/251019?speed=5)
+
+### How to start from scratch
+
+If you need to start from the very beginning, you can use the playbook `remove_cluster.yml`.
+
+Available variables:
+- `remove_postgres`: stop the PostgreSQL service and remove data.
+- `remove_etcd`: stop the ETCD service and remove data.
+- `remove_consul`: stop the Consul service and remove data.
+
+Run the following command to remove specific components:
+
+```bash
+ansible-playbook remove_cluster.yml -e "remove_postgres=true remove_etcd=true"
+```
+
+This command will delete the specified components, allowing you to start a new installation from scratch.
+
+:warning: **Caution:** be careful when running this command in a production environment.
+
+</p></details>
 
 ## Star us
 
