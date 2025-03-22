@@ -100,7 +100,7 @@ dcs_type: "etcd" # or 'consul'
 dcs_exists: false # or 'true' if you do not want Autobase to deploy and manage etcd cluster and prefer to manage it yourself.
 
 # if dcs_type: "etcd" and dcs_exists: false
-etcd_version: "3.5.17" # version for deploy etcd cluster
+etcd_version: "3.5.20" # version for deploy etcd cluster
 etcd_data_dir: "/var/lib/etcd"
 etcd_cluster_name: "etcd-{{ patroni_cluster_name }}" # ETCD_INITIAL_CLUSTER_TOKEN
 etcd_on_dedicated_nodes: "{{ groups['etcd_cluster'] | difference(groups['postgres_cluster']) | length > 0 }}" # 'true' or 'false'
