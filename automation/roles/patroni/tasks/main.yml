@@ -288,6 +288,21 @@
     - not dcs_exists | bool
   tags: patroni, patroni_conf
 
+# TLS (consul)
+- name: Copy consul cert files for patroni
+  ansible.builtin.include_role:
+    name: ../roles/tls_certificate/copy
+  vars:
+    tls_group_name: "consul_instances"
+    fetch_tls_dir: "{{ consul_tls_dir | default('/etc/consul/tls') }}"
+    copy_tls_dir: "{{ patroni_consul_tls_dir | default('/etc/patroni/tls/consul') }}"
+    copy_tls_owner: "postgres"
+  when:
+    - tls_cert_generate | bool
+    - dcs_type == "consul"
+    - not dcs_exists | bool
+  tags: patroni, patroni_conf
+
 - name: Generate conf file "/etc/patroni/patroni.yml"
   ansible.builtin.template:
     src: templates/patroni.yml.j2
