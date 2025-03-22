@@ -18,9 +18,9 @@ license:
 
 # A list of tags you want to associate with the collection for indexing/searching. A tag name has the same character
 # requirements as 'namespace' and 'name'
-tags: ['tools']
+tags: ["tools"]
 
-dependencies: { }
+dependencies: {}
 
 repository: fixme
 
@@ -37,14 +37,14 @@ issues: fixme
 build_ignore:
   - test
   - ssh.cfg
-  - '*.json'
-  - '*.ini'
-  - '*.cfg'
+  - "*.json"
+  - "*.ini"
+  - "*.cfg"
   - .yamllint.yaml
   - .markdownlint.yaml
   - .editorconfig
   - .ansible-lint
-  - '*.tar.gz'
+  - "*.tar.gz"
   - .gitignore
   - extensions
   - requirements.yaml
