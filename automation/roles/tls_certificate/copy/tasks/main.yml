@@ -38,4 +38,6 @@
     - { index: 1, filename: "{{ copy_tls_cert | default(tls_cert | default('server.crt')) }}", mode: "0644" }
     - { index: 2, filename: "{{ copy_tls_ca_cert | default(tls_ca_cert | default('ca.crt')) }}", mode: "0644" }
     - { index: 0, filename: "{{ copy_tls_privatekey | default(tls_privatekey | default('server.key')) }}", mode: "0400" }
+  loop_control:
+    label: "{{ copy_tls_dir | default(tls_dir | default('/etc/tls')) }}/{{ item.filename }}"
   tags: tls, tls_cert_copy
