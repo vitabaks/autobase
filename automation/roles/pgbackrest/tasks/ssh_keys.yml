@@ -1,5 +1,4 @@
 ---
-
 - name: Ensure that the openssh-client package is installed
   become: true
   become_user: root
@@ -106,5 +105,3 @@
   no_log: true
   loop: "{{ ssh_known_host_keyscan.results }}"
   when: "'pgbackrest' in group_names"
-
-...

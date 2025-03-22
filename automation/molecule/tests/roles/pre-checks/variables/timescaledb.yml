@@ -12,11 +12,11 @@
       + [{'option': 'shared_preload_libraries', 'value': new_value}] }}
   vars:
     shared_preload_libraries_item: >-
-          {{
-            postgresql_parameters
-            | selectattr('option', 'equalto', 'shared_preload_libraries')
-            | list | last | default({'value': ''})
-          }}
+      {{
+        postgresql_parameters
+        | selectattr('option', 'equalto', 'shared_preload_libraries')
+        | list | last | default({'value': ''})
+      }}
     new_value: >-
       {{
         (shared_preload_libraries_item.value ~ (',' if shared_preload_libraries_item.value else '')
@@ -29,11 +29,11 @@
   run_once: true
   ansible.builtin.set_fact:
     shared_preload_libraries_item: >-
-          {{
-            postgresql_parameters
-            | selectattr('option', 'equalto', 'shared_preload_libraries')
-            | list | last | default({'value': ''})
-          }}
+      {{
+        postgresql_parameters
+        | selectattr('option', 'equalto', 'shared_preload_libraries')
+        | list | last | default({'value': ''})
+      }}
 
 # ✅ Verifying that 'timescaledb' is included in 'shared_preload_libraries'
 # If 'timescaledb' is not included, the test fails and an error message is displayed

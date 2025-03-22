@@ -1,5 +1,4 @@
 ---
-
 - name: Add extensions to the databases
   become: true
   become_user: postgres
@@ -18,5 +17,3 @@
     - postgresql_extensions is defined
     - postgresql_extensions | length > 0
   tags: postgresql_extensions
-
-...

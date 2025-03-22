@@ -1,5 +1,4 @@
 ---
-
 # install confd package from repo
 - name: Download and copy "confd" binary file to /usr/local/bin/
   ansible.builtin.get_url:
@@ -32,6 +31,21 @@
     - /etc/confd/templates
   tags: confd_dir, confd_conf, confd
 
+# TLS (etcd)
+- name: Copy etcd cert files for confd
+  ansible.builtin.include_role:
+    name: ../roles/tls_certificate/copy
+  vars:
+    tls_group_name: "etcd_cluster"
+    fetch_tls_dir: "{{ etcd_tls_dir | default('/etc/etcd/tls') }}"
+    copy_tls_dir: "{{ confd_etcd_tls_dir | default('/etc/confd/tls/etcd') }}"
+    copy_tls_owner: "root"
+  when:
+    - tls_cert_generate | bool
+    - dcs_type == "etcd"
+    - not dcs_exists | bool
+  tags: patroni, patroni_conf
+
 - block:
     - name: Generate conf file "/etc/confd/confd.toml"
       ansible.builtin.template:
@@ -56,7 +70,7 @@
   when: add_balancer is not defined or not add_balancer|bool
   tags: confd_conf, confd
 
-- block:  # for add_balancer.yml
+- block: # for add_balancer.yml
     - name: "Fetch confd.toml, haproxy.toml, haproxy.tmpl conf files from {{ groups.balancers[0] }}"
       run_once: true
       ansible.builtin.fetch:
@@ -75,9 +89,9 @@
         src: "files/{{ item.conf }}"
         dest: "{{ item.dest }}"
       loop:
-        - { conf: 'confd.toml', dest: '/etc/confd/confd.toml' }
-        - { conf: 'haproxy.toml', dest: '/etc/confd/conf.d/haproxy.toml' }
-        - { conf: 'haproxy.tmpl', dest: '/etc/confd/templates/haproxy.tmpl' }
+        - { conf: "confd.toml", dest: "/etc/confd/confd.toml" }
+        - { conf: "haproxy.toml", dest: "/etc/confd/conf.d/haproxy.toml" }
+        - { conf: "haproxy.tmpl", dest: "/etc/confd/templates/haproxy.tmpl" }
       loop_control:
         label: "{{ item.dest }}"
       notify: "restart confd"
@@ -101,16 +115,16 @@
         line: "{{ line_item.line }}"
         backrefs: true
       loop:
-        - regexp: '^.*bind.*:{{ haproxy_listen_port.stats }}$'
-          line: '    bind {{ hostvars[inventory_hostname].inventory_hostname }}:{{ haproxy_listen_port.stats }}'
-        - regexp: '^.*bind.*:{{ haproxy_listen_port.master }}$'
-          line: '    bind {{ cluster_vip }}:{{ haproxy_listen_port.master }}'
-        - regexp: '^.*bind.*:{{ haproxy_listen_port.replicas }}$'
-          line: '    bind {{ cluster_vip }}:{{ haproxy_listen_port.replicas }}'
-        - regexp: '^.*bind.*:{{ haproxy_listen_port.replicas_sync }}$'
-          line: '    bind {{ cluster_vip }}:{{ haproxy_listen_port.replicas_sync }}'
-        - regexp: '^.*bind.*:{{ haproxy_listen_port.replicas_async }}$'
-          line: '    bind {{ cluster_vip }}:{{ haproxy_listen_port.replicas_async }}'
+        - regexp: "^.*bind.*:{{ haproxy_listen_port.stats }}$"
+          line: "    bind {{ hostvars[inventory_hostname].inventory_hostname }}:{{ haproxy_listen_port.stats }}"
+        - regexp: "^.*bind.*:{{ haproxy_listen_port.master }}$"
+          line: "    bind {{ cluster_vip }}:{{ haproxy_listen_port.master }}"
+        - regexp: "^.*bind.*:{{ haproxy_listen_port.replicas }}$"
+          line: "    bind {{ cluster_vip }}:{{ haproxy_listen_port.replicas }}"
+        - regexp: "^.*bind.*:{{ haproxy_listen_port.replicas_sync }}$"
+          line: "    bind {{ cluster_vip }}:{{ haproxy_listen_port.replicas_sync }}"
+        - regexp: "^.*bind.*:{{ haproxy_listen_port.replicas_async }}$"
+          line: "    bind {{ cluster_vip }}:{{ haproxy_listen_port.replicas_async }}"
       loop_control:
         loop_var: line_item
         label: "{{ line_item.line }}"
@@ -124,16 +138,16 @@
         line: "{{ line_item_2.line }}"
         backrefs: true
       loop:
-        - regexp: '^.*bind.*:{{ haproxy_listen_port.stats }}$'
-          line: '    bind {{ hostvars[inventory_hostname].inventory_hostname }}:{{ haproxy_listen_port.stats }}'
-        - regexp: '^.*bind.*:{{ haproxy_listen_port.master }}$'
-          line: '    bind {{ hostvars[inventory_hostname].inventory_hostname }}:{{ haproxy_listen_port.master }}'
-        - regexp: '^.*bind.*:{{ haproxy_listen_port.replicas }}$'
-          line: '    bind {{ hostvars[inventory_hostname].inventory_hostname }}:{{ haproxy_listen_port.replicas }}'
-        - regexp: '^.*bind.*:{{ haproxy_listen_port.replicas_sync }}$'
-          line: '    bind {{ hostvars[inventory_hostname].inventory_hostname }}:{{ haproxy_listen_port.replicas_sync }}'
-        - regexp: '^.*bind.*:{{ haproxy_listen_port.replicas_async }}$'
-          line: '    bind {{ hostvars[inventory_hostname].inventory_hostname }}:{{ haproxy_listen_port.replicas_async }}'
+        - regexp: "^.*bind.*:{{ haproxy_listen_port.stats }}$"
+          line: "    bind {{ hostvars[inventory_hostname].inventory_hostname }}:{{ haproxy_listen_port.stats }}"
+        - regexp: "^.*bind.*:{{ haproxy_listen_port.master }}$"
+          line: "    bind {{ hostvars[inventory_hostname].inventory_hostname }}:{{ haproxy_listen_port.master }}"
+        - regexp: "^.*bind.*:{{ haproxy_listen_port.replicas }}$"
+          line: "    bind {{ hostvars[inventory_hostname].inventory_hostname }}:{{ haproxy_listen_port.replicas }}"
+        - regexp: "^.*bind.*:{{ haproxy_listen_port.replicas_sync }}$"
+          line: "    bind {{ hostvars[inventory_hostname].inventory_hostname }}:{{ haproxy_listen_port.replicas_sync }}"
+        - regexp: "^.*bind.*:{{ haproxy_listen_port.replicas_async }}$"
+          line: "    bind {{ hostvars[inventory_hostname].inventory_hostname }}:{{ haproxy_listen_port.replicas_async }}"
       loop_control:
         loop_var: line_item_2
         label: "{{ line_item_2.line }}"
@@ -148,5 +162,3 @@
     dest: /etc/systemd/system/confd.service
   notify: "restart confd"
   tags: confd_service, confd
-
-...

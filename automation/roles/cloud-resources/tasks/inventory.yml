@@ -1,5 +1,5 @@
 ---
-- name: "Set variable: ssh_private_key_file"
+- name: "Inventory | Set variable: ssh_private_key_file"
   ansible.builtin.set_fact:
     ssh_private_key_file: "~{{ lookup('env', 'USER') }}/.ssh/{{ tmp_ssh_key_name }}"
   when:
@@ -64,13 +64,8 @@
     group: consul_instances
     ansible_ssh_host: "{{ item.public_ip }}"
     ansible_ssh_private_key_file: "{{ ssh_private_key_file | default(None) }}"
-    consul_node_role: "{{ not dcs_exists | ternary('server', 'client') }}"
-    consul_bootstrap_expect: true
-    consul_datacenter: "{{ server_location }}"
   loop: "{{ ip_addresses }}"
   loop_control:
     label: "{{ item.public_ip }}"
   changed_when: false
   when: dcs_type == "consul"
-
-...

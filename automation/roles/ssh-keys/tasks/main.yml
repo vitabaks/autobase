@@ -51,5 +51,3 @@
     - enable_ssh_key_based_authentication | bool
     - not ansible_check_mode
   tags: ssh_keys
-
-...

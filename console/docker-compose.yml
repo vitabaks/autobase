@@ -1,6 +1,5 @@
 ---
 services:
-
   caddy:
     image: lucaslorentz/caddy-docker-proxy:ci-alpine
     container_name: caddy

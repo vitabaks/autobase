@@ -1,5 +1,4 @@
 ---
-
 - name: Ensure iptables is present.
   ansible.builtin.package:
     name: iptables
@@ -48,14 +47,14 @@
         name: nf_conntrack_ipv4
         state: present
       when: ansible_kernel is version('4.19', '<') and
-            not (ansible_os_family == "RedHat" and ansible_distribution_version is version('8.3', '>='))
+        not (ansible_os_family == "RedHat" and ansible_distribution_version is version('8.3', '>='))
 
     - name: Load the nf_conntrack module
       community.general.modprobe:
         name: nf_conntrack
         state: present
       when: ansible_kernel is version('4.19', '>=') or
-            (ansible_os_family == "RedHat" and ansible_distribution_version is version('8.3', '>='))
+        (ansible_os_family == "RedHat" and ansible_distribution_version is version('8.3', '>='))
 
     - name: sysctl | keep connections alive when enabling the firewall
       ansible.posix.sysctl:
@@ -64,7 +63,7 @@
         state: present
         sysctl_set: true
         reload: true
-      failed_when: false  # to prevent failures in CI
+      failed_when: false # to prevent failures in CI
   ignore_errors: true
 
 - name: Configure the firewall service.
@@ -75,5 +74,3 @@
 
 - ansible.builtin.import_tasks: disable-other-firewalls.yml
   when: firewall_disable_firewalld|bool or firewall_disable_ufw|bool
-
-...

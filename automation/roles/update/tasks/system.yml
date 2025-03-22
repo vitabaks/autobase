@@ -1,5 +1,4 @@
 ---
-
 - name: Update dnf cache
   ansible.builtin.shell: dnf clean all && dnf -y makecache
   args:
@@ -20,7 +19,7 @@
 
 - name: Update all system packages
   ansible.builtin.package:
-    name: '*'
+    name: "*"
     state: latest
   register: update_system_packages_debian
   until: update_system_packages_debian is success
@@ -31,9 +30,9 @@
 
 - name: Update all system packages
   ansible.builtin.dnf:
-    name: '*'
+    name: "*"
     state: latest
-    disablerepo: 'pgdg*'
+    disablerepo: "pgdg*"
   register: update_system_packages_rhel
   until: update_system_packages_rhel is success
   delay: 5
@@ -50,7 +49,7 @@
   changed_when: false
   when:
     - ansible_os_family == "Debian"
-    - ansible_virtualization_type not in ['container', 'docker', 'lxc', 'podman']  # exclude for containers to prevent test failures in CI.
+    - ansible_virtualization_type not in ['container', 'docker', 'lxc', 'podman'] # exclude for containers to prevent test failures in CI.
     - reboot_host_after_update | bool
 
 - name: Check if a reboot is required
@@ -60,7 +59,7 @@
   changed_when: false
   when:
     - ansible_os_family == "RedHat"
-    - ansible_virtualization_type not in ['container', 'docker', 'lxc', 'podman']  # exclude for containers to prevent test failures in CI.
+    - ansible_virtualization_type not in ['container', 'docker', 'lxc', 'podman'] # exclude for containers to prevent test failures in CI.
     - reboot_host_after_update | bool
 
 - name: Rebooting host
@@ -70,7 +69,7 @@
     test_command: uptime
   register: reboot_result
   when: (reboot_required_debian.stat.exists is defined and reboot_required_debian.stat.exists) or
-        (reboot_required_rhel.rc is defined and reboot_required_rhel.rc != 0)
+    (reboot_required_rhel.rc is defined and reboot_required_rhel.rc != 0)
 
 # Set flag if any update failed
 - name: "Set variable: update_system_failed"
@@ -80,5 +79,3 @@
     (update_system_packages_debian is defined and update_system_packages_debian is failed) or
     (update_system_packages_rhel is defined and update_system_packages_rhel is failed) or
     (update_system_packages_rhel7 is defined and update_system_packages_rhel7 is failed)
-
-...

@@ -8,16 +8,11 @@ in all of your project interactions.
 
 ## Pull Request Process
 
-1. Ensure any install or build artifacts are removed before the end of
-   the layer when doing a build
-2. Update the README.md or README_VAGRANT.md with details of changes to the
-   interface, this includes new environment variables, exposed ports, useful
-   file locations and container parameters
-3. Increase the version numbers in any examples files and the README.md
-   to the new version that this Pull Request would represent. The versioning scheme we use is (mostly) [SemVer](http://semver.org/)
-4. You may merge the Pull Request in once you have the sign-off of two other
-   project contributors, or if you do not have permission to do that, you can
-   request the second reviewer to merge it for you
+1. Ensure any install or build artifacts are removed before the end of the layer when doing a build
+1. Update the README.md or README_VAGRANT.md with details of changes to the interface, this includes new environment variables, exposed ports, useful file locations and container parameters
+1. Increase the version numbers in any examples files and the README.md to the new version that this Pull Request would represent.
+   The versioning scheme we use is (mostly) [SemVer](http://semver.org/)
+1. You may merge the Pull Request in once you have the sign-off of two other project contributors, or if you do not have permission to do that, you can request the second reviewer to merge it for you
 
 ## Code of Conduct
 
@@ -35,21 +30,21 @@ identity and orientation.
 Examples of behavior that contributes to creating a positive environment
 include:
 
-* Showing empathy towards other community members
-* Using welcoming and inclusive language
-* Being respectful of differing viewpoints and experiences
-* Gracefully accepting constructive criticism
-* Focusing on what is best for the community
+- Showing empathy towards other community members
+- Using welcoming and inclusive language
+- Being respectful of differing viewpoints and experiences
+- Gracefully accepting constructive criticism
+- Focusing on what is best for the community
 
 Examples of unacceptable behavior by participants include:
 
-* Use of sexualized language or imagery and unwelcome sexual attention
+- Use of sexualized language or imagery and unwelcome sexual attention
   or advances
-* Insulting/derogatory comments, and personal or political attacks
-* Public or private harassment
-* Publishing others' private information, such as a physical or electronic
+- Insulting/derogatory comments, and personal or political attacks
+- Public or private harassment
+- Publishing others' private information, such as a physical or electronic
   address, without explicit permission
-* Other conduct which could reasonably be considered inappropriate in a
+- Other conduct which could reasonably be considered inappropriate in a
   professional setting
 
 ### Our Responsibilities

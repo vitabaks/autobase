@@ -1,5 +1,5 @@
 ---
-- name: 'Get the current Patroni Cluster Leader Node'
+- name: "Get the current Patroni Cluster Leader Node"
   ansible.builtin.uri:
     url: http://{{ inventory_hostname }}:{{ patroni_restapi_port }}/leader
     status_code: 200
@@ -24,4 +24,3 @@
   loop_control:
     loop_var: pg_target_dbname
   when: databases_list.stdout_lines is defined
-...

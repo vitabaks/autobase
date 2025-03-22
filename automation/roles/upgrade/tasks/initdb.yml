@@ -1,5 +1,4 @@
 ---
-
 - name: Make sure new PostgreSQL data directory "{{ pg_new_datadir }}" exists
   become: true
   become_user: root
@@ -15,7 +14,7 @@
     path: "{{ pg_new_datadir }}/PG_VERSION"
   register: pgdata_initialized
 
-- block:  # if already initialized
+- block: # if already initialized
     - name: Perform pg_dropcluster
       ansible.builtin.command: >
         /usr/bin/pg_dropcluster --stop {{ pg_new_version }} {{ postgresql_cluster_name }}
@@ -108,5 +107,3 @@
   when:
     - inventory_hostname in groups['primary']
     - pg_new_confdir == pg_new_datadir
-
-...

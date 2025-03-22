@@ -3,30 +3,15 @@
 
 # RedHat
 - name: Install perf
-  ansible.builtin.yum:
-    name: perf
-    state: present
-    disablerepo: 'pgdg*'
-  register: package_status
-  until: package_status is success
-  delay: 5
-  retries: 3
-  when:
-    - ansible_os_family == "RedHat"
-    - ansible_distribution_major_version == '7'
-
-- name: Install perf
   ansible.builtin.dnf:
     name: perf
     state: present
-    disablerepo: 'pgdg*'
+    disablerepo: "pgdg*"
   register: package_status
   until: package_status is success
   delay: 5
   retries: 3
-  when:
-    - ansible_os_family == "RedHat"
-    - ansible_distribution_major_version >= '8'
+  when: ansible_os_family == "RedHat"
 
 # Debian
 - name: Install perf
@@ -37,8 +22,7 @@
   until: apt_status is success
   delay: 5
   retries: 3
-  when:
-    - ansible_os_family == "Debian"
+  when: ansible_os_family == "Debian"
 
 # Check if perf is installed correctly, or build a perf from the source code
 - name: Check if perf is installed
@@ -153,7 +137,7 @@
       become_user: root
       community.general.make:
         chdir: "/tmp/linux-{{ kernel_version }}/tools/perf"
-        jobs: "{{ ansible_processor_vcpus }}"  # use all CPU cores
+        jobs: "{{ ansible_processor_vcpus }}" # use all CPU cores
       register: build_perf_result
       when:
         - build_tools_result is defined
@@ -163,12 +147,12 @@
       ansible.builtin.copy:
         src: "/tmp/linux-{{ kernel_version }}/tools/perf/perf"
         dest: "/usr/local/bin/perf"
-        mode: '0755'
+        mode: "0755"
         remote_src: true
       when:
         - build_perf_result is defined
         - build_perf_result is success
-  ignore_errors: true  # do not stop the playbook if perf could not be installed
+  ignore_errors: true # do not stop the playbook if perf could not be installed
   when:
     - perf_result.rc is defined
     - perf_result.rc != 0
@@ -189,5 +173,3 @@
         version: master
         update: false
   tags: flamegraph
-
-...

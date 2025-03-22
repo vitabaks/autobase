@@ -9,15 +9,15 @@
       tags: always
     # set_fact: 'pgbackrest_install' to configure Postgres backups (TODO: Add the ability to configure backups in the UI)
     # Note: Applicable only for "aws", "gcp", "azure", because:
-      # "digitalocean" - requires the Spaces access keys "AWS_ACCESS_KEY_ID" and "AWS_SECRET_ACCESS_KEY"
-      # "hetzner" - currently, Hetzner Cloud does not provide S3 storage
+    # "digitalocean" - requires the Spaces access keys ("AWS_ACCESS_KEY_ID" and "AWS_SECRET_ACCESS_KEY" variables)
+    # "hetzner" - requires the S3 credentials ("hetzner_object_storage_access_key" and "hetzner_object_storage_secret_key" variables).
     - name: "Set variable: 'pgbackrest_install' to configure Postgres backups"
       ansible.builtin.set_fact:
         pgbackrest_install: true
       when:
         - not (pgbackrest_install | bool or wal_g_install | bool)
         - cloud_provider | default('') | lower in ['aws', 'gcp', 'azure']
-        - pgbackrest_auto_conf | default(true) | bool  # to be able to disable auto backup settings
+        - pgbackrest_auto_conf | default(true) | bool # to be able to disable auto backup settings
       tags: always
   roles:
     - role: cloud-resources
@@ -41,11 +41,11 @@
     - name: Include OS-specific variables
       ansible.builtin.include_vars: "roles/common/defaults/{{ ansible_os_family }}.yml"
 
-    - name: '[Prepare] Set maintenance variable'
+    - name: "[Prepare] Set maintenance variable"
       ansible.builtin.set_fact:
         postgresql_cluster_maintenance: true
 
-    - name: '[Prepare] Get Patroni Cluster Leader Node'
+    - name: "[Prepare] Get Patroni Cluster Leader Node"
       ansible.builtin.uri:
         url: http://{{ inventory_hostname }}:{{ patroni_restapi_port }}/leader
         status_code: 200
@@ -105,12 +105,12 @@
       when:
         - not (pgbackrest_install | bool or wal_g_install | bool)
         - cloud_provider | default('') | lower in ['aws', 'gcp', 'azure']
-        - pgbackrest_auto_conf | default(true) | bool  # to be able to disable auto backup settings
+        - pgbackrest_auto_conf | default(true) | bool # to be able to disable auto backup settings
   tags:
     - always
 
 - name: config_pgcluster.yml | Configure PostgreSQL Cluster
-  hosts: 'primary:secondary'
+  hosts: "primary:secondary"
   become: true
   become_method: sudo
   gather_facts: true
@@ -226,7 +226,7 @@
       when:
         - not (pgbackrest_install | bool or wal_g_install | bool)
         - cloud_provider | default('') | lower in ['aws', 'gcp', 'azure']
-        - pgbackrest_auto_conf | default(true) | bool  # to be able to disable auto backup settings
+        - pgbackrest_auto_conf | default(true) | bool # to be able to disable auto backup settings
       tags: always
   roles:
     - role: pgbackrest

@@ -29,7 +29,7 @@
   when:
     - patroni_leader_result.status == 200
     - (pg_old_extensions.stdout_lines | length > 0
-       and not 'pg_stat_kcache' in pg_old_extensions.stdout_lines)
+      and not 'pg_stat_kcache' in pg_old_extensions.stdout_lines)
 
 # if pg_stat_kcache is exists
 - block:
@@ -53,7 +53,7 @@
     - patroni_leader_result.status == 200
     - pg_old_extensions.stdout_lines | length > 0
     - ('pg_stat_statements' in pg_old_extensions.stdout_lines or
-       'pg_stat_kcache' in pg_old_extensions.stdout_lines)
+      'pg_stat_kcache' in pg_old_extensions.stdout_lines)
 
 # re-create the 'pg_repack' if it exists and an update is required
 - name: Recreate old pg_repack extension to update
@@ -64,5 +64,4 @@
   when:
     - patroni_leader_result.status == 200
     - (pg_old_extensions.stdout_lines | length > 0
-       and 'pg_repack' in pg_old_extensions.stdout_lines)
-...
+      and 'pg_repack' in pg_old_extensions.stdout_lines)

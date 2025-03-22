@@ -1,5 +1,4 @@
 ---
-
 - block:
     - name: Download Netdata installation script
       ansible.builtin.get_url:
@@ -31,8 +30,6 @@
         name: netdata
         state: restarted
   environment: "{{ proxy_env | default({}) }}"
-  ignore_errors: "{{ netdata_install_ignore_errors | default(true) }}"  # show the error and continue the playbook execution
+  ignore_errors: "{{ netdata_install_ignore_errors | default(true) }}" # show the error and continue the playbook execution
   when: netdata_install | default(false)| bool
   tags: netdata
-
-...

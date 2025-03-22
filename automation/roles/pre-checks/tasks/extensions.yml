@@ -47,8 +47,8 @@
   when:
     - (enable_paradedb | default(false) | bool) or (enable_pg_search | default(false) | bool) or (enable_pg_analytics | default(false) | bool)
     - not (
-        (ansible_os_family == "Debian" and ansible_distribution_release in ['bookworm', 'jammy', 'noble']) or
-        (ansible_os_family == "RedHat" and ansible_distribution_major_version in ['8', '9'])
+      (ansible_os_family == "Debian" and ansible_distribution_release in ['bookworm', 'jammy', 'noble']) or
+      (ansible_os_family == "RedHat" and ansible_distribution_major_version in ['8', '9'])
       )
 
 # shared_preload_libraries
@@ -58,7 +58,7 @@
       {{
         (extensions | default([]))
         + (['timescaledb'] if ((enable_timescale | default(false) | bool) or (enable_timescaledb | default(false) | bool)) else [])
-        + (['citus'] if ((enable_citus | default(false) | bool) and (postgresql_version | int >= 11)) else [])
+        + (['citus'] if (enable_citus | default(false) | bool and postgresql_version | int >= 11 and ansible_architecture in ["x86_64", "amd64"]) else [])
         + (['pg_cron'] if (enable_pg_cron | default(false) | bool) else [])
         + (['pgaudit'] if (enable_pgaudit | default(false) | bool) else [])
         + (['pg_stat_statements'] if (enable_pg_stat_kcache | default(false) | bool) else [])
@@ -101,5 +101,3 @@
       }}
   loop: "{{ extensions | default([]) | unique }}"
   when: extensions | default([]) | length > 0
-
-...

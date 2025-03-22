@@ -171,40 +171,63 @@
                 'cidr_ip': database_public_allowed_ips | default('0.0.0.0/0', true) | split(',')
               }
             ] if database_public_access | bool else []) +
-            [{
-              'rule_desc': 'Postgres cluster ports',
+            ([{
+              'rule_desc': 'Netdata internal access',
               'proto': 'tcp',
-              'ports':
-                [ansible_ssh_port | default(22)] +
-                ([
-                  netdata_port | default('19999')
-                ] if netdata_install | bool else []) +
-                ([
-                  pgbouncer_listen_port | default('6432')
-                ] if pgbouncer_install | bool else []) +
-                [
-                  postgresql_port | default('5432'),
-                  patroni_restapi_port | default('8008')
-                ] +
-                ([
-                  haproxy_listen_port.master | default('5000'),
-                  haproxy_listen_port.replicas | default('5001'),
-                  haproxy_listen_port.replicas_sync | default('5002'),
-                  haproxy_listen_port.replicas_async | default('5003'),
-                  haproxy_listen_port.stats | default('7000')
-                ] if with_haproxy_load_balancing | bool else []) +
-                ([
-                  etcd_client_port | default('2379'),
-                  etcd_peer_port | default('2380')
-                ] if dcs_type == 'etcd' else []) +
-                ([
-                  consul_ports_dns | default('8600'),
-                  consul_ports_http | default('8500'),
-                  consul_ports_rpc | default('8400'),
-                  consul_ports_serf_lan | default('8301'),
-                  consul_ports_serf_wan | default('8302'),
-                  consul_ports_server | default('8300')
-                ] if dcs_type == 'consul' else []),
+              'ports': [netdata_port | default('19999')],
+              'cidr_ip': vpc_subnet_info.subnets[0].cidr_block }] if netdata_install | bool else []) +
+            ([{
+              'rule_desc': 'PgBouncer internal access',
+              'proto': 'tcp',
+              'ports': [pgbouncer_listen_port | default('6432')],
+              'cidr_ip': vpc_subnet_info.subnets[0].cidr_block }] if pgbouncer_install | bool else []) +
+            ([{
+              'rule_desc': 'PostgreSQL internal access',
+              'proto': 'tcp',
+              'ports': [postgresql_port | default('5432')],
+              'cidr_ip': vpc_subnet_info.subnets[0].cidr_block }]) +
+            ([{
+              'rule_desc': 'Patroni REST API internal access',
+              'proto': 'tcp',
+              'ports': [patroni_restapi_port | default('8008')], 'cidr_ip': vpc_subnet_info.subnets[0].cidr_block }]) +
+            ([{
+              'rule_desc': 'HAProxy internal access',
+              'proto': 'tcp',
+              'ports': [
+                haproxy_listen_port.master | default('5000'),
+                haproxy_listen_port.replicas | default('5001'),
+                haproxy_listen_port.replicas_sync | default('5002'),
+                haproxy_listen_port.replicas_async | default('5003'),
+                haproxy_listen_port.stats | default('7000')
+              ],
+              'cidr_ip': vpc_subnet_info.subnets[0].cidr_block
+            }] if with_haproxy_load_balancing | bool else []) +
+            ([{
+              'rule_desc': 'etcd internal access',
+              'proto': 'tcp',
+              'ports': [
+                etcd_client_port | default('2379'),
+                etcd_peer_port | default('2380')
+              ],
+              'cidr_ip': vpc_subnet_info.subnets[0].cidr_block
+            }] if dcs_type == 'etcd' else []) +
+            ([{
+              'rule_desc': 'Consul internal access',
+              'proto': 'tcp',
+              'ports': [
+                consul_ports_dns | default('8600'),
+                consul_ports_http | default('8500'),
+                consul_ports_rpc | default('8400'),
+                consul_ports_serf_lan | default('8301'),
+                consul_ports_serf_wan | default('8302'),
+                consul_ports_server | default('8300')
+              ],
+              'cidr_ip': vpc_subnet_info.subnets[0].cidr_block
+            }] if dcs_type == 'consul' else []) +
+            [{
+              'rule_desc': 'SSH internal access',
+              'proto': 'tcp',
+              'ports': [ansible_ssh_port | default(22)],
               'cidr_ip': vpc_subnet_info.subnets[0].cidr_block
             }]
           }}
@@ -375,9 +398,9 @@
         label: "{{ patroni_cluster_name }}-{{ item }}"
       register: aws_elb_classic_lb
       when: cloud_load_balancer | bool and
-            (item == 'primary' or
-            (item == 'replica' and server_count | int > 1) or
-            (item in ['sync', 'async'] and server_count | int > 1 and synchronous_mode | bool))
+        (item == 'primary' or
+        (item == 'replica' and server_count | int > 1) or
+        (item in ['sync', 'async'] and server_count | int > 1 and synchronous_mode | bool))
 
     # S3 bucket (Backups)
     - name: "AWS: Create S3 bucket '{{ aws_s3_bucket_name }}'"
@@ -493,8 +516,8 @@
       loop_control:
         label: "{{ patroni_cluster_name }}-{{ item }}"
       when: item == 'primary' or
-            (item == 'replica' and server_count | int > 1) or
-            (item in ['sync', 'async'] and server_count | int > 1 and synchronous_mode | bool)
+        (item == 'replica' and server_count | int > 1) or
+        (item in ['sync', 'async'] and server_count | int > 1 and synchronous_mode | bool)
 
     - name: "AWS: Delete Security Group"
       amazon.aws.ec2_security_group:
@@ -518,5 +541,3 @@
         - (pgbackrest_install | bool or wal_g_install | bool)
         - aws_s3_bucket_absent | default(false) | bool
   when: state == 'absent'
-
-...

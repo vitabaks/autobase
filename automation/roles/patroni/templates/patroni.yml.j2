@@ -47,11 +47,11 @@ etcd3:
   hosts: {% for etcd_hosts in patroni_etcd_hosts %}{{etcd_hosts.host}}:{{etcd_hosts.port}}{% if not loop.last %},{% endif %}{% endfor %}
   {% endif %}
 
-  {% if tls_cert_generate | default(false) | bool %}
+  {% if etcd_tls_enable | default(false) | bool %}
   protocol: https
-  cacert: {{ tls_ca_cert_path | default('/etc/tls/ca.crt') }}
-  cert: {{ tls_cert_path | default('/etc/tls/server.crt') }}
-  key: {{ tls_privatekey_path | default('/etc/tls/server.key') }}
+  cacert: {{ patroni_etcd_cacert | default('/etc/patroni/tls/etcd/ca.crt') }}
+  cert: {{ patroni_etcd_cert | default('/etc/patroni/tls/etcd/server.crt') }}
+  key: {{ patroni_etcd_key | default('/etc/patroni/tls/etcd/server.key') }}
   {% endif %}
   {% if patroni_etcd_username | default('') | length > 0 %}
   username: {{ patroni_etcd_username | default('') }}
@@ -65,6 +65,12 @@ etcd3:
 consul:
   host: 127.0.0.1:8500
   checks: []
+  {% if consul_tls_enable | default(false) | bool %}
+  scheme: https
+  cacert: {{ patroni_consul_cacert | default('/etc/patroni/tls/consul/ca.crt') }}
+  cert: {{ patroni_consul_cert | default('/etc/patroni/tls/consul/server.crt') }}
+  key: {{ patroni_consul_key |  default('/etc/patroni/tls/consul/server.key') }}
+  {% endif %}
 {% endif %}
 
 bootstrap:

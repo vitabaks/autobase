@@ -1,5 +1,4 @@
 ---
-
 - block:
     - name: Change hostname
       ansible.builtin.hostname:
@@ -13,8 +12,6 @@
         state: present
       no_log: true
       loop:
-        - { regexp: '^127\.0\.0\.1[ \t]+localhost', line: '127.0.0.1 localhost {{ ansible_hostname }}' }
+        - { regexp: '^127\.0\.0\.1[ \t]+localhost', line: "127.0.0.1 localhost {{ ansible_hostname }}" }
   when: hostname is defined and hostname | length > 0
   tags: hostname
-
-...

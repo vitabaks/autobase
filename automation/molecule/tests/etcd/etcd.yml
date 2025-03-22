@@ -5,9 +5,13 @@
     method: GET
     return_content: true
     validate_certs: "{{ tls_cert_generate | default(false) | bool }}"
-    ca_path: "{{ tls_etcd_ca_cert_path if tls_cert_generate | default(false) | bool else omit }}"
-    client_cert: "{{ tls_etcd_cert_path if tls_cert_generate | default(false) | bool else omit }}"
-    client_key: "{{ tls_etcd_privatekey_path if tls_cert_generate | default(false) | bool else omit }}"
+    ca_path: "{{ ca_cert_path if tls_cert_generate | default(false) | bool else omit }}"
+    client_cert: "{{ cert_path if tls_cert_generate | default(false) | bool else omit }}"
+    client_key: "{{ key_path if tls_cert_generate | default(false) | bool else omit }}"
   register: etcd_health_status
   failed_when: "(etcd_health_status.content | from_json).health != 'true'"
+  vars:
+    ca_cert_path: "{{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_ca_crt | default('ca.crt') }}"
+    cert_path: "{{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_server_crt | default('server.crt') }}"
+    key_path: "{{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_server_key | default('server.key') }}"
   when: dcs_type == "etcd"

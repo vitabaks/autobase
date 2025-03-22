@@ -1,5 +1,4 @@
 ---
-
 - name: Restart vip-manager service
   ansible.builtin.systemd:
     daemon_reload: true
@@ -13,9 +12,7 @@
     host: "{{ cluster_vip }}"
     port: "{{ pgbouncer_listen_port if pgbouncer_install | bool else postgresql_port }}"
     state: started
-    timeout: 15  # max wait time: 30 seconds
+    timeout: 15 # max wait time: 30 seconds
     delay: 2
-  ignore_errors: true  # show the error and continue the playbook execution
+  ignore_errors: true # show the error and continue the playbook execution
   listen: "restart vip-manager"
-
-...

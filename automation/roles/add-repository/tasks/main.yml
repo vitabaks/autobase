@@ -1,6 +1,5 @@
 ---
-
-- block:  # Debian/Ubuntu
+- block: # Debian/Ubuntu
     - name: Make sure the python3-debian package is present
       ansible.builtin.apt:
         pkg:
@@ -35,7 +34,7 @@
   when: installation_method == "repo" and ansible_os_family == "Debian"
   tags: add_repo
 
-- block:  # RedHat/CentOS
+- block: # RedHat/CentOS
     - name: Add repository GPG key
       ansible.builtin.command: "rpm --import https://repo.almalinux.org/almalinux/RPM-GPG-KEY-AlmaLinux-{{ ansible_distribution_major_version }}"
       when: ansible_distribution == "AlmaLinux"
@@ -79,15 +78,15 @@
         - name: Enable PowerTools repository
           ansible.builtin.command: dnf config-manager --set-enabled "[Pp]ower[Tt]ools"
           when:
-            - ansible_distribution_major_version is version('8', '==')
+            - ansible_distribution_major_version is version("8", "==")
             - ansible_distribution != "OracleLinux"
-            - ansible_distribution != 'RedHat'
+            - ansible_distribution != "RedHat"
 
         # CodeReady Linux Builder (crb) repository
         - name: Enable CodeReady Linux Builder (crb) repository
           ansible.builtin.command: dnf config-manager --set-enabled crb
           when:
-            - ansible_distribution_major_version is version('9', '>=')
+            - ansible_distribution_major_version is version("9", ">=")
             - ansible_distribution != "OracleLinux"
 
         # CodeReady Builder repository for OracleLinux
@@ -95,7 +94,7 @@
           ansible.builtin.command: dnf config-manager --enable ol{{ ansible_distribution_major_version }}_codeready_builder
           when:
             - ansible_distribution == "OracleLinux"
-            - ansible_distribution_major_version is version('8', '>=')
+            - ansible_distribution_major_version is version("8", ">=")
       vars:
         pg_devel_package: "postgresql{{ postgresql_version | string | replace('.', '') }}-devel"
       when:
@@ -103,8 +102,8 @@
 
     # Install PostgreSQL Repository
     - name: Get pgdg-redhat-repo-latest.noarch.rpm
-      ansible.builtin.get_url:
-        url: "https://download.postgresql.org/pub/repos/yum/reporpms/EL-{{ ansible_distribution_major_version }}-x86_64/pgdg-redhat-repo-latest.noarch.rpm"
+      ansible.builtin.get_url: # yamllint disable rule:line-length
+        url: "https://download.postgresql.org/pub/repos/yum/reporpms/EL-{{ ansible_distribution_major_version }}-{{ pgdg_architecture_map[ansible_architecture] }}/pgdg-redhat-repo-latest.noarch.rpm"
         dest: /tmp/
         timeout: 30
         validate_certs: false
@@ -132,6 +131,7 @@
             sed -i '/\[pgdg[0-9]*-debuginfo\]/,/^$/ s/gpgcheck=1/gpgcheck=0/' {{ pgdg_redhat_repo_path }}
           vars:
             pgdg_redhat_repo_path: "/etc/yum.repos.d/pgdg-redhat-all.repo"
+          when: ansible_architecture in ["x86_64", "amd64"]
 
         # Check if the repository entry exists in the file
         - name: Check if pgdg{{ postgresql_version }}-debuginfo exists in repo file
@@ -147,10 +147,10 @@
 
         # If the entry does not exist, try to add the repository
         - name: Add pgdg{{ postgresql_version }}-debuginfo repo if not present
-          ansible.builtin.yum_repository:
+          ansible.builtin.yum_repository: # yamllint disable rule:line-length
             name: "pgdg{{ postgresql_version }}-debuginfo"
-            description: "PostgreSQL {{ postgresql_version }} for RHEL {{ ansible_distribution_major_version }} - x86_64 - Debuginfo"
-            baseurl: "https://download.postgresql.org/pub/repos/yum/debug/{{ postgresql_version }}/redhat/rhel-{{ ansible_distribution_major_version }}-x86_64/"
+            description: "PostgreSQL {{ postgresql_version }} for RHEL {{ ansible_distribution_major_version }} - {{ pgdg_architecture_map[ansible_architecture] }} - Debuginfo"
+            baseurl: "https://download.postgresql.org/pub/repos/yum/debug/{{ postgresql_version }}/redhat/rhel-{{ ansible_distribution_major_version }}-{{ pgdg_architecture_map[ansible_architecture] }}/"
             gpgcheck: false
             enabled: true
           when: repo_check.found == 0
@@ -165,5 +165,3 @@
 - name: Extensions repository
   ansible.builtin.import_tasks: extensions.yml
   when: installation_method == "repo"
-
-...

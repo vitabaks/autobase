@@ -1,5 +1,4 @@
 ---
-
 - name: Make sure that the cronie package is installed
   ansible.builtin.package:
     name: cronie

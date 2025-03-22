@@ -1,6 +1,5 @@
 ---
-
-- block:  # Debian family
+- block: # Debian family
     - name: Make sure the gnupg, apt-transport-https and python3-debian packages are present
       ansible.builtin.apt:
         pkg:
@@ -50,7 +49,7 @@
     - pg_probackup_install_from_postgrespro_repo|bool
   tags: pg_probackup, pg_probackup_repo, pg_probackup_install
 
-- block:  # RedHat family
+- block: # RedHat family
     # RPM Centos Packages
     - name: Get pg_probackup-repo-centos.noarch.rpm
       ansible.builtin.get_url:
@@ -106,5 +105,3 @@
     - ansible_os_family == "RedHat"
     - pg_probackup_install_from_postgrespro_repo|bool
   tags: pg_probackup, pg_probackup_repo, pg_probackup_install
-
-...

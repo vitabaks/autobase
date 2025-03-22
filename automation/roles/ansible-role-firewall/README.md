@@ -48,7 +48,7 @@ Any additional (custom) rules to be added to the firewall (in the same format yo
     # Allow only the IP 167.89.89.18 to access port 4949 (Munin).
     firewall_additional_rules:
       - "iptables -A INPUT -p tcp --dport 4949 -s 167.89.89.18 -j ACCEPT"
-    
+
     # Allow only the IP 214.192.48.21 to access port 3306 (MySQL).
     firewall_additional_rules:
       - "iptables -A INPUT -p tcp --dport 3306 -s 214.192.48.21 -j ACCEPT"
@@ -80,7 +80,7 @@ None.
       roles:
         - { role: geerlingguy.firewall }
 
-*Inside `vars/main.yml`*:
+_Inside `vars/main.yml`_:
 
     firewall_allowed_tcp_ports:
       - "22"
@@ -89,8 +89,8 @@ None.
 
 ## TODO
 
-  - Make outgoing ports more configurable.
-  - Make other firewall features (like logging) configurable.
+- Make outgoing ports more configurable.
+- Make other firewall features (like logging) configurable.
 
 ## License
 

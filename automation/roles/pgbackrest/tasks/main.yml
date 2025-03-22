@@ -1,14 +1,14 @@
 ---
-
 # Automatic setup of the backup configuration based on the selected cloud provider.
 # if 'cloud_provider' is 'aws', 'gcp', 'azure', 'digitalocean'.
 - ansible.builtin.import_tasks: auto_conf.yml
   when:
     - cloud_provider | default('') | length > 0
-    - pgbackrest_auto_conf | default(true) | bool  # to be able to disable auto backup settings
+    - pgbackrest_auto_conf | default(true) | bool # to be able to disable auto backup settings
   tags: pgbackrest, pgbackrest_conf
 
-- block:  # Debian pgdg repo
+- block:
+    # Debian pgdg repo
     - name: Make sure the gnupg, apt-transport-https and python3-debian packages are present
       ansible.builtin.apt:
         pkg:
@@ -47,10 +47,11 @@
     - pgbackrest_install_from_pgdg_repo|bool
   tags: pgbackrest, pgbackrest_repo, pgbackrest_install
 
-- block:  # RedHat pgdg repo
+- block:
+    # RedHat pgdg repo
     - name: Get pgdg-redhat-repo-latest.noarch.rpm
       ansible.builtin.get_url:
-        url: "https://download.postgresql.org/pub/repos/yum/reporpms/EL-{{ ansible_distribution_major_version }}-x86_64/pgdg-redhat-repo-latest.noarch.rpm"
+        url: "https://download.postgresql.org/pub/repos/yum/reporpms/EL-{{ ansible_distribution_major_version }}-{{ pgdg_architecture_map[ansible_architecture] }}/pgdg-redhat-repo-latest.noarch.rpm" # yamllint disable rule:line-length
         dest: /tmp/
         timeout: 30
         validate_certs: false
@@ -72,34 +73,6 @@
     - ansible_os_family == "RedHat"
     - pgbackrest_install_from_pgdg_repo|bool
   tags: pgbackrest, pgbackrest_repo, pgbackrest_install
-
-# (workaround for CentOS 8.0/8.1)
-# install libzstd RPM from an archived EPEL 8.1 release
-# The problem will be solved when CentOS 8.2 will be released.
-- block:
-    - name: Get libzstd rpm package from archived EPEL
-      ansible.builtin.get_url:
-        url: https://dl.fedoraproject.org/pub/archive/epel/8.1/Everything/x86_64/Packages/l/libzstd-1.4.4-1.el8.x86_64.rpm
-        dest: /tmp/
-        timeout: 120
-        validate_certs: false
-      register: get_libzstd_result
-
-    - name: Install libzstd
-      ansible.builtin.package:
-        name: /tmp/libzstd-1.4.4-1.el8.x86_64.rpm
-        state: present
-      register: package_status
-      until: package_status is success
-      delay: 5
-      retries: 3
-      when: get_libzstd_result is changed
-  environment: "{{ proxy_env | default({}) }}"
-  when:
-    - ansible_distribution == "CentOS"
-    - ansible_distribution_major_version == '8'
-    - ansible_distribution_version is version('8.1', '<=')
-  tags: pgbackrest, pgbackrest_install
 
 - name: Install pgbackrest
   ansible.builtin.package:
@@ -243,13 +216,9 @@
     - pgbackrest_cron_jobs is defined
     - pgbackrest_cron_jobs | length > 0
   tags: pgbackrest, pgbackrest_cron
-
 # - import_tasks: bootstrap_script.yml
 #  when:
 #    - patroni_cluster_bootstrap_method is defined
 #    - patroni_cluster_bootstrap_method == "pgbackrest"
 #    - "'postgres_cluster' in group_names"
 #  tags: pgbackrest, pgbackrest_bootstrap_script
-
-
-...

@@ -14,7 +14,7 @@
     - name: Include upgrade variables
       ansible.builtin.include_vars: "vars/upgrade.yml"
 
-    - name: '[Prepare] Get Patroni Cluster Leader Node'
+    - name: "[Prepare] Get Patroni Cluster Leader Node"
       ansible.builtin.uri:
         url: http://{{ inventory_hostname }}:{{ patroni_restapi_port }}/leader
         status_code: 200
@@ -57,7 +57,7 @@
     - always
 
 - name: "(1/6) PRE-UPGRADE: Perform Pre-Checks"
-  hosts: 'primary:secondary'
+  hosts: "primary:secondary"
   gather_facts: false
   become: true
   become_user: postgres
@@ -80,7 +80,7 @@
     - pre-checks
 
 - name: "(2/6) PRE-UPGRADE: Install new PostgreSQL packages"
-  hosts: 'primary:secondary'
+  hosts: "primary:secondary"
   gather_facts: false
   become: true
   become_user: root
@@ -104,7 +104,7 @@
     - packages
 
 - name: "(3/6) PRE-UPGRADE: Initialize new db, schema compatibility check, and pg_upgrade --check"
-  hosts: 'primary:secondary'
+  hosts: "primary:secondary"
   gather_facts: false
   become: true
   become_user: postgres
@@ -144,7 +144,7 @@
     - schema-compatibility-check
 
 - name: "(4/6) PRE-UPGRADE: Prepare the Patroni configuration"
-  hosts: 'primary:secondary'
+  hosts: "primary:secondary"
   gather_facts: false
   become: true
   become_user: postgres
@@ -166,7 +166,7 @@
     - update-config
 
 - name: "(5/6) UPGRADE: Upgrade PostgreSQL"
-  hosts: 'primary:secondary'
+  hosts: "primary:secondary"
   gather_facts: false
   become: true
   become_user: postgres
@@ -229,7 +229,7 @@
     - upgrade
 
 - name: "(6/6) POST-UPGRADE: Analyze a PostgreSQL database (update optimizer statistics) and Post-Upgrade tasks"
-  hosts: 'primary:secondary'
+  hosts: "primary:secondary"
   gather_facts: false
   become: true
   become_user: postgres
@@ -267,5 +267,3 @@
   tags:
     - upgrade
     - post-upgrade
-
-...

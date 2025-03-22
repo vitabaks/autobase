@@ -34,7 +34,7 @@
     - always
 
 - name: "Perform Rollback"
-  hosts: 'primary:secondary'
+  hosts: "primary:secondary"
   gather_facts: false
   become: true
   become_user: postgres

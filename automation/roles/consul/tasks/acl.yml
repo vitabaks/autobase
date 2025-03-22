@@ -10,16 +10,16 @@
 
     - name: Save acl_master_token from existing configuration
       ansible.builtin.set_fact:
-        consul_acl_master_token: "{{ config_read.stdout | from_json | json_query(query) }}"
+        consul_acl_master_token: "{{ config_read.stdout | from_json | json_query(query_acl) }}"
       vars:
-        query: "acl.tokens.master"
+        query_acl: "acl.tokens.master"
       no_log: true
 
     - name: Save acl_initial_management from existing configuration if acl_master_token not found
       ansible.builtin.set_fact:
-        consul_acl_master_token: "{{ config_read.stdout | from_json | json_query(query) }}"
+        consul_acl_master_token: "{{ config_read.stdout | from_json | json_query(query_acl) }}"
       vars:
-        query: "acl.tokens.initial_management"
+        query_acl: "acl.tokens.initial_management"
       no_log: true
       when: consul_acl_master_token | length == 0
 
@@ -29,7 +29,6 @@
     - consul_node_role == 'server'
 
 - block:
-
     - name: Generate ACL master token
       ansible.builtin.command: "echo {{ lookup('password', '/dev/null length=32 chars=ascii_letters') | to_uuid }}"
       register: consul_acl_master_token_keygen
@@ -64,9 +63,9 @@
 
     - name: Save acl_replication_token from existing configuration
       ansible.builtin.set_fact:
-        consul_acl_replication_token: "{{ config_read.stdout | from_json | json_query(query) }}"
+        consul_acl_replication_token: "{{ config_read.stdout | from_json | json_query(query_acl) }}"
       vars:
-        query: "acl.tokens.replication"
+        query_acl: "acl.tokens.replication"
       no_log: true
 
   when:
@@ -75,7 +74,6 @@
     - consul_node_role == 'server'
 
 - block:
-
     - name: Generate ACL replication token
       ansible.builtin.command: "echo {{ lookup('password', '/dev/null length=32 chars=ascii_letters') | to_uuid }}"
       register: consul_acl_replication_token_keygen

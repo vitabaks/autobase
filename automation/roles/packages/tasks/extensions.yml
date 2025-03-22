@@ -29,8 +29,10 @@
   loop: "{{ citus_package }}"
   vars:
     citus_package: >-
-      [{% if ansible_os_family == 'Debian' and pg_version | default(postgresql_version) | int >= 14 %}
-      "postgresql-{{ pg_version | default(postgresql_version) }}-citus-{{ citus_version | default('12.1') }}"
+      [{% if ansible_os_family == 'Debian' and pg_version | default(postgresql_version) | int >= 15 %}
+      "postgresql-{{ pg_version | default(postgresql_version) }}-citus-{{ citus_version | default('13.0') }}"
+      {% elif ansible_os_family == 'Debian' and pg_version | default(postgresql_version) | int == 14 %}
+      "postgresql-{{ pg_version | default(postgresql_version) }}-citus-12.1"
       {% elif ansible_os_family == 'Debian' and pg_version | default(postgresql_version) | int == 13 %}
       "postgresql-{{ pg_version | default(postgresql_version) }}-citus-11.3"
       {% elif ansible_os_family == 'Debian' and pg_version | default(postgresql_version) | int == 12 %}
@@ -48,6 +50,7 @@
     - enable_citus | default(false) | bool
     - (ansible_os_family == 'Debian' and pg_version | default(postgresql_version) | int >= 11) or
       (ansible_os_family == 'RedHat' and pg_version | default(postgresql_version) | int >= 12)
+    - ansible_architecture in ["x86_64", "amd64"] # no arm64 support
   tags: citus
 
 # pg_repack (if 'enable_pg_repack' is 'true')
@@ -155,7 +158,7 @@
   delay: 5
   retries: 3
   when: enable_pgrouting | default(false) | bool and
-        not (ansible_distribution == 'Ubuntu' and ansible_distribution_version is version('20.04', '<='))
+    not (ansible_distribution == 'Ubuntu' and ansible_distribution_version is version('20.04', '<='))
   tags: pgrouting
 
 # pg_stat_kcache (if 'enable_pg_stat_kcache' is 'true')
@@ -278,8 +281,8 @@
       retries: 3
   vars:
     pgvectorscale_repo: "https://github.com/timescale/pgvectorscale/releases/download/{{ pgvectorscale_version }}"
-    pgvectorscale_archive: "pgvectorscale-{{ pgvectorscale_version }}-pg{{ pg_version | default(postgresql_version) }}-amd64.zip" # yamllint disable rule:line-length
-    pgvectorscale_package: "pgvectorscale-postgresql-{{ pg_version | default(postgresql_version) }}_{{ pgvectorscale_version }}-Linux_amd64.deb" # yamllint disable rule:line-length
+    pgvectorscale_archive: "pgvectorscale-{{ pgvectorscale_version }}-pg{{ pg_version | default(postgresql_version) }}-{{ pgvectorscale_architecture_map[ansible_architecture] }}.zip" # yamllint disable rule:line-length
+    pgvectorscale_package: "pgvectorscale-postgresql-{{ pg_version | default(postgresql_version) }}_{{ pgvectorscale_version }}-Linux_{{ pgvectorscale_architecture_map[ansible_architecture] }}.deb" # yamllint disable rule:line-length
   when:
     - enable_pgvectorscale | default(false) | bool
     - ansible_os_family == "Debian"
@@ -310,7 +313,7 @@
           retries: 3
           vars:
             pg_search_repo: "https://github.com/paradedb/paradedb/releases/download/v{{ pg_search_version }}/"
-            pg_search_package: "{{ pg_search_repo }}/postgresql-{{ pg_version | default(postgresql_version) }}-pg-search_{{ pg_search_version }}-1PARADEDB-{{ ansible_distribution_release }}_amd64.deb" # yamllint disable rule:line-length
+            pg_search_package: "{{ pg_search_repo }}/postgresql-{{ pg_version | default(postgresql_version) }}-pg-search_{{ pg_search_version }}-1PARADEDB-{{ ansible_distribution_release }}_{{ paradedb_architecture_map_dep[ansible_architecture] }}.deb" # yamllint disable rule:line-length
           when:
             - ansible_os_family == "Debian"
             - ansible_distribution_release in ['bookworm', 'jammy', 'noble']
@@ -326,7 +329,7 @@
           retries: 3
           vars:
             pg_search_repo: "https://github.com/paradedb/paradedb/releases/download/v{{ pg_search_version }}/"
-            pg_search_package: "{{ pg_search_repo }}/pg_search_{{ pg_version | default(postgresql_version) }}-{{ pg_search_version }}-1PARADEDB.el{{ ansible_distribution_major_version }}.x86_64.rpm" # yamllint disable rule:line-length
+            pg_search_package: "{{ pg_search_repo }}/pg_search_{{ pg_version | default(postgresql_version) }}-{{ pg_search_version }}-1PARADEDB.el{{ ansible_distribution_major_version }}.{{ paradedb_architecture_map_rpm[ansible_architecture] }}.rpm" # yamllint disable rule:line-length
           when:
             - ansible_os_family == "RedHat"
             - ansible_distribution_major_version in ['8', '9']
@@ -354,7 +357,7 @@
           retries: 3
           vars:
             pg_analytics_repo: "https://github.com/paradedb/pg_analytics/releases/download/v{{ pg_analytics_version }}/"
-            pg_analytics_package: "{{ pg_analytics_repo }}/postgresql-{{ pg_version | default(postgresql_version) }}-pg-analytics_{{ pg_analytics_version }}-1PARADEDB-{{ ansible_distribution_release }}_amd64.deb" # yamllint disable rule:line-length
+            pg_analytics_package: "{{ pg_analytics_repo }}/postgresql-{{ pg_version | default(postgresql_version) }}-pg-analytics_{{ pg_analytics_version }}-1PARADEDB-{{ ansible_distribution_release }}_{{ paradedb_architecture_map_dep[ansible_architecture] }}.deb" # yamllint disable rule:line-length
           when:
             - ansible_os_family == "Debian"
             - ansible_distribution_release in ['bookworm', 'jammy', 'noble']
@@ -370,14 +373,11 @@
           retries: 3
           vars:
             pg_analytics_repo: "https://github.com/paradedb/pg_analytics/releases/download/v{{ pg_analytics_version }}/"
-            pg_analytics_package: "{{ pg_analytics_repo }}/pg_analytics_{{ pg_version | default(postgresql_version) }}-{{ pg_analytics_version }}-1PARADEDB.el{{ ansible_distribution_major_version }}.x86_64.rpm" # yamllint disable rule:line-length
+            pg_analytics_package: "{{ pg_analytics_repo }}/pg_analytics_{{ pg_version | default(postgresql_version) }}-{{ pg_analytics_version }}-1PARADEDB.el{{ ansible_distribution_major_version }}.{{ paradedb_architecture_map_rpm[ansible_architecture] }}.rpm" # yamllint disable rule:line-length
           when:
             - ansible_os_family == "RedHat"
             - ansible_distribution_major_version in ['8', '9']
       when: (enable_paradedb | default(false) | bool) or (enable_pg_analytics | default(false) | bool)
   when: (enable_paradedb | default(false) | bool) or (enable_pg_search | default(false) | bool) or (enable_pg_analytics | default(false) | bool)
   tags: paradedb, pg_search, pg_analytics
-
 # Note: We use the 'pg_version' variable to be able to reuse this code in the upgrade role.
-
-...

@@ -1,5 +1,4 @@
 ---
-
 - name: Create systemd unit file io-scheduler.service
   ansible.builtin.template:
     src: templates/io-scheduler.service.j2
@@ -10,5 +9,3 @@
 
 - name: Make sure handlers are flushed immediately
   ansible.builtin.meta: flush_handlers
-
-...

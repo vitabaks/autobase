@@ -1,0 +1,3 @@
+{
+  "Exclude": [".env", ".j2", "console/", "settings.json", ".sql", "go.mod", "go.sum", "patroni/library/"]
+}

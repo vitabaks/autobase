@@ -11,11 +11,11 @@ nodes = [
   {% endfor %}
 {% endif %}
 ]
-{% if tls_cert_generate | default(false) | bool %}
+{% if etcd_tls_enable | default(false) | bool %}
 scheme = "https"
-client_cakeys = "{{ tls_ca_cert_path | default('/etc/tls/ca.crt') }}"
-client_cert = "{{ tls_cert_path | default('/etc/tls/server.crt') }}"
-client_key = "{{ tls_privatekey_path | default('/etc/tls/server.key') }}"
+client_cakeys = "{{ confd_etcd_tls_dir | default('/etc/confd/tls/etcd') }}/{{ confd_etcd_client_cakey | default('ca.crt') }}"
+client_cert = "{{ confd_etcd_tls_dir | default('/etc/confd/tls/etcd') }}/{{ confd_etcd_client_cert | default('server.crt') }}"
+client_key = "{{ confd_etcd_tls_dir | default('/etc/confd/tls/etcd') }}/{{ confd_etcd_client_key | default('server.key') }}"
 {% endif %}
 {% if patroni_etcd_username | default('') | length > 0 %}
 basic_auth = true
