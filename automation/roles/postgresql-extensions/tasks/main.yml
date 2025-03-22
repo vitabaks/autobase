@@ -3,9 +3,9 @@
   become: true
   become_user: postgres
   community.postgresql.postgresql_ext:
-    db: "{{ item.db }}"
     name: "{{ item.ext }}"
     schema: "{{ item.schema | default('public') }}"
+    login_db: "{{ item.db }}"
     login_host: "127.0.0.1"
     login_port: "{{ postgresql_port }}"
     login_user: "{{ patroni_superuser_username }}"

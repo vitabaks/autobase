@@ -557,7 +557,7 @@
 
         - name: Prepare PostgreSQL | make sure the user "{{ patroni_superuser_username }}" are present, and password does not differ from the specified
           community.postgresql.postgresql_user:
-            db: postgres
+            login_db: postgres
             name: "{{ patroni_superuser_username }}"
             password: "{{ patroni_superuser_password }}"
             encrypted: true
@@ -570,7 +570,7 @@
 
         - name: Prepare PostgreSQL | make sure the user "{{ patroni_replication_username }}" are present, and password does not differ from the specified
           community.postgresql.postgresql_user:
-            db: postgres
+            login_db: postgres
             name: "{{ patroni_replication_username }}"
             password: "{{ patroni_replication_password }}"
             encrypted: true
@@ -950,7 +950,7 @@
 
     - name: Make sure the superuser and replication users are present, and password does not differ from the specified
       community.postgresql.postgresql_user:
-        db: postgres
+        login_db: postgres
         name: "{{ item.name }}"
         password: "{{ item.password }}"
         role_attr_flags: "{{ item.flags }}"
@@ -971,7 +971,7 @@
 
     - name: Make sure the postgresql users are present, and password does not differ from the specified
       community.postgresql.postgresql_user:
-        db: postgres
+        login_db: postgres
         name: "{{ item.name }}"
         password: "{{ item.password }}"
         role_attr_flags: "{{ item.flags }}"
