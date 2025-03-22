@@ -6,12 +6,12 @@
     type: "{{ item.type }}"
     objs: "{{ item.objs }}"
     schema: "{{ item.schema | default(omit) }}"
-    db: "{{ item.db }}"
-    state: "{{ item.state | default('present') }}"
+    login_db: "{{ item.db }}"
     login_host: "127.0.0.1"
     login_port: "{{ postgresql_port }}"
     login_user: "{{ patroni_superuser_username }}"
     login_password: "{{ patroni_superuser_password }}"
+    state: "{{ item.state | default('present') }}"
   ignore_errors: true # noqa ignore-errors
   loop: "{{ postgresql_privs | flatten(1) }}"
   when:
