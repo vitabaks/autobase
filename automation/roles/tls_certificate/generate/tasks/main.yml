@@ -13,17 +13,17 @@
         # Check if certificates already exist
         - name: Check if TLS CA cert already exists
           ansible.builtin.stat:
-            path: "{{ generate_tls_ca_cert_path | default(tls_ca_cert_path | default('/etc/tls/ca.crt')) }}"
+            path: "{{ tls_directory }}/{{ generate_tls_ca_cert | default(tls_ca_cert | default('ca.crt')) }}"
           register: ca_cert
 
         - name: Check if TLS server cert already exists
           ansible.builtin.stat:
-            path: "{{ generate_tls_cert_path | default(tls_cert_path | default('/etc/tls/server.crt')) }}"
+            path: "{{ tls_directory }}/{{ generate_tls_cert | default(tls_cert | default('server.crt')) }}"
           register: server_cert
 
         - name: Check if TLS server key already exists
           ansible.builtin.stat:
-            path: "{{ generate_tls_privatekey_path | default(tls_privatekey_path | default('/etc/tls/server.key')) }}"
+            path: "{{ tls_directory }}/{{ generate_tls_privatekey | default(tls_privatekey | default('server.key')) }}"
           register: server_key
 
         # Skip generation if certificates already exist and tls_cert_regenerate is false
@@ -38,6 +38,8 @@
               etcd_tls_cert_regenerate
               {%- elif tls_group_name == 'postgres_cluster' and etcd_on_dedicated_nodes | default(false) | bool -%}
               patroni_tls_cert_regenerate
+              {%- elif tls_group_name == 'consul_instances' and consul_on_dedicated_nodes | default(false) | bool -%}
+              consul_tls_cert_regenerate
               {%- else -%}
               tls_cert_regenerate
               {%- endif -%}
@@ -52,15 +54,16 @@
     # Clean up existing certificates if tls_cert_regenerate is true
     - name: Clean up existing certificates
       ansible.builtin.file:
-        path: "{{ item }}"
+        path: "{{ tls_directory }}/{{ generate_tls_dir | default(tls_dir | default('/etc/tls')) }}/{{ item }}"
         state: absent
       loop:
-        - "{{ generate_tls_privatekey_path | default(tls_privatekey_path | default('/etc/tls/server.key')) }}"
-        - "{{ generate_tls_cert_path | default(tls_cert_path | default('/etc/tls/server.crt')) }}"
-        - "{{ generate_tls_ca_cert_path | default(tls_ca_cert_path | default('/etc/tls/ca.crt')) }}"
-        - "{{ generate_tls_ca_key_path | default(tls_ca_key_path | default('/etc/tls/ca.key')) }}"
+        - "{{ generate_tls_privatekey | default(tls_privatekey | default('server.key')) }}"
+        - "{{ generate_tls_cert | default(tls_cert | default('server.crt')) }}"
+        - "{{ generate_tls_ca_cert | default(tls_ca_cert | default('ca.crt')) }}"
+        - "{{ generate_tls_ca_key | default(tls_ca_key | default('ca.key')) }}"
       when: tls_cert_regenerate | default(false)| bool
   vars:
+    tls_directory: "{{ generate_tls_dir | default(tls_dir | default('/etc/tls')) }}"
     selected_group: >-
       {{
         groups[tls_group_name]
@@ -102,7 +105,7 @@
     ######## Generate CA ########
     - name: "Ensure TLS directory exist"
       ansible.builtin.file:
-        path: "{{ generate_tls_privatekey_path | default(tls_privatekey_path | default('/etc/tls/server.key')) | dirname }}"
+        path: "{{ tls_directory }}"
         state: directory
         owner: "root"
         group: "root"
@@ -110,13 +113,13 @@
 
     - name: "Generate CA private key"
       community.crypto.openssl_privatekey:
-        path: "{{ generate_tls_ca_key_path | default(tls_ca_key_path | default('/etc/tls/ca.key')) }}"
+        path: "{{ tls_directory }}/{{ generate_tls_ca_key | default(tls_ca_key | default('ca.key')) }}"
         size: "{{ generate_tls_privatekey_size | default(tls_privatekey_size | default(4096)) }}"
         type: "{{ generate_tls_privatekey_type | default(tls_privatekey_type | default('RSA')) }}"
 
     - name: "Create CSR for CA certificate"
       community.crypto.openssl_csr_pipe:
-        privatekey_path: "{{ generate_tls_ca_key_path | default(tls_ca_key_path | default('/etc/tls/ca.key')) }}"
+        privatekey_path: "{{ tls_directory }}/{{ generate_tls_ca_key | default(tls_ca_key | default('ca.key')) }}"
         common_name: "{{ generate_tls_ca_common_name | default(tls_ca_common_name | default('Autobase CA')) }}"
         use_common_name_for_san: false
         basic_constraints:
@@ -129,9 +132,9 @@
 
     - name: "Create self-signed CA certificate from CSR"
       community.crypto.x509_certificate:
-        path: "{{ generate_tls_ca_cert_path | default(tls_ca_cert_path | default('/etc/tls/ca.crt')) }}"
+        path: "{{ tls_directory }}/{{ generate_tls_ca_cert | default(tls_ca_cert | default('ca.crt')) }}"
         csr_content: "{{ ca_csr.csr }}"
-        privatekey_path: "{{ generate_tls_ca_key_path | default(tls_ca_key_path | default('/etc/tls/ca.key')) }}"
+        privatekey_path: "{{ tls_directory }}/{{ generate_tls_ca_key | default(tls_ca_key | default('ca.key')) }}"
         provider: "{{ generate_tls_cert_provider | default(tls_cert_provider | default('selfsigned')) }}"
         selfsigned_not_after: "+{{ generate_tls_cert_valid_days | default(tls_cert_valid_days | default(3650)) }}d"
         selfsigned_not_before: "-1d"
@@ -139,13 +142,13 @@
     ######## Generate Server cert/key ########
     - name: "Create server private key"
       community.crypto.openssl_privatekey:
-        path: "{{ generate_tls_privatekey_path | default(tls_privatekey_path | default('/etc/tls/server.key')) }}"
+        path: "{{ tls_directory }}/{{ generate_tls_privatekey | default(tls_privatekey | default('server.key')) }}"
         size: "{{ generate_tls_privatekey_size | default(tls_privatekey_size | default(4096)) }}"
         type: "{{ generate_tls_privatekey_type | default(tls_privatekey_type | default('RSA')) }}"
 
     - name: "Create server CSR"
       community.crypto.openssl_csr_pipe:
-        privatekey_path: "{{ generate_tls_privatekey_path | default(tls_privatekey_path | default('/etc/tls/server.key')) }}"
+        privatekey_path: "{{ tls_directory }}/{{ generate_tls_privatekey | default(tls_privatekey | default('server.key')) }}"
         common_name: "{{ generate_tls_common_name | default(tls_common_name | default(patroni_cluster_name)) }}"
         key_usage:
           - digitalSignature
@@ -163,17 +166,18 @@
       community.crypto.x509_certificate_pipe:
         csr_content: "{{ csr.csr }}"
         provider: ownca
-        ownca_path: "{{ generate_tls_ca_cert_path | default(tls_ca_cert_path | default('/etc/tls/ca.crt')) }}"
-        ownca_privatekey_path: "{{ generate_tls_ca_key_path | default(tls_ca_key_path | default('/etc/tls/ca.key')) }}"
+        ownca_path: "{{ tls_directory }}/{{ generate_tls_ca_cert | default(tls_ca_cert | default('ca.crt')) }}"
+        ownca_privatekey_path: "{{ tls_directory }}/{{ generate_tls_ca_key | default(tls_ca_key | default('ca.key')) }}"
         ownca_not_after: +{{ generate_tls_cert_valid_days | default(tls_cert_valid_days | default(3650)) }}d
         ownca_not_before: "-1d"
       register: certificate
 
     - name: "Write server certificate"
       ansible.builtin.copy:
-        dest: "{{ generate_tls_cert_path | default(tls_cert_path | default('/etc/tls/server.crt')) }}"
+        dest: "{{ tls_directory }}/{{ generate_tls_cert | default(tls_cert | default('server.crt')) }}"
         content: "{{ certificate.certificate }}"
   vars:
+    tls_directory: "{{ generate_tls_dir | default(tls_dir | default('/etc/tls')) }}"
     selected_group: >-
       {{
         [groups[tls_group_name][0]]

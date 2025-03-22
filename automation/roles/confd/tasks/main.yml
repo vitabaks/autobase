@@ -37,12 +37,8 @@
     name: ../roles/tls_certificate/copy
   vars:
     tls_group_name: "etcd_cluster"
-    fetch_tls_ca_cert_path: "{{ etcd_tls_ca_crt | default('/etc/etcd/tls/ca.crt') }}"
-    fetch_tls_cert_path: "{{ etcd_tls_server_crt | default('/etc/etcd/tls/server.crt') }}"
-    fetch_tls_privatekey_path: "{{ etcd_tls_server_key | default('/etc/etcd/tls/server.key') }}"
-    copy_tls_ca_cert_path: "{{ confd_etcd_client_cakey | default('/etc/confd/tls/etcd/ca.crt') }}"
-    copy_tls_cert_path: "{{ confd_etcd_client_cert | default('/etc/confd/tls/etcd/server.crt') }}"
-    copy_tls_privatekey_path: "{{ confd_etcd_client_key | default('/etc/confd/tls/etcd/server.key') }}"
+    fetch_tls_dir: "{{ etcd_tls_dir | default('/etc/etcd/tls') }}"
+    copy_tls_dir: "{{ confd_etcd_tls_dir | default('/etc/confd/tls/etcd') }}"
     copy_tls_owner: "root"
   when:
     - tls_cert_generate | bool
