@@ -5,3 +5,4 @@
 __pycache__/
 *.log
 molecule/**/tmp
+.ansible/lock

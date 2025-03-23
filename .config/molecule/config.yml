@@ -13,9 +13,6 @@ provisioner:
       remote_tmp: "~/.ansible/tmp"
       allow_world_readable_tmpfiles: false
       timeout: 60
-  inventory:
-    links:
-      group_vars: ../../group_vars/
   playbooks:
     prepare: prepare.yml
 

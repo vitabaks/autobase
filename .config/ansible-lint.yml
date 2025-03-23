@@ -19,6 +19,7 @@ skip_list:
   - role-name # TODO: Avoid using paths when importing roles. Role name XXX does not match ``^*$`` pattern.
   - schema[playbook] # TODO: Use FQCN for `become_method`.
   - schema[tasks] # TODO: Use FQCN for `become_method`.
+  - galaxy[no-changelog]
 
 exclude_paths:
   - ../.venv

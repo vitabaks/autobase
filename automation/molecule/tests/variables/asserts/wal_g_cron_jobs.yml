@@ -39,7 +39,7 @@
 - name: Molecule.tests.variables.asserts.wal_g_cron_jobs | Debian | Load Debian-specific Variables
   run_once: true
   ansible.builtin.include_vars:
-    file: ../../../../vars/Debian.yml
+    file: ../../../../roles/common/defaults/Debian.yml
 
 # 🔄 Define the expected first wal_g_cron job for Debian
 - name: Molecule.tests.variables.asserts.wal_g_cron_jobs | Debian | Define Expected First wal_g_cron Job
@@ -91,7 +91,7 @@
 - name: Molecule.tests.variables.asserts.wal_g_cron_jobs | RedHat | Load RedHat-specific Variables
   run_once: true
   ansible.builtin.include_vars:
-    file: ../../../../vars/RedHat.yml
+    file: ../../../../roles/common/defaults/RedHat.yml
 
 # 🔄 Define the expected first wal_g_cron job for RedHat
 - name: Molecule.tests.variables.asserts.wal_g_cron_jobs | RedHat | Define Expected First wal_g_cron Job

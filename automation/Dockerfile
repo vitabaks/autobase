@@ -19,8 +19,6 @@ RUN apt-get clean && rm -rf /var/lib/apt/lists/partial \
   /autobase/automation/requirements.txt \
   && ansible-galaxy install --force -r \
   /autobase/automation/requirements.yml \
-  && ansible-galaxy install --force -r \
-  /autobase/automation/roles/consul/requirements.yml \
   && ansible-galaxy collection list \
   && pip3 install --break-system-packages --no-cache-dir -r \
   /root/.ansible/collections/ansible_collections/azure/azcollection/requirements.txt \

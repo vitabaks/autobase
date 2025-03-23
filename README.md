@@ -178,50 +178,43 @@ While the Console (UI) is designed for ease of use and is suitable for most user
 
 0. [Install Ansible](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html) on one control node (which could easily be a laptop)
 
-```
+```sh
 sudo apt update && sudo apt install -y python3-pip sshpass git
 pip3 install ansible
 ```
 
-1. Download or clone this repository
+1. Install the Ansible Collection
 
-```
-git clone https://github.com/vitabaks/autobase.git
-```
+```sh
+# from Ansible Galaxy
+ansible-galaxy collection install autobase.autobase
 
-2. Go to the automation directory
-
-```
-cd autobase/automation
+# via git
+ansible-galaxy collection install git+https://github.com/vitabaks/autobase.git,subdirectory=automation@collection
 ```
 
-3. Install requirements on the control node
+Or reference it in a `requirements.yml`:
 
-```
-ansible-galaxy install --force -r requirements.yml
+```yml
+collections:
+  ### Galaxy
+  - name: autobase.autobase
+    version: <version>
+  ### git
+  - name: autobase.autobase
+    type: git
+    version: main # or a tag/commit
+    source: https://github.com/vitabaks/autobase.git
+    subdirectory: automation
 ```
 
-Note: If you plan to use Consul (`dcs_type: consul`), install the consul role requirements
-
-```
-ansible-galaxy install -r roles/consul/requirements.yml
-```
-
-4. Edit the inventory file
+2. Prepare the inventory file
 
 Specify (non-public) IP addresses and connection settings (`ansible_user`, `ansible_ssh_pass` or `ansible_ssh_private_key_file` for your environment
 
-```
-nano inventory
-```
+3. Prepare variables
 
-5. Edit the variable file vars/[main.yml](./automation/vars/main.yml)
-
-```
-nano vars/main.yml
-```
-
-Minimum set of variables:
+The following variables are required:
 
 - `proxy_env` to download packages in environments without direct internet access (optional)
 - `patroni_cluster_name`
@@ -231,18 +224,24 @@ Minimum set of variables:
 - `with_haproxy_load_balancing` to enable load balancing (optional)
 - `dcs_type` "etcd" (default) or "consul"
 
-See the vars/[main.yml](./automation/vars/main.yml), [system.yml](./automation/vars/system.yml) and ([Debian.yml](./automation/vars/Debian.yml) or [RedHat.yml](./automation/vars/RedHat.yml)) files for more details.
+See the vars/[main.yml](./automation/roles/common/defaults/main.yml), [system.yml](./automation/roles/common/defaults/system.yml) and ([Debian.yml](./automation/roles/common/defaults/Debian.yml) or [RedHat.yml](./automation/roles/common/defaults/RedHat.yml)) files for more details.
 
-6. Try to connect to hosts
+4. Test host connectivity
 
-```
+```sh
 ansible all -m ping
 ```
 
-7. Run playbook:
+5. Create playbooks to execute the playbooks within the collection:
 
-```
-ansible-playbook deploy_pgcluster.yml
+```yaml
+- name: Playbook
+  hosts: <node group name>
+
+  tasks:
+    # Start with the 'deploy' playbook, change to 'configure' afterwards
+    - name: Run playbook
+      ansible.builtin.include_playbook: autobase.autobase.deploy_pgcluster
 ```
 
 #### Deploy Cluster with TimescaleDB

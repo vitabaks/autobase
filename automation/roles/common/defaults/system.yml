@@ -238,3 +238,21 @@ post_deploy_command_hosts: "postgres_cluster" # host groups where the post_deplo
 post_deploy_command_print: true # Print the command in the ansible log
 post_deploy_command_print_result: true # Print the result of the command execution to the ansible log
 post_deploy_command_log: "/var/tmp/post_deploy_command.log"
+
+os_valid_distributions:
+  - RedHat
+  - CentOS
+  - Rocky
+  - OracleLinux
+  - Ubuntu
+  - Debian
+  - AlmaLinux
+
+os_minimum_versions:
+  RedHat: 8
+  CentOS: 8
+  Rocky: 8.4
+  AlmaLinux: 8.3
+  OracleLinux: 8
+  Ubuntu: 22.04
+  Debian: 11
