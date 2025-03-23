@@ -135,7 +135,6 @@ You have the option to deploy Postgres clusters using the Console (UI), command 
 > [!TIP]
 > 📩 Contact us at info@autobase.tech, and our team will help you implement Autobase into your infrastructure.
 
-
 ### Console (UI)
 
 The Autobase Console (UI) is the recommended method for most users. It is designed to be user-friendly, minimizing the risk of errors and making it easier than ever to set up your PostgreSQL clusters. This method is suitable for both beginners and those who prefer a visual interface for managing their PostgreSQL clusters.
@@ -161,7 +160,6 @@ docker run -d --name autobase-console \
 
 > [!TIP]
 > It is recommended to run the console in the same network as your database servers to enable monitoring of the cluster status.
-
 
 **Open the Console UI**:
 
@@ -200,10 +198,11 @@ cd autobase/automation
 3. Install requirements on the control node
 
 ```
-ansible-galaxy install --force -r requirements.yml 
+ansible-galaxy install --force -r requirements.yml
 ```
 
 Note: If you plan to use Consul (`dcs_type: consul`), install the consul role requirements
+
 ```
 ansible-galaxy install -r roles/consul/requirements.yml
 ```
@@ -222,7 +221,8 @@ nano inventory
 nano vars/main.yml
 ```
 
-Minimum set of variables: 
+Minimum set of variables:
+
 - `proxy_env` to download packages in environments without direct internet access (optional)
 - `patroni_cluster_name`
 - `postgresql_version`
@@ -250,6 +250,7 @@ ansible-playbook deploy_pgcluster.yml
 To deploy a PostgreSQL High-Availability Cluster with the [TimescaleDB](https://github.com/timescale/timescaledb) extension, add the `enable_timescale` variable:
 
 Example:
+
 ```
 ansible-playbook deploy_pgcluster.yml -e "enable_timescale=true"
 ```
@@ -261,6 +262,7 @@ ansible-playbook deploy_pgcluster.yml -e "enable_timescale=true"
 If you need to start from the very beginning, you can use the playbook `remove_cluster.yml`.
 
 Available variables:
+
 - `remove_postgres`: stop the PostgreSQL service and remove data.
 - `remove_etcd`: stop the ETCD service and remove data.
 - `remove_consul`: stop the Consul service and remove data.
