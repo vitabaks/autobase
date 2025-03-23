@@ -1,21 +1,21 @@
 ---
 collections:
   - name: amazon.aws
-    version: "==9.1.1"
+    version: "==9.3.0"
   - name: google.cloud
     version: "==1.5.1"
   - name: azure.azcollection
-    version: "==3.1.0"
+    version: "==3.3.1"
   - name: community.digitalocean
     version: "==1.27.0"
   - name: hetzner.hcloud
-    version: "==4.2.2"
+    version: "==4.3.0"
   - name: community.postgresql
-    version: "==3.10.2"
+    version: "==3.12.0"
   - name: community.docker
-    version: "==4.3.1"
+    version: "==4.4.0"
   - name: community.general
-    version: "==10.3.0"
+    version: "==10.4.0"
   - name: ansible.posix
     version: "==1.6.2"
   - name: ansible.utils

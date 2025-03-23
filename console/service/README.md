@@ -57,7 +57,7 @@ PG_CONSOLE_DB_MIGRATIONDIR            String              /etc/db/migrations    
 PG_CONSOLE_ENCRYPTIONKEY              String              super_secret                                     Encryption key for secret storage
 PG_CONSOLE_DOCKER_HOST                String              unix:///var/run/docker.sock                      Docker host
 PG_CONSOLE_DOCKER_LOGDIR              String              /tmp/ansible                                     Directory inside docker container for ansible json log
-PG_CONSOLE_DOCKER_IMAGE               String              autobase/automation:2.1.0                        Docker image for autobase automation
+PG_CONSOLE_DOCKER_IMAGE               String              autobase/automation:2.2.0                        Docker image for autobase automation
 PG_CONSOLE_LOGWATCHER_RUNEVERY        Duration            1m                                               LogWatcher run interval
 PG_CONSOLE_LOGWATCHER_ANALYZEPAST     Duration            48h                                              LogWatcher gets operations to analyze which created_at > now() - AnalyzePast
 PG_CONSOLE_CLUSTERWATCHER_RUNEVERY    Duration            1m                                               ClusterWatcher run interval

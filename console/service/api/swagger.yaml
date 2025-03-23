@@ -3,7 +3,7 @@ swagger: '2.0'
 info:
   title: autobase console
   description: API for autobase console
-  version: 2.1.0
+  version: 2.2.0
 host: localhost:8080
 schemes:
   - http
