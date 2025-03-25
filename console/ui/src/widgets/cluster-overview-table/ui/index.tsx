@@ -31,9 +31,21 @@ const ClusterOverviewTable: FC<ClusterOverviewTableProps> = ({ clusterName = '',
     },
     initialState: {
       columnVisibility: {
+        [CLUSTER_OVERVIEW_TABLE_COLUMN_NAMES.ROLE]: true,
+        [CLUSTER_OVERVIEW_TABLE_COLUMN_NAMES.STATE]: true,
         [CLUSTER_OVERVIEW_TABLE_COLUMN_NAMES.PENDING_RESTART]: false,
         [CLUSTER_OVERVIEW_TABLE_COLUMN_NAMES.TAGS]: false,
       },
+      columnOrder: [
+        CLUSTER_OVERVIEW_TABLE_COLUMN_NAMES.NAME,
+        CLUSTER_OVERVIEW_TABLE_COLUMN_NAMES.ROLE,
+        CLUSTER_OVERVIEW_TABLE_COLUMN_NAMES.STATE,
+        CLUSTER_OVERVIEW_TABLE_COLUMN_NAMES.HOST,
+        CLUSTER_OVERVIEW_TABLE_COLUMN_NAMES.TIMELINE,
+        CLUSTER_OVERVIEW_TABLE_COLUMN_NAMES.LAG_IN_MB,
+        CLUSTER_OVERVIEW_TABLE_COLUMN_NAMES.PENDING_RESTART,
+        CLUSTER_OVERVIEW_TABLE_COLUMN_NAMES.TAGS,
+      ],
     },
     renderRowActionMenuItems: ({ row, closeMenu }) => (
       <ClustersOverviewTableRowActions row={row} closeMenu={closeMenu} />

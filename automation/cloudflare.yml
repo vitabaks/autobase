@@ -1,0 +1,145 @@
+---
+# Playbook for configuring Cloudflare DNS and load balancing for PostgreSQL cluster
+# This playbook requires the cloudflare_proxy configuration in vars/main.yml
+
+- name: Configure Cloudflare DNS and Load Balancing
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars_files:
+    - vars/main.yml
+  
+  tasks:
+    - name: Check if Cloudflare proxy is enabled
+      ansible.builtin.fail:
+        msg: "Cloudflare proxy is not enabled. Set cloudflare_proxy.enabled to true in vars/main.yml"
+      when: not cloudflare_proxy.enabled | bool
+
+    - name: Check if Cloudflare API token is provided
+      ansible.builtin.fail:
+        msg: "Cloudflare API token is not provided. Set cloudflare_proxy.api_token in vars/main.yml"
+      when: cloudflare_proxy.api_token | length == 0
+
+    - name: Check if Cloudflare Zone ID is provided
+      ansible.builtin.fail:
+        msg: "Cloudflare Zone ID is not provided. Set cloudflare_proxy.zone_id in vars/main.yml"
+      when: cloudflare_proxy.zone_id | length == 0
+
+    - name: Check if domain is provided
+      ansible.builtin.fail:
+        msg: "Domain is not provided. Set cloudflare_proxy.domain in vars/main.yml"
+      when: cloudflare_proxy.domain | length == 0
+
+    - name: Install required Python packages
+      ansible.builtin.pip:
+        name:
+          - cloudflare
+        state: present
+
+    - name: Get primary node IP address
+      ansible.builtin.set_fact:
+        primary_ip: "{{ hostvars[groups['master'][0]]['ansible_host'] }}"
+      when: groups['master'] is defined and groups['master'] | length > 0
+
+    - name: Get replica nodes IP addresses
+      ansible.builtin.set_fact:
+        replica_ips: "{{ groups['replica'] | map('extract', hostvars, ['ansible_host']) | list }}"
+      when: groups['replica'] is defined and groups['replica'] | length > 0
+
+    - name: Create DNS record for primary node
+      community.general.cloudflare_dns:
+        zone: "{{ cloudflare_proxy.domain }}"
+        record: "{{ cloudflare_proxy.primary_record }}"
+        type: A
+        value: "{{ primary_ip }}"
+        ttl: "{{ cloudflare_proxy.ttl }}"
+        proxied: "{{ cloudflare_proxy.proxied }}"
+        api_token: "{{ cloudflare_proxy.api_token }}"
+      when: primary_ip is defined
+      register: primary_dns
+
+    - name: Create DNS records for replica nodes
+      community.general.cloudflare_dns:
+        zone: "{{ cloudflare_proxy.domain }}"
+        record: "{{ cloudflare_proxy.replica_record }}-{{ index }}"
+        type: A
+        value: "{{ item }}"
+        ttl: "{{ cloudflare_proxy.ttl }}"
+        proxied: "{{ cloudflare_proxy.proxied }}"
+        api_token: "{{ cloudflare_proxy.api_token }}"
+      loop: "{{ replica_ips }}"
+      loop_control:
+        index_var: index
+      when: replica_ips is defined
+      register: replica_dns
+
+    - name: Configure Cloudflare Load Balancer
+      block:
+        - name: Create primary pool
+          uri:
+            url: "https://api.cloudflare.com/client/v4/accounts/{{ cloudflare_proxy.account_id }}/load_balancers/pools"
+            method: POST
+            headers:
+              Authorization: "Bearer {{ cloudflare_proxy.api_token }}"
+              Content-Type: "application/json"
+            body_format: json
+            body:
+              name: "{{ patroni_cluster_name }}-primary"
+              description: "Primary PostgreSQL servers"
+              enabled: true
+              monitor: null
+              origins:
+                - name: "primary"
+                  address: "{{ primary_ip }}"
+                  enabled: true
+                  weight: 1
+          register: primary_pool
+          when: primary_ip is defined
+
+        - name: Create replica pool
+          uri:
+            url: "https://api.cloudflare.com/client/v4/accounts/{{ cloudflare_proxy.account_id }}/load_balancers/pools"
+            method: POST
+            headers:
+              Authorization: "Bearer {{ cloudflare_proxy.api_token }}"
+              Content-Type: "application/json"
+            body_format: json
+            body:
+              name: "{{ patroni_cluster_name }}-replica"
+              description: "Replica PostgreSQL servers"
+              enabled: true
+              monitor: null
+              origins: "{{ replica_ips | map('regex_replace', '^(.*)$', '{\"name\": \"replica-\\1\", \"address\": \"\\1\", \"enabled\": true, \"weight\": 1}') | list }}"
+          register: replica_pool
+          when: replica_ips is defined and replica_ips | length > 0
+
+        - name: Create load balancer
+          uri:
+            url: "https://api.cloudflare.com/client/v4/zones/{{ cloudflare_proxy.zone_id }}/load_balancers"
+            method: POST
+            headers:
+              Authorization: "Bearer {{ cloudflare_proxy.api_token }}"
+              Content-Type: "application/json"
+            body_format: json
+            body:
+              name: "{{ cloudflare_proxy.load_balancer.name }}"
+              description: "{{ cloudflare_proxy.load_balancer.description }}"
+              default_pools:
+                - "{{ primary_pool.json.result.id }}"
+              fallback_pool: "{{ replica_pool.json.result.id }}"
+              ttl: "{{ cloudflare_proxy.load_balancer.ttl }}"
+              steering_policy: "{{ cloudflare_proxy.load_balancer.steering_policy }}"
+              session_affinity: "{{ cloudflare_proxy.load_balancer.session_affinity }}"
+              session_affinity_ttl: "{{ cloudflare_proxy.load_balancer.session_affinity_ttl }}"
+          when: primary_pool is defined and primary_pool.json is defined and replica_pool is defined and replica_pool.json is defined
+      when: cloudflare_proxy.load_balancer.enabled | bool
+
+    - name: Display DNS information
+      ansible.builtin.debug:
+        msg: |
+          Cloudflare DNS configuration completed:
+          Primary node: {{ cloudflare_proxy.primary_record }}.{{ cloudflare_proxy.domain }}
+          Replica nodes: {{ cloudflare_proxy.replica_record }}-*.{{ cloudflare_proxy.domain }}
+          {% if cloudflare_proxy.load_balancer.enabled | bool %}
+          Load balancer: {{ cloudflare_proxy.load_balancer.name }}.{{ cloudflare_proxy.domain }}
+          {% endif %} 

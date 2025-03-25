@@ -1,0 +1,66 @@
+---
+# Test configuration for S3 backup integration
+# This file configures the parameters needed to test the S3 backup functionality
+
+s3_backup_config:
+  enabled: true
+  bucket: "pg-backup-bucket"  # Replace with your actual bucket name
+  region: "us-east-1"  # Replace with your actual region
+  endpoint: ""  # Leave empty for AWS S3, or specify for other S3-compatible storage
+  access_key: "YOUR_ACCESS_KEY"  # Replace with your actual access key
+  secret_key: "YOUR_SECRET_KEY"  # Replace with your actual secret key
+  path: "postgres-cluster"  # Path prefix in the S3 bucket
+  wal_path: "wal"  # Path for WAL files in S3
+  backup_path: "backup"  # Path for base backups in S3
+  retention_days: 7  # Number of days to keep backups
+  schedule: "0 0 * * *"  # Cron schedule for backups
+
+cluster_info:
+  name: "postgres-cluster"
+  data_dir: "/var/lib/postgresql/14/main"  # PostgreSQL data directory
+  host: "10.0.1.1"  # Replace with your PostgreSQL host
+  port: 5432
+  user: "postgres"  # PostgreSQL superuser
+  password: "password"  # Replace with the actual password
+
+# Test scenarios
+test_scenarios:
+  - name: "Basic Backup"
+    description: "Test that a basic backup can be created and uploaded to S3"
+    steps:
+      - "Check if S3 bucket exists"
+      - "Create a full base backup"
+      - "Upload the backup to S3"
+      - "Verify the backup exists in S3"
+  
+  - name: "WAL Archiving"
+    description: "Test that WAL segments are correctly archived to S3"
+    steps:
+      - "Force WAL switch"
+      - "Verify WAL segments are uploaded to S3"
+      - "Test WAL segment retrieval"
+  
+  - name: "Point-in-Time Recovery"
+    description: "Test point-in-time recovery from S3 backups"
+    steps:
+      - "Create a test table and insert data"
+      - "Record current timestamp"
+      - "Wait for WAL to be archived"
+      - "Insert more data"
+      - "Restore to the recorded timestamp"
+      - "Verify the first data exists but not the second"
+  
+  - name: "Backup Retention"
+    description: "Test that old backups are deleted according to retention policy"
+    steps:
+      - "Create multiple backups with different timestamps"
+      - "Run retention cleanup process"
+      - "Verify only the expected number of backups remain"
+
+# Test validation
+validation:
+  - "S3 bucket is accessible"
+  - "Base backups are successfully created and uploaded to S3"
+  - "WAL segments are successfully archived to S3"
+  - "Point-in-time recovery works correctly"
+  - "Backup retention policy is correctly enforced" 

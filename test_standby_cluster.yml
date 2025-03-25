@@ -1,0 +1,64 @@
+---
+# Test configuration for Standby PostgreSQL Cluster
+# This file configures the parameters needed to test the standby cluster functionality
+
+# Primary cluster information
+primary_cluster:
+  name: "postgres-cluster-primary"
+  host: "5.78.106.214"  # Replace with the IP of your primary cluster leader
+  port: 5432
+  username: "postgres"  # PostgreSQL superuser
+  password: "postgres"  # Replace with the actual password
+
+# Standby cluster configuration
+standby_cluster:
+  enabled: true
+  name: "postgres-cluster-standby"
+  primary_slot_name: "standby_replication_slot"
+  recovery_min_apply_delay: "0"  # No delay in applying WAL records
+  
+  # S3 backup configuration for standby cluster
+  s3_backup:
+    enabled: true
+    bucket: "alex-s3-cuebase-test"
+    region: "us-east-2"
+    endpoint: ""  # Leave empty for AWS S3, or specify for other S3-compatible storage
+    access_key: "AKIAUB3ELC3AZDUGA2BX"  # Replace with your actual access key
+    secret_key: "ilS3caBDqmS8e4+LOnrILutxYwoSMemsFRl9dXZ+"  # Replace with your actual secret key
+    path: "standby-cluster"
+    wal_path: "wal"
+    backup_path: "backup"
+    retention_days: 7
+    schedule: "0 0 * * *"  # Daily at midnight
+
+# Test scenarios
+test_scenarios:
+  - name: "Basic Replication"
+    description: "Test that the standby cluster properly replicates from the primary"
+    steps:
+      - "Create a table on the primary"
+      - "Insert data into the table"
+      - "Verify the data is replicated to the standby"
+  
+  - name: "S3 Backup and Restore"
+    description: "Test S3 backup and restore functionality"
+    steps:
+      - "Trigger a backup to S3"
+      - "Verify the backup exists in S3"
+      - "Restore from the backup to a new cluster"
+      - "Verify the restored data"
+  
+  - name: "Failover Testing"
+    description: "Test failover from primary to standby"
+    steps:
+      - "Manually stop the primary cluster"
+      - "Promote the standby cluster to primary"
+      - "Verify the standby can accept writes"
+      - "Reconnect the original primary as a standby"
+
+# Test validation
+validation:
+  - "All standby nodes are in sync with the primary"
+  - "WAL archiving to S3 is working properly"
+  - "Base backups to S3 are working properly"
+  - "Failover and failback operations work correctly" 

@@ -6,6 +6,27 @@ proxy_env: {} # yamllint disable rule:braces
 #  https_proxy: http://10.128.64.9:3128
 # ---------------------------------------------------------------------
 
+# Cloudflare proxy configuration
+cloudflare_proxy:
+  enabled: false # Set to true to enable Cloudflare proxy
+  api_token: "" # Cloudflare API token with Zone.DNS permissions
+  zone_id: "" # Cloudflare Zone ID
+  domain: "" # Domain name (e.g., example.com)
+  ttl: 120 # TTL for DNS records (in seconds)
+  proxied: true # Whether the DNS records should be proxied through Cloudflare
+  # DNS record names
+  primary_record: "pg-primary" # DNS record for primary node (e.g., pg-primary.example.com)
+  replica_record: "pg-replica" # DNS record for replica nodes (e.g., pg-replica.example.com)
+  # Load balancer configuration (alternative to HAProxy)
+  load_balancer:
+    enabled: false # Set to true to use Cloudflare Load Balancer instead of HAProxy
+    name: "pg-lb" # Name of the load balancer
+    description: "PostgreSQL Load Balancer"
+    ttl: 30 # TTL for load balancer (in seconds)
+    steering_policy: "geo" # Options: "off", "geo", "dynamic_latency", "random", "proximity"
+    session_affinity: "none" # Options: "none", "cookie", "ip_cookie"
+    session_affinity_ttl: 1800 # Time (in seconds) until session affinity cookie expires
+
 # Cluster variables
 cluster_vip: "" # IP address for client access to the databases in the cluster (optional).
 vip_interface: "{{ ansible_default_ipv4.interface }}" # interface name (e.g., "ens32").
@@ -426,11 +447,27 @@ patroni_callbacks: []
 # 1. the cluster name for Standby Cluster must be unique ('patroni_cluster_name' variable)
 # 2. the IP addresses (or network) of the Standby Cluster servers must be added to the pg_hba.conf of the Main Cluster ('postgresql_pg_hba' variable).
 patroni_standby_cluster:
+  enabled: false # Set to true to enable standby cluster
   host: "" # an address of remote master
   port: "5432" # a port of remote master
-#  primary_slot_name: ""  # which slot on the remote master to use for replication (optional)
-#  restore_command: ""  # command to restore WAL records from the remote master to standby leader (optional)
-#  recovery_min_apply_delay: ""  # how long to wait before actually apply WAL records on a standby leader (optional)
+  primary_slot_name: "" # which slot on the remote master to use for replication (optional)
+  restore_command: "" # command to restore WAL records from the remote master to standby leader (optional)
+  recovery_min_apply_delay: "" # how long to wait before actually apply WAL records on a standby leader (optional)
+  # S3 backup configuration for standby cluster
+  s3_backup:
+    enabled: false # Set to true to use S3 for WAL archiving and backup
+    bucket: "" # S3 bucket name
+    region: "us-east-1" # S3 region
+    endpoint: "" # S3 endpoint (for non-AWS S3 compatible storage)
+    access_key: "" # S3 access key
+    secret_key: "" # S3 secret key
+    path: "{{ patroni_cluster_name }}" # Path prefix in the S3 bucket
+    # WAL archiving configuration
+    wal_path: "wal" # Path for WAL files in S3
+    # Base backup configuration
+    backup_path: "backup" # Path for base backups in S3
+    retention_days: 7 # Number of days to keep backups
+    schedule: "0 0 * * *" # Cron schedule for backups (default: daily at midnight)
 
 # Permanent replication slots.
 # These slots will be preserved during switchover/failover.
@@ -438,12 +475,6 @@ patroni_standby_cluster:
 patroni_slots: []
 #  - slot: "logical_replication_slot" # the name of the permanent replication slot.
 #    type: "logical" # the type of slot. Could be 'physical' or 'logical' (if the slot is logical, you have to define 'database' and 'plugin').
-#    plugin: "pgoutput" # the plugin name for the logical slot.
-#    database: "postgres" # the database name where logical slots should be created.
-#  - slot: "test_logical_replication_slot"
-#    type: "logical"
-#    plugin: "pgoutput"
-#    database: "test"
 
 patroni_log_destination: stderr # or 'logfile'
 # if patroni_log_destination: logfile

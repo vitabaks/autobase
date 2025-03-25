@@ -2,7 +2,7 @@ FROM node:20-bookworm AS builder
 
 WORKDIR /usr/src/pg-console
 
-COPY console/ui/ .
+COPY . .
 
 RUN yarn install --frozen-lockfile --network-timeout 1000000 && yarn vite build
 
@@ -12,8 +12,8 @@ LABEL maintainer="Vitaliy Kukharik vitabaks@gmail.com"
 WORKDIR /usr/share/nginx/html
 
 COPY --from=builder /usr/src/pg-console/dist ./
-COPY console/ui/nginx/nginx.conf /etc/nginx/
-COPY console/ui/env.sh console/ui/.env console/ui/.env.production ./
+COPY nginx/nginx.conf /etc/nginx/
+COPY env.sh .env .env.production ./
 
 RUN chmod +x ./env.sh
 

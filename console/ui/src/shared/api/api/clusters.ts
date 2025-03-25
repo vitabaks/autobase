@@ -209,6 +209,7 @@ export type ClusterInfoInstance = {
   id?: number;
   name?: string;
   ip?: string;
+  public_ip?: string;
   status?: string;
   role?: string;
   timeline?: number | null;

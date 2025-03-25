@@ -18,7 +18,8 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       - /tmp/ansible:/tmp/ansible
     environment:
-      - PG_CONSOLE_AUTHORIZATION_TOKEN=${AUTH_TOKEN}
+      #- PG_CONSOLE_AUTHORIZATION_TOKEN=${AUTH_TOKEN}
+      - PG_CONSOLE_AUTHORIZATION_TOKEN=test_token_123
       - PG_CONSOLE_DB_HOST=autobase-console-db
       - PG_CONSOLE_LOGGER_LEVEL=${PG_CONSOLE_LOGGER_LEVEL:-INFO}
       - PG_CONSOLE_DOCKER_IMAGE=console-custom-automation:latest 
@@ -28,14 +29,17 @@ services:
       - autobase
 
   autobase-console-ui:
-    image: autobase/console_ui:latest
+    build:
+      context: ./ui
+      dockerfile: Dockerfile
     container_name: autobase-console-ui
     restart: unless-stopped
     ports:
       - "3000:80"  # Exposes the UI on localhost:3000
     environment:
       - PG_CONSOLE_API_URL=http://localhost:8080/api/v1
-      - PG_CONSOLE_AUTHORIZATION_TOKEN=${AUTH_TOKEN}
+      #- PG_CONSOLE_AUTHORIZATION_TOKEN=${AUTH_TOKEN}
+      - PG_CONSOLE_AUTHORIZATION_TOKEN=test_token_123
     networks:
       - autobase
 

@@ -5,6 +5,7 @@ import { ClusterOverviewTableValues } from '@widgets/cluster-overview-table/mode
 export const CLUSTER_OVERVIEW_TABLE_COLUMN_NAMES = Object.freeze({
   NAME: 'name',
   HOST: 'host',
+  PUBLIC_IP: 'publicIp',
   ROLE: 'role',
   STATE: 'state',
   TIMELINE: 'timeline',
@@ -21,8 +22,12 @@ export const clusterOverviewTableColumns = (t: TFunction) => [
     header: t('name', { ns: 'shared' }),
   }),
   columnHelper.accessor(CLUSTER_OVERVIEW_TABLE_COLUMN_NAMES.HOST, {
-    header: t('host', { ns: 'clusters' }),
-    size: 70,
+    header: t('privateIp', { ns: 'clusters' }),
+    size: 120,
+  }),
+  columnHelper.accessor(CLUSTER_OVERVIEW_TABLE_COLUMN_NAMES.PUBLIC_IP, {
+    header: t('publicIp', { ns: 'clusters' }),
+    size: 120,
   }),
   columnHelper.accessor(CLUSTER_OVERVIEW_TABLE_COLUMN_NAMES.ROLE, {
     header: t('role', { ns: 'clusters' }),

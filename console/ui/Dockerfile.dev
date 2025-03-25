@@ -1,0 +1,35 @@
+FROM node:20-bookworm AS builder
+
+WORKDIR /usr/src/pg-console
+
+# First copy package files to leverage Docker caching
+COPY package.json yarn.lock ./
+
+# Install dependencies
+RUN yarn install --frozen-lockfile --network-timeout 1000000
+
+# Copy the rest of the files
+COPY . .
+
+# Build the project (in development mode to make debugging easier)
+RUN yarn vite build --mode development
+
+FROM nginx:1.26-bookworm AS runtime
+LABEL maintainer="Your Name <your.email@example.com>"
+
+WORKDIR /usr/share/nginx/html
+
+# Copy the built files from the builder stage
+COPY --from=builder /usr/src/pg-console/dist ./
+
+# Copy nginx configuration
+COPY nginx/nginx.conf /etc/nginx/
+
+# Copy environment files and script
+COPY env.sh .env .env.production ./
+
+# Make the env script executable
+RUN chmod +x ./env.sh
+
+# Command to run when container starts
+CMD ["/bin/bash", "-c", "/usr/share/nginx/html/env.sh && nginx -g \"daemon off;\""] 

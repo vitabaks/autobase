@@ -1,0 +1,175 @@
+---
+# Playbook for setting up a standby PostgreSQL cluster
+# This playbook requires the patroni_standby_cluster configuration in vars/main.yml
+
+- name: Configure Standby PostgreSQL Cluster
+  hosts: all
+  become: true
+  vars_files:
+    - vars/main.yml
+  
+  pre_tasks:
+    - name: Check if standby cluster is enabled
+      ansible.builtin.fail:
+        msg: "Standby cluster is not enabled. Set patroni_standby_cluster.enabled to true in vars/main.yml"
+      when: not patroni_standby_cluster.enabled | bool
+      run_once: true
+
+    - name: Check if primary host is provided
+      ansible.builtin.fail:
+        msg: "Primary host is not provided. Set patroni_standby_cluster.host in vars/main.yml"
+      when: patroni_standby_cluster.host | length == 0
+      run_once: true
+
+    - name: Gather facts from primary cluster
+      ansible.builtin.setup:
+      delegate_to: "{{ patroni_standby_cluster.host }}"
+      register: primary_facts
+      ignore_errors: true
+      run_once: true
+
+    - name: Check if primary cluster is reachable
+      ansible.builtin.fail:
+        msg: "Primary cluster at {{ patroni_standby_cluster.host }} is not reachable"
+      when: primary_facts is failed
+      run_once: true
+
+  tasks:
+    - name: Include deploy_pgcluster.yml playbook
+      ansible.builtin.include_tasks:
+        file: deploy_pgcluster.yml
+      vars:
+        is_standby_cluster: true
+
+    - name: Configure S3 backup for standby cluster
+      block:
+        - name: Install required packages for S3
+          ansible.builtin.package:
+            name:
+              - python3-boto3
+              - python3-botocore
+            state: present
+
+        - name: Create S3 configuration directory
+          ansible.builtin.file:
+            path: /etc/patroni/s3
+            state: directory
+            owner: postgres
+            group: postgres
+            mode: '0750'
+
+        - name: Create S3 credentials file
+          ansible.builtin.template:
+            src: templates/s3_credentials.j2
+            dest: /etc/patroni/s3/credentials
+            owner: postgres
+            group: postgres
+            mode: '0600'
+          vars:
+            s3_access_key: "{{ patroni_standby_cluster.s3_backup.access_key }}"
+            s3_secret_key: "{{ patroni_standby_cluster.s3_backup.secret_key }}"
+
+        - name: Create S3 backup script
+          ansible.builtin.template:
+            src: templates/s3_backup.sh.j2
+            dest: /usr/local/bin/s3_backup.sh
+            owner: postgres
+            group: postgres
+            mode: '0750'
+          vars:
+            s3_bucket: "{{ patroni_standby_cluster.s3_backup.bucket }}"
+            s3_region: "{{ patroni_standby_cluster.s3_backup.region }}"
+            s3_endpoint: "{{ patroni_standby_cluster.s3_backup.endpoint }}"
+            s3_path: "{{ patroni_standby_cluster.s3_backup.path }}"
+            s3_backup_path: "{{ patroni_standby_cluster.s3_backup.backup_path }}"
+            retention_days: "{{ patroni_standby_cluster.s3_backup.retention_days }}"
+
+        - name: Create S3 restore script
+          ansible.builtin.template:
+            src: templates/s3_restore.sh.j2
+            dest: /usr/local/bin/s3_restore.sh
+            owner: postgres
+            group: postgres
+            mode: '0750'
+          vars:
+            s3_bucket: "{{ patroni_standby_cluster.s3_backup.bucket }}"
+            s3_region: "{{ patroni_standby_cluster.s3_backup.region }}"
+            s3_endpoint: "{{ patroni_standby_cluster.s3_backup.endpoint }}"
+            s3_path: "{{ patroni_standby_cluster.s3_backup.path }}"
+            s3_backup_path: "{{ patroni_standby_cluster.s3_backup.backup_path }}"
+
+        - name: Create S3 WAL archive script
+          ansible.builtin.template:
+            src: templates/s3_archive_wal.sh.j2
+            dest: /usr/local/bin/s3_archive_wal.sh
+            owner: postgres
+            group: postgres
+            mode: '0750'
+          vars:
+            s3_bucket: "{{ patroni_standby_cluster.s3_backup.bucket }}"
+            s3_region: "{{ patroni_standby_cluster.s3_backup.region }}"
+            s3_endpoint: "{{ patroni_standby_cluster.s3_backup.endpoint }}"
+            s3_path: "{{ patroni_standby_cluster.s3_backup.path }}"
+            s3_wal_path: "{{ patroni_standby_cluster.s3_backup.wal_path }}"
+
+        - name: Create S3 WAL restore script
+          ansible.builtin.template:
+            src: templates/s3_restore_wal.sh.j2
+            dest: /usr/local/bin/s3_restore_wal.sh
+            owner: postgres
+            group: postgres
+            mode: '0750'
+          vars:
+            s3_bucket: "{{ patroni_standby_cluster.s3_backup.bucket }}"
+            s3_region: "{{ patroni_standby_cluster.s3_backup.region }}"
+            s3_endpoint: "{{ patroni_standby_cluster.s3_backup.endpoint }}"
+            s3_path: "{{ patroni_standby_cluster.s3_backup.path }}"
+            s3_wal_path: "{{ patroni_standby_cluster.s3_backup.wal_path }}"
+
+        - name: Configure cron job for regular backups
+          ansible.builtin.cron:
+            name: "PostgreSQL S3 backup"
+            user: postgres
+            job: "/usr/local/bin/s3_backup.sh > /var/log/postgresql/s3_backup.log 2>&1"
+            cron_file: postgres_s3_backup
+            minute: "{{ patroni_standby_cluster.s3_backup.schedule.split(' ')[0] }}"
+            hour: "{{ patroni_standby_cluster.s3_backup.schedule.split(' ')[1] }}"
+            day: "{{ patroni_standby_cluster.s3_backup.schedule.split(' ')[2] }}"
+            month: "{{ patroni_standby_cluster.s3_backup.schedule.split(' ')[3] }}"
+            weekday: "{{ patroni_standby_cluster.s3_backup.schedule.split(' ')[4] }}"
+          when: inventory_hostname == groups['master'][0]
+      when: patroni_standby_cluster.s3_backup.enabled | bool
+
+    - name: Update Patroni configuration for standby cluster
+      ansible.builtin.lineinfile:
+        path: /etc/patroni/patroni.yml
+        regexp: "^  restore_command:"
+        line: "  restore_command: '{{ patroni_standby_cluster.restore_command | default('/usr/local/bin/s3_restore_wal.sh %f %p') }}'"
+      when: patroni_standby_cluster.s3_backup.enabled | bool
+
+    - name: Restart Patroni service
+      ansible.builtin.systemd:
+        name: patroni
+        state: restarted
+        daemon_reload: yes
+
+    - name: Wait for Patroni to start
+      ansible.builtin.wait_for:
+        host: localhost
+        port: 8008
+        state: started
+        timeout: 60
+
+    - name: Display standby cluster information
+      ansible.builtin.debug:
+        msg: |
+          Standby PostgreSQL Cluster has been configured:
+          Primary cluster: {{ patroni_standby_cluster.host }}:{{ patroni_standby_cluster.port }}
+          Standby cluster name: {{ patroni_cluster_name }}
+          {% if patroni_standby_cluster.s3_backup.enabled | bool %}
+          S3 backup enabled:
+            Bucket: {{ patroni_standby_cluster.s3_backup.bucket }}
+            Path: {{ patroni_standby_cluster.s3_backup.path }}
+            Backup schedule: {{ patroni_standby_cluster.s3_backup.schedule }}
+            Retention: {{ patroni_standby_cluster.s3_backup.retention_days }} days
+          {% endif %} 

@@ -1,0 +1,72 @@
+#!/bin/bash
+# S3 backup script for PostgreSQL
+# This script creates a base backup and uploads it to S3
+
+set -e
+
+# Configuration
+PGDATA="{{ postgresql_data_dir }}"
+BACKUP_DIR="/tmp/pg_backup"
+BACKUP_NAME="pg_backup_$(date +%Y%m%d_%H%M%S)"
+S3_BUCKET="{{ s3_bucket }}"
+S3_REGION="{{ s3_region }}"
+S3_PATH="{{ s3_path }}"
+S3_BACKUP_PATH="{{ s3_backup_path }}"
+RETENTION_DAYS="{{ retention_days }}"
+{% if s3_endpoint | length > 0 %}
+S3_ENDPOINT="{{ s3_endpoint }}"
+S3_ENDPOINT_ARG="--endpoint-url=${S3_ENDPOINT}"
+{% else %}
+S3_ENDPOINT_ARG=""
+{% endif %}
+
+# Create backup directory
+mkdir -p ${BACKUP_DIR}
+
+# Check if this is the primary node
+if [ "$(patronictl list -f json | jq -r '.[] | select(.Member == "Leader") | .Host')" == "$(hostname -i)" ]; then
+    echo "This is the primary node, proceeding with backup..."
+else
+    echo "This is not the primary node, skipping backup."
+    exit 0
+fi
+
+# Create base backup
+echo "Creating base backup..."
+pg_basebackup -D ${BACKUP_DIR}/${BACKUP_NAME} -Ft -z -P -v
+
+# Create backup manifest
+echo "Creating backup manifest..."
+cat > ${BACKUP_DIR}/${BACKUP_NAME}.manifest <<EOF
+{
+  "backup_name": "${BACKUP_NAME}",
+  "backup_time": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+  "hostname": "$(hostname)",
+  "ip_address": "$(hostname -i)",
+  "postgres_version": "$(psql -V | awk '{print $3}')",
+  "cluster_name": "{{ patroni_cluster_name }}"
+}
+EOF
+
+# Upload to S3
+echo "Uploading backup to S3..."
+aws ${S3_ENDPOINT_ARG} s3 cp ${BACKUP_DIR}/${BACKUP_NAME}.tar.gz s3://${S3_BUCKET}/${S3_PATH}/${S3_BACKUP_PATH}/${BACKUP_NAME}.tar.gz
+aws ${S3_ENDPOINT_ARG} s3 cp ${BACKUP_DIR}/${BACKUP_NAME}.manifest s3://${S3_BUCKET}/${S3_PATH}/${S3_BACKUP_PATH}/${BACKUP_NAME}.manifest
+
+# Clean up local backup
+echo "Cleaning up local backup..."
+rm -rf ${BACKUP_DIR}/${BACKUP_NAME}*
+
+# Delete old backups
+echo "Deleting backups older than ${RETENTION_DAYS} days..."
+RETENTION_DATE=$(date -d "-${RETENTION_DAYS} days" +%Y-%m-%d)
+aws ${S3_ENDPOINT_ARG} s3 ls s3://${S3_BUCKET}/${S3_PATH}/${S3_BACKUP_PATH}/ | grep -E "pg_backup_[0-9]{8}_[0-9]{6}" | while read -r line; do
+    BACKUP_DATE=$(echo $line | awk '{print $1}')
+    BACKUP_FILE=$(echo $line | awk '{print $4}')
+    if [[ "${BACKUP_DATE}" < "${RETENTION_DATE}" ]]; then
+        echo "Deleting old backup: ${BACKUP_FILE}"
+        aws ${S3_ENDPOINT_ARG} s3 rm s3://${S3_BUCKET}/${S3_PATH}/${S3_BACKUP_PATH}/${BACKUP_FILE}
+    fi
+done
+
+echo "Backup completed successfully!" 

@@ -1,0 +1,61 @@
+---
+# Test configuration for Cloudflare integration
+# This file configures the parameters needed to test the Cloudflare DNS and load balancing functionality
+
+cloudflare_config:
+  enabled: true
+  api_token: "YOUR_CLOUDFLARE_API_TOKEN"  # Replace with your actual API token
+  zone_id: "YOUR_CLOUDFLARE_ZONE_ID"  # Replace with your zone ID
+  account_id: "YOUR_CLOUDFLARE_ACCOUNT_ID"  # Replace with your account ID
+  domain: "example.com"  # Replace with your domain
+  ttl: 120
+  proxied: true
+  primary_record: "pg-primary"
+  replica_record: "pg-replica"
+  load_balancer:
+    enabled: true
+    name: "pg-lb"
+    description: "PostgreSQL Load Balancer"
+    ttl: 30
+    steering_policy: "geo"
+    session_affinity: "none"
+    session_affinity_ttl: 1800
+
+cluster_info:
+  name: "postgres-cluster"
+  primary_node:
+    ip: "10.0.1.1"  # Replace with your primary IP
+  replica_nodes:
+    - ip: "10.0.1.2"  # Replace with your replica IPs
+    - ip: "10.0.1.3"
+
+# Test scenarios
+test_scenarios:
+  - name: "DNS Record Creation"
+    description: "Test that DNS records are correctly created in Cloudflare"
+    steps:
+      - "Create DNS record for primary node"
+      - "Create DNS records for replica nodes"
+      - "Verify the DNS records exist"
+  
+  - name: "Load Balancer Configuration"
+    description: "Test the load balancer functionality"
+    steps:
+      - "Create a load balancer origin pool for primary node"
+      - "Create a load balancer origin pool for replica nodes"
+      - "Create a load balancer with the pools"
+      - "Verify the load balancer works correctly"
+  
+  - name: "DNS Resolution"
+    description: "Test DNS resolution for the created records"
+    steps:
+      - "Resolve the primary DNS record"
+      - "Resolve the replica DNS records"
+      - "Resolve the load balancer DNS record"
+
+# Test validation
+validation:
+  - "All DNS records are correctly created in Cloudflare"
+  - "Load balancer is correctly configured in Cloudflare"
+  - "DNS records resolve to the correct IP addresses"
+  - "Load balancer distributes traffic according to the configured policy" 
