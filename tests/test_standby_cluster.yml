@@ -23,8 +23,8 @@ standby_cluster:
     bucket: "alex-s3-cuebase-test"
     region: "us-east-2"
     endpoint: ""  # Leave empty for AWS S3, or specify for other S3-compatible storage
-    access_key: "AKIAUB3ELC3AZDUGA2BX"  # Replace with your actual access key
-    secret_key: "ilS3caBDqmS8e4+LOnrILutxYwoSMemsFRl9dXZ+"  # Replace with your actual secret key
+    access_key: ""  # Replace with your actual access key
+    secret_key: ""  # Replace with your actual secret key
     path: "standby-cluster"
     wal_path: "wal"
     backup_path: "backup"
