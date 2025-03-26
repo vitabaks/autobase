@@ -4,10 +4,10 @@
 
 cloudflare_config:
   enabled: true
-  api_token: "YOUR_CLOUDFLARE_API_TOKEN"  # Replace with your actual API token
-  zone_id: "YOUR_CLOUDFLARE_ZONE_ID"  # Replace with your zone ID
-  account_id: "YOUR_CLOUDFLARE_ACCOUNT_ID"  # Replace with your account ID
-  domain: "example.com"  # Replace with your domain
+  api_token: "CLOUDFLARE_API_TOKEN"  # Replace with actual API token
+  zone_id: "CLOUDFLARE_ZONE_ID"  # Replace with zone ID
+  account_id: "CLOUDFLARE_ACCOUNT_ID"  # Replace with account ID
+  domain: "example.com"  # Replace wit domain
   ttl: 120
   proxied: true
   primary_record: "pg-primary"
@@ -24,9 +24,9 @@ cloudflare_config:
 cluster_info:
   name: "postgres-cluster"
   primary_node:
-    ip: "10.0.1.1"  # Replace with your primary IP
+    ip: "10.0.1.1"  # Replace with primary IP
   replica_nodes:
-    - ip: "10.0.1.2"  # Replace with your replica IPs
+    - ip: "10.0.1.2"  # Replace with replica IPs
     - ip: "10.0.1.3"
 
 # Test scenarios

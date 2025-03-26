@@ -4,11 +4,11 @@
 
 s3_backup_config:
   enabled: true
-  bucket: "pg-backup-bucket"  # Replace with your actual bucket name
-  region: "us-east-1"  # Replace with your actual region
+  bucket: "pg-backup-bucket"  # Replace with actual bucket name
+  region: "us-east-1"  # Replace with actual region
   endpoint: ""  # Leave empty for AWS S3, or specify for other S3-compatible storage
-  access_key: "YOUR_ACCESS_KEY"  # Replace with your actual access key
-  secret_key: "YOUR_SECRET_KEY"  # Replace with your actual secret key
+  access_key: "YOUR_ACCESS_KEY"  # Replace with actual access key
+  secret_key: "YOUR_SECRET_KEY"  # Replace with actual secret key
   path: "postgres-cluster"  # Path prefix in the S3 bucket
   wal_path: "wal"  # Path for WAL files in S3
   backup_path: "backup"  # Path for base backups in S3
@@ -18,7 +18,7 @@ s3_backup_config:
 cluster_info:
   name: "postgres-cluster"
   data_dir: "/var/lib/postgresql/14/main"  # PostgreSQL data directory
-  host: "10.0.1.1"  # Replace with your PostgreSQL host
+  host: "10.0.1.1"  # Replace with PostgreSQL host
   port: 5432
   user: "postgres"  # PostgreSQL superuser
   password: "password"  # Replace with the actual password

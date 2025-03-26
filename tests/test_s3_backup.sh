@@ -7,8 +7,6 @@ set -e
 CONFIG_FILE="test_s3_backup.yml"
 S3_BUCKET=$(grep -A2 "bucket:" $CONFIG_FILE | head -1 | awk -F'"' '{print $2}')
 S3_REGION=$(grep -A2 "region:" $CONFIG_FILE | head -1 | awk -F'"' '{print $2}')
-S3_ACCESS_KEY=$(grep -A2 "access_key:" $CONFIG_FILE | head -1 | awk -F'"' '{print $2}')
-S3_SECRET_KEY=$(grep -A2 "secret_key:" $CONFIG_FILE | head -1 | awk -F'"' '{print $2}')
 S3_PATH=$(grep -A2 "path:" $CONFIG_FILE | head -1 | awk -F'"' '{print $2}')
 S3_ENDPOINT=$(grep -A2 "endpoint:" $CONFIG_FILE | head -1 | awk -F'"' '{print $2}')
 PG_HOST=$(grep -A2 "host:" $CONFIG_FILE | head -1 | awk -F'"' '{print $2}')
@@ -16,10 +14,54 @@ PG_PORT=$(grep -A2 "port:" $CONFIG_FILE | head -1 | awk '{print $2}')
 PG_USER=$(grep -A2 "user:" $CONFIG_FILE | head -1 | awk -F'"' '{print $2}')
 PG_PASSWORD=$(grep -A2 "password:" $CONFIG_FILE | head -1 | awk -F'"' '{print $2}')
 
-export PGPASSWORD=$PG_PASSWORD
-export AWS_ACCESS_KEY_ID=$S3_ACCESS_KEY
-export AWS_SECRET_ACCESS_KEY=$S3_SECRET_KEY
-export AWS_DEFAULT_REGION=$S3_REGION
+# Check for PostgreSQL password in environment or config
+if [ -z "$PGPASSWORD" ]; then
+    if [ -z "$PG_PASSWORD" ]; then
+        echo "PostgreSQL password not found in environment or config. Please enter password for user '$PG_USER':"
+        read -s PG_PASSWORD
+        echo ""
+    fi
+    export PGPASSWORD=$PG_PASSWORD
+fi
+
+# Check for AWS credentials in environment variables
+if [ -z "$AWS_ACCESS_KEY_ID" ] || [ -z "$AWS_SECRET_ACCESS_KEY" ]; then
+    echo "AWS credentials not found in environment variables."
+    
+    # Try to get them from config if available
+    S3_ACCESS_KEY=$(grep -A2 "access_key:" $CONFIG_FILE | head -1 | awk -F'"' '{print $2}')
+    S3_SECRET_KEY=$(grep -A2 "secret_key:" $CONFIG_FILE | head -1 | awk -F'"' '{print $2}')
+    
+    if [ -n "$S3_ACCESS_KEY" ] && [ -n "$S3_SECRET_KEY" ]; then
+        echo "Using AWS credentials from config file."
+        export AWS_ACCESS_KEY_ID=$S3_ACCESS_KEY
+        export AWS_SECRET_ACCESS_KEY=$S3_SECRET_KEY
+    else
+        echo "Please set AWS credentials before running this script:"
+        echo "export AWS_ACCESS_KEY_ID=your_access_key"
+        echo "export AWS_SECRET_ACCESS_KEY=your_secret_key"
+        echo ""
+        echo "Would you like to enter them now? (y/n)"
+        read ENTER_CREDS
+        
+        if [ "$ENTER_CREDS" = "y" ]; then
+            echo "Enter AWS Access Key ID:"
+            read AWS_ACCESS_KEY_ID
+            echo "Enter AWS Secret Access Key:"
+            read -s AWS_SECRET_ACCESS_KEY
+            echo ""
+            
+            # Export AWS credentials
+            export AWS_ACCESS_KEY_ID
+            export AWS_SECRET_ACCESS_KEY
+        else
+            echo "Skipping AWS credential setup. S3 backup tests may fail."
+        fi
+    fi
+fi
+
+# Set AWS default region if not already set
+export AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION:-$S3_REGION}
 
 ENDPOINT_OPTION=""
 if [ -n "$S3_ENDPOINT" ]; then

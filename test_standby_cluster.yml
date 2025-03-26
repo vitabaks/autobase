@@ -5,10 +5,10 @@
 # Primary cluster information
 primary_cluster:
   name: "postgres-cluster-primary"
-  host: "5.78.106.214"  # Replace with the IP of primary cluster leader
+  host: "5.78.106.214"  # Replace with the IP of your primary cluster leader
   port: 5432
   username: "postgres"  # PostgreSQL superuser
-  password: "postgres"  # Replace with the actual password
+  password: "your_postgres_password_here"  # Replace with the actual password
 
 # Standby cluster configuration
 standby_cluster:
@@ -23,8 +23,12 @@ standby_cluster:
     bucket: "alex-s3-cuebase-test"
     region: "us-east-2"
     endpoint: ""  # Leave empty for AWS S3, or specify for other S3-compatible storage
-    access_key: "${AWS_ACCESS_KEY}"  # Replace with actual access key
-    secret_key: "${AWS_SECRET_KEY}"  # Replace with actual secret key
+    # Use environment variables for credentials - DO NOT hardcode values here
+    # Export these variables before running the tests:
+    # export AWS_ACCESS_KEY_ID=your_access_key
+    # export AWS_SECRET_ACCESS_KEY=your_secret_key
+    access_key: ""  # Will be read from AWS_ACCESS_KEY_ID environment variable
+    secret_key: ""  # Will be read from AWS_SECRET_ACCESS_KEY environment variable
     path: "standby-cluster"
     wal_path: "wal"
     backup_path: "backup"

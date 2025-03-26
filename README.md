@@ -183,3 +183,138 @@ vitaliy@autobase.tech
 ## Feedback, bug-reports, requests, ...
 
 Are [welcome](https://github.com/vitabaks/autobase/issues)!
+
+# Autobase Testing Framework
+
+This repository contains testing scripts for validating Autobase functionality, focusing on PostgreSQL clusters, S3 backups, and other integrated services.
+
+## Setup
+
+1. **Clone the repository**:
+   ```bash
+   git clone <repository-url>
+   cd autobase-testing
+   ```
+
+2. **Set up environment variables**:
+   ```bash
+   cp .env.example .env  # On Windows: copy .env.example .env
+   # Edit the .env file with your preferred editor
+   ```
+   Fill in the appropriate values for your environment.
+
+3. **Load environment variables**:
+   
+   **Linux/macOS**:
+   ```bash
+   chmod +x load_env.sh
+   source ./load_env.sh
+   ```
+   
+   **Windows PowerShell**:
+   ```powershell
+   # First, make the scripts executable if needed
+   Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+   
+   # Then load environment variables
+   . .\load_env.ps1  # Note: You need the load_env.ps1 version for PowerShell
+   ```
+
+## Available Tests
+
+### Standby Cluster Test
+Validates the PostgreSQL standby cluster functionality including replication, backup/restore, and WAL archiving.
+
+**Linux/macOS**:
+```bash
+chmod +x test_standby_cluster.sh
+./test_standby_cluster.sh
+```
+
+**Windows PowerShell**:
+```powershell
+.\test_standby_cluster.ps1  # If using PowerShell versions
+# OR
+bash .\test_standby_cluster.sh  # If using Git Bash or WSL
+```
+
+### S3 Backup Test
+Tests the S3 backup and restore functionality for PostgreSQL.
+
+**Linux/macOS**:
+```bash
+chmod +x tests/test_s3_backup.sh
+./tests/test_s3_backup.sh
+```
+
+**Windows PowerShell**:
+```powershell
+.\tests\test_s3_backup.ps1  # If using PowerShell versions
+# OR
+bash .\tests\test_s3_backup.sh  # If using Git Bash or WSL
+```
+
+### Full Test Suite
+Runs all available tests in sequence.
+
+**Linux/macOS**:
+```bash
+chmod +x test_all_modules.sh
+./test_all_modules.sh
+```
+
+**Windows PowerShell**:
+```powershell
+.\test_all_modules.ps1  # If using PowerShell versions
+# OR
+bash .\test_all_modules.sh  # If using Git Bash or WSL
+```
+
+## Configuration Files
+
+- `test_standby_cluster.yml`: Configuration for standby cluster tests
+- `tests/test_s3_backup.yml`: Configuration for S3 backup tests
+
+## Security Considerations
+
+- Never commit the `.env` file to version control
+- The `.env.example` file provides a template without sensitive information
+- All scripts use environment variables for sensitive information (AWS credentials, database passwords, etc.)
+- Scripts will prompt for missing credentials when needed
+
+## Troubleshooting
+
+### Missing Credentials
+If you encounter errors related to missing credentials:
+1. Ensure you've properly loaded the environment variables
+2. Check that your `.env` file contains all required variables
+3. You can always provide credentials interactively when prompted by the test scripts
+
+### Connection Issues
+If you encounter connection issues:
+1. Verify that your PostgreSQL hosts are reachable
+2. Check that the configured ports are open and accessible
+3. Ensure your AWS credentials have the necessary permissions for S3 operations
+
+### Windows-Specific Issues
+If running scripts on Windows:
+1. Use PowerShell with execution policy set to allow the scripts to run
+2. Consider using Git Bash or WSL (Windows Subsystem for Linux) for a more Linux-like environment
+3. If using PowerShell, ensure you have the `.ps1` versions of the scripts
+
+## Extending the Framework
+
+To add new tests:
+1. Create a configuration YAML file for your test
+2. Develop a test script that loads configuration from the YAML
+3. Update the `test_all_modules.sh` script to include your new test
+4. Document the new test in this README
+
+## Contributing
+
+When contributing to this repository, please:
+- Follow the existing code style
+- Add appropriate error handling to new scripts
+- Update documentation for any new features
+- Ensure all sensitive information is handled via environment variables
+- Test your changes thoroughly before submitting a pull request
