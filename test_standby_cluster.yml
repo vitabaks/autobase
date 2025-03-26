@@ -7,8 +7,8 @@ primary_cluster:
   name: "postgres-cluster-primary"
   host: "5.78.106.214"  # Replace with the IP of your primary cluster leader
   port: 5432
-  username: "postgres"  # PostgreSQL superuser
-  password: "your_postgres_password_here"  # Replace with the actual password
+  username: ""  # PostgreSQL superuser
+  password: ""  # Replace with the actual password
 
 # Standby cluster configuration
 standby_cluster:
