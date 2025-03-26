@@ -25,14 +25,14 @@ Follow these steps:
 
 1. Make all scripts executable:
    ```bash
-   chmod +x *.sh
+   chmod +x *.sh 
    ```
 
 2. Update your PostgreSQL password in `test_standby_cluster.yml`:
    ```yaml
    primary_cluster:
      # ...
-     password: "your_actual_postgres_password"  # Replace with your actual password
+     password: ""  # Replace with your actual password
    ```
 
 3. Run the pg_hba.conf update script to allow your IP to connect:
