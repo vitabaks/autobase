@@ -13,7 +13,7 @@ sudo apt update && sudo apt install -y python3-pip sshpass git
 pip3 install ansible
 ```
 
-1. Install the Ansible Collection
+2. Install the Autobase Collection
 
 ```sh
 # from Ansible Galaxy
@@ -41,23 +41,23 @@ collections:
     subdirectory: automation
 ```
 
-1. Prepare the inventory
+1. Prepare inventory
 
 See example of [inventory](./inventory.example) file.
 
 Specify (non-public) IP addresses and connection settings (`ansible_user`, `ansible_ssh_pass` or `ansible_ssh_private_key_file` for your environment
 
-1. Prepare variables
+4. Prepare variables
 
 See the [main.yml](./roles/common/defaults/main.yml), [system.yml](./roles/common/defaults/system.yml) and ([Debian.yml](./roles/common/defaults/Debian.yml) or [RedHat.yml](./roles/common/defaults/RedHat.yml)) variable files for more details.
 
-1. Test host connectivity
+5. Test host connectivity
 
 ```sh
 ansible all -m ping
 ```
 
-5. Create playbooks to execute the playbooks within the collection:
+6. Create playbook to execute the playbooks within the collection:
 
 ```yaml
 - name: Playbook
