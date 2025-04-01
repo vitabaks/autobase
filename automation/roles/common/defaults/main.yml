@@ -201,7 +201,7 @@ consul_services:
 
 # PostgreSQL variables
 postgresql_version: 17
-# postgresql_data_dir: see Debian.yml or RedHat.yml in roles/common/defaults/
+# postgresql_data_dir: see Debian.yml or RedHat.yml
 postgresql_listen_addr: "0.0.0.0" # Listen on all interfaces. Or use "{{ inventory_hostname }},127.0.0.1" to listen on a specific IP address.
 postgresql_port: 5432
 postgresql_encoding: "UTF8" # for bootstrap only (initdb)
