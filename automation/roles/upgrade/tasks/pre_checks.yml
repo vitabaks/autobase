@@ -15,7 +15,7 @@
   ansible.builtin.debug:
     msg:
       - "pg_old_datadir and pg_new_datadir, pg_old_confdir and pg_new_confdir must not be the same."
-      - "Please check your configuration (vars/upgrade.yml)"
+      - "Please check your configuration (upgrade.yml)"
   failed_when: (pg_old_datadir == pg_new_datadir) or (pg_old_confdir == pg_new_confdir)
   when: (pg_old_datadir == pg_new_datadir) or (pg_old_confdir == pg_new_confdir)
 
