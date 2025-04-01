@@ -1,57 +1,51 @@
----
-### REQUIRED
-namespace: autobase
-
+namespace: vitabaks
 name: autobase
-
-version: 1.0.0
+version: 2.2.0
 
 readme: README.md
 
 authors:
-  - FIXME <fixme>
+  - Vitaliy Kukharik <vitaliy@autobase.tech>
 
-description: fixme
+description: >
+  Autobase for PostgreSQL® is an open-source alternative to cloud-managed databases (DBaaS) such as Amazon RDS,
+  Google Cloud SQL, Azure Database, and more. This automated database platform enables you to create and manage
+  production-ready, highly available PostgreSQL clusters. It simplifies the deployment process, reduces operational
+  costs, and makes database management accessible—even for teams without specialized expertise.
+
+  Automate deployment, failover, backups, restore, upgrades, scaling, and more with ease.
 
 license:
-  - AGPL-3.0-or-later
+  - MIT
 
-# A list of tags you want to associate with the collection for indexing/searching. A tag name has the same character
-# requirements as 'namespace' and 'name'
-tags: ["tools"]
+tags:
+  - high-availability
+  - postgresql
+  - postgres
+  - database
+  - automation
+  - dbaas
+  - autobase
 
-dependencies: {}
+dependencies:
+  amazon.aws: "==9.3.0"
+  google.cloud: "==1.5.1"
+  azure.azcollection: "==3.3.1"
+  community.digitalocean: "==1.27.0"
+  hetzner.hcloud: "==4.3.0"
+  community.postgresql: "==3.12.0"
+  community.docker: "==4.4.0"
+  community.general: "==10.4.0"
+  ansible.posix: "==1.6.2"
+  ansible.utils: "==5.1.2"
 
-repository: fixme
+repository: https://github.com/vitabaks/autobase
+documentation: https://autobase.tech/docs
+homepage: https://autobase.tech
+issues: https://github.com/vitabaks/autobase/issues
 
-# The URL to the homepage of the collection/project
-homepage: fixme
-
-# The URL to the collection issue tracker
-issues: fixme
-
-# A list of file glob-like patterns used to filter any files or directories that should not be included in the build
-# artifact. A pattern is matched from the relative path of the file or directory of the collection directory. This
-# uses 'fnmatch' to match the files or directories. Some directories and files like 'galaxy.yml', '*.pyc', '*.retry',
-# and '.git' are always filtered. Mutually exclusive with 'manifest'
 build_ignore:
-  - test
-  - ssh.cfg
-  - "*.json"
-  - "*.ini"
-  - "*.cfg"
-  - .yamllint.yaml
-  - .markdownlint.yaml
-  - .editorconfig
-  - .ansible-lint
-  - "*.tar.gz"
-  - .gitignore
-  - extensions
-  - requirements.yaml
-  - requirements.txt
-# A dict controlling use of manifest directives used in building the collection artifact. The key 'directives' is a
-# list of MANIFEST.in style
-# L(directives,https://packaging.python.org/en/latest/guides/using-manifest-in/#manifest-in-commands). The key
-# 'omit_default_directives' is a boolean that controls whether the default directives are used. Mutually exclusive
-# with 'build_ignore'
-# manifest: null
+  - molecule
+  - .dockerignore
+  - Dockerfile
+  - entrypoint.sh
