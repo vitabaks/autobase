@@ -7,7 +7,7 @@
 # ============================================
 
 # 📝 Establishing test data for haproxy_nodes
-- name: Molecule.tests.rolesdeploy_finish.variables.haproxy_nodes | Establish haproxy_nodes Test Data
+- name: Molecule.tests.roles.deploy_finish.variables.haproxy_nodes | Establish haproxy_nodes Test Data
   run_once: true
   ansible.builtin.set_fact:
     haproxy_nodes: >-
@@ -19,14 +19,14 @@
       }}
 
 # 🖨️ Debugging the established haproxy_nodes
-- name: Molecule.tests.rolesdeploy_finish.variables.haproxy_nodes | Debug haproxy_nodes
+- name: Molecule.tests.roles.deploy_finish.variables.haproxy_nodes | Debug haproxy_nodes
   run_once: true
   ansible.builtin.debug:
     var: haproxy_nodes
 
 # ✅ Verifying the correctness of the established haproxy_nodes
 # If the haproxy_nodes is not set, the test fails and an error message is displayed
-- name: Molecule.tests.rolesdeploy_finish.variables.haproxy_nodes | Verify haproxy_nodes
+- name: Molecule.tests.roles.deploy_finish.variables.haproxy_nodes | Verify haproxy_nodes
   run_once: true
   ansible.builtin.assert:
     that:
@@ -41,7 +41,7 @@
 # =====================================================
 
 # 📝 Establishing test data for postgres_cluster_nodes
-- name: Molecule.tests.rolesdeploy_finish.variables.haproxy_nodes | Establish postgres_cluster_nodes Test Data
+- name: Molecule.tests.roles.deploy_finish.variables.haproxy_nodes | Establish postgres_cluster_nodes Test Data
   run_once: true
   ansible.builtin.set_fact:
     postgres_cluster_nodes: >-
@@ -53,14 +53,14 @@
       }}
 
 # 🖨️ Debugging the established postgres_cluster_nodes
-- name: Molecule.tests.rolesdeploy_finish.variables.haproxy_nodes | Debug postgres_cluster_nodes
+- name: Molecule.tests.roles.deploy_finish.variables.haproxy_nodes | Debug postgres_cluster_nodes
   run_once: true
   ansible.builtin.debug:
     var: postgres_cluster_nodes
 
 # ✅ Verifying the correctness of the established postgres_cluster_nodes
 # If the postgres_cluster_nodes is not set, the test fails and an error message is displayed
-- name: Molecule.tests.rolesdeploy_finish.variables.haproxy_nodes | Verify postgres_cluster_nodes
+- name: Molecule.tests.roles.deploy_finish.variables.haproxy_nodes | Verify postgres_cluster_nodes
   run_once: true
   ansible.builtin.assert:
     that:
