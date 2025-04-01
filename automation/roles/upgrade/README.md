@@ -163,7 +163,7 @@ Please see the [upgrade.yml](../common/defaults/upgrade.yml) variable file.
   - Initialize new PostgreSQL data directory
     - for Debain based: on all database servers to create default config files
     - for RedHat based: on the Primary only
-- **Copy files specified in the `copy_files_to_all_server` variable** (vars/upgrade.yml), [optional]
+- **Copy files specified in the `copy_files_to_all_server` variable**, [optional]
   - Notes: for example, it may be necessary for Postgres Full-Text Search (FTS) files
 - **Schema compatibility check**
   - Get the current `shared_preload_libraries` settings

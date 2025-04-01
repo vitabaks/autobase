@@ -56,7 +56,7 @@ This scheme enables load distribution for read operations and also allows for sc
 
 When deploying to cloud providers such as AWS, GCP, Azure, DigitalOcean, and Hetzner Cloud, a cloud load balancer is automatically created by default to provide a single entry point to the database (controlled by the `cloud_load_balancer` variable).
 
-For non-cloud environments, such as when deploying on Your Own Machines, the HAProxy load balancer is available for use. To enable it, set `with_haproxy_load_balancing: true` in the vars/main.yml file.
+For non-cloud environments, such as when deploying on Your Own Machines, the HAProxy load balancer is available for use. To enable it, set `with_haproxy_load_balancing: true` variable.
 
 > [!NOTE]
 > Your application must have support sending read requests to a custom port 5001, and write requests to port 5000.
@@ -79,7 +79,7 @@ List of ports when using HAProxy:
 
 #### 3. PostgreSQL High-Availability with Consul Service Discovery
 
-To use this scheme, specify `dcs_type: consul` in variable file vars/main.yml
+To use this scheme, specify `dcs_type: consul` variable.
 
 This scheme is suitable for master-only access and for load balancing (using DNS) for reading across replicas. Consul [Service Discovery](https://developer.hashicorp.com/consul/docs/concepts/service-discovery) with [DNS resolving ](https://developer.hashicorp.com/consul/docs/discovery/dns) is used as a client access point to the database.
 
