@@ -187,46 +187,41 @@ pip3 install ansible
 
 ```sh
 # from Ansible Galaxy
-ansible-galaxy collection install autobase.autobase
+ansible-galaxy collection install vitabaks.autobase
 
 # via git
-ansible-galaxy collection install git+https://github.com/vitabaks/autobase.git,subdirectory=automation@collection
+ansible-galaxy collection install \
+  git+https://github.com/vitabaks/autobase.git,subdirectory=automation,version=master
 ```
 
 Or reference it in a `requirements.yml`:
 
 ```yml
+# from Ansible Galaxy
 collections:
-  ### Galaxy
-  - name: autobase.autobase
+  - name: vitabaks.autobase
     version: <version>
-  ### git
-  - name: autobase.autobase
+
+# via git
+collections:
+  - name: vitabaks.autobase
     type: git
-    version: main # or a tag/commit
+    version: master # or a tag/commit
     source: https://github.com/vitabaks/autobase.git
     subdirectory: automation
 ```
 
-2. Prepare the inventory file
+1. Prepare the inventory
+
+See example of [inventory](./automation/inventory.example) file.
 
 Specify (non-public) IP addresses and connection settings (`ansible_user`, `ansible_ssh_pass` or `ansible_ssh_private_key_file` for your environment
 
 3. Prepare variables
 
-The following variables are required:
+See the [main.yml](./automation/roles/common/defaults/main.yml), [system.yml](./automation/roles/common/defaults/system.yml) and ([Debian.yml](./automation/roles/common/defaults/Debian.yml) or [RedHat.yml](./automation/roles/common/defaults/RedHat.yml)) variable files for more details.
 
-- `proxy_env` to download packages in environments without direct internet access (optional)
-- `patroni_cluster_name`
-- `postgresql_version`
-- `postgresql_data_dir`
-- `cluster_vip` to provide a single entry point for client access to databases in the cluster (optional)
-- `with_haproxy_load_balancing` to enable load balancing (optional)
-- `dcs_type` "etcd" (default) or "consul"
-
-See the vars/[main.yml](./automation/roles/common/defaults/main.yml), [system.yml](./automation/roles/common/defaults/system.yml) and ([Debian.yml](./automation/roles/common/defaults/Debian.yml) or [RedHat.yml](./automation/roles/common/defaults/RedHat.yml)) files for more details.
-
-4. Test host connectivity
+1. Test host connectivity
 
 ```sh
 ansible all -m ping
@@ -239,40 +234,20 @@ ansible all -m ping
   hosts: <node group name>
 
   tasks:
-    # Start with the 'deploy' playbook, change to 'configure' afterwards
+    # Start with the 'deploy' playbook, change to 'config' afterwards
     - name: Run playbook
-      ansible.builtin.include_playbook: autobase.autobase.deploy_pgcluster
+      ansible.builtin.include_playbook: vitabaks.autobase.deploy_pgcluster
 ```
 
-#### Deploy Cluster with TimescaleDB
+#### How to start from scratch
 
-To deploy a PostgreSQL High-Availability Cluster with the [TimescaleDB](https://github.com/timescale/timescaledb) extension, add the `enable_timescale` variable:
-
-Example:
-
-```
-ansible-playbook deploy_pgcluster.yml -e "enable_timescale=true"
-```
-
-[![asciicast](https://asciinema.org/a/251019.svg)](https://asciinema.org/a/251019?speed=5)
-
-### How to start from scratch
-
-If you need to start from the very beginning, you can use the playbook `remove_cluster.yml`.
+If you need to start from the very beginning, you can use the `remove_cluster` playbook.
 
 Available variables:
 
 - `remove_postgres`: stop the PostgreSQL service and remove data.
 - `remove_etcd`: stop the ETCD service and remove data.
 - `remove_consul`: stop the Consul service and remove data.
-
-Run the following command to remove specific components:
-
-```bash
-ansible-playbook remove_cluster.yml -e "remove_postgres=true remove_etcd=true"
-```
-
-This command will delete the specified components, allowing you to start a new installation from scratch.
 
 :warning: **Caution:** be careful when running this command in a production environment.
 
