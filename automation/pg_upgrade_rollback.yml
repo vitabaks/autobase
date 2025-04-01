@@ -13,7 +13,7 @@
     - name: Include main variables
       ansible.builtin.include_vars: "roles/common/defaults/main.yml"
     - name: Include upgrade variables
-      ansible.builtin.include_vars: "vars/upgrade.yml"
+      ansible.builtin.include_vars: "roles/common/defaults/upgrade.yml"
   tasks:
     - name: '[Prepare] Add host to group "primary" (in-memory inventory)'
       ansible.builtin.add_host:
@@ -45,7 +45,7 @@
     - name: Include OS-specific variables
       ansible.builtin.include_vars: "roles/common/defaults/{{ ansible_os_family }}.yml"
     - name: Include upgrade variables
-      ansible.builtin.include_vars: "vars/upgrade.yml"
+      ansible.builtin.include_vars: "roles/common/defaults/upgrade.yml"
   tasks:
     - name: Running rollback.yml
       ansible.builtin.include_role:
