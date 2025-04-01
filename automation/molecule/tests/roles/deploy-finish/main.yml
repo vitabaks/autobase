@@ -1,11 +1,11 @@
 ---
-# 🚀 This task is designed to include and execute a series of variable tests for the 'deploy-finish' role in our Molecule test suite.
+# 🚀 This task is designed to include and execute a series of variable tests for the 'deploy_finish' role in our Molecule test suite.
 # 🎯 The objective is to ensure that all variable tests are run in a systematic and efficient manner, thus ensuring the integrity of our deployment process.
 
-# 🔄 Including and executing variable tests for the 'deploy-finish' role
+# 🔄 Including and executing variable tests for the 'deploy_finish' role
 # We use a loop to iterate over all the YAML files in the 'variables' directory, and for each file, we include its tasks in the current playbook.
 # This allows us to run a comprehensive set of variable tests in an automated and efficient manner.
-- name: Molecule.tests.roles.deploy-finish.main | Include and Execute Variable Tests
+- name: Molecule.tests.roles.deploy_finish.main | Include and Execute Variable Tests
   run_once: true
   ansible.builtin.include_tasks: "{{ molecule_tests_roles_deploy_finish_main_file }}"
   loop: "{{ lookup('fileglob', 'variables/*.yml', wantlist=True) }}"

@@ -20,7 +20,7 @@
         - pgbackrest_auto_conf | default(true) | bool # to be able to disable auto backup settings
       tags: always
   roles:
-    - role: cloud-resources
+    - role: cloud_resources
       when: cloud_provider | default('') | length > 0
       vars:
         postgresql_cluster_maintenance: true
@@ -64,7 +64,7 @@
       when: patroni_leader_result is undefined or patroni_leader_result.status == -1
 
   roles:
-    - role: pre-checks
+    - role: pre_checks
       vars:
         minimal_ansible_version: 2.16.0
         timescale_minimal_pg_version: 12 # if enable_timescale is defined
@@ -153,7 +153,7 @@
       when: dcs_type == "consul" and consul_dnsmasq_enable | bool and ('127.0.0.1' not in (nameservers | default([])))
 
   roles:
-    - role: ansible-role-firewall
+    - role: firewall
       vars:
         firewall_allowed_tcp_ports: "{{ firewall_ports_dynamic_var | default([]) | unique }}"
         firewall_additional_rules: "{{ firewall_rules_dynamic_var | default([]) | unique }}"
@@ -164,17 +164,17 @@
     - role: resolv_conf
     - role: etc_hosts
     - role: timezone
-    - role: add-repository
+    - role: add_repository
     - role: packages
     - role: sudo
     - role: swap
     - role: sysctl
     - role: transparent_huge_pages
     - role: pam_limits
-    - role: io-scheduler
+    - role: io_scheduler
     - role: locales
     - role: ntp
-    - role: ssh-keys
+    - role: ssh_keys
     - role: copy
     - role: pgpass
     - role: cron
@@ -184,23 +184,23 @@
     - role: pgbouncer/config
       when: pgbouncer_install | bool
 
-    - role: vip-manager
+    - role: vip_manager
       when: not with_haproxy_load_balancing | bool and
         (cluster_vip is defined and cluster_vip | length > 0)
 
-    - role: postgresql-users
+    - role: postgresql_users
       when: inventory_hostname in groups['primary']
 
-    - role: postgresql-databases
+    - role: postgresql_databases
       when: inventory_hostname in groups['primary']
 
-    - role: postgresql-schemas
+    - role: postgresql_schemas
       when: inventory_hostname in groups['primary']
 
-    - role: postgresql-privs
+    - role: postgresql_privs
       when: inventory_hostname in groups['primary']
 
-    - role: wal-g
+    - role: wal_g
       when: wal_g_install | bool
 
 - name: config_pgcluster | Configure pgBackRest
@@ -361,7 +361,7 @@
       ansible.builtin.include_vars: "roles/common/defaults/{{ ansible_os_family }}.yml"
       tags: always
   roles:
-    - role: postgresql-extensions
+    - role: postgresql_extensions
 
     # finish (info)
-    - role: deploy-finish
+    - role: deploy_finish

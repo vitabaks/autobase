@@ -34,8 +34,8 @@
         - ../tests/patroni/*.yml
         - ../tests/postgres/*.yml
         - ../tests/roles/confd/main.yml
-        - ../tests/roles/deploy-finish/main.yml
+        - ../tests/roles/deploy_finish/main.yml
         - ../tests/roles/haproxy/main.yml
         - ../tests/roles/patroni/main.yml
-        - ../tests/roles/pre-checks/main.yml
+        - ../tests/roles/pre_checks/main.yml
         - ../tests/roles/swap/main.yml

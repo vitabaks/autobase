@@ -1,8 +1,8 @@
 ---
-- name: Start io-scheduler service
+- name: Start io_scheduler service
   ansible.builtin.systemd:
     daemon_reload: true
-    name: io-scheduler
+    name: io_scheduler
     state: restarted
     enabled: true
-  listen: "restart io-scheduler"
+  listen: "restart io_scheduler"

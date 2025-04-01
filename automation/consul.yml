@@ -137,7 +137,7 @@
       when: cloud_provider | default('') | length > 0
 
   roles:
-    - role: ansible-role-firewall
+    - role: firewall
       vars:
         firewall_allowed_tcp_ports: "{{ firewall_ports_dynamic_var | default([]) | unique }}"
         firewall_additional_rules: "{{ firewall_rules_dynamic_var | default([]) | unique }}"

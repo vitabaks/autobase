@@ -58,7 +58,7 @@
       tags: firewall
 
   roles:
-    - role: ansible-role-firewall
+    - role: firewall
       environment: "{{ proxy_env | default({}) }}"
       vars:
         firewall_allowed_tcp_ports: "{{ firewall_ports_dynamic_var | default([]) | unique }}"

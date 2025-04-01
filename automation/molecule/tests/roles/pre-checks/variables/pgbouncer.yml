@@ -3,7 +3,7 @@
 # 🎯 The objective is to guarantee that each database's pool size is precisely defined and calculated
 
 # 📝 Establishing test data for PgBouncer pools. Two databases are specified, each with a pool size indicated in pool_parameters
-- name: Molecule.tests.roles.pre-checks.variables.pgbouncer | Establish PgBouncer Pools Test Data
+- name: Molecule.tests.roles.pre_checks.variables.pgbouncer | Establish PgBouncer Pools Test Data
   run_once: true
   ansible.builtin.set_fact:
     pgbouncer_pools:
@@ -19,7 +19,7 @@
 # 🔄 Calculating the overall pool size (pgbouncer_pool_size)
 # For each database in pgbouncer_pools, we extract the pool size from pool_parameters and add it to the total
 # If pool size is undefined, we use the default pool size (pgbouncer_default_pool_size), or 0 if that's also undefined
-- name: Molecule.tests.roles.pre-checks.variables.pgbouncer | Compute Overall Pool Size
+- name: Molecule.tests.roles.pre_checks.variables.pgbouncer | Compute Overall Pool Size
   run_once: true
   ansible.builtin.set_fact:
     pgbouncer_pool_size: "{{
@@ -36,7 +36,7 @@
     loop_var: pool_item
 
 # 🖨️ Debugging the calculated overall pool size
-- name: Molecule.tests.roles.pre-checks.variables.pgbouncer | Debug Overall Pool Size
+- name: Molecule.tests.roles.pre_checks.variables.pgbouncer | Debug Overall Pool Size
   run_once: true
   ansible.builtin.debug:
     var: pgbouncer_pool_size
@@ -44,7 +44,7 @@
 # ✅ Verifying the correctness of the calculated overall pool size
 # The expected overall pool size is 30 (10 from db1 and 20 from db2)
 # If the calculated overall pool size is not 30, the test fails and an error message is displayed
-- name: Molecule.tests.roles.pre-checks.variables.pgbouncer | Verify Pool Size Calculation
+- name: Molecule.tests.roles.pre_checks.variables.pgbouncer | Verify Pool Size Calculation
   run_once: true
   ansible.builtin.assert:
     that:
@@ -57,7 +57,7 @@
 # ========================================================
 
 # 🖨️ Debugging test variables
-- name: Molecule.tests.roles.pre-checks.variables.pgbouncer | Debug Test Variables
+- name: Molecule.tests.roles.pre_checks.variables.pgbouncer | Debug Test Variables
   run_once: true
   ansible.builtin.debug:
     var: "{{ debug_item }}"
@@ -69,7 +69,7 @@
     loop_var: debug_item
 
 # 📝 Establishing test data for PostgreSQL databases
-- name: Molecule.tests.roles.pre-checks.variables.pgbouncer | Establish PostgreSQL Databases Test Data
+- name: Molecule.tests.roles.pre_checks.variables.pgbouncer | Establish PostgreSQL Databases Test Data
   run_once: true
   ansible.builtin.set_fact:
     postgresql_databases:
@@ -78,7 +78,7 @@
       - db: db3
 
 # 🔄 Calculating the overall pool size (pgbouncer_total_pool_size) across all databases
-- name: Molecule.tests.roles.pre-checks.variables.pgbouncer | Compute Total Pool Size
+- name: Molecule.tests.roles.pre_checks.variables.pgbouncer | Compute Total Pool Size
   run_once: true
   ansible.builtin.set_fact:
     pgbouncer_total_pool_size: >-
@@ -94,7 +94,7 @@
   when: pgbouncer_pool_size is defined
 
 # 🖨️ Debugging the calculated overall pool size
-- name: Molecule.tests.roles.pre-checks.variables.pgbouncer | Debug Total Pool Size
+- name: Molecule.tests.roles.pre_checks.variables.pgbouncer | Debug Total Pool Size
   run_once: true
   ansible.builtin.debug:
     var: pgbouncer_total_pool_size
@@ -105,7 +105,7 @@
 #   20 from db2
 #   100 from db3 as db3 is not defined in pgbouncer_pools and hence, its pool size is pgbouncer_default_pool_size which is 100
 # If the calculated overall pool size is not 130, the test fails and an error message is displayed
-- name: Molecule.tests.roles.pre-checks.variables.pgbouncer | Verify Total Pool Size Calculation
+- name: Molecule.tests.roles.pre_checks.variables.pgbouncer | Verify Total Pool Size Calculation
   run_once: true
   ansible.builtin.assert:
     that:
@@ -118,13 +118,13 @@
 # ======================================================================
 
 # 📝 Overriding postgresql_databases to an empty list for the next test
-- name: Molecule.tests.roles.pre-checks.variables.pgbouncer | Override postgresql_databases
+- name: Molecule.tests.roles.pre_checks.variables.pgbouncer | Override postgresql_databases
   run_once: true
   ansible.builtin.set_fact:
     postgresql_databases: []
 
 # 🔄 Compute the aggregate pool size (pgbouncer_total_pool_size) across all databases with postgresql_databases not defined.
-- name: Molecule.tests.roles.pre-checks.variables.pgbouncer | Compute Total Pool Size (postgresql_databases not defined)
+- name: Molecule.tests.roles.pre_checks.variables.pgbouncer | Compute Total Pool Size (postgresql_databases not defined)
   run_once: true
   ansible.builtin.set_fact:
     pgbouncer_total_pool_size: >-
@@ -144,7 +144,7 @@
 #   10 from db1
 #   20 from db2
 #   0 from db3 as postgresql_databases is not defined
-- name: Molecule.tests.roles.pre-checks.variables.pgbouncer | Verify Total Pool Size Calculation (postgresql_databases not defined)
+- name: Molecule.tests.roles.pre_checks.variables.pgbouncer | Verify Total Pool Size Calculation (postgresql_databases not defined)
   run_once: true
   ansible.builtin.assert:
     that:

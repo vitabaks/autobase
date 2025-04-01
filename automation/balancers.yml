@@ -70,7 +70,7 @@
       tags: firewall
 
   roles:
-    - role: ansible-role-firewall
+    - role: firewall
       environment: "{{ proxy_env | default({}) }}"
       vars:
         firewall_allowed_tcp_ports: "{{ firewall_ports_dynamic_var | default([]) | unique }}"
@@ -87,7 +87,7 @@
     - role: confd
       when: dcs_type == "etcd"
 
-    - role: vip-manager/disable
+    - role: vip_manager/disable
       when: vip_manager_disable|bool
 
     - role: keepalived

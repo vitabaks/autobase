@@ -110,7 +110,7 @@
       tags: firewall
 
   roles:
-    - role: ansible-role-firewall
+    - role: firewall
       environment: "{{ proxy_env | default({}) }}"
       vars:
         firewall_allowed_tcp_ports: "{{ firewall_ports_dynamic_var | default([]) | unique }}"
@@ -120,7 +120,7 @@
         - firewall_enabled_at_boot | bool
       tags: firewall
 
-    - role: pre-checks
+    - role: pre_checks
       vars:
         minimal_ansible_version: 2.16.0
         timescale_minimal_pg_version: 12 # if enable_timescale is defined
@@ -130,7 +130,7 @@
       when:
         - new_node | default(false) | bool
 
-    - role: ssh-keys
+    - role: ssh_keys
       when:
         - enable_ssh_key_based_authentication | default(false) | bool
 
@@ -173,13 +173,13 @@
     - role: hostname
     - role: resolv_conf
     - role: etc_hosts
-    - role: add-repository
+    - role: add_repository
     - role: packages
     - role: sudo
     - role: swap
     - role: transparent_huge_pages
     - role: pam_limits
-    - role: io-scheduler
+    - role: io_scheduler
     - role: locales
     - role: timezone
     - role: ntp
@@ -233,7 +233,7 @@
       tags: always
 
   roles:
-    - role: wal-g
+    - role: wal_g
       when: wal_g_install|bool
 
     - role: pg_probackup
@@ -249,11 +249,11 @@
 
     - role: patroni
 
-    - role: vip-manager
+    - role: vip_manager
       when: not with_haproxy_load_balancing|bool and
         (cluster_vip is defined and cluster_vip | length > 0)
 
     - role: netdata
 
     # finish (info)
-    - role: deploy-finish
+    - role: deploy_finish
