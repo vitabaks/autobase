@@ -188,10 +188,6 @@ pip3 install ansible
 ```sh
 # from Ansible Galaxy
 ansible-galaxy collection install vitabaks.autobase
-
-# via git
-ansible-galaxy collection install \
-  git+https://github.com/vitabaks/autobase.git,subdirectory=automation,version=master
 ```
 
 Or reference it in a `requirements.yml`:
@@ -201,14 +197,6 @@ Or reference it in a `requirements.yml`:
 collections:
   - name: vitabaks.autobase
     version: 2.2.0
-
-# via git
-collections:
-  - name: vitabaks.autobase
-    type: git
-    version: master # or a tag/commit
-    source: https://github.com/vitabaks/autobase.git
-    subdirectory: automation
 ```
 
 2. Prepare the inventory
