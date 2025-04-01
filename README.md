@@ -200,7 +200,7 @@ Or reference it in a `requirements.yml`:
 # from Ansible Galaxy
 collections:
   - name: vitabaks.autobase
-    version: <version>
+    version: 2.2.0
 
 # via git
 collections:
