@@ -19,7 +19,8 @@ license:
   - MIT
 
 tags:
-  - high-availability
+  - high_availability
+  - cluster
   - postgresql
   - postgres
   - database
