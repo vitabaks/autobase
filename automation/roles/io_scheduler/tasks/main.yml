@@ -5,7 +5,7 @@
     dest: /etc/systemd/system/io-scheduler.service
   notify: "restart io-scheduler"
   when: set_scheduler is defined and set_scheduler|bool
-  tags: scheduler, io-scheduler
+  tags: scheduler, io_scheduler
 
 - name: Make sure handlers are flushed immediately
   ansible.builtin.meta: flush_handlers
