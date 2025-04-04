@@ -1,0 +1,53 @@
+---
+namespace: vitabaks
+name: autobase
+version: 2.2.0
+
+readme: README.md
+
+authors:
+  - Vitaliy Kukharik <vitaliy@autobase.tech>
+
+description: >
+  Autobase for PostgreSQL® is an open-source alternative to cloud-managed databases (DBaaS) such as Amazon RDS,
+  Google Cloud SQL, Azure Database, and more. This automated database platform enables you to create and manage
+  production-ready, highly available PostgreSQL clusters. It simplifies the deployment process, reduces operational
+  costs, and makes database management accessible—even for teams without specialized expertise.
+
+  Automate deployment, failover, backups, restore, upgrades, scaling, and more with ease.
+
+license:
+  - MIT
+
+tags:
+  - high_availability
+  - cluster
+  - postgresql
+  - postgres
+  - database
+  - automation
+  - dbaas
+  - autobase
+
+dependencies:
+  amazon.aws: "==9.3.0"
+  google.cloud: "==1.5.1"
+  azure.azcollection: "==3.3.1"
+  community.digitalocean: "==1.27.0"
+  hetzner.hcloud: "==4.3.0"
+  community.postgresql: "==3.12.0"
+  community.docker: "==4.4.0"
+  community.general: "==10.4.0"
+  ansible.posix: "==1.6.2"
+  ansible.utils: "==5.1.2"
+
+repository: https://github.com/vitabaks/autobase
+documentation: https://autobase.tech/docs
+homepage: https://autobase.tech
+issues: https://github.com/vitabaks/autobase/issues
+
+build_ignore:
+  - molecule
+  - .dockerignore
+  - Dockerfile
+  - entrypoint.sh

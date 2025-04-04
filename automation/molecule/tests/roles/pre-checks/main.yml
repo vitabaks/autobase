@@ -5,7 +5,7 @@
 # 🔄 Including variable tests in the main pre-checks for Molecule tests
 # For each YAML file in the 'variables' directory, we include its tasks in the main pre-checks
 # If a file does not exist or cannot be read, the task will fail and an error message will be displayed
-- name: Molecule.tests.roles.pre-checks.main | Include Variable Tests in Main Pre-checks
+- name: Molecule.tests.roles.pre_checks.main | Include Variable Tests in Main Pre-checks
   run_once: true
   ansible.builtin.include_tasks: "{{ molecule_tests_roles_pre_checks_main_file }}"
   loop: "{{ lookup('fileglob', 'variables/*.yml', wantlist=True) }}"

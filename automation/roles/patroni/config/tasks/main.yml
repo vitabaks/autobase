@@ -62,7 +62,7 @@
       when: item.value == "null"
   environment:
     no_proxy: "{{ inventory_hostname }}"
-  when: is_master | bool
+  when: inventory_hostname in groups['primary']
   tags: patroni, patroni_conf
 
 - name: Delete postgresql parameters from "/etc/patroni/patroni.yml"

@@ -1,8 +1,8 @@
 ## Update the PostgreSQL HA Cluster
 
-This role is designed to update the PostgreSQL HA cluster to a new minor version (for example, 15.1->15.2, and etc).
+This role is designed to update the PostgreSQL HA cluster to a new minor version (for example, 17.1->17.2, and etc).
 
-By default, only PostgreSQL packages defined in the postgresql_packages variable are updated (vars/Debian.yml or vars/RedHat.yml). In addition, you can update Patroni or the entire system.
+By default, only PostgreSQL packages defined in the `postgresql_packages` variable are updated. In addition, you can update Patroni or the entire system.
 
 #### Usage
 

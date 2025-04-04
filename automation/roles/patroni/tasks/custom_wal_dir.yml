@@ -46,7 +46,7 @@
       ansible.builtin.systemd:
         name: patroni
         state: stopped
-      when: not is_master | bool
+      when: inventory_hostname in groups['replica']
 
     - name: Stop patroni service on the Leader (for create symlink)
       become: true
@@ -54,7 +54,7 @@
       ansible.builtin.systemd:
         name: patroni
         state: stopped
-      when: is_master | bool
+      when: inventory_hostname == groups['master'][0]
 
     - name: Make sure PostgreSQL is stopped
       become: true
@@ -92,7 +92,7 @@
       ansible.builtin.systemd:
         name: patroni
         state: started
-      when: is_master | bool
+      when: inventory_hostname == groups['master'][0]
 
     - name: "Wait for port {{ patroni_restapi_port }} to become open on the host"
       ansible.builtin.wait_for:
@@ -102,7 +102,7 @@
         timeout: 120
         delay: 10
       ignore_errors: false
-      when: is_master | bool
+      when: inventory_hostname == groups['master'][0]
 
     - name: Check that the patroni is healthy (the leader with the lock)
       ansible.builtin.uri:
@@ -114,7 +114,7 @@
       delay: 10
       environment:
         no_proxy: "{{ inventory_hostname }}"
-      when: is_master | bool and not ansible_check_mode
+      when: inventory_hostname == groups['master'][0] and not ansible_check_mode
 
     - name: Start patroni service on the Replica
       become: true
@@ -122,7 +122,7 @@
       ansible.builtin.systemd:
         name: patroni
         state: started
-      when: not is_master | bool
+      when: inventory_hostname in groups['replica']
 
     - name: "Wait for port {{ patroni_restapi_port }} to become open on the host"
       ansible.builtin.wait_for:
@@ -132,7 +132,7 @@
         timeout: 120
         delay: 10
       ignore_errors: false
-      when: not is_master | bool
+      when: inventory_hostname in groups['replica']
 
     - name: Check that the patroni is healthy on the Replica
       ansible.builtin.uri:
@@ -144,7 +144,7 @@
       delay: 10
       environment:
         no_proxy: "{{ inventory_hostname }}"
-      when: not is_master | bool and not ansible_check_mode
+      when: inventory_hostname in groups['replica'] and not ansible_check_mode
 
     - name: "Remove {{ pg_wal_dir }}_old directory"
       ansible.builtin.file:

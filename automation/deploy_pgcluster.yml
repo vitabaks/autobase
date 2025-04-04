@@ -5,7 +5,7 @@
   any_errors_fatal: true
   pre_tasks:
     - name: Include main variables
-      ansible.builtin.include_vars: "vars/main.yml"
+      ansible.builtin.include_vars: "roles/common/defaults/main.yml"
       tags: always
     # set_fact: 'pgbackrest_install' to configure Postgres backups (TODO: Add the ability to configure backups in the UI)
     # Note: Applicable only for "aws", "gcp", "azure", because:
@@ -20,7 +20,7 @@
         - pgbackrest_auto_conf | default(true) | bool # to be able to disable auto backup settings
       tags: always
   roles:
-    - role: cloud-resources
+    - role: cloud_resources
       when: cloud_provider | default('') | length > 0
       tags: always
 
@@ -34,15 +34,15 @@
 
   pre_tasks:
     - name: Include main variables
-      ansible.builtin.include_vars: "vars/main.yml"
+      ansible.builtin.include_vars: "roles/common/defaults/main.yml"
       tags: always
 
     - name: Include system variables
-      ansible.builtin.include_vars: "vars/system.yml"
+      ansible.builtin.include_vars: "roles/common/defaults/system.yml"
       tags: always
 
     - name: Include OS-specific variables
-      ansible.builtin.include_vars: "vars/{{ ansible_os_family }}.yml"
+      ansible.builtin.include_vars: "roles/common/defaults/{{ ansible_os_family }}.yml"
       tags: always
 
     - name: System info
@@ -192,10 +192,10 @@
 
   roles:
     # (optional) if 'ssh_public_keys' is defined
-    - role: authorized-keys
+    - role: authorized_keys
       tags: ssh_public_keys
 
-    - role: pre-checks
+    - role: pre_checks
       vars:
         minimal_ansible_version: 2.16.0
         timescale_minimal_pg_version: 12 # if enable_timescale is defined
@@ -229,15 +229,15 @@
 
   pre_tasks:
     - name: Include main variables
-      ansible.builtin.include_vars: "vars/main.yml"
+      ansible.builtin.include_vars: "roles/common/defaults/main.yml"
       tags: always
 
     - name: Include system variables
-      ansible.builtin.include_vars: "vars/system.yml"
+      ansible.builtin.include_vars: "roles/common/defaults/system.yml"
       tags: always
 
     - name: Include OS-specific variables
-      ansible.builtin.include_vars: "vars/{{ ansible_os_family }}.yml"
+      ansible.builtin.include_vars: "roles/common/defaults/{{ ansible_os_family }}.yml"
       tags: always
 
     - name: Build a firewall_ports_dynamic_var
@@ -261,7 +261,7 @@
       when: dcs_type == "consul" and consul_dnsmasq_enable | bool and ('127.0.0.1' not in (nameservers | default([])))
 
   roles:
-    - role: ansible-role-firewall
+    - role: firewall
       vars:
         firewall_allowed_tcp_ports: "{{ firewall_ports_dynamic_var | default([]) | unique }}"
         firewall_additional_rules: "{{ firewall_rules_dynamic_var | default([]) | unique }}"
@@ -270,7 +270,7 @@
 
     - role: resolv_conf
     - role: etc_hosts
-    - role: add-repository
+    - role: add_repository
     - role: packages
     - role: sudo
     - role: mount
@@ -278,11 +278,11 @@
     - role: sysctl
     - role: transparent_huge_pages
     - role: pam_limits
-    - role: io-scheduler
+    - role: io_scheduler
     - role: locales
     - role: timezone
     - role: ntp
-    - role: ssh-keys
+    - role: ssh_keys
     - role: copy
 
 - name: deploy_pgcluster.yml | Deploy balancers
@@ -299,11 +299,11 @@
 
   pre_tasks:
     - name: Include main variables
-      ansible.builtin.include_vars: "vars/main.yml"
+      ansible.builtin.include_vars: "roles/common/defaults/main.yml"
       tags: always
 
     - name: Include OS-specific variables
-      ansible.builtin.include_vars: "vars/{{ ansible_os_family }}.yml"
+      ansible.builtin.include_vars: "roles/common/defaults/{{ ansible_os_family }}.yml"
       tags: always
 
     # if 'cloud_provider' is 'aws', 'gcp', or 'azure'
@@ -331,15 +331,15 @@
 
   pre_tasks:
     - name: Include main variables
-      ansible.builtin.include_vars: "vars/main.yml"
+      ansible.builtin.include_vars: "roles/common/defaults/main.yml"
       tags: always
 
     - name: Include system variables
-      ansible.builtin.include_vars: "vars/system.yml"
+      ansible.builtin.include_vars: "roles/common/defaults/system.yml"
       tags: always
 
     - name: Include OS-specific variables
-      ansible.builtin.include_vars: "vars/{{ ansible_os_family }}.yml"
+      ansible.builtin.include_vars: "roles/common/defaults/{{ ansible_os_family }}.yml"
       tags: always
 
     # if 'cloud_provider' is 'aws', 'gcp', or 'azure'
@@ -354,7 +354,7 @@
       tags: always
 
   roles:
-    - role: wal-g
+    - role: wal_g
       when: wal_g_install|bool
 
     - role: pg_probackup
@@ -375,25 +375,25 @@
     - role: pgbackrest/stanza-create
       when: pgbackrest_install | bool
 
-    - role: vip-manager
+    - role: vip_manager
       when: not with_haproxy_load_balancing|bool and
         (cluster_vip is defined and cluster_vip | length > 0)
 
     # optional
-    - role: postgresql-users
-      when: is_master | bool and postgresql_users | length > 0
+    - role: postgresql_users
+      when: inventory_hostname == groups['master'][0]
 
-    - role: postgresql-databases
-      when: is_master | bool and postgresql_databases | length > 0
+    - role: postgresql_databases
+      when: inventory_hostname == groups['master'][0]
 
-    - role: postgresql-schemas
-      when: is_master | bool and postgresql_schemas | length > 0
+    - role: postgresql_schemas
+      when: inventory_hostname == groups['master'][0]
 
-    - role: postgresql-privs
-      when: is_master | bool and postgresql_privs | default('') | length > 0
+    - role: postgresql_privs
+      when: inventory_hostname == groups['master'][0]
 
-    - role: postgresql-extensions
-      when: is_master | bool and postgresql_extensions | length > 0
+    - role: postgresql_extensions
+      when: inventory_hostname == groups['master'][0]
 
     - role: pgbouncer/config
       when: pgbouncer_install|bool
@@ -401,7 +401,7 @@
     - role: netdata
 
     # finish (info)
-    - role: deploy-finish
+    - role: deploy_finish
 
   tasks:
     # (optional) Command or script to be executed after the Postgres cluster deployment.

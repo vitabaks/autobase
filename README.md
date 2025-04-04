@@ -56,7 +56,7 @@ This scheme enables load distribution for read operations and also allows for sc
 
 When deploying to cloud providers such as AWS, GCP, Azure, DigitalOcean, and Hetzner Cloud, a cloud load balancer is automatically created by default to provide a single entry point to the database (controlled by the `cloud_load_balancer` variable).
 
-For non-cloud environments, such as when deploying on Your Own Machines, the HAProxy load balancer is available for use. To enable it, set `with_haproxy_load_balancing: true` in the vars/main.yml file.
+For non-cloud environments, such as when deploying on Your Own Machines, the HAProxy load balancer is available for use. To enable it, set `with_haproxy_load_balancing: true` variable.
 
 > [!NOTE]
 > Your application must have support sending read requests to a custom port 5001, and write requests to port 5000.
@@ -79,7 +79,7 @@ List of ports when using HAProxy:
 
 #### 3. PostgreSQL High-Availability with Consul Service Discovery
 
-To use this scheme, specify `dcs_type: consul` in variable file vars/main.yml
+To use this scheme, specify `dcs_type: consul` variable.
 
 This scheme is suitable for master-only access and for load balancing (using DNS) for reading across replicas. Consul [Service Discovery](https://developer.hashicorp.com/consul/docs/concepts/service-discovery) with [DNS resolving ](https://developer.hashicorp.com/consul/docs/discovery/dns) is used as a client access point to the database.
 
@@ -178,102 +178,64 @@ While the Console (UI) is designed for ease of use and is suitable for most user
 
 0. [Install Ansible](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html) on one control node (which could easily be a laptop)
 
-```
+```sh
 sudo apt update && sudo apt install -y python3-pip sshpass git
 pip3 install ansible
 ```
 
-1. Download or clone this repository
+1. Install the Autobase Collection
 
-```
-git clone https://github.com/vitabaks/autobase.git
-```
-
-2. Go to the automation directory
-
-```
-cd autobase/automation
+```sh
+# from Ansible Galaxy
+ansible-galaxy collection install vitabaks.autobase
 ```
 
-3. Install requirements on the control node
+Or reference it in a `requirements.yml`:
 
-```
-ansible-galaxy install --force -r requirements.yml
-```
-
-Note: If you plan to use Consul (`dcs_type: consul`), install the consul role requirements
-
-```
-ansible-galaxy install -r roles/consul/requirements.yml
+```yml
+# from Ansible Galaxy
+collections:
+  - name: vitabaks.autobase
+    version: 2.2.0
 ```
 
-4. Edit the inventory file
+2. Prepare the inventory
+
+See example of [inventory](./automation/inventory.example) file.
 
 Specify (non-public) IP addresses and connection settings (`ansible_user`, `ansible_ssh_pass` or `ansible_ssh_private_key_file` for your environment
 
-```
-nano inventory
-```
+3. Prepare variables
 
-5. Edit the variable file vars/[main.yml](./automation/vars/main.yml)
+See the [main.yml](./automation/roles/common/defaults/main.yml), [system.yml](./automation/roles/common/defaults/system.yml) and ([Debian.yml](./automation/roles/common/defaults/Debian.yml) or [RedHat.yml](./automation/roles/common/defaults/RedHat.yml)) variable files for more details.
 
-```
-nano vars/main.yml
-```
+4. Test host connectivity
 
-Minimum set of variables:
-
-- `proxy_env` to download packages in environments without direct internet access (optional)
-- `patroni_cluster_name`
-- `postgresql_version`
-- `postgresql_data_dir`
-- `cluster_vip` to provide a single entry point for client access to databases in the cluster (optional)
-- `with_haproxy_load_balancing` to enable load balancing (optional)
-- `dcs_type` "etcd" (default) or "consul"
-
-See the vars/[main.yml](./automation/vars/main.yml), [system.yml](./automation/vars/system.yml) and ([Debian.yml](./automation/vars/Debian.yml) or [RedHat.yml](./automation/vars/RedHat.yml)) files for more details.
-
-6. Try to connect to hosts
-
-```
+```sh
 ansible all -m ping
 ```
 
-7. Run playbook:
+5. Create playbook to execute the playbooks within the collection:
 
-```
-ansible-playbook deploy_pgcluster.yml
-```
+```yaml
+- name: Playbook
+  hosts: <node group name>
 
-#### Deploy Cluster with TimescaleDB
-
-To deploy a PostgreSQL High-Availability Cluster with the [TimescaleDB](https://github.com/timescale/timescaledb) extension, add the `enable_timescale` variable:
-
-Example:
-
-```
-ansible-playbook deploy_pgcluster.yml -e "enable_timescale=true"
+  tasks:
+    # Start with the 'deploy' playbook, change to 'config' afterwards
+    - name: Run playbook
+      ansible.builtin.include_playbook: vitabaks.autobase.deploy_pgcluster
 ```
 
-[![asciicast](https://asciinema.org/a/251019.svg)](https://asciinema.org/a/251019?speed=5)
+#### How to start from scratch
 
-### How to start from scratch
-
-If you need to start from the very beginning, you can use the playbook `remove_cluster.yml`.
+If you need to start from the very beginning, you can use the `remove_cluster` playbook.
 
 Available variables:
 
 - `remove_postgres`: stop the PostgreSQL service and remove data.
 - `remove_etcd`: stop the ETCD service and remove data.
 - `remove_consul`: stop the Consul service and remove data.
-
-Run the following command to remove specific components:
-
-```bash
-ansible-playbook remove_cluster.yml -e "remove_postgres=true remove_etcd=true"
-```
-
-This command will delete the specified components, allowing you to start a new installation from scratch.
 
 :warning: **Caution:** be careful when running this command in a production environment.
 
