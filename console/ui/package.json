@@ -70,7 +70,7 @@
     "prettier": "^3.5.3",
     "sass": "^1.86.0",
     "typescript": "^5.8.2",
-    "vite": "^5.4.14",
+    "vite": "^5.4.18",
     "vite-plugin-svgr": "^4.3.0",
     "vitest": "^1.6.1"
   }
