@@ -1,6 +1,7 @@
+---
 # Backups (if 'pgbackrest_install' or 'wal_g_install' is 'true')
 aws_s3_bucket_create: true # if 'cloud_provider=aws'
-aws_s3_bucket_name: "{{ patroni_cluster_name }}-backup" # Name of the S3 bucket. Bucket naming rules: https://docs.aws.amazon.com/AmazonS3/latest/userguide/bucketnamingrules.html
+aws_s3_bucket_name: "{{ patroni_cluster_name }}-backup" # Name of the S3 bucket.
 aws_s3_bucket_region: "{{ server_location }}" # The AWS region to use.
 aws_s3_bucket_object_lock_enabled: false # Whether S3 Object Lock to be enabled.
 aws_s3_bucket_encryption: "AES256" # Describes the default server-side encryption to apply to new objects in the bucket. Choices: "AES256", "aws:kms"
@@ -10,15 +11,15 @@ aws_s3_bucket_absent: false # Allow to delete S3 bucket when deleting a cluster 
 
 gcp_bucket_create: true # if 'cloud_provider=gcp'
 gcp_bucket_name: "{{ patroni_cluster_name }}-backup" # Name of the GCS bucket.
-gcp_bucket_storage_class: "MULTI_REGIONAL" # The bucket’s default storage class. Values include: MULTI_REGIONAL, REGIONAL, STANDARD, NEARLINE, COLDLINE, ARCHIVE, DURABLE_REDUCED_AVAILABILITY.
+gcp_bucket_storage_class: "MULTI_REGIONAL" # The bucket’s default storage class.
 gcp_bucket_default_object_acl: "projectPrivate" # Apply a predefined set of default object access controls to this bucket.
 gcp_bucket_absent: false # Allow to delete GCS bucket when deleting a cluster servers using the 'state=absent' variable.
 
 azure_blob_storage_create: true # if 'cloud_provider=azure'
 azure_blob_storage_name: "{{ patroni_cluster_name }}-backup" # Name of a blob container within the storage account.
 azure_blob_storage_blob_type: "block" # Type of blob object. Values include: block, page.
-azure_blob_storage_account_name: "{{ patroni_cluster_name | lower | replace('-', '') | truncate(24, true, '') }}" # Storage account name must be between 3 and 24 characters in length and use numbers and lower-case letters only.
-azure_blob_storage_account_type: "Standard_RAGRS" # Type of storage account. Values include: Standard_LRS, Standard_GRS, Standard_RAGRS, Standard_ZRS, Standard_RAGZRS, Standard_GZRS, Premium_LRS, Premium_ZRS.
+azure_blob_storage_account_name: "{{ patroni_cluster_name | lower | replace('-', '') | truncate(24, true, '') }}"
+azure_blob_storage_account_type: "Standard_RAGRS" # Type of storage account.
 azure_blob_storage_account_kind: "BlobStorage" # The kind of storage. Values include: Storage, StorageV2, BlobStorage, BlockBlobStorage, FileStorage.
 azure_blob_storage_account_access_tier: "Hot" # The access tier for this storage account. Required when kind=BlobStorage.
 azure_blob_storage_account_public_network_access: "Enabled" # Allow public network access to Storage Account to create Blob Storage container.

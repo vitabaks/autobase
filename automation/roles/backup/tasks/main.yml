@@ -1,3 +1,4 @@
+---
 - name: Import tasks for aws
   ansible.builtin.import_tasks: aws.yml
   when: backup_provider == 'aws'
