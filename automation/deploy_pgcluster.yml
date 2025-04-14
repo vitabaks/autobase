@@ -361,7 +361,7 @@
     - role: backup
       when: (wal_g_install | bool) or (pgbackrest_install | bool)
 
-    - role: wal-g
+    - role: wal_g
       when: wal_g_install|bool
 
     - role: pg_probackup
