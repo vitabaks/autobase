@@ -94,7 +94,7 @@ If these checks pass, the playbook switches back to the old PostgreSQL paths and
 | `pgbackrest_stanza_upgrade`                  | Perform the "stanza-upgrade" command after the upgrade (if 'pgbackrest_install' is 'true').                                                                                           |        `true` |
 
 Note: For variables marked as "Derived value", the default value is determined based on other variables. \
-Please see the variable file vars/[upgrade.yml](../../vars/upgrade.yml)
+Please see the [upgrade.yml](../common/defaults/upgrade.yml) variable file.
 
 ---
 
@@ -163,7 +163,7 @@ Please see the variable file vars/[upgrade.yml](../../vars/upgrade.yml)
   - Initialize new PostgreSQL data directory
     - for Debain based: on all database servers to create default config files
     - for RedHat based: on the Primary only
-- **Copy files specified in the `copy_files_to_all_server` variable** (vars/upgrade.yml), [optional]
+- **Copy files specified in the `copy_files_to_all_server` variable**, [optional]
   - Notes: for example, it may be necessary for Postgres Full-Text Search (FTS) files
 - **Schema compatibility check**
   - Get the current `shared_preload_libraries` settings

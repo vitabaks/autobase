@@ -56,7 +56,7 @@ This scheme enables load distribution for read operations and also allows for sc
 
 When deploying to cloud providers such as AWS, GCP, Azure, DigitalOcean, and Hetzner Cloud, a cloud load balancer is automatically created by default to provide a single entry point to the database (controlled by the `cloud_load_balancer` variable).
 
-For non-cloud environments, such as when deploying on Your Own Machines, the HAProxy load balancer is available for use. To enable it, set `with_haproxy_load_balancing: true` in the vars/main.yml file.
+For non-cloud environments, such as when deploying on Your Own Machines, the HAProxy load balancer is available for use. To enable it, set `with_haproxy_load_balancing: true` variable.
 
 > [!NOTE]
 > Your application must have support sending read requests to a custom port 5001, and write requests to port 5000.
@@ -79,7 +79,7 @@ List of ports when using HAProxy:
 
 #### 3. PostgreSQL High-Availability with Consul Service Discovery
 
-To use this scheme, specify `dcs_type: consul` in variable file vars/main.yml
+To use this scheme, specify `dcs_type: consul` variable.
 
 This scheme is suitable for master-only access and for load balancing (using DNS) for reading across replicas. Consul [Service Discovery](https://developer.hashicorp.com/consul/docs/concepts/service-discovery) with [DNS resolving ](https://developer.hashicorp.com/consul/docs/discovery/dns) is used as a client access point to the database.
 
@@ -130,20 +130,116 @@ _Table of results of daily automated testing of cluster deployment:_
 
 ## Getting Started
 
-You have the option to easily deploy Postgres clusters using the Console (UI), command line, or GitOps.
+You have the option to deploy Postgres clusters using the Console (UI), command line, or GitOps.
 
 > [!TIP]
-> 📩 **Contact us at info@autobase.tech**, and our team will provide you with detailed deployment instructions and help you implement Autobase into your infrastructure.
+> 📩 Contact us at info@autobase.tech, and our team will help you implement Autobase into your infrastructure.
 
-Deploying and managing PostgreSQL clusters can be challenging, especially without a dedicated database administrator (DBA).
-With **Autobase**, it becomes simpler: alongside powerful automation tools, you get **DBA as a Service (DBAaaS)**.
-This means access to PostgreSQL experts who will assist with deployment, maintenance, and optimization, ensuring your clusters run smoothly.
+### Console (UI)
 
-Explore our [support packages](https://autobase.tech/docs/support) to find a plan that fits your needs.
+The Autobase Console (UI) is the recommended method for most users. It is designed to be user-friendly, minimizing the risk of errors and making it easier than ever to set up your PostgreSQL clusters. This method is suitable for both beginners and those who prefer a visual interface for managing their PostgreSQL clusters.
+
+To run the autobase console, execute the following command:
+
+```
+docker run -d --name autobase-console \
+  --publish 80:80 \
+  --publish 8080:8080 \
+  --env PG_CONSOLE_API_URL=http://localhost:8080/api/v1 \
+  --env PG_CONSOLE_AUTHORIZATION_TOKEN=secret_token \
+  --env PG_CONSOLE_DOCKER_IMAGE=autobase/automation:latest \
+  --volume console_postgres:/var/lib/postgresql \
+  --volume /var/run/docker.sock:/var/run/docker.sock \
+  --volume /tmp/ansible:/tmp/ansible \
+  --restart=unless-stopped \
+  autobase/console:latest
+```
+
+> [!NOTE]
+> If you are running the console on a dedicated server (rather than on your laptop), replace `localhost` with the server’s IP address in the `PG_CONSOLE_API_URL` variable.
+
+> [!TIP]
+> It is recommended to run the console in the same network as your database servers to enable monitoring of the cluster status.
+
+**Open the Console UI**:
+
+Go to http://localhost:80 (or the address of your server) and use `secret_token` for authorization.
 
 ![Cluster creation demo](images/autobase_create_cluster_demo.gif)
 
 Refer to the [Deployment](https://autobase.tech/docs/category/deployment) section to learn more about the different deployment methods.
+
+### Command line
+
+<details><summary>Click here to expand... if you prefer the command line.</summary><p>
+
+The command line mode is suitable for advanced users who require greater flexibility and control over the deployment and management of their PostgreSQL clusters.
+While the Console (UI) is designed for ease of use and is suitable for most users, the command line provides powerful options for those experienced in automation and configuration.
+
+0. [Install Ansible](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html) on one control node (which could easily be a laptop)
+
+```sh
+sudo apt update && sudo apt install -y python3-pip sshpass git
+pip3 install ansible
+```
+
+1. Install the Autobase Collection
+
+```sh
+# from Ansible Galaxy
+ansible-galaxy collection install vitabaks.autobase
+```
+
+Or reference it in a `requirements.yml`:
+
+```yml
+# from Ansible Galaxy
+collections:
+  - name: vitabaks.autobase
+    version: 2.2.0
+```
+
+2. Prepare the inventory
+
+See example of [inventory](./automation/inventory.example) file.
+
+Specify (non-public) IP addresses and connection settings (`ansible_user`, `ansible_ssh_pass` or `ansible_ssh_private_key_file` for your environment
+
+3. Prepare variables
+
+See the [main.yml](./automation/roles/common/defaults/main.yml), [system.yml](./automation/roles/common/defaults/system.yml) and ([Debian.yml](./automation/roles/common/defaults/Debian.yml) or [RedHat.yml](./automation/roles/common/defaults/RedHat.yml)) variable files for more details.
+
+4. Test host connectivity
+
+```sh
+ansible all -m ping
+```
+
+5. Create playbook to execute the playbooks within the collection:
+
+```yaml
+- name: Playbook
+  hosts: <node group name>
+
+  tasks:
+    # Start with the 'deploy' playbook, change to 'config' afterwards
+    - name: Run playbook
+      ansible.builtin.include_playbook: vitabaks.autobase.deploy_pgcluster
+```
+
+#### How to start from scratch
+
+If you need to start from the very beginning, you can use the `remove_cluster` playbook.
+
+Available variables:
+
+- `remove_postgres`: stop the PostgreSQL service and remove data.
+- `remove_etcd`: stop the ETCD service and remove data.
+- `remove_consul`: stop the Consul service and remove data.
+
+:warning: **Caution:** be careful when running this command in a production environment.
+
+</p></details>
 
 ## Star us
 

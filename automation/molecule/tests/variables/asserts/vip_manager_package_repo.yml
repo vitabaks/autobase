@@ -7,7 +7,16 @@
 - name: Molecule.tests.variables.asserts.vip_manager_package_repo| Common | Setting vip_manager_version
   run_once: true
   ansible.builtin.set_fact:
-    vip_manager_version: "1.0.0"
+    vip_manager_version: "3.0.0"
+
+- name: Molecule.tests.variables.asserts.vip_manager_package_repo| Common | Setting vip_manager_architecture_map
+  ansible.builtin.set_fact:
+    vip_manager_architecture_map:
+      amd64: x86_64
+      x86_64: x86_64
+      aarch64: arm64
+      arm64: arm64
+  when: vip_manager_architecture_map is not defined
 
 # ===============================================
 # 💾 Start Debian-specific operations and tests
@@ -18,14 +27,14 @@
 - name: Molecule.tests.variables.asserts.vip_manager_package_repo | Debian | Incorporate RedHat-specific Variables
   run_once: true
   ansible.builtin.include_vars:
-    file: ../../../../vars/Debian.yml
+    file: ../../../../roles/common/defaults/Debian.yml
 
 # 🔄 Define the origin_vip_manager_package_repo for Debian
 # This task defines the expected URL for the VIP Manager package for Debian OS
 - name: Molecule.tests.variables.asserts.vip_manager_package_repo | Debian | Define origin_vip_manager_package_repo
   run_once: true
   ansible.builtin.set_fact: # yamllint disable rule:line-length
-    origin_vip_manager_package_repo: "https://github.com/cybertec-postgresql/vip-manager/releases/download/v{{ vip_manager_version }}/vip-manager_{{ vip_manager_version }}_Linux_x86_64.deb"
+    origin_vip_manager_package_repo: "https://github.com/cybertec-postgresql/vip-manager/releases/download/v{{ vip_manager_version }}/vip-manager_{{ vip_manager_version }}_Linux_{{ vip_manager_architecture_map[ansible_architecture]}}.deb"
 
 # 🖨️ Debug the vip_manager_package_repo for Debian
 # This task prints the actual URL for the VIP Manager package for Debian OS
@@ -55,14 +64,14 @@
 - name: Molecule.tests.variables.asserts.vip_manager_package_repo | RedHat | Incorporate RedHat-specific Variables
   run_once: true
   ansible.builtin.include_vars:
-    file: ../../../../vars/RedHat.yml
+    file: ../../../../roles/common/defaults/RedHat.yml
 
 # 🔄 Define the origin_vip_manager_package_repo for RedHat
 # This task defines the expected URL for the VIP Manager package for RedHat OS
 - name: Molecule.tests.variables.asserts.vip_manager_package_repo | RedHat | Define origin_vip_manager_package_repo
   run_once: true
   ansible.builtin.set_fact: # yamllint disable rule:line-length
-    origin_vip_manager_package_repo: "https://github.com/cybertec-postgresql/vip-manager/releases/download/v{{ vip_manager_version }}/vip-manager_{{ vip_manager_version }}_Linux_x86_64.rpm"
+    origin_vip_manager_package_repo: "https://github.com/cybertec-postgresql/vip-manager/releases/download/v{{ vip_manager_version }}/vip-manager_{{ vip_manager_version }}_Linux_{{ vip_manager_architecture_map[ansible_architecture]}}.rpm"
 
 # 🖨️ Debug the vip_manager_package_repo for RedHat
 # This task prints the actual URL for the VIP Manager package for RedHat OS

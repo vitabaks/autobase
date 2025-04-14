@@ -7,7 +7,7 @@
   any_errors_fatal: true
   pre_tasks:
     - name: Include main variables
-      ansible.builtin.include_vars: "vars/main.yml"
+      ansible.builtin.include_vars: "roles/common/defaults/main.yml"
       tags: always
   tasks:
     - name: "[Prepare] Get Patroni Cluster Leader Node"
@@ -57,9 +57,9 @@
     - name: Include role variables
       ansible.builtin.include_vars: "roles/update/vars/main.yml"
     - name: Include main variables
-      ansible.builtin.include_vars: "vars/main.yml"
+      ansible.builtin.include_vars: "roles/common/defaults/main.yml"
     - name: Include OS-specific variables
-      ansible.builtin.include_vars: "vars/{{ ansible_os_family }}.yml"
+      ansible.builtin.include_vars: "roles/common/defaults/{{ ansible_os_family }}.yml"
   tasks:
     - name: Running Pre-Checks
       ansible.builtin.include_role:
@@ -89,9 +89,9 @@
     - name: Include role variables
       ansible.builtin.include_vars: "roles/update/vars/main.yml"
     - name: Include main variables
-      ansible.builtin.include_vars: "vars/main.yml"
+      ansible.builtin.include_vars: "roles/common/defaults/main.yml"
     - name: Include OS-specific variables
-      ansible.builtin.include_vars: "vars/{{ ansible_os_family }}.yml"
+      ansible.builtin.include_vars: "roles/common/defaults/{{ ansible_os_family }}.yml"
   tasks:
     - name: Stop read-only traffic
       ansible.builtin.include_role:
@@ -145,9 +145,9 @@
     - name: Include role variables
       ansible.builtin.include_vars: "roles/update/vars/main.yml"
     - name: Include main variables
-      ansible.builtin.include_vars: "vars/main.yml"
+      ansible.builtin.include_vars: "roles/common/defaults/main.yml"
     - name: Include OS-specific variables
-      ansible.builtin.include_vars: "vars/{{ ansible_os_family }}.yml"
+      ansible.builtin.include_vars: "roles/common/defaults/{{ ansible_os_family }}.yml"
   tasks:
     - name: "Switchover Patroni leader role"
       ansible.builtin.include_role:
@@ -205,9 +205,9 @@
     - name: Include role variables
       ansible.builtin.include_vars: "roles/update/vars/main.yml"
     - name: Include main variables
-      ansible.builtin.include_vars: "vars/main.yml"
+      ansible.builtin.include_vars: "roles/common/defaults/main.yml"
     - name: Include OS-specific variables
-      ansible.builtin.include_vars: "vars/{{ ansible_os_family }}.yml"
+      ansible.builtin.include_vars: "roles/common/defaults/{{ ansible_os_family }}.yml"
   tasks:
     - name: Update extensions
       ansible.builtin.include_role:

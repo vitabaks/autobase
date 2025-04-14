@@ -31,6 +31,21 @@
     - /etc/confd/templates
   tags: confd_dir, confd_conf, confd
 
+# TLS (etcd)
+- name: Copy etcd cert files for confd
+  ansible.builtin.include_role:
+    name: ../roles/tls_certificate/copy
+  vars:
+    tls_group_name: "etcd_cluster"
+    fetch_tls_dir: "{{ etcd_tls_dir | default('/etc/etcd/tls') }}"
+    copy_tls_dir: "{{ confd_etcd_tls_dir | default('/etc/confd/tls/etcd') }}"
+    copy_tls_owner: "root"
+  when:
+    - tls_cert_generate | bool
+    - dcs_type == "etcd"
+    - not dcs_exists | bool
+  tags: patroni, patroni_conf
+
 - block:
     - name: Generate conf file "/etc/confd/confd.toml"
       ansible.builtin.template:

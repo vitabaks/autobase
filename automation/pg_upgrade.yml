@@ -9,10 +9,10 @@
   any_errors_fatal: true
   pre_tasks:
     - name: Include main variables
-      ansible.builtin.include_vars: "vars/main.yml"
+      ansible.builtin.include_vars: "roles/common/defaults/main.yml"
 
     - name: Include upgrade variables
-      ansible.builtin.include_vars: "vars/upgrade.yml"
+      ansible.builtin.include_vars: "roles/common/defaults/upgrade.yml"
 
     - name: "[Prepare] Get Patroni Cluster Leader Node"
       ansible.builtin.uri:
@@ -65,11 +65,11 @@
   environment: "{{ proxy_env | default({}) }}"
   pre_tasks:
     - name: Include main variables
-      ansible.builtin.include_vars: "vars/main.yml"
+      ansible.builtin.include_vars: "roles/common/defaults/main.yml"
     - name: Include OS-specific variables
-      ansible.builtin.include_vars: "vars/{{ ansible_os_family }}.yml"
+      ansible.builtin.include_vars: "roles/common/defaults/{{ ansible_os_family }}.yml"
     - name: Include upgrade variables
-      ansible.builtin.include_vars: "vars/upgrade.yml"
+      ansible.builtin.include_vars: "roles/common/defaults/upgrade.yml"
   tasks:
     - name: Running Pre-Checks
       ansible.builtin.include_role:
@@ -88,11 +88,11 @@
   environment: "{{ proxy_env | default({}) }}"
   pre_tasks:
     - name: Include main variables
-      ansible.builtin.include_vars: "vars/main.yml"
+      ansible.builtin.include_vars: "roles/common/defaults/main.yml"
     - name: Include OS-specific variables
-      ansible.builtin.include_vars: "vars/{{ ansible_os_family }}.yml"
+      ansible.builtin.include_vars: "roles/common/defaults/{{ ansible_os_family }}.yml"
     - name: Include upgrade variables
-      ansible.builtin.include_vars: "vars/upgrade.yml"
+      ansible.builtin.include_vars: "roles/common/defaults/upgrade.yml"
   tasks:
     - name: Install packages
       ansible.builtin.include_role:
@@ -111,11 +111,11 @@
   any_errors_fatal: true
   pre_tasks:
     - name: Include main variables
-      ansible.builtin.include_vars: "vars/main.yml"
+      ansible.builtin.include_vars: "roles/common/defaults/main.yml"
     - name: Include OS-specific variables
-      ansible.builtin.include_vars: "vars/{{ ansible_os_family }}.yml"
+      ansible.builtin.include_vars: "roles/common/defaults/{{ ansible_os_family }}.yml"
     - name: Include upgrade variables
-      ansible.builtin.include_vars: "vars/upgrade.yml"
+      ansible.builtin.include_vars: "roles/common/defaults/upgrade.yml"
   tasks:
     - name: Create Data directory and initdb
       ansible.builtin.include_role:
@@ -151,11 +151,11 @@
   any_errors_fatal: true
   pre_tasks:
     - name: Include main variables
-      ansible.builtin.include_vars: "vars/main.yml"
+      ansible.builtin.include_vars: "roles/common/defaults/main.yml"
     - name: Include OS-specific variables
-      ansible.builtin.include_vars: "vars/{{ ansible_os_family }}.yml"
+      ansible.builtin.include_vars: "roles/common/defaults/{{ ansible_os_family }}.yml"
     - name: Include upgrade variables
-      ansible.builtin.include_vars: "vars/upgrade.yml"
+      ansible.builtin.include_vars: "roles/common/defaults/upgrade.yml"
   tasks:
     - name: Patroni config
       ansible.builtin.include_role:
@@ -173,11 +173,11 @@
   any_errors_fatal: true
   pre_tasks:
     - name: Include main variables
-      ansible.builtin.include_vars: "vars/main.yml"
+      ansible.builtin.include_vars: "roles/common/defaults/main.yml"
     - name: Include OS-specific variables
-      ansible.builtin.include_vars: "vars/{{ ansible_os_family }}.yml"
+      ansible.builtin.include_vars: "roles/common/defaults/{{ ansible_os_family }}.yml"
     - name: Include upgrade variables
-      ansible.builtin.include_vars: "vars/upgrade.yml"
+      ansible.builtin.include_vars: "roles/common/defaults/upgrade.yml"
   tasks:
     - name: Enable maintenance mode
       ansible.builtin.include_role:
@@ -236,11 +236,11 @@
   any_errors_fatal: true
   pre_tasks:
     - name: Include main variables
-      ansible.builtin.include_vars: "vars/main.yml"
+      ansible.builtin.include_vars: "roles/common/defaults/main.yml"
     - name: Include OS-specific variables
-      ansible.builtin.include_vars: "vars/{{ ansible_os_family }}.yml"
+      ansible.builtin.include_vars: "roles/common/defaults/{{ ansible_os_family }}.yml"
     - name: Include upgrade variables
-      ansible.builtin.include_vars: "vars/upgrade.yml"
+      ansible.builtin.include_vars: "roles/common/defaults/upgrade.yml"
   tasks:
     - name: Analyze database
       ansible.builtin.include_role:

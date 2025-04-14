@@ -4,7 +4,7 @@
 
 # 🔄 Ensuring 'timescaledb' is included in 'shared_preload_libraries'
 # If 'timescaledb' is not already in 'shared_preload_libraries', it is added
-- name: Molecule.tests.roles.pre-checks.variables.timescaledb | Ensure 'timescaledb' is in 'shared_preload_libraries'
+- name: Molecule.tests.roles.pre_checks.variables.timescaledb | Ensure 'timescaledb' is in 'shared_preload_libraries'
   run_once: true
   ansible.builtin.set_fact:
     postgresql_parameters: >-
@@ -25,7 +25,7 @@
       }}
 
 # 📝 Setting 'shared_preload_libraries_item' as a fact for further use
-- name: Molecule.tests.roles.pre-checks.variables.timescaledb | Set 'shared_preload_libraries_item' as a fact
+- name: Molecule.tests.roles.pre_checks.variables.timescaledb | Set 'shared_preload_libraries_item' as a fact
   run_once: true
   ansible.builtin.set_fact:
     shared_preload_libraries_item: >-
@@ -37,7 +37,7 @@
 
 # ✅ Verifying that 'timescaledb' is included in 'shared_preload_libraries'
 # If 'timescaledb' is not included, the test fails and an error message is displayed
-- name: Molecule.tests.roles.pre-checks.variables.timescaledb | Assert that 'timescaledb' is in 'shared_preload_libraries'
+- name: Molecule.tests.roles.pre_checks.variables.timescaledb | Assert that 'timescaledb' is in 'shared_preload_libraries'
   run_once: true
   ansible.builtin.assert:
     that:
@@ -46,14 +46,14 @@
     success_msg: "'timescaledb' is in 'shared_preload_libraries'"
 
 # 📝 Setting 'origin_shared_preload_libraries_item' as a fact for further use
-- name: Molecule.tests.roles.pre-checks.variables.timescaledb | Set 'origin_shared_preload_libraries_item' as a fact
+- name: Molecule.tests.roles.pre_checks.variables.timescaledb | Set 'origin_shared_preload_libraries_item' as a fact
   run_once: true
   ansible.builtin.set_fact: # yamllint disable rule:line-length
     origin_shared_preload_libraries_item: "{{ postgresql_parameters | selectattr('option', 'equalto', 'shared_preload_libraries') | list | last | default({'value': ''}) }}"
 
 # ✅ Verifying that the new 'shared_preload_libraries_item' equals 'origin_shared_preload_libraries_item'
 # If they are not equal, the test fails and an error message is displayed
-- name: Molecule.tests.roles.pre-checks.variables.timescaledb | Assert that new 'shared_preload_libraries_item' equals 'origin_shared_preload_libraries_item'
+- name: Molecule.tests.roles.pre_checks.variables.timescaledb | Assert that new 'shared_preload_libraries_item' equals 'origin_shared_preload_libraries_item'
   run_once: true
   ansible.builtin.assert:
     that:

@@ -85,15 +85,40 @@
     state: directory
   tags: etcd, etcd_conf
 
-- name: Fetch etcd TLS certificate, key and CA from the master node
-  ansible.builtin.include_role:
-    name: ../roles/tls_certificate/copy
-  vars:
-    copy_tls_cert_path: "{{ tls_etcd_cert_path | default('/etc/etcd/tls/server.crt') }}"
-    copy_tls_ca_cert_path: "{{ tls_etcd_ca_cert_path | default('/etc/etcd/tls/ca.crt') }}"
-    copy_tls_privatekey_path: "{{ tls_etcd_privatekey_path | default('/etc/etcd/tls/server.key') }}"
-    copy_tls_owner: "etcd"
-  when: tls_cert_generate|bool
+# TLS
+- block:
+    # if 'etcd_on_dedicated_nodes' is 'false'
+    - name: Copy etcd TLS certificate, key and CA from the master node
+      ansible.builtin.include_role:
+        name: ../roles/tls_certificate/copy
+      vars:
+        tls_group_name: "postgres_cluster"
+        copy_tls_dir: "{{ etcd_tls_dir | default('/etc/etcd/tls') }}"
+        copy_tls_owner: "etcd"
+      when: not etcd_on_dedicated_nodes | default(false) | bool
+
+    # if 'etcd_on_dedicated_nodes' is 'true'
+    - name: Generate etcd TLS certificate
+      ansible.builtin.include_role:
+        name: ../roles/tls_certificate/generate
+      vars:
+        tls_group_name: "etcd_cluster"
+        generate_tls_owner: "etcd"
+        generate_tls_common_name: "etcd"
+        generate_tls_dir: "{{ etcd_tls_dir | default('/etc/etcd/tls') }}"
+        tls_cert_regenerate: "{{ etcd_tls_cert_regenerate | default(false) }}" # Do not generate new certificates if they already exist.
+      when: etcd_on_dedicated_nodes | default(false) | bool
+
+    - name: Copy etcd TLS files to all etcd nodes
+      ansible.builtin.include_role:
+        name: ../roles/tls_certificate/copy
+      vars:
+        tls_group_name: "etcd_cluster"
+        fetch_tls_dir: "{{ etcd_tls_dir | default('/etc/etcd/tls') }}"
+        copy_tls_dir: "{{ etcd_tls_dir | default('/etc/etcd/tls') }}"
+        copy_tls_owner: "etcd"
+      when: etcd_on_dedicated_nodes | default(false) | bool
+  when: tls_cert_generate | default(true) | bool
   tags: etcd, etcd_conf
 
 - name: Create etcd data directory
@@ -139,10 +164,10 @@
       ansible.builtin.command: >
         /usr/local/bin/etcdctl endpoint health
         --endpoints={{ patroni_etcd_protocol | default('http', true) }}://{{ inventory_hostname }}:2379
-        {% if tls_cert_generate | default(false) | bool %}
-        --cacert={{ tls_etcd_ca_cert_path | default('/etc/etcd/tls/ca.crt') }}
-        --cert={{ tls_etcd_cert_path | default('/etc/etcd/tls/server.crt') }}
-        --key={{ tls_etcd_privatekey_path | default('/etc/etcd/tls/server.key') }}
+        {% if etcd_tls_enable | default(false) | bool %}
+        --cacert={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_ca_crt | default('ca.crt') }}
+        --cert={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_server_crt | default('server.crt') }}
+        --key={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_server_key | default('server.key') }}
         {% endif %}
       environment:
         ETCDCTL_API: "3"
