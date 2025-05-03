@@ -79,7 +79,7 @@
     - pgbackrest_conf.global | selectattr('option', 'equalto', 'backup-standby') | map(attribute='value') | list | last | default('') == 'y'
 
 - name: known_hosts | Get public ssh keys of hosts (ssh-keyscan)
-  ansible.builtin.command: "ssh-keyscan -trsa -p {{ ansible_ssh_port | default(22) }} {{ item }}"
+  ansible.builtin.command: "ssh-keyscan -trsa -p {{ hostvars[item].ansible_ssh_port | default(hostvars[item].ansible_port) | default(22) }} {{ item }}"
   loop: "{{ groups['all'] }}"
   register: ssh_known_host_keyscan
   changed_when: false
@@ -88,7 +88,7 @@
   become: true
   become_user: postgres
   ansible.builtin.known_hosts:
-    host: "{{ item.item }}"
+    name: "{{ item.stdout.split(' ')[0] }}"
     key: "{{ item.stdout }}"
     path: "~postgres/.ssh/known_hosts"
   no_log: true
@@ -99,7 +99,7 @@
   become: true
   become_user: "{{ pgbackrest_repo_user }}"
   ansible.builtin.known_hosts:
-    host: "{{ item.item }}"
+    name: "{{ item.stdout.split(' ')[0] }}"
     key: "{{ item.stdout }}"
     path: "~{{ pgbackrest_repo_user }}/.ssh/known_hosts"
   no_log: true
