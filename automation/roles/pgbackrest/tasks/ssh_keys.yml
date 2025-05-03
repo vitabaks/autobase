@@ -88,7 +88,7 @@
   become: true
   become_user: postgres
   ansible.builtin.known_hosts:
-    name: "{{ item.stdout.split(' ')[0] }}"
+    host: "{{ item.stdout.split(' ')[0] }}"
     key: "{{ item.stdout }}"
     path: "~postgres/.ssh/known_hosts"
   no_log: true
@@ -99,7 +99,7 @@
   become: true
   become_user: "{{ pgbackrest_repo_user }}"
   ansible.builtin.known_hosts:
-    name: "{{ item.stdout.split(' ')[0] }}"
+    host: "{{ item.stdout.split(' ')[0] }}"
     key: "{{ item.stdout }}"
     path: "~{{ pgbackrest_repo_user }}/.ssh/known_hosts"
   no_log: true
