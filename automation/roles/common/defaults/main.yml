@@ -460,10 +460,10 @@ patroni_slots: []
 #    plugin: "pgoutput"
 #    database: "test"
 
-patroni_log_destination: stderr # or 'logfile'
+patroni_log_destination: logfile # or 'stderr'
 # if patroni_log_destination: logfile
 patroni_log_dir: /var/log/patroni
-patroni_log_level: info
+patroni_log_level: warning
 patroni_log_traceback_level: error
 patroni_log_format: "%(asctime)s %(levelname)s: %(message)s"
 patroni_log_dateformat: ""
