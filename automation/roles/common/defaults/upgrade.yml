@@ -75,7 +75,7 @@ max_transaction_sec: 15 # Maximum allowed duration for a transactions in seconds
 
 # (optional) Copy any files located in the "files" directory to all servers
 # example for Postgres Full-Text Search (FTS) files
-copy_files_to_all_server: []
+upgrade_copy_files_to_all_server: []
 #  - { src: "files/numbers.syn", dest: "/usr/share/postgresql/{{ pg_new_version }}/tsearch_data/numbers.syn", owner: "root", group: "root", mode: "0644" }
 #  - { src: "files/part_of_speech_russian.stop", dest: "/usr/share/postgresql/{{ pg_new_version }}/tsearch_data/part_of_speech_russian.stop", owner: "root", group: "root", mode: "0644" }
 #  - { src: "files/ru_ru.affix", dest: "/usr/share/postgresql/{{ pg_new_version }}/tsearch_data/ru_ru.affix", owner: "root", group: "root", mode: "0644" }
