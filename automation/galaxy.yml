@@ -30,16 +30,16 @@ tags:
   - autobase
 
 dependencies:
-  amazon.aws: "==9.3.0"
-  google.cloud: "==1.5.1"
-  azure.azcollection: "==3.3.1"
-  community.digitalocean: "==1.27.0"
-  hetzner.hcloud: "==4.3.0"
-  community.postgresql: "==3.12.0"
-  community.docker: "==4.4.0"
-  community.general: "==10.4.0"
-  ansible.posix: "==1.6.2"
-  ansible.utils: "==5.1.2"
+  amazon.aws: ">=9.3.0"
+  google.cloud: ">=1.5.1"
+  azure.azcollection: ">=3.3.1"
+  community.digitalocean: ">=1.27.0"
+  hetzner.hcloud: ">=4.3.0"
+  community.postgresql: ">=3.12.0"
+  community.docker: ">=4.4.0"
+  community.general: ">=10.4.0"
+  ansible.posix: ">=1.6.2"
+  ansible.utils: ">=5.1.2"
 
 repository: https://github.com/vitabaks/autobase
 documentation: https://autobase.tech/docs
