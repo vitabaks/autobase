@@ -122,15 +122,12 @@
         name: upgrade
         tasks_from: initdb
 
-    - name:  Substitution of a variable copy_files_to_all_server
-      set_fact:
-        copy_files_to_all_server: "{{ upgrade_copy_files_to_all_server  }}"
-
     # (optional) copy files specified in variable:
     # 'copy_files_to_all_server'
     - name: Copy files
       ansible.builtin.include_role:
         name: copy
+      vars: copy_files_to_all_server: "{{ upgrade_copy_files_to_all_server  }}"
 
     - name: Check Schema Compatibility
       ansible.builtin.import_role:
