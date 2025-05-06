@@ -154,9 +154,12 @@ haproxy_installation_method: "rpm" # "rpm" (default) or "src"
 confd_package_repo: "https://github.com/kelseyhightower/confd/releases/download/v0.16.0/confd-0.16.0-linux-{{ confd_architecture_map[ansible_architecture] }}"
 
 # if haproxy_installation_method: "src" (optional)
-haproxy_major: "1.8"
+haproxy_major: "{{ haproxy_version.split('.')[:2] | join('.') }}"
+# renovate: datasource=github-tags depName=haproxy/haproxy extractVersion=^v(?<version>.*)$
 haproxy_version: "1.8.31" # version to build from source
-lua_src_repo: "https://www.lua.org/ftp/lua-5.3.5.tar.gz" # required for build haproxy
+# renovate: datasource=github-releases depName=lua/lua extractVersion=^v(?<version>.*)$
+lua_version: 5.4.7
+lua_src_repo: "https://www.lua.org/ftp/lua-{{ lua_version }}.tar.gz" # required for build haproxy
 haproxy_src_repo: "https://www.haproxy.org/download/{{ haproxy_major }}/src/haproxy-{{ haproxy_version }}.tar.gz"
 haproxy_compile_requirements:
   - unzip
@@ -179,11 +182,15 @@ haproxy_compile_requirements:
 # Packages from this directory will be used for installation.
 
 # if installation_method: "file" and patroni_installation_method: "rpm"
-patroni_rpm_package_file: "patroni-3.3.2-1PGDG.rhel8.noarch.rpm"
+# renovate: datasource=github-releases depName=patroni/patroni extractVersion=^v(?<version>.*)$
+patroni_version: 4.0.5
+patroni_rpm_package_file: "patroni-{{ patroni_version }}-1PGDG.rhel8.noarch.rpm"
 # (package for RHEL 8) https://download.postgresql.org/pub/repos/yum/common/redhat/rhel-8-x86_64/
 
 # if installation_method: "file" and patroni_installation_method: "pip"
-pip_package_file: "pip-24.2.tar.gz" # https://pypi.org/project/pip/#files
+# renovate: datasource=github-tags depName=pypa/pip
+pip_version: 25.1.1
+pip_package_file: "pip-{{ pip_version }}.tar.gz" # https://pypi.org/project/pip/#files
 patroni_pip_requirements_file: []
 #  - "setuptools-41.2.0.zip"  # https://pypi.org/project/setuptools/#files
 #  - "setuptools_scm-3.3.3.tar.gz"  # https://pypi.org/project/setuptools-scm/#files
@@ -209,8 +216,12 @@ patroni_pip_package_file: []
 #  - "patroni-3.3.2.tar.gz"  # https://pypi.org/project/patroni/#files
 
 # additional packages
-etcd_package_file: "etcd-v3.5.17-linux-{{ etcd_architecture_map[ansible_architecture] }}.tar.gz" # https://github.com/etcd-io/etcd/releases
-vip_manager_package_file: "vip-manager_3.0.0_Linux_{{ vip_manager_architecture_map[ansible_architecture] }}.rpm" # https://github.com/cybertec-postgresql/vip-manager/releases
+# renovate: datasource=github-releases depName=etcd-io/etcd extractVersion=^v(?<version>.*)$
+etcd_version: 3.5.20
+etcd_package_file: "etcd-v{{ etcd_version }}-linux-{{ etcd_architecture_map[ansible_architecture] }}.tar.gz" # https://github.com/etcd-io/etcd/releases
+# renovate: datasource=github-releases depName=cybertec-postgresql/vip-manager extractVersion=^v(?<version>.*)$
+vip_manager_version: 3.0.0
+vip_manager_package_file: "vip-manager_{{ vip_manager_version }}_Linux_{{ vip_manager_architecture_map[ansible_architecture] }}.rpm" # https://github.com/cybertec-postgresql/vip-manager/releases
 wal_g_package_file: "wal-g-pg-ubuntu-20.04-{{ wal_g_architecture_map[ansible_architecture] }}.tar.gz" # https://github.com/wal-g/wal-g/releases
 
 # if with_haproxy_load_balancing: true
@@ -218,11 +229,13 @@ haproxy_package_file: []
 #  - "rh-haproxy18-runtime-3.1-2.el7.x86_64.rpm"
 #  - "rh-haproxy18-haproxy-1.8.31-1.el7.x86_64.rpm"
 
-confd_package_file: "confd-0.16.0-linux-amd64" # https://github.com/kelseyhightower/confd/releases
+# renovate: datasource=github-releases depName=kelseyhightower/confd extractVersion=^v(?<version>.*)$
+confd_version: 0.16.0
+confd_package_file: "confd-{{ confd_version }}-linux-{{ confd_architecture_map[ansible_architecture] }}" # https://github.com/kelseyhightower/confd/releases
 
 # if haproxy_installation_method: 'src' (optional)
-lua_src_file: "lua-5.3.5.tar.gz" # https://www.lua.org/ftp/lua-5.3.5.tar.gz (required for build haproxy)
-haproxy_src_file: "haproxy-1.8.31.tar.gz" # http://www.haproxy.org/download/1.8/src/
+lua_src_file: "lua-{{ lua_version }}.tar.gz" # https://www.lua.org/ftp/lua-5.3.5.tar.gz (required for build haproxy)
+haproxy_src_file: "haproxy-{{ haproxy_version }}.tar.gz" # http://www.haproxy.org/download/1.8/src/
 
 # ------------------------------------------------------------------------------------------------- #
 # (optional) Specify additional rpm packages if required (for any installation_method)
