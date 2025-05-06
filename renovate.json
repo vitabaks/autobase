@@ -1,6 +1,8 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["config:recommended"],
+  "extends": ["config:recommended", "group:recommended", "schedule:automergeDaily", "schedule:weekends", ":maintainLockFilesWeekly"],
+  "prConcurrentLimit": 5,
+  "labels": ["dependencies"]
   "customManagers": [
     {
       "customType": "regex",
