@@ -1,6 +1,17 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": [
-    "config:recommended"
+  "extends": ["config:recommended"],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "fileMatch": ["automation/roles/common/defaults/.*\\.ya?ml$"],
+      "matchStrings": [
+        "datasource=(?<datasource>.*?) depName=(?<depName>.*?)?( registryUrls=(?<registryUrls>.*?))?( versioning=(?<versioning>.*?))?( extractVersion=(?<extractVersion>.*?))?\\s.*?_version: (?<currentValue>.*)\\s"
+      ],
+      "registryUrlTemplate": "{{#if registryUrls}}{{{registryUrls}}}{{else}}https://github.com{{/if}}",
+      "datasourceTemplate": "{{#if datasource}}{{datasource}}{{else}}github-releases{{/if}}",
+      "depNameTemplate": "{{#if depName}}{{depName}}{{else}}{{packageName}}{{/if}}",
+      "packageNameTemplate": "{{#if depName}}{{depName}}{{else}}{{packageName}}{{/if}}"
+    }
   ]
 }
