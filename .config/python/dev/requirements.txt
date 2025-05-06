@@ -10,7 +10,7 @@ cffi==1.17.1
 charset-normalizer==3.4.1
 click==8.1.8
 click-help-colors==0.9.4
-cryptography==44.0.2
+cryptography==44.0.3
 docker==7.1.0
 enrich==1.2.7
 filelock==3.18.0
