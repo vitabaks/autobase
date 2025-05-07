@@ -38,7 +38,7 @@
   delegate_to: localhost
   run_once: true # noqa run-once
   no_log: true # do not output contents to the ansible log
-  when: cloud_provider | default('') | lower == 'aws'
+  when: cloud_provider | default('') | lower == 'aws' or backup_provider == 'aws_s3'
 
 # GCS Bucket (if 'cloud_provider=gcp')
 - block:
@@ -101,7 +101,7 @@
         group: "postgres"
       no_log: true # do not output GCP service account contents to the ansible log
       when: gcs_key_file is defined and gcs_key_file | length > 0
-  when: cloud_provider | default('') | lower == 'gcp'
+  when: cloud_provider | default('') | lower == 'gcp' or backup_provider == 'gcp_s3'
 
 # Azure Blob Storage (if 'cloud_provider=azure')
 - name: "Set variable 'pgbackrest_conf' for backup in Azure Blob Storage"
@@ -141,7 +141,7 @@
         - { option: "recovery-option", value: "recovery_target_action=promote" }
         - { option: "pg1-path", value: "{{ postgresql_data_dir }}" }
   no_log: true # do not output contents to the ansible log
-  when: cloud_provider | default('') | lower == 'azure'
+  when: cloud_provider | default('') | lower == 'azure' or backup_provider == 'azure_s3'
 
 # DigitalOcean Spaces Object Storage (if 'cloud_provider=digitalocean')
 # Note: requires the Spaces access keys "AWS_ACCESS_KEY_ID" and "AWS_SECRET_ACCESS_KEY" (https://cloud.digitalocean.com/account/api/spaces)
@@ -181,7 +181,7 @@
         - { option: "recovery-option", value: "recovery_target_action=promote" }
         - { option: "pg1-path", value: "{{ postgresql_data_dir }}" }
   no_log: true # do not output contents to the ansible log
-  when: cloud_provider | default('') | lower == 'digitalocean'
+  when: cloud_provider | default('') | lower == 'digitalocean' or backup_provider == 'digitalocean_s3'
 
 # Hetzner Object Storage (if 'cloud_provider=hetzner')
 - name: "Set variable 'pgbackrest_conf' for backup in Hetzner Object Storage (S3 bucket)"
@@ -222,4 +222,4 @@
   delegate_to: localhost
   run_once: true # noqa run-once
   no_log: true # do not output contents to the ansible log
-  when: cloud_provider | default('') | lower == 'hetzner'
+  when: cloud_provider | default('') | lower == 'hetzner' or backup_provider == 'hetzner_s3'

@@ -499,6 +499,9 @@ patroni_create_replica_methods:
   #  - pg_probackup
   - basebackup
 
+# if set, will configure s3 backups to the respective provider. Possible values: aws_s3, azure_s3, digitalocean_s3, hetzner_s3, gcp_s3
+backup_provider: ""
+
 pgbackrest:
   - { option: "command", value: "{{ pgbackrest_patroni_cluster_restore_command }}" }
   - { option: "keep_data", value: "True" }
