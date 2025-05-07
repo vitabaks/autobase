@@ -192,7 +192,7 @@ patroni_pip_package_file: []
 
 # additional packages
 # renovate: datasource=github-releases depName=etcd-io/etcd extractVersion=^v(?<version>.*)$
-etcd_version: 3.5.20
+etcd_version: 3.5.21
 etcd_package_file: "etcd-v{{ etcd_version }}-linux-{{ etcd_architecture_map[ansible_architecture] }}.tar.gz" # https://github.com/etcd-io/etcd/releases
 # renovate: datasource=github-releases depName=cybertec-postgresql/vip-manager extractVersion=^v(?<version>.*)$
 vip_manager_version: 3.0.0
