@@ -19,16 +19,7 @@ jobs:
           - distro: debian12
             tag: latest
             namespace: geerlingguy
-          - distro: debian11
-            tag: latest
-            namespace: geerlingguy
           - distro: ubuntu2404
-            tag: latest
-            namespace: geerlingguy
-          - distro: ubuntu2204
-            tag: latest
-            namespace: geerlingguy
-          - distro: rockylinux8
             tag: latest
             namespace: geerlingguy
           - distro: rockylinux9
@@ -38,9 +29,6 @@ jobs:
             tag: latest
             namespace: glillico
           - distro: almalinux9
-            tag: latest
-            namespace: glillico
-          - distro: oraclelinux8
             tag: latest
             namespace: glillico
           - distro: oraclelinux9
