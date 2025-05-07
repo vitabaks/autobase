@@ -25,9 +25,6 @@ jobs:
           - distro: rockylinux9
             tag: latest
             namespace: geerlingguy
-          - distro: almalinux8
-            tag: latest
-            namespace: glillico
           - distro: almalinux9
             tag: latest
             namespace: glillico
