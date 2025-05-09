@@ -520,8 +520,7 @@
             - absent
             - directory
           when: postgresql_wal_dir | default('') | length > 0
-      when: (inventory_hostname == groups['master'][0] and patroni_cluster_bootstrap_method != "pgbackrest")
-        or (inventory_hostname in groups['replica'] and ('pgbackrest' not in patroni_create_replica_methods or new_node | default(false) | bool))
+      when: patroni_cluster_bootstrap_method != "pgbackrest"
   when: not postgresql_exists | default(false) | bool or patroni_cluster_bootstrap_method != "initdb"
   tags: patroni, point_in_time_recovery
 
