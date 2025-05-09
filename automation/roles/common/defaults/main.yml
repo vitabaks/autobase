@@ -241,6 +241,7 @@ postgresql_privs: []
 #  - { role: "user", privs: "EXECUTE", type: "function", db: "db1", objs: "pg_ls_waldir()", schema: "pg_catalog" }  # grant EXECUTE on a function
 #  - { role: "user, privs: "SELECT", type: "table", db: "mydb", objs: "table2", schema: "schema2", state: "absent" }  # revoke SELECT on a table2 and schema2
 #  - { role: "test, test2", privs: "CREATE", type: "database", db: "test2", objs: "test2" }  # grant CREATE on a database test2 to role test and test2
+#  - { role: "invnatom_ms", privs: "EXECUTE", type: "default_privs", db: "invnatom_db_prod", schema: "invnatom", objs: "FUNCTIONS", target_roles: "invnatom_cd" }  # grant EXECUTE on future functions in schema invnatom to role invnatom_cd
 
 # (optional) list of database extensions to be created (if not already exists)
 postgresql_extensions: []
