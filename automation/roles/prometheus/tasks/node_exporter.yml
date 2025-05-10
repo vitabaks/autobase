@@ -16,7 +16,7 @@
 
 - name: Install node_exporter binary
   ansible.builtin.copy:
-    src: "/tmp/node_exporter-{{ node_exporter_version }}.linux-{{ postgres_exporter_architecture_map[ansible_architecture] }}/node_exporter"
+    src: "/tmp/node_exporter-{{ node_exporter_version }}.linux-{{ prometheus_architecture_map[ansible_architecture] }}/node_exporter"
     dest: "{{ node_exporter_bin_path }}"
     mode: 0755
     remote_src: true

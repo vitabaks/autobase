@@ -1,5 +1,5 @@
 ---
-postgres_exporter_architecture_map:
+prometheus_architecture_map:
   amd64: amd64
   x86_64: amd64
   armv6l: armhfv6

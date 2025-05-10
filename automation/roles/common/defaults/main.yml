@@ -377,28 +377,6 @@ postgresql_pgpass:
   - "*:{{ pgbouncer_listen_port }}:*:{{ patroni_superuser_username }}:{{ patroni_superuser_password }}"
 #  - hostname:port:database:username:password
 
-### Metric ###
-with_metric_exporters: false # or true
-# Node Exporter
-node_exporter_bin_path: /opt/prometheus/node-exporter
-node_exporter_host: ""
-node_exporter_port: 9100
-node_exporter_options: ""
-
-# Postgres Exporter
-postgres_exporter_bin_path: /opt/prometheus/postgres-exporter
-postgres_exporter_host: ""
-postgres_exporter_port: 9187
-postgres_exporter_dbname: postgres
-postgres_exporter_system_user: postgres
-postgres_exporter_data_source_name: "user={{ postgres_exporter_system_user }} dbname={{ postgres_exporter_dbname }} host={{ postgresql_unix_socket_dir }} sslmode=disable"
-postgres_exporter_query_filenames:
-  - queries-default.yml
-  # - queries-pg_stat_statements.yml
-  # - queries-pg_statio_user_tables.yml
-postgres_exporter_query_directory: files/
-### Metrics ###
-
 # PgBouncer parameters
 pgbouncer_install: true # or 'false' if you do not want to install and configure the pgbouncer service
 pgbouncer_processes: 1 # Number of pgbouncer processes to be used. Multiple processes use the so_reuseport option for better performance.
@@ -742,3 +720,25 @@ netdata_conf:
   # You can fine-tune retention for each tier by setting a time limit or size limit. Setting a limit to 0 disables it.
 # More options you can specify in the roles/netdata/templates/netdata.conf.j2
 # https://learn.netdata.cloud/docs/netdata-agent/configuration
+
+### Metric ###
+with_metric_exporters: false # or true
+
+# Node Exporter
+node_exporter_bin_path: /opt/prometheus/node-exporter
+node_exporter_host: ""
+node_exporter_port: 9100
+node_exporter_options: ""
+
+# Postgres Exporter
+postgres_exporter_bin_path: /opt/prometheus/postgres-exporter
+postgres_exporter_host: ""
+postgres_exporter_port: 9187
+postgres_exporter_dbname: postgres
+postgres_exporter_system_user: postgres
+postgres_exporter_data_source_name: "user={{ postgres_exporter_system_user }} dbname={{ postgres_exporter_dbname }} host={{ postgresql_unix_socket_dir }} sslmode=disable"
+postgres_exporter_query_filenames:
+  - queries-default.yml
+  # - queries-pg_stat_statements.yml
+  # - queries-pg_statio_user_tables.yml
+postgres_exporter_query_directory: files/

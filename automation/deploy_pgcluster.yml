@@ -400,9 +400,7 @@
 
     - role: netdata
 
-    - role: postgres_exporter
-      when: with_metric_exporters | bool
-    - role: node_exporter
+    - role: prometheus
       when: with_metric_exporters | bool
 
     # finish (info)

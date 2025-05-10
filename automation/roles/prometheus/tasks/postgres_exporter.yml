@@ -29,7 +29,7 @@
 
 - name: Install postgres_exporter binary
   ansible.builtin.copy:
-    src: "/tmp/postgres_exporter-{{ postgres_exporter_version }}.linux-{{ postgres_exporter_architecture_map[ansible_architecture] }}/postgres_exporter"
+    src: "/tmp/postgres_exporter-{{ postgres_exporter_version }}.linux-{{ prometheus_architecture_map[ansible_architecture] }}/postgres_exporter"
     dest: "{{ postgres_exporter_bin_path }}"
     mode: 0755
     remote_src: true
