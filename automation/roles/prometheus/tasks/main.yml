@@ -1,0 +1,6 @@
+---
+- name: Install Prometheus Node Exporter
+  ansible.builtin.import_tasks: node_exporter.yml
+
+- name: Install Prometheus Postgres Exporter
+  ansible.builtin.import_tasks: postgres_exporter.yml

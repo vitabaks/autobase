@@ -150,6 +150,14 @@ haproxy_compile_requirements:
   - ca-certificates
   - libssl-dev
 
+# node exporter
+node_exporter_version: "1.9.1"
+node_exporter_package_repo: "https://github.com/prometheus/node_exporter/releases/download/v{{ node_exporter_version }}/node_exporter-{{ node_exporter_version }}.linux-{{ prometheus_architecture_map[ansible_architecture] }}.tar.gz"
+
+# postgres exporter
+postgres_exporter_version: "0.17.1"
+postgres_exporter_package_repo: "https://github.com/prometheus-community/postgres_exporter/releases/download/v{{ postgres_exporter_version }}/postgres_exporter-{{ postgres_exporter_version }}.linux-{{ prometheus_architecture_map[ansible_architecture] }}.tar.gz"
+
 # ================================================================================================= #
 # Offline installation (if installation_method: "file")
 #
