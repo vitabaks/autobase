@@ -49,5 +49,5 @@ typing-extensions==4.12.2
 urllib3==2.3.0
 wcmatch==10.0
 wheel==0.45.1
-yamllint==1.37.0
+yamllint==1.37.1
 zipp==3.21.0
