@@ -734,9 +734,9 @@ node_exporter_options: ""
 postgres_exporter_bin_path: /opt/prometheus/postgres-exporter
 postgres_exporter_host: ""
 postgres_exporter_port: 9187
-postgres_exporter_dbname: postgres
-postgres_exporter_system_user: postgres
-postgres_exporter_data_source_name: "user={{ postgres_exporter_system_user }} dbname={{ postgres_exporter_dbname }} host={{ postgresql_unix_socket_dir }} sslmode=disable"
+postgres_exporter_db: postgres
+postgres_exporter_user: postgres
+postgres_exporter_data_source_name: "user={{ postgres_exporter_user }} dbname={{ postgres_exporter_db }} host={{ postgresql_unix_socket_dir }} sslmode=disable"
 postgres_exporter_query_filenames:
   - queries-default.yml
   # - queries-pg_stat_statements.yml

@@ -11,14 +11,14 @@
     src: "{{ node_exporter_package_repo }}"
     dest: /tmp
     remote_src: true
-    mode: 0755
+    mode: "0755"
   tags: prometheus, node_exporter
 
 - name: Install node_exporter binary
   ansible.builtin.copy:
     src: "/tmp/node_exporter-{{ node_exporter_version }}.linux-{{ prometheus_architecture_map[ansible_architecture] }}/node_exporter"
     dest: "{{ node_exporter_bin_path }}"
-    mode: 0755
+    mode: "0755"
     remote_src: true
   notify: "restart node_exporter"
   tags: prometheus, node_exporter
@@ -34,7 +34,7 @@
   ansible.builtin.template:
     src: prometheus-node-exporter.service.j2
     dest: /etc/systemd/system/prometheus-node-exporter.service
-    mode: 0644
+    mode: "0644"
   notify: "restart node_exporter"
   tags: prometheus, node_exporter
 
