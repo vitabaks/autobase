@@ -2,6 +2,7 @@
 - name: Grant/revoke privileges on objects
   community.postgresql.postgresql_privs:
     roles: "{{ item.role }}"
+    target_roles: "{{ item.target_roles if item.type == 'default_privs' and item.target_roles | default('') | length > 0 else omit }}"
     privs: "{{ item.privs }}"
     type: "{{ item.type }}"
     objs: "{{ item.objs }}"
