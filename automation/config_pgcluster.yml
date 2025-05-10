@@ -200,6 +200,9 @@
     - role: postgresql_privs
       when: inventory_hostname in groups['primary']
 
+    - role: backup
+      when: wal_g_install | bool or pgbackrest_install | bool
+
     - role: wal_g
       when: wal_g_install | bool
 
