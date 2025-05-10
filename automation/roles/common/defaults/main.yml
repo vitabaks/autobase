@@ -241,6 +241,7 @@ postgresql_privs: []
 #  - { role: "user", privs: "EXECUTE", type: "function", db: "db1", objs: "pg_ls_waldir()", schema: "pg_catalog" }  # grant EXECUTE on a function
 #  - { role: "user, privs: "SELECT", type: "table", db: "mydb", objs: "table2", schema: "schema2", state: "absent" }  # revoke SELECT on a table2 and schema2
 #  - { role: "test, test2", privs: "CREATE", type: "database", db: "test2", objs: "test2" }  # grant CREATE on a database test2 to role test and test2
+#  - { role: "invnatom_ms", privs: "EXECUTE", type: "default_privs", db: "invnatom_db", schema: "invnatom", objs: "FUNCTIONS", target_roles: "invnatom_cd" }
 
 # (optional) list of database extensions to be created (if not already exists)
 postgresql_extensions: []
@@ -566,7 +567,7 @@ pg_probackup_patroni_cluster_bootstrap_command: "{{ pg_probackup_command_parts |
 # WAL-G
 wal_g_install: false # or 'true'
 # renovate: datasource=github-releases depName=wal-g/wal-g extractVersion=^v(?<version>.*)$
-wal_g_version: 3.0.5
+wal_g_version: 3.0.7
 wal_g_installation_method: "binary" # or "src" to build from source code
 wal_g_path: "/usr/local/bin/wal-g --config {{ postgresql_home_dir }}/.walg.json"
 wal_g_json: # config https://github.com/wal-g/wal-g#configuration

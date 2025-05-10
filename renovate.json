@@ -1,7 +1,13 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["config:recommended", "group:recommended", "schedule:automergeDaily", "schedule:weekends", ":maintainLockFilesWeekly"],
-  "prConcurrentLimit": 5,
+  "extends": [
+    "config:recommended",
+    "group:recommended",
+    "schedule:daily",
+    ":automergeMinor",
+    ":automergeRequireAllStatusChecks",
+    ":prHourlyLimit1"
+  ],
   "labels": ["dependencies"],
   "customManagers": [
     {
