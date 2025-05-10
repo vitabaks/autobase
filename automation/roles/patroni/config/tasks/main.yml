@@ -60,6 +60,39 @@
         body_format: json
       loop: "{{ postgresql_parameters }}"
       when: item.value == "null"
+
+    - name: Update postgresql slots in DCS
+      ansible.builtin.uri:
+        url: http://{{ inventory_hostname }}:{{ patroni_restapi_port }}/config
+        method: PATCH
+        user: "{{ patroni_restapi_username | default(omit) }}"
+        password: "{{ patroni_restapi_password | default(omit) }}"
+        body: >-
+          {
+            "postgresql": {
+              "slots": {
+                {% for slot in patroni_slots %}
+                  "{{ slot.slot }}": {
+                    {% for key, value in slot.items() if key != 'slot' %}
+                      "{{ key }}": {{ value | to_json }}{% if not loop.last %},{% endif %}
+                    {% endfor %}
+                  }{% if not loop.last %},{% endif %}
+                {% endfor %}
+              }
+            }
+          }
+        body_format: json
+      when: patroni_slots is defined and patroni_slots | length > 0
+
+    - name: Delete postgresql slots from DCS
+      ansible.builtin.uri:
+        url: http://{{ inventory_hostname }}:{{ patroni_restapi_port }}/config
+        method: PATCH
+        user: "{{ patroni_restapi_username | default(omit) }}"
+        password: "{{ patroni_restapi_password | default(omit) }}"
+        body: '{"postgresql":{"slots":null}}'
+        body_format: json
+      when: patroni_slots is not defined or patroni_slots | length < 1
   environment:
     no_proxy: "{{ inventory_hostname }}"
   when: inventory_hostname in groups['primary']
