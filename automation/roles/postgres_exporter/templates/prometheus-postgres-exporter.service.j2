@@ -1,0 +1,13 @@
+[Unit]
+Description=Prometheus Postgres Exporter Server
+
+[Service]
+User={{ postgres_exporter_system_user }}
+Environment="DATA_SOURCE_NAME={{ postgres_exporter_data_source_name }}"
+ExecStart={{ postgres_exporter_bin_path }}/postgres_exporter \
+    --extend.query-path /etc/prometheus/postgres-queries.yml \
+    --web.listen-address {{ postgres_exporter_host }}:{{ postgres_exporter_port }} \
+    --auto-discover-databases
+
+[Install]
+WantedBy=multi-user.target

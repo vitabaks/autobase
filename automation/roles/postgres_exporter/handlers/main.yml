@@ -1,0 +1,17 @@
+---
+- name: Restart postgres_exporter
+  ansible.builtin.systemd:
+    daemon_reload: true
+    name: prometheus-postgres-exporter
+    state: restarted
+  listen: "restart postgres_exporter"
+
+- name: Verify postgres_exporter is responding to requests
+  ansible.builtin.uri:
+    url: "http://{% if postgres_exporter_host != '' %}{{ postgres_exporter_host }}{% else %}localhost{% endif %}:{{ postgres_exporter_port }}/"
+    return_content: true
+  retries: 5
+  delay: 3
+  register: metrics_output
+  failed_when: "'Metrics' not in metrics_output.content"
+  listen: "restart postgres_exporter"

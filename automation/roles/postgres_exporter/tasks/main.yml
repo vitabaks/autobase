@@ -1,0 +1,63 @@
+---
+- name: Create postgres_exporter system user
+  ansible.builtin.user:
+    name: "{{ postgres_exporter_system_user }}"
+    comment: "postgres_exporter_system_user"
+    system: true
+    shell: /bin/false
+    create_home: false
+  when: "postgres_exporter_system_user != 'postgres'"
+  tags: prometheus, postgres_exporter
+
+- name: Create directories for postgres_exporter
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: "0755"
+  loop:
+    - "{{ postgres_exporter_bin_path }}"
+    - /etc/prometheus
+  tags: prometheus, postgres_exporter
+
+- name: Download and extract postgres_exporter archive
+  ansible.builtin.unarchive:
+    src: "{{ postgres_exporter_package_repo }}"
+    dest: "/tmp"
+    remote_src: true
+    mode: 0755
+  tags: prometheus, postgres_exporter
+
+- name: Install postgres_exporter binary
+  ansible.builtin.copy:
+    src: "/tmp/postgres_exporter-{{ postgres_exporter_version }}.linux-{{ postgres_exporter_architecture_map[ansible_architecture] }}/postgres_exporter"
+    dest: "{{ postgres_exporter_bin_path }}"
+    mode: 0755
+    remote_src: true
+  notify: "restart postgres_exporter"
+  tags: prometheus, postgres_exporter
+
+- name: Assemble postgres_exporter queries configuration
+  ansible.builtin.assemble:
+    dest: /etc/prometheus/postgres-queries.yml
+    regexp: "^{{ postgres_exporter_query_filenames | join('|') }}$"
+    remote_src: false
+    src: "{{ postgres_exporter_query_directory }}"
+    mode: "0644"
+  notify: "restart postgres_exporter"
+  tags: prometheus, postgres_exporter
+
+- name: Setup systemd service for prometheus-postgres-exporter
+  ansible.builtin.template:
+    dest: /etc/systemd/system/prometheus-postgres-exporter.service
+    src: prometheus-postgres-exporter.service.j2
+    mode: "0644"
+  notify: "restart postgres_exporter"
+  tags: prometheus, postgres_exporter
+
+- name: Enable and start prometheus-postgres-exporter service
+  ansible.builtin.systemd:
+    daemon_reload: true
+    enabled: true
+    name: prometheus-postgres-exporter
+    state: started
+  tags: prometheus, postgres_exporter

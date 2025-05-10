@@ -400,6 +400,11 @@
 
     - role: netdata
 
+    - role: postgres_exporter
+      when: with_metric_exporters | bool
+    - role: node_exporter
+      when: with_metric_exporters | bool
+
     # finish (info)
     - role: deploy_finish
 
