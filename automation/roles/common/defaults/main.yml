@@ -544,7 +544,7 @@ pg_probackup_patroni_cluster_bootstrap_command: "{{ pg_probackup_command_parts |
 # WAL-G
 wal_g_install: false # or 'true'
 # renovate: datasource=github-releases depName=wal-g/wal-g extractVersion=^v(?<version>.*)$
-wal_g_version: 3.0.5
+wal_g_version: 3.0.7
 wal_g_installation_method: "binary" # or "src" to build from source code
 wal_g_path: "/usr/local/bin/wal-g --config {{ postgresql_home_dir }}/.walg.json"
 wal_g_json: # config https://github.com/wal-g/wal-g#configuration
