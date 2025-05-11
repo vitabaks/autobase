@@ -1,0 +1,8 @@
+---
+# roles/delete/tasks/main.yml
+
+- name: Include common variables
+  ansible.builtin.include_role:
+    name: common
+  tags: always
+
