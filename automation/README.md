@@ -1,9 +1,9 @@
 # Autobase: Automation
 
-Autobase for PostgreSQL® automates the deployment and management of highly available PostgreSQL clusters in production environments.
+**Autobase for PostgreSQL®** automates the deployment and management of highly available PostgreSQL clusters in production environments.
 It’s designed for dedicated physical servers, virtual machines, and both on-premises and cloud-based infrastructures.
 
-For a detailed overview of the cluster components, see the Architecture page.
+For a detailed overview of the cluster components, see the [Architecture](https://autobase.tech/docs/overview/architecture) page.
 
 ## Getting Started
 1. Install Ansible on your control node (this could be your laptop:
