@@ -1052,6 +1052,7 @@ system_os_specific_packages:
     - python{{ python_version }}-dev
     - moreutils
     - dnsutils
+    - curl
   RedHat:
     - python{{ python_version }}-devel
     - python{{ python_version }}-libselinux
@@ -1066,7 +1067,6 @@ system_packages:
   - python{{ python_version }}-setuptools
   - python{{ python_version }}-pip
   - python{{ python_version }}-urllib3
-  - curl
   - less
   - sudo
   - vim
