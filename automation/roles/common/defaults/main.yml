@@ -1105,9 +1105,9 @@ patroni_installation_method: "{{ pkg_type }}" # deb/rpm (default) or "pip"
 # if patroni_installation_method: "deb" or "rpm"
 patroni_os_specific_packages:
   Debian:
-    - patroni-{{ dcs_type }}
-  RedHat:
     - python3-{{ dcs_type }}
+  RedHat:
+    - patroni-{{ dcs_type }}
 patroni_packages:
   - patroni
   - "{{ patroni_os_specific_packages[ansible_os_family] }}"
