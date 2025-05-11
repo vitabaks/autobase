@@ -4,11 +4,6 @@
   gather_facts: true
   any_errors_fatal: true
   pre_tasks:
-    - name: Include common variables
-      ansible.builtin.include_role:
-        name: common
-      tags: always
-
     # set_fact: 'pgbackrest_install' to configure Postgres backups (TODO: Add the ability to configure backups in the UI)
     # Note: Applicable only for "aws", "gcp", "azure", because:
     # "digitalocean" - requires the Spaces access keys ("AWS_ACCESS_KEY_ID" and "AWS_SECRET_ACCESS_KEY" variables)
