@@ -1,76 +1,65 @@
 # Autobase: Automation
 
-**Autobase for PostgreSQL®** automates the deployment and management of highly available PostgreSQL clusters in production environments. This solution is tailored for use on dedicated physical servers, virtual machines, and within both on-premises and cloud-based infrastructures.
+Autobase for PostgreSQL® automates the deployment and management of highly available PostgreSQL clusters in production environments.
+It’s designed for dedicated physical servers, virtual machines, and both on-premises and cloud-based infrastructures.
 
-For a detailed description of the cluster components, visit the [Architecture](https://autobase.tech/docs/overview/architecture) page.
+For a detailed overview of the cluster components, see the Architecture page.
 
 ## Getting Started
+1. Install Ansible on your control node (this could be your laptop:
 
-1. [Install Ansible](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html) on one control node (which could easily be a laptop)
-
-```sh
+```
 sudo apt update && sudo apt install -y python3-pip sshpass git
 pip3 install ansible
 ```
 
 2. Install the Autobase Collection
 
-```sh
-# from Ansible Galaxy
+Install directly from Ansible Galaxy:
+
+```
 ansible-galaxy collection install vitabaks.autobase
 ```
 
-Or reference it in a `requirements.yml`:
+Or include it in your requirements.yml:
 
-```yml
-# from Ansible Galaxy
+```yaml
 collections:
   - name: vitabaks.autobase
     version: 2.2.0
 ```
 
-1. Prepare inventory
+3. Prepare your inventory
 
-See example of [inventory](./inventory.example) file.
+See the example [inventory](https://github.com/vitabaks/autobase/blob/master/automation/inventory.example) file.
+Specify internal IP addresses and connection details such as `ansible_user`, `ansible_ssh_pass`, or `ansible_ssh_private_key_file`.
 
-Specify (non-public) IP addresses and connection settings (`ansible_user`, `ansible_ssh_pass` or `ansible_ssh_private_key_file` for your environment
+4. Define variables
 
-4. Prepare variables
+See the default collection [variables](https://github.com/vitabaks/autobase/blob/master/automation/roles/common/defaults/main.yml).\
+You can override any of them in your inventory, group_vars, or another method that suits your setup.
 
-See the [main.yml](./roles/common/defaults/main.yml) variable files for more details.
-
-5. Test host connectivity
-
-```sh
-ansible all -m ping
-```
-
-6. Create playbook to execute the playbooks within the collection:
+5. Include the Autobase playbook in your project
 
 ```yaml
-- name: Playbook
-  hosts: <node group name>
-
-  tasks:
-    # Start with the 'deploy' playbook, change to 'config' afterwards
-    - name: Run playbook
-      ansible.builtin.include_playbook: vitabaks.autobase.deploy_pgcluster
+- name: Run Autobase deployment
+  ansible.builtin.include_playbook: vitabaks.autobase.deploy_pgcluster
 ```
 
-#### How to start from scratch
+Start with the `deploy_pgcluster` playbook, and switch to `config_pgcluster` afterwards for reconfiguration.
+
+### How to start from scratch
 
 If you need to start from the very beginning, you can use the `remove_cluster` playbook.
 
 Available variables:
+- `remove_postgres`: stop the PostgreSQL service and remove data
+- `emove_etcd`: stop the ETCD service and remove data
+- `remove_consul`: stop the Consul service and remove data
 
-- `remove_postgres`: stop the PostgreSQL service and remove data.
-- `remove_etcd`: stop the ETCD service and remove data.
-- `remove_consul`: stop the Consul service and remove data.
-
-:warning: **Caution:** be careful when running this command in a production environment.
+⚠️ Caution: Only use this in non-production or when you’re absolutely sure.
 
 ## Support
 
-We provide personalized support and expert assistance, so you can focus on building your project with confidence, knowing that a reliable partner is always available when you need help.
-
-Choose the support plan that fits your needs: https://autobase.tech/docs/support
+We provide expert guidance and commercial support — so you can focus on building your project with confidence.\
+Choose a support plan that fits your needs: https://autobase.tech/docs/support
