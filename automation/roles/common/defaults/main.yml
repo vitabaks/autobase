@@ -1089,8 +1089,8 @@ glibc_langpack:
 #  - "glibc-langpack-de"
 
 # additional packages
-etcd_package_repo: "https://github.com/etcd-io/etcd/releases/download/v{{ etcd_version }}/etcd-v{{ etcd_version }}-linux-{{ etcd_architecture_map[ansible_architecture] }}.tar.gz"
-vip_manager_package_repo: "https://github.com/cybertec-postgresql/vip-manager/releases/download/v{{ vip_manager_version }}/vip-manager_{{ vip_manager_version }}_Linux_{{ vip_manager_architecture_map[ansible_architecture] }}.{{ pkg_type }}"
+etcd_package_repo: "https://github.com/etcd-io/etcd/releases/download/v{{ etcd_version }}/etcd-v{{ etcd_version }}-linux-{{ etcd_architecture_map[ansible_architecture] }}.tar.gz" # yamllint disable rule:line-length
+vip_manager_package_repo: "https://github.com/cybertec-postgresql/vip-manager/releases/download/v{{ vip_manager_version }}/vip-manager_{{ vip_manager_version }}_Linux_{{ vip_manager_architecture_map[ansible_architecture] }}.{{ pkg_type }}" # yamllint disable rule:line-length
 confd_package_repo: "https://github.com/kelseyhightower/confd/releases/download/v0.16.0/confd-0.16.0-linux-{{ confd_architecture_map[ansible_architecture] }}"
 
 # ----------------------------------------------------------------------------------------------------
