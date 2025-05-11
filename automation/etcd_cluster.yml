@@ -21,7 +21,7 @@
       delay: 5
       retries: 3
       environment: "{{ proxy_env | default({}) }}"
-      when: ansible_os_family == "Debian" and installation_method == "repo"
+      when: ansible_os_family == "Debian" and installation_method | default('repo') == "repo"
 
     - name: Make sure the gnupg and apt-transport-https packages are present
       ansible.builtin.apt:
@@ -34,20 +34,20 @@
       delay: 5
       retries: 3
       environment: "{{ proxy_env | default({}) }}"
-      when: ansible_os_family == "Debian" and installation_method == "repo"
+      when: ansible_os_family == "Debian" and installation_method | default('repo') == "repo"
 
     - name: Build a firewall_ports_dynamic_var
       ansible.builtin.set_fact:
         firewall_ports_dynamic_var: "{{ firewall_ports_dynamic_var | default([]) + (firewall_allowed_tcp_ports_for[item] | default([])) }}"
       loop: "{{ hostvars[inventory_hostname].group_names }}"
-      when: firewall_enabled_at_boot | bool
+      when: firewall_enabled_at_boot | default(false) | bool
       tags: firewall
 
     - name: Build a firewall_rules_dynamic_var
       ansible.builtin.set_fact:
         firewall_rules_dynamic_var: "{{ firewall_rules_dynamic_var | default([]) + (firewall_additional_rules_for[item] | default([])) }}"
       loop: "{{ hostvars[inventory_hostname].group_names }}"
-      when: firewall_enabled_at_boot | bool
+      when: firewall_enabled_at_boot | default(false) | bool
       tags: firewall
 
   roles:
@@ -56,7 +56,7 @@
       vars:
         firewall_allowed_tcp_ports: "{{ firewall_ports_dynamic_var | default([]) | unique }}"
         firewall_additional_rules: "{{ firewall_rules_dynamic_var | default([]) | unique }}"
-      when: firewall_enabled_at_boot|bool
+      when: firewall_enabled_at_boot | default(false) | bool
       tags: firewall
 
     - role: hostname

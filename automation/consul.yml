@@ -74,7 +74,7 @@
       until: apt_status is success
       delay: 5
       retries: 3
-      when: ansible_os_family == "Debian" and installation_method == "repo"
+      when: ansible_os_family == "Debian" and installation_method | default('repo') == "repo"
 
     - name: Make sure the gnupg and apt-transport-https packages are present
       ansible.builtin.apt:
@@ -86,7 +86,7 @@
       until: apt_status is success
       delay: 5
       retries: 3
-      when: ansible_os_family == "Debian" and installation_method == "repo"
+      when: ansible_os_family == "Debian" and installation_method | default('repo') == "repo"
 
     - name: Make sure the python3-pip package are present
       ansible.builtin.package:
@@ -101,25 +101,25 @@
       ansible.builtin.set_fact:
         firewall_ports_dynamic_var: "{{ firewall_ports_dynamic_var | default([]) + (firewall_allowed_tcp_ports_for[item] | default([])) }}"
       loop: "{{ hostvars[inventory_hostname].group_names }}"
-      when: firewall_enabled_at_boot | bool
+      when: firewall_enabled_at_boot | default(false) | bool
       tags: firewall
 
     - name: Build a firewall_rules_dynamic_var
       ansible.builtin.set_fact:
         firewall_rules_dynamic_var: "{{ firewall_rules_dynamic_var | default([]) + (firewall_additional_rules_for[item] | default([])) }}"
       loop: "{{ hostvars[inventory_hostname].group_names }}"
-      when: firewall_enabled_at_boot | bool
+      when: firewall_enabled_at_boot | default(false) | bool
       tags: firewall
 
     - name: Add a nameserver entry poining to localhost for dnsmasq
       ansible.builtin.set_fact:
         nameservers: "{{ ['127.0.0.1'] + (nameservers | default([])) }}"
-      when: dcs_type == "consul" and consul_dnsmasq_enable | bool and ('127.0.0.1' not in (nameservers | default([])))
+      when: dcs_type | default('etcd') == "consul" and consul_dnsmasq_enable | default(true) | bool and ('127.0.0.1' not in (nameservers | default([])))
 
     - name: Redefine the consul_dnsmasq_servers variable
       ansible.builtin.set_fact:
         consul_dnsmasq_servers: "{{ consul_dnsmasq_servers | reject('equalto', '127.0.0.1') | list }}"
-      when: dcs_type == "consul" and consul_dnsmasq_enable | bool and ('127.0.0.1' in (consul_dnsmasq_servers | default([])))
+      when: dcs_type | default('etcd') == "consul" and consul_dnsmasq_enable | default(true) | bool and ('127.0.0.1' in (consul_dnsmasq_servers | default([])))
 
     # Setting variables for Consul during cloud deployment
     - name: Redefine the consul_node_role and consul_bootstrap_expect variables
@@ -134,7 +134,7 @@
       vars:
         firewall_allowed_tcp_ports: "{{ firewall_ports_dynamic_var | default([]) | unique }}"
         firewall_additional_rules: "{{ firewall_rules_dynamic_var | default([]) | unique }}"
-      when: firewall_enabled_at_boot|bool
+      when: firewall_enabled_at_boot | default(false) | bool
       tags: firewall
 
     - role: hostname

@@ -17,7 +17,7 @@
       ansible.builtin.set_fact:
         pgbackrest_install: true
       when:
-        - not (pgbackrest_install | bool or wal_g_install | bool)
+        - not (pgbackrest_install | default(false) | bool or wal_g_install | default(false) | bool)
         - cloud_provider | default('') | lower in ['aws', 'gcp', 'azure']
         - pgbackrest_auto_conf | default(true) | bool # to be able to disable auto backup settings
       tags: always
@@ -73,15 +73,14 @@
       ansible.builtin.set_fact:
         pgbackrest_install: true
       when:
-        - not (pgbackrest_install | bool or wal_g_install | bool)
+        - not (pgbackrest_install | default(false) | bool or wal_g_install | default(false) | bool)
         - cloud_provider | default('') | lower in ['aws', 'gcp', 'azure']
         - pgbackrest_auto_conf | default(true) | bool # to be able to disable auto backup settings
       tags: always
 
     - name: Clean dnf cache
       ansible.builtin.command: dnf clean all
-      when:
-        - ansible_os_family == "RedHat"
+      when: ansible_os_family == "RedHat"
 
     - name: Update apt cache
       ansible.builtin.apt:
@@ -202,16 +201,16 @@
       vars:
         tls_group_name: "postgres_cluster"
         tls_cert_regenerate: "{{ patroni_tls_cert_regenerate | default(false) }}" # Do not generate new certificates if they already exist.
-      when: tls_cert_generate | bool
+      when: tls_cert_generate | default(true) | bool
 
 - name: deploy_pgcluster.yml | Deploy etcd cluster
   ansible.builtin.import_playbook: etcd_cluster.yml
-  when: not dcs_exists|bool and dcs_type == "etcd"
+  when: not dcs_exists | default(false) | bool and dcs_type | default('etcd') == "etcd"
   tags: etcd
 
 - name: deploy_pgcluster.yml | Deploy Consul
   ansible.builtin.import_playbook: consul.yml
-  when: dcs_type == "consul"
+  when: dcs_type | default('etcd') == "consul"
   tags: consul
 
 - name: deploy_pgcluster.yml | Postgres Cluster Configuration
@@ -232,28 +231,28 @@
       ansible.builtin.set_fact:
         firewall_ports_dynamic_var: "{{ firewall_ports_dynamic_var | default([]) + (firewall_allowed_tcp_ports_for[item] | default([])) }}"
       loop: "{{ hostvars[inventory_hostname].group_names }}"
-      when: firewall_enabled_at_boot | bool
+      when: firewall_enabled_at_boot | default(false) | bool
       tags: firewall
 
     - name: Build a firewall_rules_dynamic_var
       ansible.builtin.set_fact:
         firewall_rules_dynamic_var: "{{ firewall_rules_dynamic_var | default([]) + (firewall_additional_rules_for[item] | default([])) }}"
       loop: "{{ hostvars[inventory_hostname].group_names }}"
-      when: firewall_enabled_at_boot | bool
+      when: firewall_enabled_at_boot | default(false) | bool
       tags: firewall
 
     # if 'dcs_type' is 'consul'
     - name: Add a nameserver entry poining to localhost for dnsmasq
       ansible.builtin.set_fact:
         nameservers: "{{ ['127.0.0.1'] + (nameservers | default([])) }}"
-      when: dcs_type == "consul" and consul_dnsmasq_enable | bool and ('127.0.0.1' not in (nameservers | default([])))
+      when: dcs_type | default('etcd') == "consul" and consul_dnsmasq_enable | default(true) | bool and ('127.0.0.1' not in (nameservers | default([])))
 
   roles:
     - role: firewall
       vars:
         firewall_allowed_tcp_ports: "{{ firewall_ports_dynamic_var | default([]) | unique }}"
         firewall_additional_rules: "{{ firewall_rules_dynamic_var | default([]) | unique }}"
-      when: firewall_enabled_at_boot|bool
+      when: firewall_enabled_at_boot | default(false) | bool
       tags: firewall
 
     - role: resolv_conf
@@ -275,7 +274,7 @@
 
 - name: deploy_pgcluster.yml | Deploy balancers
   ansible.builtin.import_playbook: balancers.yml
-  when: with_haproxy_load_balancing|bool
+  when: with_haproxy_load_balancing | default(false) | bool
   tags: load_balancing, haproxy
 
 - name: deploy_pgcluster.yml | Install and configure pgBackRest
@@ -297,13 +296,13 @@
       ansible.builtin.set_fact:
         pgbackrest_install: true
       when:
-        - not (pgbackrest_install | bool or wal_g_install | bool)
+        - not (pgbackrest_install | default(false) | bool or wal_g_install | default(false) | bool)
         - cloud_provider | default('') | lower in ['aws', 'gcp', 'azure']
         - pgbackrest_auto_conf | default(true) | bool # to be able to disable auto backup settings
       tags: always
   roles:
     - role: pgbackrest
-      when: pgbackrest_install | bool
+      when: pgbackrest_install | default(false) | bool
 
 - name: deploy_pgcluster.yml | PostgreSQL Cluster Deployment
   hosts: postgres_cluster
@@ -326,35 +325,35 @@
       ansible.builtin.set_fact:
         pgbackrest_install: true
       when:
-        - not (pgbackrest_install | bool or wal_g_install | bool)
+        - not (pgbackrest_install | default(false) | bool or wal_g_install | default(false) | bool)
         - cloud_provider | default('') | lower in ['aws', 'gcp', 'azure']
         - pgbackrest_auto_conf | default(true) | bool # to be able to disable auto backup settings
       tags: always
 
   roles:
     - role: wal_g
-      when: wal_g_install|bool
+      when: wal_g_install | default(false) | bool
 
     - role: pg_probackup
-      when: pg_probackup_install|bool
+      when: pg_probackup_install | default(false) | bool
 
     - role: cron
 
     - role: tls_certificate/copy
-      when: tls_cert_generate|bool
+      when: tls_cert_generate | default(true) | bool
 
     - role: pgbouncer
-      when: pgbouncer_install|bool
+      when: pgbouncer_install | default(false) | bool
 
     - role: pgpass
 
     - role: patroni
 
     - role: pgbackrest/stanza-create
-      when: pgbackrest_install | bool
+      when: pgbackrest_install | default(false) | bool
 
     - role: vip_manager
-      when: not with_haproxy_load_balancing|bool and
+      when: not with_haproxy_load_balancing | default(false) | bool and
         (cluster_vip is defined and cluster_vip | length > 0)
 
     # optional
@@ -374,7 +373,7 @@
       when: inventory_hostname == groups['master'][0]
 
     - role: pgbouncer/config
-      when: pgbouncer_install|bool
+      when: pgbouncer_install | default(false) | bool
 
     - role: netdata
 

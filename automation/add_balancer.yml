@@ -11,16 +11,6 @@
         name: common
       tags: always
 
-    - name: "[Pre-Check] Checking Linux distribution"
-      ansible.builtin.fail:
-        msg: "{{ ansible_distribution }} is not supported"
-      when: ansible_distribution not in os_valid_distributions
-
-    - name: "[Pre-Check] Checking version of OS Linux"
-      ansible.builtin.fail:
-        msg: "{{ ansible_distribution_version }} of {{ ansible_distribution }} is not supported"
-      when: ansible_distribution_version is version_compare(os_minimum_versions[ansible_distribution], '<')
-
     - name: "[Pre-Check] Check if there is a node with new_node set to true"
       ansible.builtin.set_fact:
         new_nodes: "{{ new_nodes | default([]) + [item] }}"
@@ -53,7 +43,7 @@
       when:
         - new_node | default(false) | bool
         - ansible_os_family == "Debian"
-        - installation_method == "repo"
+        - installation_method | default('repo') == "repo"
 
     - name: Make sure the gnupg and apt-transport-https packages are present
       ansible.builtin.apt:
@@ -69,7 +59,7 @@
       when:
         - new_node | default(false) | bool
         - ansible_os_family == "Debian"
-        - installation_method == "repo"
+        - installation_method | default('repo') == "repo"
 
     - name: Build a firewall_ports_dynamic_var
       ansible.builtin.set_fact:
@@ -77,7 +67,7 @@
       loop: "{{ hostvars[inventory_hostname].group_names }}"
       when:
         - new_node | default(false) | bool
-        - firewall_enabled_at_boot | bool
+        - firewall_enabled_at_boot | default(false)| bool
       tags: firewall
 
     - name: Build a firewall_rules_dynamic_var
@@ -86,7 +76,7 @@
       loop: "{{ hostvars[inventory_hostname].group_names }}"
       when:
         - new_node | default(false) | bool
-        - firewall_enabled_at_boot | bool
+        - firewall_enabled_at_boot | default(false)| bool
       tags: firewall
 
   roles:
@@ -97,7 +87,7 @@
         firewall_additional_rules: "{{ firewall_rules_dynamic_var | default([]) | unique }}"
       when:
         - new_node | default(false) | bool
-        - firewall_enabled_at_boot | bool
+        - firewall_enabled_at_boot | default(false)| bool
       tags: firewall
 
     - role: sysctl
@@ -133,12 +123,12 @@
     - role: resolv_conf
 
     - role: haproxy
-      when: with_haproxy_load_balancing|bool
+      when: with_haproxy_load_balancing | default(false) | bool
 
     - role: confd
-      when: dcs_type == "etcd" and
-        with_haproxy_load_balancing|bool
+      when: dcs_type | default('etcd') == "etcd" and
+        with_haproxy_load_balancing | default(false) | bool
 
     - role: keepalived
       when: cluster_vip is defined and cluster_vip | length > 0 and
-        with_haproxy_load_balancing|bool
+        with_haproxy_load_balancing | default(false) | bool

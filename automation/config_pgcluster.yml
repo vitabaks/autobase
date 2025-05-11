@@ -17,7 +17,7 @@
       ansible.builtin.set_fact:
         pgbackrest_install: true
       when:
-        - not (pgbackrest_install | bool or wal_g_install | bool)
+        - not (pgbackrest_install | default(false) | bool or wal_g_install | default(false) | bool)
         - cloud_provider | default('') | lower in ['aws', 'gcp', 'azure']
         - pgbackrest_auto_conf | default(true) | bool # to be able to disable auto backup settings
       tags: always
@@ -101,7 +101,7 @@
       ansible.builtin.set_fact:
         pgbackrest_install: true
       when:
-        - not (pgbackrest_install | bool or wal_g_install | bool)
+        - not (pgbackrest_install | default(false) | bool or wal_g_install | default(false) | bool)
         - cloud_provider | default('') | lower in ['aws', 'gcp', 'azure']
         - pgbackrest_auto_conf | default(true) | bool # to be able to disable auto backup settings
   tags:
@@ -127,28 +127,28 @@
       ansible.builtin.set_fact:
         firewall_ports_dynamic_var: "{{ firewall_ports_dynamic_var | default([]) + (firewall_allowed_tcp_ports_for[item] | default([])) }}"
       loop: "{{ hostvars[inventory_hostname].group_names }}"
-      when: firewall_enabled_at_boot | bool
+      when: firewall_enabled_at_boot | default(false) | bool
       tags: config_firewall, firewall
 
     - name: Build a firewall_rules_dynamic_var
       ansible.builtin.set_fact:
         firewall_rules_dynamic_var: "{{ firewall_rules_dynamic_var | default([]) + (firewall_additional_rules_for[item] | default([])) }}"
       loop: "{{ hostvars[inventory_hostname].group_names }}"
-      when: firewall_enabled_at_boot | bool
+      when: firewall_enabled_at_boot | default(false) | bool
       tags: firewall
 
     # if 'dcs_type' is 'consul'
     - name: Add a nameserver entry poining to localhost for dnsmasq
       ansible.builtin.set_fact:
         nameservers: "{{ ['127.0.0.1'] + (nameservers | default([])) }}"
-      when: dcs_type == "consul" and consul_dnsmasq_enable | bool and ('127.0.0.1' not in (nameservers | default([])))
+      when: dcs_type | default('etcd') == "consul" and consul_dnsmasq_enable | default(true) | bool and ('127.0.0.1' not in (nameservers | default([])))
 
   roles:
     - role: firewall
       vars:
         firewall_allowed_tcp_ports: "{{ firewall_ports_dynamic_var | default([]) | unique }}"
         firewall_additional_rules: "{{ firewall_rules_dynamic_var | default([]) | unique }}"
-      when: firewall_enabled_at_boot | bool
+      when: firewall_enabled_at_boot | default(false) | bool
       tags: firewall
 
     - role: hostname
@@ -173,10 +173,10 @@
     - role: patroni/config
 
     - role: pgbouncer/config
-      when: pgbouncer_install | bool
+      when: pgbouncer_install | default(true) | bool
 
     - role: vip_manager
-      when: not with_haproxy_load_balancing | bool and
+      when: not with_haproxy_load_balancing | default(false) | bool and
         (cluster_vip is defined and cluster_vip | length > 0)
 
     - role: postgresql_users
@@ -192,7 +192,7 @@
       when: inventory_hostname in groups['primary']
 
     - role: wal_g
-      when: wal_g_install | bool
+      when: wal_g_install | default(false) | bool
 
 - name: config_pgcluster | Configure pgBackRest
   hosts: pgbackrest:postgres_cluster
@@ -212,13 +212,13 @@
       ansible.builtin.set_fact:
         pgbackrest_install: true
       when:
-        - not (pgbackrest_install | bool or wal_g_install | bool)
+        - not (pgbackrest_install | default(false) | bool or wal_g_install | default(false) | bool)
         - cloud_provider | default('') | lower in ['aws', 'gcp', 'azure']
         - pgbackrest_auto_conf | default(true) | bool # to be able to disable auto backup settings
       tags: always
   roles:
     - role: pgbackrest
-      when: pgbackrest_install | bool
+      when: pgbackrest_install | default(false) | bool
 
 - name: config_pgcluster.yml | Restart patroni on secondary after config settings if need
   hosts: secondary
@@ -239,32 +239,32 @@
         name: update
         tasks_from: stop_traffic
       when:
-        - pending_restart | bool
-        - pg_pending_restart_settings | length > 0
+        - pending_restart | default(false) | bool
+        - pg_pending_restart_settings | default('') | length > 0
 
     - name: Stop Services
       ansible.builtin.include_role:
         name: update
         tasks_from: stop_services
       when:
-        - pending_restart | bool
-        - pg_pending_restart_settings | length > 0
+        - pending_restart | default(false) | bool
+        - pg_pending_restart_settings | default('') | length > 0
 
     - name: Start Services
       ansible.builtin.include_role:
         name: update
         tasks_from: start_services
       when:
-        - pending_restart | bool
-        - pg_pending_restart_settings | length > 0
+        - pending_restart | default(false) | bool
+        - pg_pending_restart_settings | default('') | length > 0
 
     - name: Start read-only traffic
       ansible.builtin.include_role:
         name: update
         tasks_from: start_traffic
       when:
-        - pending_restart | bool
-        - pg_pending_restart_settings | length > 0
+        - pending_restart | default(false) | bool
+        - pg_pending_restart_settings | default('') | length > 0
   tags:
     - patroni_conf
 
@@ -287,40 +287,40 @@
         name: update
         tasks_from: switchover
       when:
-        - pending_restart | bool
-        - pg_pending_restart_settings | length > 0
+        - pending_restart | default(false) | bool
+        - pg_pending_restart_settings | default('') | length > 0
 
     - name: Stop read-only traffic
       ansible.builtin.include_role:
         name: update
         tasks_from: stop_traffic
       when:
-        - pending_restart | bool
-        - pg_pending_restart_settings | length > 0
+        - pending_restart | default(false) | bool
+        - pg_pending_restart_settings | default('') | length > 0
 
     - name: Stop Services
       ansible.builtin.include_role:
         name: update
         tasks_from: stop_services
       when:
-        - pending_restart | bool
-        - pg_pending_restart_settings | length > 0
+        - pending_restart | default(false) | bool
+        - pg_pending_restart_settings | default('') | length > 0
 
     - name: Start Services
       ansible.builtin.include_role:
         name: update
         tasks_from: start_services
       when:
-        - pending_restart | bool
-        - pg_pending_restart_settings | length > 0
+        - pending_restart | default(false) | bool
+        - pg_pending_restart_settings | default('') | length > 0
 
     - name: Start read-only traffic
       ansible.builtin.include_role:
         name: update
         tasks_from: start_traffic
       when:
-        - pending_restart | bool
-        - pg_pending_restart_settings | length > 0
+        - pending_restart | default(false) | bool
+        - pg_pending_restart_settings | default('') | length > 0
   tags:
     - patroni_conf
 

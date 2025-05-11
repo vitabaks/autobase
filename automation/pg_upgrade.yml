@@ -127,7 +127,7 @@
       ansible.builtin.import_role:
         name: upgrade
         tasks_from: schema_compatibility
-      when: schema_compatibility_check | bool
+      when: schema_compatibility_check | default(true) | bool
 
     - name: Check pg_upgrade
       ansible.builtin.import_role:
@@ -200,7 +200,7 @@
       ansible.builtin.include_role:
         name: upgrade
         tasks_from: custom_wal_dir
-      when: pg_new_wal_dir | length > 0
+      when: pg_new_wal_dir | default('') | length > 0
 
     - name: Remove old cluster from DCS
       ansible.builtin.include_role:
@@ -241,7 +241,7 @@
       ansible.builtin.include_role:
         name: upgrade
         tasks_from: extensions
-      when: update_extensions | bool
+      when: update_extensions | default(true) | bool
       tags: update_extensions
 
     - name: Running Post-Checks

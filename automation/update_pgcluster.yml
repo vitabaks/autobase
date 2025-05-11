@@ -71,7 +71,7 @@
       ansible.builtin.include_role:
         name: update
         tasks_from: pgbackrest_host
-      when: groups['pgbackrest'] | default([]) | length > 0 and target | lower == 'system'
+      when: groups['pgbackrest'] | default([]) | length > 0 and target | default('postgres') == 'system'
   tags:
     - update
     - pre-checks
@@ -104,19 +104,19 @@
       ansible.builtin.include_role:
         name: update
         tasks_from: postgres
-      when: target | lower == 'postgres' or target | lower == 'system'
+      when: target | default('postgres') == 'postgres' or target | default('postgres')  == 'system'
 
     - name: Update Patroni
       ansible.builtin.include_role:
         name: update
         tasks_from: patroni
-      when: target | lower == 'patroni' or target | lower == 'system'
+      when: target | default('postgres') == 'patroni' or target | default('postgres') == 'system'
 
     - name: Update all system packages
       ansible.builtin.include_role:
         name: update
         tasks_from: system
-      when: target | lower == 'system'
+      when: target | default('postgres') == 'system'
 
     - name: Start Services
       ansible.builtin.include_role:
@@ -163,19 +163,19 @@
       ansible.builtin.include_role:
         name: update
         tasks_from: postgres
-      when: target | lower == 'postgres' or target | lower == 'system'
+      when: target | default('postgres') == 'postgres' or target | default('postgres')  == 'system'
 
     - name: Update Patroni
       ansible.builtin.include_role:
         name: update
         tasks_from: patroni
-      when: target | lower == 'patroni' or target | lower == 'system'
+      when: target | default('postgres') == 'patroni' or target | default('postgres') == 'system'
 
     - name: Update all system packages
       ansible.builtin.include_role:
         name: update
         tasks_from: system
-      when: target | lower == 'system'
+      when: target | default('postgres') == 'system'
 
     - name: Start Services
       ansible.builtin.include_role:
@@ -206,7 +206,7 @@
       ansible.builtin.include_role:
         name: update
         tasks_from: extensions
-      when: update_extensions | bool
+      when: update_extensions | default(true) | bool
 
     # finish (info)
     - name: Check for any update failure

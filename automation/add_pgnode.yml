@@ -18,16 +18,6 @@
       ansible.builtin.set_fact:
         postgresql_cluster_maintenance: true
 
-    - name: "[Pre-Check] Checking Linux distribution"
-      ansible.builtin.fail:
-        msg: "{{ ansible_distribution }} is not supported"
-      when: ansible_distribution not in os_valid_distributions
-
-    - name: "[Pre-Check] Checking version of OS Linux"
-      ansible.builtin.fail:
-        msg: "{{ ansible_distribution_version }} of {{ ansible_distribution }} is not supported"
-      when: ansible_distribution_version is version_compare(os_minimum_versions[ansible_distribution], '<')
-
     - name: "[Pre-Check] Check if there is a node with new_node set to true"
       ansible.builtin.set_fact:
         new_nodes: "{{ new_nodes | default([]) + [item] }}"
@@ -66,7 +56,7 @@
       when:
         - new_node | default(false) | bool
         - ansible_os_family == "Debian"
-        - installation_method == "repo"
+        - installation_method | default('repo') == "repo"
 
     - name: Make sure the gnupg and apt-transport-https packages are present
       ansible.builtin.apt:
@@ -82,7 +72,7 @@
       when:
         - new_node | default(false) | bool
         - ansible_os_family == "Debian"
-        - installation_method == "repo"
+        - installation_method | default('repo') == "repo"
 
     - name: Build a firewall_ports_dynamic_var
       ansible.builtin.set_fact:
@@ -90,7 +80,7 @@
       loop: "{{ hostvars[inventory_hostname].group_names }}"
       when:
         - new_node | default(false) | bool
-        - firewall_enabled_at_boot | bool
+        - firewall_enabled_at_boot | default(false)| bool
       tags: firewall
 
     - name: Build a firewall_rules_dynamic_var
@@ -99,7 +89,7 @@
       loop: "{{ hostvars[inventory_hostname].group_names }}"
       when:
         - new_node | default(false) | bool
-        - firewall_enabled_at_boot | bool
+        - firewall_enabled_at_boot | default(false)| bool
       tags: firewall
 
   roles:
@@ -110,7 +100,7 @@
         firewall_additional_rules: "{{ firewall_rules_dynamic_var | default([]) | unique }}"
       when:
         - new_node | default(false) | bool
-        - firewall_enabled_at_boot | bool
+        - firewall_enabled_at_boot | default(false)| bool
       tags: firewall
 
     - role: pre_checks
@@ -153,7 +143,7 @@
     - name: Add a nameserver entry poining to localhost for dnsmasq
       ansible.builtin.set_fact:
         nameservers: "{{ ['127.0.0.1'] + (nameservers | default([])) }}"
-      when: dcs_type == "consul" and consul_dnsmasq_enable | bool and ('127.0.0.1' not in (nameservers | default([])))
+      when: dcs_type | default('etcd') == "consul" and consul_dnsmasq_enable | default(true) | bool and ('127.0.0.1' not in (nameservers | default([])))
 
   roles:
     - role: hostname
@@ -189,7 +179,7 @@
 
 - name: add_pgnode.yml | Import Consul playbook
   ansible.builtin.import_playbook: consul.yml
-  when: dcs_type == "consul"
+  when: dcs_type | default('etcd') == "consul"
   tags: consul
 
 - name: add_pgnode.yml | Add new PostgreSQL replica to the cluster
@@ -209,23 +199,23 @@
 
   roles:
     - role: wal_g
-      when: wal_g_install|bool
+      when: wal_g_install | default(false) | bool
 
     - role: pg_probackup
-      when: pg_probackup_install|bool
+      when: pg_probackup_install | default(false) | bool
 
     - role: tls_certificate/copy
-      when: tls_cert_generate|bool
+      when: tls_cert_generate | default(true) | bool
 
     - role: pgbouncer
-      when: pgbouncer_install|bool
+      when: pgbouncer_install | default(false) | bool
 
     - role: pgpass
 
     - role: patroni
 
     - role: vip_manager
-      when: not with_haproxy_load_balancing|bool and
+      when: not with_haproxy_load_balancing | default(false) | bool and
         (cluster_vip is defined and cluster_vip | length > 0)
 
     - role: netdata
