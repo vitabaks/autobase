@@ -1102,7 +1102,7 @@ installation_method: "repo" # "repo" (default) or "file"
 # You also have the option of choosing an installation method using the pip package.
 patroni_installation_method: "{{ pkg_type }}" # deb/rpm (default) or "pip"
 
-# if patroni_installation_method: "deb" or "rpm" 
+# if patroni_installation_method: "deb" or "rpm"
 patroni_os_specific_packages:
   Debian:
     - patroni-{{ dcs_type }}
@@ -1189,7 +1189,7 @@ patroni_pip_package_file: []
 
 # additional packages
 etcd_package_file: ""
-vip_manager_package_file: "" 
+vip_manager_package_file: ""
 wal_g_package_file: ""
 
 # if with_haproxy_load_balancing: true
