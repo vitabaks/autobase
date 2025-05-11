@@ -37,7 +37,7 @@ Specify (non-public) IP addresses and connection settings (`ansible_user`, `ansi
 
 4. Prepare variables
 
-See the [main.yml](./roles/common/defaults/main.yml), [system.yml](./roles/common/defaults/system.yml) and ([Debian.yml](./roles/common/defaults/Debian.yml) or [RedHat.yml](./roles/common/defaults/RedHat.yml)) variable files for more details.
+See the [main.yml](./roles/common/defaults/main.yml) variable files for more details.
 
 5. Test host connectivity
 

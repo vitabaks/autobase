@@ -207,7 +207,7 @@ Specify (non-public) IP addresses and connection settings (`ansible_user`, `ansi
 
 3. Prepare variables
 
-See the [main.yml](./automation/roles/common/defaults/main.yml), [system.yml](./automation/roles/common/defaults/system.yml) and ([Debian.yml](./automation/roles/common/defaults/Debian.yml) or [RedHat.yml](./automation/roles/common/defaults/RedHat.yml)) variable files for more details.
+See the [main.yml](./automation/roles/common/defaults/main.yml) variable files for more details.
 
 4. Test host connectivity
 

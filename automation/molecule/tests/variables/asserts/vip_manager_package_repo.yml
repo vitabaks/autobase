@@ -24,10 +24,10 @@
 
 # 📁 Incorporate Debian-specific variables
 # This task includes variables that are specific to Debian OS
-- name: Molecule.tests.variables.asserts.vip_manager_package_repo | Debian | Incorporate RedHat-specific Variables
+- name: Molecule.tests.variables.asserts.vip_manager_package_repo | Debian | Include Variables
   run_once: true
-  ansible.builtin.include_vars:
-    file: ../../../../roles/common/defaults/Debian.yml
+  ansible.builtin.include_role:
+    name: ../../../../../roles/common
 
 # 🔄 Define the origin_vip_manager_package_repo for Debian
 # This task defines the expected URL for the VIP Manager package for Debian OS
@@ -61,10 +61,10 @@
 
 # 📁 Incorporate RedHat-specific variables
 # This task includes variables that are specific to RedHat OS
-- name: Molecule.tests.variables.asserts.vip_manager_package_repo | RedHat | Incorporate RedHat-specific Variables
+- name: Molecule.tests.variables.asserts.vip_manager_package_repo | RedHat | Include Variables
   run_once: true
-  ansible.builtin.include_vars:
-    file: ../../../../roles/common/defaults/RedHat.yml
+  ansible.builtin.include_role:
+    name: ../../../../../roles/common
 
 # 🔄 Define the origin_vip_manager_package_repo for RedHat
 # This task defines the expected URL for the VIP Manager package for RedHat OS

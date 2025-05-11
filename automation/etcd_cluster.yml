@@ -7,16 +7,9 @@
   gather_facts: true
 
   pre_tasks:
-    - name: Include main variables
-      ansible.builtin.include_vars: "roles/common/defaults/main.yml"
-      tags: always
-
-    - name: Include system variables
-      ansible.builtin.include_vars: "roles/common/defaults/system.yml"
-      tags: always
-
-    - name: Include OS-specific variables
-      ansible.builtin.include_vars: "roles/common/defaults/{{ ansible_os_family }}.yml"
+    - name: Include common variables
+      ansible.builtin.include_role:
+        name: common
       tags: always
 
     - name: Update apt cache

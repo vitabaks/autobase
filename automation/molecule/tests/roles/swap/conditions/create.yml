@@ -5,8 +5,8 @@
 # 📝 Loading system variables that may be needed for the swap file creation process
 - name: Molecule.tests.roles.swap.conditions.create | Load System Variables
   run_once: true
-  ansible.builtin.include_vars:
-    file: ../../../../../roles/common/defaults/system.yml
+  ansible.builtin.include_role:
+    name: ../../../../../roles/common
 
 # 🔄 Setting up a test condition where no swap file exists
 # We initialize swap_exists with an empty stdout and stdout_lines

@@ -7,22 +7,10 @@
   gather_facts: true
 
   tasks:
-    # 📝 Including the main variables file for the Molecule default configuration
-    # This file contains all the necessary variables for the playbook
-    - name: Molecule.default.verify | Include Main Variables
-      ansible.builtin.include_vars:
-        file: ../../roles/common/defaults/main.yml
-
-    # Including the dcs_type variable redefined in converge.yml
-    - name: Molecule.default.verify | Include dcs_type Variable
-      ansible.builtin.include_vars:
-        file: ../../dcs_type.yml
-
-    # 🔄 Including OS-specific variables
-    # These variables are specific to the operating system on which the playbook is running
-    - name: Molecule.default.verify | Include OS-Specific Variables
-      ansible.builtin.include_vars:
-        file: "../../roles/common/defaults/{{ ansible_os_family }}.yml"
+    # 📝 Including the common variables for the Molecule default configuration
+    - name: Include common variables
+      ansible.builtin.include_role:
+        name: ../../roles/common
 
     # 🔄 Including all tests for the Molecule default configuration
     # These tests ensure that all components of the configuration are functioning correctly

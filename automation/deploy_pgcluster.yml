@@ -4,9 +4,11 @@
   gather_facts: true
   any_errors_fatal: true
   pre_tasks:
-    - name: Include main variables
-      ansible.builtin.include_vars: "roles/common/defaults/main.yml"
+    - name: Include common variables
+      ansible.builtin.include_role:
+        name: common
       tags: always
+
     # set_fact: 'pgbackrest_install' to configure Postgres backups (TODO: Add the ability to configure backups in the UI)
     # Note: Applicable only for "aws", "gcp", "azure", because:
     # "digitalocean" - requires the Spaces access keys ("AWS_ACCESS_KEY_ID" and "AWS_SECRET_ACCESS_KEY" variables)
@@ -33,16 +35,9 @@
   environment: "{{ proxy_env | default({}) }}"
 
   pre_tasks:
-    - name: Include main variables
-      ansible.builtin.include_vars: "roles/common/defaults/main.yml"
-      tags: always
-
-    - name: Include system variables
-      ansible.builtin.include_vars: "roles/common/defaults/system.yml"
-      tags: always
-
-    - name: Include OS-specific variables
-      ansible.builtin.include_vars: "roles/common/defaults/{{ ansible_os_family }}.yml"
+    - name: Include common variables
+      ansible.builtin.include_role:
+        name: common
       tags: always
 
     - name: System info
@@ -228,16 +223,9 @@
   environment: "{{ proxy_env | default({}) }}"
 
   pre_tasks:
-    - name: Include main variables
-      ansible.builtin.include_vars: "roles/common/defaults/main.yml"
-      tags: always
-
-    - name: Include system variables
-      ansible.builtin.include_vars: "roles/common/defaults/system.yml"
-      tags: always
-
-    - name: Include OS-specific variables
-      ansible.builtin.include_vars: "roles/common/defaults/{{ ansible_os_family }}.yml"
+    - name: Include common variables
+      ansible.builtin.include_role:
+        name: common
       tags: always
 
     - name: Build a firewall_ports_dynamic_var
@@ -298,12 +286,9 @@
   any_errors_fatal: true
 
   pre_tasks:
-    - name: Include main variables
-      ansible.builtin.include_vars: "roles/common/defaults/main.yml"
-      tags: always
-
-    - name: Include OS-specific variables
-      ansible.builtin.include_vars: "roles/common/defaults/{{ ansible_os_family }}.yml"
+    - name: Include common variables
+      ansible.builtin.include_role:
+        name: common
       tags: always
 
     # if 'cloud_provider' is 'aws', 'gcp', or 'azure'
@@ -330,16 +315,9 @@
     - ansible.builtin.import_tasks: roles/pgbouncer/handlers/main.yml
 
   pre_tasks:
-    - name: Include main variables
-      ansible.builtin.include_vars: "roles/common/defaults/main.yml"
-      tags: always
-
-    - name: Include system variables
-      ansible.builtin.include_vars: "roles/common/defaults/system.yml"
-      tags: always
-
-    - name: Include OS-specific variables
-      ansible.builtin.include_vars: "roles/common/defaults/{{ ansible_os_family }}.yml"
+    - name: Include common variables
+      ansible.builtin.include_role:
+        name: common
       tags: always
 
     # if 'cloud_provider' is 'aws', 'gcp', or 'azure'
