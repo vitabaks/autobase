@@ -8,11 +8,6 @@
   environment: "{{ proxy_env | default({}) }}"
 
   pre_tasks:
-    - name: Include common variables
-      ansible.builtin.include_role:
-        name: common
-      tags: always
-
     - name: Check if the consul role requirements (ansible.utils) are installed
       ansible.builtin.command: ansible-galaxy collection list ansible.utils
       changed_when: false

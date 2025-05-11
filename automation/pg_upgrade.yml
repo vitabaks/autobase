@@ -8,11 +8,6 @@
   become_user: postgres
   any_errors_fatal: true
   pre_tasks:
-    - name: Include common variables
-      ansible.builtin.include_role:
-        name: common
-      tags: always
-
     - name: "[Prepare] Get Patroni Cluster Leader Node"
       ansible.builtin.uri:
         url: http://{{ inventory_hostname }}:{{ patroni_restapi_port }}/leader
@@ -62,11 +57,6 @@
   become_user: postgres
   any_errors_fatal: true
   environment: "{{ proxy_env | default({}) }}"
-  pre_tasks:
-    - name: Include common variables
-      ansible.builtin.include_role:
-        name: common
-      tags: always
   tasks:
     - name: Running Pre-Checks
       ansible.builtin.include_role:
@@ -83,11 +73,6 @@
   become_user: root
   any_errors_fatal: true
   environment: "{{ proxy_env | default({}) }}"
-  pre_tasks:
-    - name: Include common variables
-      ansible.builtin.include_role:
-        name: common
-      tags: always
   tasks:
     - name: Install packages
       ansible.builtin.include_role:
@@ -104,11 +89,6 @@
   become: true
   become_user: postgres
   any_errors_fatal: true
-  pre_tasks:
-    - name: Include common variables
-      ansible.builtin.include_role:
-        name: common
-      tags: always
   tasks:
     - name: Create Data directory and initdb
       ansible.builtin.include_role:
@@ -144,11 +124,6 @@
   become: true
   become_user: postgres
   any_errors_fatal: true
-  pre_tasks:
-    - name: Include common variables
-      ansible.builtin.include_role:
-        name: common
-      tags: always
   tasks:
     - name: Patroni config
       ansible.builtin.include_role:
@@ -164,11 +139,6 @@
   become: true
   become_user: postgres
   any_errors_fatal: true
-  pre_tasks:
-    - name: Include common variables
-      ansible.builtin.include_role:
-        name: common
-      tags: always
   tasks:
     - name: Enable maintenance mode
       ansible.builtin.include_role:
@@ -225,11 +195,6 @@
   become: true
   become_user: postgres
   any_errors_fatal: true
-  pre_tasks:
-    - name: Include common variables
-      ansible.builtin.include_role:
-        name: common
-      tags: always
   tasks:
     - name: Analyze database
       ansible.builtin.include_role:

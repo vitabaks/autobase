@@ -9,11 +9,6 @@
   hosts: postgres_cluster
   gather_facts: true
   any_errors_fatal: true
-  pre_tasks:
-    - name: Include common variables
-      ansible.builtin.include_role:
-        name: common
-      tags: always
   tasks:
     - name: '[Prepare] Add host to group "primary" (in-memory inventory)'
       ansible.builtin.add_host:
@@ -39,11 +34,6 @@
   become: true
   become_user: postgres
   any_errors_fatal: true
-  pre_tasks:
-    - name: Include common variables
-      ansible.builtin.include_role:
-        name: common
-      tags: always
   tasks:
     - name: Running rollback.yml
       ansible.builtin.include_role:

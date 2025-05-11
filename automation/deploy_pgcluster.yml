@@ -30,11 +30,6 @@
   environment: "{{ proxy_env | default({}) }}"
 
   pre_tasks:
-    - name: Include common variables
-      ansible.builtin.include_role:
-        name: common
-      tags: always
-
     - name: System info
       ansible.builtin.debug:
         msg:
@@ -217,11 +212,6 @@
   environment: "{{ proxy_env | default({}) }}"
 
   pre_tasks:
-    - name: Include common variables
-      ansible.builtin.include_role:
-        name: common
-      tags: always
-
     - name: Build a firewall_ports_dynamic_var
       ansible.builtin.set_fact:
         firewall_ports_dynamic_var: "{{ firewall_ports_dynamic_var | default([]) + (firewall_allowed_tcp_ports_for[item] | default([])) }}"
@@ -280,11 +270,6 @@
   any_errors_fatal: true
 
   pre_tasks:
-    - name: Include common variables
-      ansible.builtin.include_role:
-        name: common
-      tags: always
-
     # if 'cloud_provider' is 'aws', 'gcp', or 'azure'
     # set_fact: 'pgbackrest_install' to configure Postgres backups (TODO: Add the ability to configure backups in the UI)
     - name: "Set variable: 'pgbackrest_install' to configure Postgres backups"
@@ -309,11 +294,6 @@
     - ansible.builtin.import_tasks: roles/pgbouncer/handlers/main.yml
 
   pre_tasks:
-    - name: Include common variables
-      ansible.builtin.include_role:
-        name: common
-      tags: always
-
     # if 'cloud_provider' is 'aws', 'gcp', or 'azure'
     # set_fact: 'pgbackrest_install' to configure Postgres backups (TODO: Add the ability to configure backups in the UI)
     - name: "Set variable: 'pgbackrest_install' to configure Postgres backups"

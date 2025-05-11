@@ -9,11 +9,6 @@
     - ansible.builtin.import_tasks: roles/patroni/handlers/main.yml
 
   pre_tasks:
-    - name: Include common variables
-      ansible.builtin.include_role:
-        name: common
-      tags: always
-
     - name: Set maintenance variable
       ansible.builtin.set_fact:
         postgresql_cluster_maintenance: true
@@ -134,11 +129,6 @@
   any_errors_fatal: true
 
   pre_tasks:
-    - name: Include common variables
-      ansible.builtin.include_role:
-        name: common
-      tags: always
-
     # if 'dcs_type' is 'consul'
     - name: Add a nameserver entry poining to localhost for dnsmasq
       ansible.builtin.set_fact:
@@ -168,11 +158,6 @@
   become_method: sudo
   gather_facts: true
   any_errors_fatal: true
-  pre_tasks:
-    - name: Include common variables
-      ansible.builtin.include_role:
-        name: common
-      tags: always
   roles:
     - role: pgbackrest
       when: pgbackrest_install|bool
@@ -190,12 +175,6 @@
   any_errors_fatal: true
   vars:
     existing_pgcluster: true
-
-  pre_tasks:
-    - name: Include common variables
-      ansible.builtin.include_role:
-        name: common
-      tags: always
 
   roles:
     - role: wal_g

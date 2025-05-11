@@ -4,11 +4,6 @@
   gather_facts: true
   any_errors_fatal: true
   pre_tasks:
-    - name: Include common variables
-      ansible.builtin.include_role:
-        name: common
-      tags: always
-
     # set_fact: 'pgbackrest_install' to configure Postgres backups (TODO: Add the ability to configure backups in the UI)
     # Note: Applicable only for "aws", "gcp", "azure", because:
     # "digitalocean" - requires the Spaces access keys ("AWS_ACCESS_KEY_ID" and "AWS_SECRET_ACCESS_KEY" variables)
@@ -34,11 +29,6 @@
   become_method: sudo
   gather_facts: true
   pre_tasks:
-    - name: Include common variables
-      ansible.builtin.include_role:
-        name: common
-      tags: always
-
     - name: "[Prepare] Set maintenance variable"
       ansible.builtin.set_fact:
         postgresql_cluster_maintenance: true
@@ -118,11 +108,6 @@
     - ansible.builtin.import_tasks: roles/patroni/handlers/main.yml
     - ansible.builtin.import_tasks: roles/pgbouncer/handlers/main.yml
   pre_tasks:
-    - name: Include common variables
-      ansible.builtin.include_role:
-        name: common
-      tags: always
-
     - name: Build a firewall_ports_dynamic_var
       ansible.builtin.set_fact:
         firewall_ports_dynamic_var: "{{ firewall_ports_dynamic_var | default([]) + (firewall_allowed_tcp_ports_for[item] | default([])) }}"
@@ -201,11 +186,6 @@
   gather_facts: true
   any_errors_fatal: true
   pre_tasks:
-    - name: Include common variables
-      ansible.builtin.include_role:
-        name: common
-      tags: always
-
     # if 'cloud_provider' is 'aws', 'gcp', or 'azure'
     # set_fact: 'pgbackrest_install' to configure Postgres backups (TODO: Add the ability to configure backups in the UI)
     - name: "Set variable: 'pgbackrest_install' to configure Postgres backups"
@@ -227,12 +207,6 @@
   become: true
   become_method: sudo
   any_errors_fatal: true
-  pre_tasks:
-    - name: Include common variables
-      ansible.builtin.include_role:
-        name: common
-      tags: always
-
   tasks:
     - name: Stop read-only traffic
       ansible.builtin.include_role:
@@ -275,12 +249,6 @@
   become_method: sudo
   any_errors_fatal: true
   environment: "{{ proxy_env | default({}) }}"
-  pre_tasks:
-    - name: Include common variables
-      ansible.builtin.include_role:
-        name: common
-      tags: always
-
   tasks:
     - name: Switchover Patroni leader role
       ansible.builtin.include_role:
@@ -330,11 +298,6 @@
   become_method: sudo
   gather_facts: true
   any_errors_fatal: true
-  pre_tasks:
-    - name: Include common variables
-      ansible.builtin.include_role:
-        name: common
-      tags: always
   roles:
     - role: postgresql_extensions
 

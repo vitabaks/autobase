@@ -6,11 +6,6 @@
   any_errors_fatal: true
   gather_facts: true
   pre_tasks:
-    - name: Include common variables
-      ansible.builtin.include_role:
-        name: common
-      tags: always
-
     - name: "[Pre-Check] Check if there is a node with new_node set to true"
       ansible.builtin.set_fact:
         new_nodes: "{{ new_nodes | default([]) + [item] }}"
@@ -111,12 +106,6 @@
   any_errors_fatal: true
   vars:
     add_balancer: true
-
-  pre_tasks:
-    - name: Include common variables
-      ansible.builtin.include_role:
-        name: common
-      tags: always
 
   roles:
     - role: hostname

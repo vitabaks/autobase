@@ -5,11 +5,6 @@
   become: true
   become_method: sudo
   any_errors_fatal: true
-  pre_tasks:
-    - name: Include common variables
-      ansible.builtin.include_role:
-        name: common
-      tags: always
   tasks:
     - name: "[Prepare] Get Patroni Cluster Leader Node"
       ansible.builtin.uri:
@@ -54,11 +49,6 @@
   become: true
   become_user: postgres
   any_errors_fatal: true
-  pre_tasks:
-    - name: Include common variables
-      ansible.builtin.include_role:
-        name: common
-      tags: always
   tasks:
     - name: Running Pre-Checks
       ansible.builtin.include_role:
@@ -84,11 +74,6 @@
   become_method: sudo
   any_errors_fatal: true
   environment: "{{ proxy_env | default({}) }}"
-  pre_tasks:
-    - name: Include common variables
-      ansible.builtin.include_role:
-        name: common
-      tags: always
   tasks:
     - name: Stop read-only traffic
       ansible.builtin.include_role:
@@ -138,11 +123,6 @@
   become_method: sudo
   any_errors_fatal: true
   environment: "{{ proxy_env | default({}) }}"
-  pre_tasks:
-    - name: Include common variables
-      ansible.builtin.include_role:
-        name: common
-      tags: always
   tasks:
     - name: "Switchover Patroni leader role"
       ansible.builtin.include_role:
@@ -196,11 +176,6 @@
   become: true
   become_user: postgres
   any_errors_fatal: true
-  pre_tasks:
-    - name: Include common variables
-      ansible.builtin.include_role:
-        name: common
-      tags: always
   tasks:
     - name: Update extensions
       ansible.builtin.include_role:

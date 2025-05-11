@@ -2,11 +2,6 @@
 - name: remove_cluster.yml | Remove PostgreSQL HA Cluster
   hosts: postgres_cluster
   become: true
-  pre_tasks:
-    - name: Include common variables
-      ansible.builtin.include_role:
-        name: common
-      tags: always
   tasks:
     - block:
         - name: Stop Patroni service
@@ -36,11 +31,6 @@
 - name: remove_cluster.yml | Consul Cluster Play
   hosts: consul_instances
   become: true
-  pre_tasks:
-    - name: Include common variables
-      ansible.builtin.include_role:
-        name: common
-      tags: always
   tasks:
     - block:
         - name: Stop Consul service
@@ -62,11 +52,6 @@
 - name: remove_cluster.yml | Etcd Cluster Play
   hosts: etcd_cluster
   become: true
-  pre_tasks:
-    - name: Include common variables
-      ansible.builtin.include_role:
-        name: common
-      tags: always
   tasks:
     - block:
         - name: Stop Etcd service

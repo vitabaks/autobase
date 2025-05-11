@@ -7,11 +7,6 @@
   gather_facts: true
 
   tasks:
-    # 📝 Including the common variables for the Molecule default configuration
-    - name: Include common variables
-      ansible.builtin.include_role:
-        name: ../../roles/common
-
     # 🔄 Including all tests for the Molecule default configuration
     # These tests ensure that all components of the configuration are functioning correctly
     - name: Molecule.default.verify | Include All Tests

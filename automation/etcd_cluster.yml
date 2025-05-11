@@ -7,11 +7,6 @@
   gather_facts: true
 
   pre_tasks:
-    - name: Include common variables
-      ansible.builtin.include_role:
-        name: common
-      tags: always
-
     - name: Update apt cache
       ansible.builtin.apt:
         update_cache: true
