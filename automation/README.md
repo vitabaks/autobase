@@ -6,14 +6,14 @@ It’s designed for dedicated physical servers, virtual machines, and both on-pr
 For a detailed overview of the cluster components, see the [Architecture](https://autobase.tech/docs/overview/architecture) page.
 
 ## Getting Started
-1. Install Ansible on your control node (this could be your laptop:
+0. [Install Ansible](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html) on one control node (which could easily be a laptop)
 
-```
+```sh
 sudo apt update && sudo apt install -y python3-pip sshpass git
 pip3 install ansible
 ```
 
-2. Install the Autobase Collection
+1. Install the Autobase Collection
 
 Install directly from Ansible Galaxy:
 
@@ -23,23 +23,23 @@ ansible-galaxy collection install vitabaks.autobase
 
 Or include it in your requirements.yml:
 
-```yaml
+```yml
 collections:
   - name: vitabaks.autobase
     version: 2.2.0
 ```
 
-3. Prepare your inventory
+2. Prepare your inventory
 
 See the example [inventory](https://github.com/vitabaks/autobase/blob/master/automation/inventory.example) file.
 Specify internal IP addresses and connection details such as `ansible_user`, `ansible_ssh_pass`, or `ansible_ssh_private_key_file`.
 
-4. Define variables
+3. Define variables
 
 See the default collection [variables](https://github.com/vitabaks/autobase/blob/master/automation/roles/common/defaults/main.yml).\
 You can override any of them in your inventory, group_vars, or another method that suits your setup.
 
-5. Include the Autobase playbook in your project
+4. Include the Autobase playbook in your project
 
 ```yaml
 - name: Run Autobase deployment
