@@ -15,8 +15,6 @@ provisioner:
       timeout: 60
   playbooks:
     prepare: prepare.yml
-  env:
-    ANSIBLE_ROLES_PATH: "../../roles"
 
 scenario:
   create_sequence:

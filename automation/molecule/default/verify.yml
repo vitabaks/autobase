@@ -10,8 +10,8 @@
     # 📝 Including the common variables for the Molecule default configuration
     # This file contains all the necessary variables for the playbook
     - name: Molecule.default.verify | Include Common Variables
-      ansible.builtin.include_role:
-        name: common
+      ansible.builtin.include_vars:
+        file: ../../roles/common/defaults/main.yml
 
     # Including the dcs_type variable redefined in converge.yml
     - name: Molecule.default.verify | Include dcs_type Variable
