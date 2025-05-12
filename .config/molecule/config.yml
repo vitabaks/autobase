@@ -9,13 +9,14 @@ provisioner:
   name: ansible
   config_options:
     defaults:
-      roles_path: ["../../roles"]
       display_skipped_hosts: false
       remote_tmp: "~/.ansible/tmp"
       allow_world_readable_tmpfiles: false
       timeout: 60
   playbooks:
     prepare: prepare.yml
+  env:
+    ANSIBLE_ROLES_PATH: "../../roles"
 
 scenario:
   create_sequence:
