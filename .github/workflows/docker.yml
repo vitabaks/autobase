@@ -23,7 +23,7 @@ jobs:
         run: |
           if [[ -n "${GITHUB_HEAD_REF}" ]]; then
             # This is a PR, use the source branch name
-            echo "REF_NAME=${GITHUB_HEAD_REF}" >> $GITHUB_ENV
+            echo "REF_NAME=${GITHUB_HEAD_REF/\//-}" >> $GITHUB_ENV
           else
             # This is a push, use the branch or tag name from GITHUB_REF
             echo "REF_NAME=${GITHUB_REF##*/}" >> $GITHUB_ENV
