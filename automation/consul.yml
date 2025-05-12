@@ -119,8 +119,8 @@
     # Setting variables for Consul during cloud deployment
     - name: Redefine the consul_node_role and consul_bootstrap_expect variables
       ansible.builtin.set_fact:
-        consul_node_role: "{{ 'server' if not dcs_exists else 'client' }}"
-        consul_bootstrap_expect: "{{ not dcs_exists }}"
+        consul_node_role: "{{ 'server' if not dcs_exists | default(false) else 'client' }}"
+        consul_bootstrap_expect: "{{ not dcs_exists | default(false) }}"
         consul_datacenter: "{{ server_location | default('dc1') }}"
       when: cloud_provider | default('') | length > 0
 

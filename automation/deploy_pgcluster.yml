@@ -129,7 +129,7 @@
           register: pre_deploy_result
           delegate_to: "{{ item }}"
           loop: "{{ pre_deploy_command_hosts.split(',') | map('extract', groups) | list | flatten }}"
-          async: "{{ pre_deploy_command_timeout }}" # run the command asynchronously
+          async: "{{ pre_deploy_command_timeout | default(3600) }}" # run the command asynchronously
           poll: 0
 
         - name: Wait for the pre-deploy command to complete
@@ -141,7 +141,7 @@
           loop_control:
             label: "{{ item.item }}"
           until: pre_deploy_job_result.finished
-          retries: "{{ (pre_deploy_command_timeout | int) // 10 }}"
+          retries: "{{ (pre_deploy_command_timeout | default(3600) | int) // 10 }}"
           delay: 10
           ignore_errors: true # allows to collect logs before stopping execution (in case of failure)
           when:
@@ -152,7 +152,7 @@
           ansible.builtin.command: "cat {{ pre_deploy_command_log | default('/var/tmp/pre_deploy_command.log') }}"
           register: pre_deploy_log_content
           delegate_to: "{{ item }}"
-          loop: "{{ pre_deploy_command_hosts.split(',') | map('extract', groups) | list | flatten }}"
+          loop: "{{ pre_deploy_command_hosts | default('postgres_cluster') | split(',') | map('extract', groups) | list | flatten }}"
           changed_when: false
           when: pre_deploy_command_print_result | default(false) | bool
 

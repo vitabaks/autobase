@@ -101,7 +101,7 @@
       ansible.builtin.include_role:
         name: copy
       vars:
-        copy_files_to_all_server: "{{ upgrade_copy_files_to_all_server }}"
+        copy_files_to_all_server: "{{ upgrade_copy_files_to_all_server | default([]) }}"
 
     - name: Check Schema Compatibility
       ansible.builtin.import_role:
