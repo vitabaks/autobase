@@ -996,9 +996,9 @@ pkg_type: "{{ 'deb' if ansible_os_family == 'Debian' else 'rpm' }}"
 apt_repository:
   - repo: "deb https://apt.postgresql.org/pub/repos/apt/ {{ ansible_distribution_release }}-pgdg main" # postgresql apt repository
     key: "https://apt.postgresql.org/pub/repos/apt/ACCC4CF8.asc" # postgresql apt repository key
-#  - repo: "deb https://deb.{{ pkg_type }}ian.org/debian/ {{ ansible_distribution_release }} main"
-#  - repo: "deb https://deb.{{ pkg_type }}ian.org/debian/ {{ ansible_distribution_release }}-updates main"
-#  - repo: "deb https://security.{{ pkg_type }}ian.org/debian-security/ {{ ansible_distribution_release }}/updates main"
+#  - repo: "deb https://deb.debian.org/debian/ {{ ansible_distribution_release }} main"
+#  - repo: "deb https://deb.debian.org/debian/ {{ ansible_distribution_release }}-updates main"
+#  - repo: "deb https://security.debian.org/debian-security/ {{ ansible_distribution_release }}/updates main"
 
 # RedHat
 yum_repository: []
@@ -1008,8 +1008,8 @@ yum_repository: []
 #    gpgkey: "https://my-repo-key.url"
 #    gpgcheck: "yes"
 
-install_postgresql_repo: true # or 'false' (installed from the package "pgdg-redhat-repo-latest.noarch.{{ pkg_type }}")
-install_epel_repo: true # or 'false' (installed from the package "epel-release-latest.noarch.{{ pkg_type }}")
+install_postgresql_repo: true # or 'false' (installed from the package "pgdg-redhat-repo-latest.noarch.rpm")
+install_epel_repo: true # or 'false' (installed from the package "epel-release-latest.noarch.rpm")
 install_scl_repo: true # or 'false' (Redhat 7 family only)
 
 postgresql_os_specific_packages:
