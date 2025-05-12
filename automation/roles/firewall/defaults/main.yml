@@ -1,6 +1,8 @@
 ---
+# Note: Some variables defined in roles/common/defaults/main.yml. Commented out here to prevent conflicts.
+
 firewall_state: started
-firewall_enabled_at_boot: true
+# firewall_enabled_at_boot: true
 
 firewall_flush_rules_and_chains: true
 
@@ -18,5 +20,5 @@ firewall_ip6_additional_rules: []
 firewall_log_dropped_packets: true
 
 # Set to true to ensure other firewall management software is disabled.
-firewall_disable_firewalld: false
-firewall_disable_ufw: false
+# firewall_disable_firewalld: false
+# firewall_disable_ufw: false
