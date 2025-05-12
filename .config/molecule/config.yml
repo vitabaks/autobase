@@ -9,6 +9,7 @@ provisioner:
   name: ansible
   config_options:
     defaults:
+      roles_path: ["../../roles"]
       display_skipped_hosts: false
       remote_tmp: "~/.ansible/tmp"
       allow_world_readable_tmpfiles: false
