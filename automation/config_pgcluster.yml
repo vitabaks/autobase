@@ -35,7 +35,7 @@
 
     - name: "[Prepare] Get Patroni Cluster Leader Node"
       ansible.builtin.uri:
-        url: http://{{ inventory_hostname }}:{{ patroni_restapi_port }}/leader
+        url: http://{{ inventory_hostname }}:{{ patroni_restapi_port | default('8008') }}/leader
         status_code: 200
       register: patroni_leader_result
       changed_when: false
