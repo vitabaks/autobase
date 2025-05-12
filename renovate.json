@@ -12,7 +12,7 @@
   "customManagers": [
     {
       "customType": "regex",
-      "fileMatch": ["automation/roles/common/defaults/.*\\.ya?ml$"],
+      "managerFilePatterns": ["/automation/roles/common/defaults/.*\\.ya?ml$/"],
       "matchStrings": [
         "datasource=(?<datasource>.*?) depName=(?<depName>.*?)?( registryUrls=(?<registryUrls>.*?))?( versioning=(?<versioning>.*?))?( extractVersion=(?<extractVersion>.*?))?\\s.*?_version: (?<currentValue>.*)\\s"
       ],
