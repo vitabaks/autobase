@@ -2,6 +2,13 @@
 # 🚀 These tasks aim to define and verify 'wal_g_cron_jobs' for different OS
 # 🎯 The objective is to ensure accurate setup and validation of wal-g cron jobs
 
+# 📁 Incorporate variables
+# This task includes common role variables
+- name: Molecule.tests.variables.asserts.wal_g_cron_jobs | Common | Load Variables
+  run_once: true
+  ansible.builtin.include_role:
+    name: ../../../../../roles/common
+
 # 📝 Validate the structure and content of wal_g_cron_jobs. We expect two jobs, each with specific attributes.
 - name: Molecule.tests.variables.asserts.wal_g_cron_jobs | Validate Structure and Content of wal_g_cron_jobs
   run_once: true
@@ -34,13 +41,6 @@
 # ==================================================
 # 💾 Start Debian-specific operations and tests
 # ==================================================
-
-# 📁 Load Debian-specific variables for the tests
-- name: Molecule.tests.variables.asserts.wal_g_cron_jobs | Debian | Load Variables
-  run_once: true
-  ansible.builtin.include_role:
-    name: ../../../../../roles/common
-  tags: always
 
 # 🔄 Define the expected first wal_g_cron job for Debian
 - name: Molecule.tests.variables.asserts.wal_g_cron_jobs | Debian | Define Expected First wal_g_cron Job
@@ -87,12 +87,6 @@
 # ==================================================
 # 🚀 Start RedHat-specific operations and tests
 # ==================================================
-
-# 📁 Load RedHat-specific variables for the tests
-- name: Molecule.tests.variables.asserts.wal_g_cron_jobs | RedHat | Load Variables
-  run_once: true
-  ansible.builtin.include_role:
-    name: ../../../../../roles/common
 
 # 🔄 Define the expected first wal_g_cron job for RedHat
 - name: Molecule.tests.variables.asserts.wal_g_cron_jobs | RedHat | Define Expected First wal_g_cron Job

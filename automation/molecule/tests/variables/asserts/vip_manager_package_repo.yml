@@ -2,12 +2,20 @@
 # 🚀 These tasks aim to define and verify 'vip_manager_package_repo' for different OS
 # 🎯 The objective is to ensure accurate url
 
+# 📁 Incorporate variables
+# This task includes common role variables
+- name: Molecule.tests.variables.asserts.vip_manager_package_repo | Common | Include Variables
+  run_once: true
+  ansible.builtin.include_role:
+    name: ../../../../../roles/common
+
 # 🔄 Define the vip_manager_version
 # This is the version of the VIP Manager that we will be using in our tests
 - name: Molecule.tests.variables.asserts.vip_manager_package_repo| Common | Setting vip_manager_version
   run_once: true
   ansible.builtin.set_fact:
     vip_manager_version: "3.0.0"
+  when: vip_manager_version is not defined
 
 - name: Molecule.tests.variables.asserts.vip_manager_package_repo| Common | Setting vip_manager_architecture_map
   ansible.builtin.set_fact:
@@ -21,13 +29,6 @@
 # ===============================================
 # 💾 Start Debian-specific operations and tests
 # ===============================================
-
-# 📁 Incorporate Debian-specific variables
-# This task includes variables that are specific to Debian OS
-- name: Molecule.tests.variables.asserts.vip_manager_package_repo | Debian | Include Variables
-  run_once: true
-  ansible.builtin.include_role:
-    name: ../../../../../roles/common
 
 # 🔄 Define the origin_vip_manager_package_repo for Debian
 # This task defines the expected URL for the VIP Manager package for Debian OS
@@ -58,13 +59,6 @@
 # ===============================================
 # 🚀 Start RedHat-specific operations and tests
 # ===============================================
-
-# 📁 Incorporate RedHat-specific variables
-# This task includes variables that are specific to RedHat OS
-- name: Molecule.tests.variables.asserts.vip_manager_package_repo | RedHat | Include Variables
-  run_once: true
-  ansible.builtin.include_role:
-    name: ../../../../../roles/common
 
 # 🔄 Define the origin_vip_manager_package_repo for RedHat
 # This task defines the expected URL for the VIP Manager package for RedHat OS
