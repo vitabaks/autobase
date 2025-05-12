@@ -22,10 +22,13 @@ swagger_install:
 	swagger version ;\
 	}
 
+ensure_deps: ## Ensure Go module dependencies are tidy
+	@go mod tidy
+
 build: ## Build app
 	@go build -o $(GO_BIN) $(APP)
 
 swagger:
 	@swagger generate server --name PgConsole --spec api/swagger.yaml --principal interface{} --exclude-main
 
-build_in_docker: swagger_install swagger build
+build_in_docker: swagger_install swagger ensure_deps build
