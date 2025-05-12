@@ -7,6 +7,17 @@
   gather_facts: true
 
   tasks:
+    # 📝 Including the common variables for the Molecule default configuration
+    # This file contains all the necessary variables for the playbook
+    - name: Molecule.default.verify | Include Common Variables
+      ansible.builtin.include_role:
+        name: common
+
+    # Including the dcs_type variable redefined in converge.yml
+    - name: Molecule.default.verify | Include dcs_type Variable
+      ansible.builtin.include_vars:
+        file: ../../dcs_type.yml
+
     # 🔄 Including all tests for the Molecule default configuration
     # These tests ensure that all components of the configuration are functioning correctly
     - name: Molecule.default.verify | Include All Tests

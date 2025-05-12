@@ -2,13 +2,6 @@
 # 🚀 These tasks aim to define and verify 'vip_manager_package_repo' for different OS
 # 🎯 The objective is to ensure accurate url
 
-# 📁 Incorporate variables
-# This task includes common role variables
-- name: Molecule.tests.variables.asserts.vip_manager_package_repo | Common | Include Variables
-  run_once: true
-  ansible.builtin.include_role:
-    name: ../../../../../roles/common
-
 # 🔄 Define the vip_manager_version
 # This is the version of the VIP Manager that we will be using in our tests
 - name: Molecule.tests.variables.asserts.vip_manager_package_repo| Common | Setting vip_manager_version

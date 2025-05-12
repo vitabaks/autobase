@@ -2,12 +2,6 @@
 # 🚀 These tasks aim to test the conditions for deleting a swap file
 # 🎯 The objective is to verify that the swap file exists and its size is not equal to the desired size
 
-# 📝 Loading variables that might be used in the following tasks
-- name: Molecule.tests.roles.swap.conditions.delete | Load Common Variables
-  run_once: true
-  ansible.builtin.include_role:
-    name: ../../../../../roles/common
-
 # 📝 Setting up test data for swap file existence and size
 # Here, we assume that a 1MB swap file exists
 - name: Molecule.tests.roles.swap.conditions.delete | Set Swap File Test Data
