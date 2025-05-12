@@ -1167,8 +1167,7 @@ haproxy_os_specific_packages:
     - openssl-devel
     - openssl-libs
     - systemd-devel
-haproxy_compile_requirements:
-  - "{{ haproxy_os_specific_packages[ansible_os_family] }}"
+haproxy_compile_requirements: "{{ haproxy_os_specific_packages[ansible_os_family] }}"
 
 ############################################################
 # Offline installation (if installation_method: "file")

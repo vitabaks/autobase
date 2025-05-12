@@ -138,8 +138,9 @@
 
 - name: Install the prerequisites packages to compile HAProxy
   ansible.builtin.package:
-    name: "{{ haproxy_compile_requirements }}"
+    name: "{{ item }}"
     state: present
+  loop: "{{ haproxy_compile_requirements | flatten }}"
   register: package_status
   until: package_status is success
   delay: 5

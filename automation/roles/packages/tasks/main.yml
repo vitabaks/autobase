@@ -55,7 +55,7 @@
     name: "{{ item }}"
     state: present
     disablerepo: "pgdg*"
-  loop: "{{ system_packages | list }}"
+  loop: "{{ system_packages | flatten }}"
   register: package_status
   until: package_status is success
   delay: 5
@@ -113,7 +113,7 @@
   ansible.builtin.apt:
     name: "{{ item }}"
     state: present
-  loop: "{{ system_packages | list }}"
+  loop: "{{ system_packages | flatten }}"
   register: apt_status
   until: apt_status is success
   delay: 5
@@ -148,7 +148,7 @@
   ansible.builtin.package:
     name: "{{ item }}"
     state: present
-  loop: "{{ postgresql_packages | list }}"
+  loop: "{{ postgresql_packages | flatten }}"
   register: package_status
   until: package_status is success
   delay: 5
@@ -224,7 +224,7 @@
   ansible.builtin.apt:
     name: "{{ item }}"
     state: present
-  loop: "{{ postgresql_packages | list }}"
+  loop: "{{ postgresql_packages | flatten }}"
   environment: "{{ proxy_env | default({}) }}"
   register: apt_status
   until: apt_status is success
