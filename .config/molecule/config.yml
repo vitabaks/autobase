@@ -19,8 +19,6 @@ provisioner:
       timeout: 60
   playbooks:
     prepare: prepare.yml
-  env:
-    ANSIBLE_COLLECTIONS_PATH: "../../../"
 
 scenario:
   create_sequence:
