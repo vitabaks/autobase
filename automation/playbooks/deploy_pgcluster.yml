@@ -312,7 +312,8 @@
 
     - role: vitabaks.autobase.cron
 
-    - role: vitabaks.autobase.tls_certificate/copy
+    - role: vitabaks.autobase.tls_certificate
+      tasks_from: copy
       when: tls_cert_generate | default(true) | bool
 
     - role: vitabaks.autobase.pgbouncer

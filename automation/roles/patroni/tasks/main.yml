@@ -276,7 +276,8 @@
 # TLS (etcd)
 - name: Copy etcd cert files for patroni
   ansible.builtin.include_role:
-    name: ../roles/tls_certificate/copy
+    name: ../roles/tls_certificate
+    tasks_from: copy
   vars:
     tls_group_name: "etcd_cluster"
     fetch_tls_dir: "{{ etcd_tls_dir | default('/etc/etcd/tls') }}"
@@ -291,7 +292,8 @@
 # TLS (consul)
 - name: Copy consul cert files for patroni
   ansible.builtin.include_role:
-    name: ../roles/tls_certificate/copy
+    name: ../roles/tls_certificate
+    tasks_from: copy
   vars:
     tls_group_name: "consul_instances"
     fetch_tls_dir: "{{ consul_tls_dir | default('/etc/consul/tls') }}"

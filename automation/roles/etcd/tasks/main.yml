@@ -90,7 +90,8 @@
     # if 'etcd_on_dedicated_nodes' is 'false'
     - name: Copy etcd TLS certificate, key and CA from the master node
       ansible.builtin.include_role:
-        name: ../roles/tls_certificate/copy
+        name: ../roles/tls_certificate
+        tasks_from: copy
       vars:
         tls_group_name: "postgres_cluster"
         copy_tls_dir: "{{ etcd_tls_dir | default('/etc/etcd/tls') }}"
@@ -111,7 +112,8 @@
 
     - name: Copy etcd TLS files to all etcd nodes
       ansible.builtin.include_role:
-        name: ../roles/tls_certificate/copy
+        name: ../roles/tls_certificate
+        tasks_from: copy
       vars:
         tls_group_name: "etcd_cluster"
         fetch_tls_dir: "{{ etcd_tls_dir | default('/etc/etcd/tls') }}"
