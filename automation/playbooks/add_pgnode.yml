@@ -33,7 +33,7 @@
 
     - name: Add a new node to pg_hba.conf on existing cluster nodes
       ansible.builtin.include_role:
-        name: vitabaks.autobase.patroni/config
+        name: vitabaks.autobase.patroni
         tasks_from: pg_hba
       when: not new_node | default(false) | bool
 

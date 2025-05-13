@@ -152,7 +152,8 @@
     - role: vitabaks.autobase.pgpass
     - role: vitabaks.autobase.cron
 
-    - role: vitabaks.autobase.patroni/config
+    - role: vitabaks.autobase.patroni
+      tasks_from: config
 
     - role: vitabaks.autobase.pgbouncer/config
       when: pgbouncer_install | default(true) | bool
