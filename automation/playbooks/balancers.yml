@@ -65,7 +65,8 @@
     - role: vitabaks.autobase.confd
       when: dcs_type | default('etcd') == "etcd"
 
-    - role: vitabaks.autobase.vip_manager/disable
+    - role: vitabaks.autobase.vip_manager
+      tasks_from: disable
       when: vip_manager_disable | default(false) | bool
 
     - role: vitabaks.autobase.keepalived
