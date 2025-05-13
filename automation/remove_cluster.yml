@@ -3,10 +3,9 @@
   hosts: postgres_cluster
   become: true
   pre_tasks:
-    - name: Include main variables
-      ansible.builtin.include_vars: "roles/common/defaults/main.yml"
-    - name: Include OS-specific variables
-      ansible.builtin.include_vars: "roles/common/defaults/{{ ansible_os_family }}.yml"
+    - name: Load common variables
+      ansible.builtin.include_role:
+        name: common
   tasks:
     - block:
         - name: Stop Patroni service
@@ -16,7 +15,7 @@
             enabled: false
         - name: Delete PostgreSQL database content
           ansible.builtin.file:
-            path: "{{ postgresql_data_dir }}"
+            path: "{{ postgresql_data_dir | default('/var/lib/postgresql') }}"
             state: absent
       when: remove_postgres | default(false) | bool
       ignore_errors: true
@@ -36,9 +35,6 @@
 - name: remove_cluster.yml | Consul Cluster Play
   hosts: consul_instances
   become: true
-  pre_tasks:
-    - name: Include main variables
-      ansible.builtin.include_vars: "roles/common/defaults/main.yml"
   tasks:
     - block:
         - name: Stop Consul service
@@ -48,7 +44,7 @@
             enabled: false
         - name: Delete Consul content
           ansible.builtin.file:
-            path: "{{ consul_data_path }}"
+            path: "{{ consul_data_path | default('/var/lib/consul') }}"
             state: absent
         - name: Delete Consul serivce
           ansible.builtin.file:
@@ -60,9 +56,6 @@
 - name: remove_cluster.yml | Etcd Cluster Play
   hosts: etcd_cluster
   become: true
-  pre_tasks:
-    - name: Include main variables
-      ansible.builtin.include_vars: "roles/common/defaults/main.yml"
   tasks:
     - block:
         - name: Stop Etcd service
@@ -72,7 +65,7 @@
             enabled: false
         - name: Delete Etcd content
           ansible.builtin.file:
-            path: "{{ etcd_data_dir }}/member"
+            path: "{{ etcd_data_dir | default('/var/lib/etcd') }}/member"
             state: absent
       when: remove_etcd | default(false) | bool
       ignore_errors: true

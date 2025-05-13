@@ -6,43 +6,34 @@
 # 💻 Start Repository Operations and Tests
 # ========================================
 
-# 🔄 Setting up a valid repository for testing
-# We define a minor version of PostgreSQL Pro and the distribution details of the system
-- name: Molecule.tests.variables.asserts.apt_repository | Set Valid Repository Test Data
-  run_once: true
-  ansible.builtin.set_fact:
-    postgrespro_minor_version: 12.4.1
-    ansible_distribution: Debian
-    ansible_distribution_release: "stretch"
-
-# 📝 Constructing the repository URL for testing
-# The URL is constructed based on the minor version of PostgreSQL Pro and the system's distribution details
-- name: Molecule.tests.variables.asserts.apt_repository | Construct Repository URL Test Data
-  run_once: true
-  ansible.builtin.set_fact:
-    apt_repository:
-      repo: >-
-        {{ 'deb https://repo.postgrespro.ru//pgpro-archive/pgpro-' ~
-        postgrespro_minor_version ~ '/' ~ (ansible_distribution | lower) ~ '/' ~
-        ' ' ~ ansible_distribution_release ~ ' main' }}
-
-# 🖨️ Debugging the constructed repository URL
-# The constructed URL is printed for debugging purposes
-- name: Molecule.tests.variables.asserts.apt_repository | Debug Constructed Repository URL
+# 🖨️ Debugging the current OS distribution and release
+# These values are used to construct the expected URL
+- name: Molecule.tests.variables.asserts.apt_repository | Debug System Distribution Info
   run_once: true
   ansible.builtin.debug:
-    var: apt_repository['repo']
+    msg:
+      distribution: "{{ ansible_distribution }}"
+      release: "{{ ansible_distribution_release }}"
+      apt_repository: "{{ apt_repository }}"
 
-# ✅ Verifying the correctness of the constructed repository URL
-# The constructed URL is compared with the expected URL
-# If the URLs do not match, the test fails and an error message is displayed
-- name: Molecule.tests.variables.asserts.apt_repository | Verify Constructed Repository URL
+# 📝 Construct the expected apt repository URL and key
+- name: Molecule.tests.variables.asserts.apt_repository | Set expected repo and key
+  run_once: true
+  ansible.builtin.set_fact:
+    expected_apt_repo_url: "deb https://apt.postgresql.org/pub/repos/apt/ {{ ansible_distribution_release }}-pgdg main"
+    expected_apt_repo_key: "https://apt.postgresql.org/pub/repos/apt/ACCC4CF8.asc"
+
+# ✅ Verifying the correctness of the repository URL and key
+- name: Molecule.tests.variables.asserts.apt_repository | Assert repo and key
   run_once: true
   ansible.builtin.assert:
     that:
-      - "'repo' in apt_repository"
-      - "apt_repository['repo'] is not none"
-      - "apt_repository['repo'] != 'N/A'"
-      - "apt_repository['repo'] == 'deb https://repo.postgrespro.ru//pgpro-archive/pgpro-12.4.1/debian/ stretch main'"
-    fail_msg: "Test failed: The constructed repository URL does not match the expected URL."
-    success_msg: "Test passed: The constructed repository URL matches the expected URL."
+      - "apt_repository[0]['repo'] | trim == expected_apt_repo_url | trim"
+      - "apt_repository[0]['key'] == expected_apt_repo_key"
+    fail_msg: >-
+      Test failed:
+        repo is "{{ apt_repository[0]['repo'] }}"
+        key  is "{{ apt_repository[0]['key'] }}"
+        expected repo: "{{ expected_apt_repo_url }}"
+        expected key : "{{ expected_apt_repo_key }}"
+    success_msg: "Test passed: apt_repository[0]['repo'] and ['key'] are correct"

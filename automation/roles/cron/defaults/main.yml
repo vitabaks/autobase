@@ -1,4 +1,4 @@
 ---
 # defaults file for cron
 
-cron_jobs: []
+# cron_jobs: [] # Defined in roles/common/defaults/main.yml. Commented out here to prevent conflicts.

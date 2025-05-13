@@ -1,15 +1,14 @@
 ---
-# ---------------------------------------------------------------------
-# Proxy variables (optional) for download packages using a proxy server
+# ----------------------------------------------------------
+# Proxy variables (optional)
+# ----------------------------------------------------------
 proxy_env: {} # yamllint disable rule:braces
 #  http_proxy: http://10.128.64.9:3128
 #  https_proxy: http://10.128.64.9:3128
-# ---------------------------------------------------------------------
 
-# Cluster variables
-cluster_vip: "" # IP address for client access to the databases in the cluster (optional).
-vip_interface: "{{ ansible_default_ipv4.interface }}" # interface name (e.g., "ens32").
-# Note: VIP-based solutions such as keepalived or vip-manager may not function correctly in cloud environments.
+############################################################
+# Main cluster variables
+############################################################
 
 patroni_cluster_name: "postgres-cluster" # the cluster name (must be unique for each cluster)
 
@@ -23,7 +22,7 @@ synchronous_mode_strict: false # if 'true' then block all client writes to the m
 synchronous_node_count: 1 # number of synchronous standby databases
 
 # Load Balancing
-with_haproxy_load_balancing: false # or 'true' if you want to install and configure the load-balancing
+with_haproxy_load_balancing: false # or 'true' if you want to install and configure the HAProxy load balancers
 haproxy_listen_port:
   master: 5000
   replicas: 5001
@@ -74,6 +73,10 @@ haproxy_timeout:
 #  \"request_size\":%U\
 #  }"
 
+cluster_vip: "" # IP address for client access to the databases in the cluster (optional).
+vip_interface: "{{ ansible_default_ipv4.interface }}" # interface name (e.g., "ens32").
+# Note: VIP-based solutions such as keepalived or vip-manager may not function correctly in cloud environments.
+
 # keepalived (if 'cluster_vip' is specified and 'with_haproxy_load_balancing' is 'true')
 keepalived_virtual_router_id: "{{ cluster_vip.split('.')[3] | int }}" # The last octet of 'cluster_vip' IP address is used by default.
 # virtual_router_id - must be unique in the network (available values are 0..255).
@@ -97,7 +100,10 @@ tls_privatekey: "server.key"
 tls_ca_cert: "ca.crt"
 tls_ca_key: "ca.key"
 
+############################################################
 # DCS (Distributed Consensus Store)
+############################################################
+
 dcs_type: "etcd" # or 'consul'
 dcs_exists: false # or 'true' if you do not want Autobase to deploy and manage etcd cluster and prefer to manage it yourself.
 
@@ -201,17 +207,47 @@ consul_services:
 #      - { http: "http://{{ inventory_hostname }}:{{ patroni_restapi_port }}/async?lag={{ patroni_maximum_lag_on_replica }}", interval: "2s" }
 #      - { args: ["systemctl", "status", "pgbouncer"], interval: "5s" }
 
-# PostgreSQL variables
+############################################################
+# PostgreSQL parameters
+############################################################
+
 postgresql_version: 17
-# postgresql_data_dir: see Debian.yml or RedHat.yml
 postgresql_listen_addr: "0.0.0.0" # Listen on all interfaces. Or use "{{ inventory_hostname }},127.0.0.1" to listen on a specific IP address.
 postgresql_port: 5432
 postgresql_encoding: "UTF8" # for bootstrap only (initdb)
 postgresql_locale: "en_US.UTF-8" # for bootstrap only (initdb)
 postgresql_data_checksums: true # for bootstrap only (initdb)
 postgresql_password_encryption_algorithm: "scram-sha-256" # or "md5" if your clients do not work with passwords encrypted with SCRAM-SHA-256
+postgresql_cluster_name: "{{ 'main' if ansible_os_family == 'Debian' else 'data' }}"
+postgresql_home_dir: "{{ '/var/lib/postgresql' if ansible_os_family == 'Debian' else '/var/lib/pgsql' }}"
+# You can specify custom data dir path. Example: "/pgdata/{{ postgresql_version }}/main"
+postgresql_data_dir: "\
+  {% if cloud_provider | default('') | length > 0 %}\
+  {{ pg_data_mount_path | default('/pgdata') }}/{{ postgresql_version }}/{{ postgresql_cluster_name }}\
+  {% else %}\
+  {{ postgresql_home_dir }}/{{ postgresql_version }}/{{ postgresql_cluster_name }}\
+  {% endif %}"
+# You can specify custom WAL dir path. Example: "/pgwal/{{ postgresql_version }}/pg_wal"
+postgresql_wal_dir: "" # if defined, symlink will be created [optional]
+postgresql_conf_dir: "\
+  {% if ansible_os_family == 'Debian' %}\
+  /etc/postgresql/{{ postgresql_version }}/{{ postgresql_cluster_name }}\
+  {% else %}\
+  {{ postgresql_data_dir }}\
+  {% endif %}"
+postgresql_bin_dir: "\
+  {% if ansible_os_family == 'Debian' %}\
+  /usr/lib/postgresql/{{ postgresql_version }}/bin\
+  {% else %}\
+  /usr/pgsql-{{ postgresql_version }}/bin\
+  {% endif %}"
+postgresql_log_dir: "/var/log/postgresql"
+postgresql_unix_socket_dir: "/var/run/postgresql"
+# Mount the statistics directory in tmpfs (if postgresql_version < 15)
+postgresql_stats_temp_directory_path: "/var/lib/pgsql_stats_tmp" # or 'none'
+postgresql_stats_temp_directory_size: "1024m"
 
-# (optional) list of users to be created (if not already exists)
+# List of users to be created
 postgresql_users:
   - { name: "{{ pgbouncer_auth_username }}", password: "{{ pgbouncer_auth_password }}", flags: "LOGIN", role: "" }
 #  - { name: "monitoring_auth_username", password: "monitoring_user_password", flags: "LOGIN", role: "pg_monitor" } # monitoring Service Account
@@ -220,18 +256,18 @@ postgresql_users:
 #  - { name: "", password: "", flags: "NOSUPERUSER" }
 #  - { name: "", password: "", flags: "NOLOGIN" }
 
-# (optional) list of databases to be created (if not already exists)
+# List of databases to be created
 postgresql_databases: []
 #  - { db: "mydatabase", encoding: "UTF8", lc_collate: "ru_RU.UTF-8", lc_ctype: "ru_RU.UTF-8", owner: "mydb-user" }
 #  - { db: "mydatabase2", encoding: "UTF8", lc_collate: "ru_RU.UTF-8", lc_ctype: "ru_RU.UTF-8", owner: "mydb-user", conn_limit: "50" }
 #  - { db: "", encoding: "UTF8", lc_collate: "en_US.UTF-8", lc_ctype: "en_US.UTF-8", owner: "" }
 #  - { db: "", encoding: "UTF8", lc_collate: "en_US.UTF-8", lc_ctype: "en_US.UTF-8", owner: "" }
 
-# (optional) list of schemas to be created (if not already exists)
+# List of schemas to be created
 postgresql_schemas: []
 #  - { schema: "myschema", db: "mydatabase", owner: "mydb-user" }
 
-# (optional) list of privileges to be granted (if not already exists) or revoked
+# List of privileges to be granted or revoked
 # https://docs.ansible.com/ansible/latest/collections/community/postgresql/postgresql_privs_module.html#examples
 # The db (which is the database to connect to) and role parameters are required
 postgresql_privs: []
@@ -243,7 +279,7 @@ postgresql_privs: []
 #  - { role: "test, test2", privs: "CREATE", type: "database", db: "test2", objs: "test2" }  # grant CREATE on a database test2 to role test and test2
 #  - { role: "invnatom_ms", privs: "EXECUTE", type: "default_privs", db: "invnatom_db", schema: "invnatom", objs: "FUNCTIONS", target_roles: "invnatom_cd" }
 
-# (optional) list of database extensions to be created (if not already exists)
+# List of database extensions to be created
 postgresql_extensions: []
 #  - { ext: "pg_stat_statements", db: "postgres" }
 #  - { ext: "pg_stat_statements", db: "mydatabase" }
@@ -255,7 +291,7 @@ postgresql_extensions: []
 #  - { ext: "", db: "" }
 #  - { ext: "", db: "" }
 
-# postgresql parameters to bootstrap dcs (are parameters for example)
+# Example PostgreSQL parameters (stored in DCS)
 postgresql_parameters:
   - { option: "max_connections", value: "1000" }
   - { option: "superuser_reserved_connections", value: "5" }
@@ -377,7 +413,10 @@ postgresql_pgpass:
   - "*:{{ pgbouncer_listen_port }}:*:{{ patroni_superuser_username }}:{{ patroni_superuser_password }}"
 #  - hostname:port:database:username:password
 
+############################################################
 # PgBouncer parameters
+############################################################
+
 pgbouncer_install: true # or 'false' if you do not want to install and configure the pgbouncer service
 pgbouncer_processes: 1 # Number of pgbouncer processes to be used. Multiple processes use the so_reuseport option for better performance.
 pgbouncer_conf_dir: "/etc/pgbouncer"
@@ -418,7 +457,10 @@ pgbouncer_pools:
 #  - { name: "", dbname: "", pool_parameters: "" }
 #  - { name: "", dbname: "", pool_parameters: "" }
 
-# Extended variables (optional)
+############################################################
+# Patroni parameters
+############################################################
+
 patroni_restapi_listen_addr: "0.0.0.0" # Listen on all interfaces. Or use "{{ inventory_hostname }}" to listen on a specific IP address.
 patroni_restapi_port: 8008
 patroni_restapi_username: "patroni"
@@ -489,6 +531,10 @@ patroni_remove_data_directory_on_rewind_failure: false # or 'true' (if use_pg_re
 patroni_remove_data_directory_on_diverged_timelines: false # or 'true'
 # if 'true', Patroni will remove the PostgreSQL data directory and recreate the replica
 # if it notices that timelines are diverging and the former master can not start streaming from the new master.
+
+############################################################
+# Backup and Restore
+############################################################
 
 # https://patroni.readthedocs.io/en/latest/replica_bootstrap.html#bootstrap
 patroni_cluster_bootstrap_method: "initdb" # or "wal-g", "pgbackrest", "pg_probackup"
@@ -698,6 +744,10 @@ cluster_restore_timeout: 86400 # backup and WAL restore timeout in seconds (24 h
 disable_archive_command: true # or 'false' to not disable archive_command after restore
 keep_patroni_dynamic_json: true # or 'false' to remove patroni.dynamic.json after restore (if exists)
 
+############################################################
+# Monitoring
+############################################################
+
 # Netdata - https://github.com/netdata/netdata
 # Open up your web browser of choice and navigate to http://NODE:19999
 netdata_install: true # Install Netdata on Postgres cluster nodes (with kickstart.sh)
@@ -720,3 +770,485 @@ netdata_conf:
   # You can fine-tune retention for each tier by setting a time limit or size limit. Setting a limit to 0 disables it.
 # More options you can specify in the roles/netdata/templates/netdata.conf.j2
 # https://learn.netdata.cloud/docs/netdata-agent/configuration
+
+############################################################
+# System parameters
+############################################################
+
+# DNS servers (/etc/resolv.conf)
+nameservers: []
+#  - "8.8.8.8"  # example (Google Public DNS)
+#  - "9.9.9.9"  # (Quad9 Public DNS)
+
+# /etc/hosts (optional)
+etc_hosts: []
+#  - "10.128.64.143 pgbackrest.minio.local minio.local s3.eu-west-3.amazonaws.com"  # example (MinIO)
+#  - ""
+
+ntp_enabled: false # or 'true' if you want to install and configure the ntp service
+ntp_servers: []
+#  - "10.128.64.44"
+#  - "10.128.64.45"
+
+timezone: ""
+# timezone: "Etc/UTC"
+# timezone: "America/New_York"
+# timezone: "Europe/Moscow"
+# timezone: "Europe/Berlin"
+
+# Generate locale
+# (except RHEL,use glibc-langpack)
+locale_gen:
+  - { language_country: "en_US", encoding: "UTF-8" }
+#  - { language_country: "ru_RU", encoding: "UTF-8" }
+#  - { language_country: "de_DE", encoding: "UTF-8" }
+#  - { language_country: "", encoding: "" }
+
+# Set system locale (LANG,LC_ALL)
+locale: "en_US.utf-8"
+
+# Configure swap space
+swap_file_create: true # or 'false'
+swap_file_path: /swapfile
+swap_file_size_mb: "4096" # change this value for your system
+
+# Kernel parameters
+sysctl_set: true # or 'false'
+# these parameters for example! Specify kernel options for your system
+sysctl_conf:
+  etcd_cluster: []
+  consul_instances: []
+  master: []
+  replica: []
+  pgbackrest: []
+  postgres_cluster:
+    - { name: "vm.overcommit_memory", value: "2" }
+    - { name: "vm.swappiness", value: "1" }
+    - { name: "vm.min_free_kbytes", value: "102400" }
+    - { name: "vm.dirty_expire_centisecs", value: "1000" }
+    - { name: "vm.dirty_background_bytes", value: "67108864" }
+    - { name: "vm.dirty_bytes", value: "536870912" }
+    #    - { name: "vm.nr_hugepages", value: "9510" }  # example "9510"=18GB
+    - { name: "vm.zone_reclaim_mode", value: "0" }
+    - { name: "kernel.numa_balancing", value: "0" }
+    - { name: "kernel.sched_autogroup_enabled", value: "0" }
+    - { name: "net.ipv4.ip_nonlocal_bind", value: "1" }
+    - { name: "net.ipv4.ip_forward", value: "1" }
+    - { name: "net.ipv4.ip_local_port_range", value: "10000 65535" }
+    - { name: "net.core.netdev_max_backlog", value: "10000" }
+    - { name: "net.ipv4.tcp_max_syn_backlog", value: "8192" }
+    - { name: "net.core.somaxconn", value: "65535" }
+    - { name: "net.ipv4.tcp_tw_reuse", value: "1" }
+  #    - { name: "net.netfilter.nf_conntrack_max", value: "1048576" }
+  #    - { name: "kernel.sched_migration_cost_ns", value: "5000000" }
+  #    - { name: "", value: "" }
+  balancers:
+    - { name: "net.ipv4.ip_nonlocal_bind", value: "1" }
+    - { name: "net.ipv4.ip_forward", value: "1" }
+    - { name: "net.ipv4.ip_local_port_range", value: "10000 65535" }
+    - { name: "net.core.netdev_max_backlog", value: "10000" }
+    - { name: "net.ipv4.tcp_max_syn_backlog", value: "8192" }
+    - { name: "net.core.somaxconn", value: "65535" }
+    - { name: "net.ipv4.tcp_tw_reuse", value: "1" }
+#   - { name: "net.netfilter.nf_conntrack_max", value: "1048576" }
+#   - { name: "", value: "" }
+
+# Huge Pages
+# this setting will automatically configure "vm.nr_hugepages" for shared_buffers of 8GB or more
+# if 'sysctl_set' is 'true', "vm.nr_hugepages" is undefined or insufficient in sysctl_conf,
+# and "huge_pages" is not 'off' in postgresql_parameters.
+huge_pages_auto_conf: true
+
+# Transparent Huge Pages
+disable_thp: true # or 'false'
+
+# Max open file limit
+set_limits: true # or 'false'
+limits_user: "postgres"
+soft_nofile: 65536
+hard_nofile: 200000
+
+# I/O Scheduler (optional)
+set_scheduler: false # or 'true'
+scheduler:
+  - { sched: "deadline", nr_requests: "1024", device: "sda" }
+#  - { sched: "noop" , nr_requests: "1024", device: "sdb" }
+#  - { sched: "" , nr_requests: "1024", device: "" }
+
+# Non-multiqueue I/O schedulers:
+# cfq         - for desktop systems and slow SATA drives
+# deadline    - for SAS drives (recommended for databases)
+# noop        - for SSD drives
+# Multiqueue I/O schedulers (blk-mq):
+# mq-deadline - (recommended for databases)
+# none        - (ideal for fast random I/O devices such as NVMe)
+# bfq         - (avoid for databases)
+# kyber
+
+# SSH Keys (optional)
+enable_ssh_key_based_authentication: false # or 'true' for configure SSH Key-Based Authentication
+ssh_key_user: "postgres"
+ssh_key_state: "present"
+ssh_known_hosts: "{{ groups['postgres_cluster'] }}"
+
+# List of public SSH keys. These keys will be added to the database server's  ~/.ssh/authorized_keys  file.
+ssh_public_keys: []
+
+# sudo
+sudo_users:
+  - name: "postgres"
+    nopasswd: "yes" # or "no" to require a password
+    commands: "ALL"
+#  - name: "joe" # other user (example)
+#    nopasswd: "no"
+#    commands: "/usr/bin/find, /usr/bin/less, /usr/bin/tail, /bin/kill"
+
+# Firewall
+firewall_enabled_at_boot: false # or 'true' for configure firewall (iptables)
+
+firewall_allowed_tcp_ports_for:
+  master: []
+  replica: []
+  pgbackrest: []
+  postgres_cluster:
+    - "{{ ansible_ssh_port | default(22) }}"
+    - "{{ postgresql_port }}"
+    - "{{ pgbouncer_listen_port }}"
+    - "{{ patroni_restapi_port }}"
+    - "19999" # Netdata
+  #    - "10050"  # Zabbix agent
+  #    - ""
+  etcd_cluster:
+    - "{{ ansible_ssh_port | default(22) }}"
+    - "2379" # ETCD port
+    - "2380" # ETCD port
+  #    - ""
+  consul_instances:
+    - 8300
+    - 8301
+    - 8302
+    - 8500
+    - 8600
+  balancers:
+    - "{{ ansible_ssh_port | default(22) }}"
+    - "{{ haproxy_listen_port.master }}" # HAProxy (read/write) master
+    - "{{ haproxy_listen_port.replicas }}" # HAProxy (read only) all replicas
+    - "{{ haproxy_listen_port.replicas_sync }}" # HAProxy (read only) synchronous replica only
+    - "{{ haproxy_listen_port.replicas_async }}" # HAProxy (read only) asynchronous replicas only
+    - "{{ haproxy_listen_port.stats }}" # HAProxy stats
+#    - ""
+
+firewall_additional_rules_for:
+  master: []
+  replica: []
+  postgres_cluster: []
+  pgbackrest: []
+  etcd_cluster: []
+  consul_instances: []
+  balancers:
+    - "iptables -p vrrp -A INPUT -j ACCEPT" # Keepalived (vrrp)
+    - "iptables -p vrrp -A OUTPUT -j ACCEPT" # Keepalived (vrrp)
+
+# disable firewalld (installed by default on RHEL/CentOS) or ufw (installed by default on Ubuntu)
+firewall_disable_firewalld: true
+firewall_disable_ufw: true
+
+# System cron jobs
+cron_jobs: []
+#  - name: "Example Job one"
+#    user: "postgres"
+#    file: /etc/cron.d/example_job_one
+#    minute: "00"
+#    hour: "1"
+#    day: "*"
+#    month: "*"
+#    weekday: "*"
+#    job: "echo 'example job one command'"
+#  - name: "Example Job two"
+#    user: "postgres"
+#    file: /etc/cron.d/example_job_two
+#    minute: "00"
+#    hour: "2"
+#    day: "*"
+#    month: "*"
+#    weekday: "*"
+#    job: "echo 'example job two command'"
+
+# Configure mount points in /etc/fstab and mount the file system (if 'mount.src' is defined)
+mount:
+  - path: "/pgdata"
+    src: "" # device UUID or path.
+    fstype: ext4 # if 'zfs' is specified a ZFS pool will be created
+    opts: defaults,noatime # not applicable to 'zfs'
+    state: mounted
+#  - path: "/pgwal"
+#    src: ""
+#    fstype: ext4
+#    opts: defaults,noatime
+#    state: mounted
+
+############################################################
+# Repository and packages
+############################################################
+pkg_type: "{{ 'deb' if ansible_os_family == 'Debian' else 'rpm' }}"
+
+# Debian
+apt_repository:
+  - repo: "deb https://apt.postgresql.org/pub/repos/apt/ {{ ansible_distribution_release }}-pgdg main" # postgresql apt repository
+    key: "https://apt.postgresql.org/pub/repos/apt/ACCC4CF8.asc" # postgresql apt repository key
+#  - repo: "deb https://deb.debian.org/debian/ {{ ansible_distribution_release }} main"
+#  - repo: "deb https://deb.debian.org/debian/ {{ ansible_distribution_release }}-updates main"
+#  - repo: "deb https://security.debian.org/debian-security/ {{ ansible_distribution_release }}/updates main"
+
+# RedHat
+yum_repository: []
+#  - name: "repo name"
+#    description: "repo description"
+#    baseurl: "https://<my_repo>"
+#    gpgkey: "https://my-repo-key.url"
+#    gpgcheck: "yes"
+
+install_postgresql_repo: true # or 'false' (installed from the package "pgdg-redhat-repo-latest.noarch.rpm")
+install_epel_repo: true # or 'false' (installed from the package "epel-release-latest.noarch.rpm")
+install_scl_repo: true # or 'false' (Redhat 7 family only)
+
+postgresql_os_specific_packages:
+  Debian:
+    - postgresql-{{ postgresql_version }}
+    - postgresql-client-{{ postgresql_version }}
+    - postgresql-contrib-{{ postgresql_version }}
+    - postgresql-server-dev-{{ postgresql_version }}
+    - postgresql-{{ postgresql_version }}-dbgsym
+#   - postgresql-{{ postgresql_version }}-repack
+#   - postgresql-{{ postgresql_version }}-cron
+#   - postgresql-{{ postgresql_version }}-pg-stat-kcache
+#   - postgresql-{{ postgresql_version }}-pg-wait-sampling
+#   - postgresql-{{ postgresql_version }}-postgis-3
+#   - postgresql-{{ postgresql_version }}-pgrouting
+#   - postgresql-{{ postgresql_version }}-pgvector
+#   - postgresql-{{ postgresql_version }}-pgaudit
+#   - postgresql-{{ postgresql_version }}-partman
+  RedHat:
+    - postgresql{{ postgresql_version }}
+    - postgresql{{ postgresql_version }}-server
+    - postgresql{{ postgresql_version }}-contrib
+    - postgresql{{ postgresql_version }}-devel
+#   - postgresql{{ postgresql_version }}-debuginfo
+#   - pg_repack_{{ postgresql_version }}
+#   - pg_cron_{{ postgresql_version }}
+#   - pg_stat_kcache_{{ postgresql_version }}
+#   - pg_wait_sampling_{{ postgresql_version }}
+#   - postgis33_{{ postgresql_version }}
+#   - pgrouting_{{ postgresql_version }}
+#   - pgvector_{{ postgresql_version }}
+#   - pgaudit17_{{ postgresql_version }}
+#   - pg_partman_{{ postgresql_version }}
+postgresql_packages: "{{ postgresql_os_specific_packages[ansible_os_family] }}"
+
+python_version: "3" # override the version (e.q, 3.11) only if patroni_installation_method: "pip" is used
+
+system_os_specific_packages:
+  Debian:
+    - python{{ python_version }}-dev
+    - moreutils
+    - dnsutils
+    - curl
+  RedHat:
+    - python{{ python_version }}-devel
+    - python{{ python_version }}-libselinux
+    - python{{ python_version }}-libsemanage
+    - python{{ python_version }}-policycoreutils
+    - dnf-utils
+    - bind-utils
+system_packages:
+  - "{{ system_os_specific_packages[ansible_os_family] }}"
+  - python{{ python_version }}
+  - python{{ python_version }}-psycopg2
+  - python{{ python_version }}-setuptools
+  - python{{ python_version }}-pip
+  - python{{ python_version }}-urllib3
+  - less
+  - sudo
+  - vim
+  - nano
+  - gcc
+  - jq
+  - iptables
+  - acl
+  - unzip
+  - tar
+  - zstd
+
+install_perf: false # or 'true' to install "perf" (Linux profiling with performance counters) and "FlameGraph".
+
+# RedHat
+# The glibc-langpack package includes the basic information required to support the language in your applications.
+glibc_langpack:
+  - "glibc-langpack-en"
+#  - "glibc-langpack-ru"
+#  - "glibc-langpack-de"
+
+# additional packages
+etcd_package_repo: "https://github.com/etcd-io/etcd/releases/download/v{{ etcd_version }}/etcd-v{{ etcd_version }}-linux-{{ etcd_architecture_map[ansible_architecture] }}.tar.gz" # yamllint disable rule:line-length
+vip_manager_package_repo: "https://github.com/cybertec-postgresql/vip-manager/releases/download/v{{ vip_manager_version }}/vip-manager_{{ vip_manager_version }}_Linux_{{ vip_manager_architecture_map[ansible_architecture] }}.{{ pkg_type }}" # yamllint disable rule:line-length
+confd_package_repo: "https://github.com/kelseyhightower/confd/releases/download/v0.16.0/confd-0.16.0-linux-{{ confd_architecture_map[ansible_architecture] }}"
+
+# ----------------------------------------------------------------------------------------------------
+# Redefine the installation method (optional)
+# ----------------------------------------------------------------------------------------------------
+installation_method: "repo" # "repo" (default) or "file"
+
+# The Patroni package will be installed from the deb/rpm package by default.
+# You also have the option of choosing an installation method using the pip package.
+patroni_installation_method: "{{ pkg_type }}" # deb/rpm (default) or "pip"
+
+# if patroni_installation_method: "deb" or "rpm"
+patroni_os_specific_packages:
+  Debian:
+    - python3-{{ dcs_type }}
+  RedHat:
+    - patroni-{{ dcs_type }}
+patroni_packages:
+  - patroni
+  - "{{ patroni_os_specific_packages[ansible_os_family] }}"
+
+# You can preload the Patroni package to your own repository.
+patroni_deb_package_repo: []
+#  - "https://<my_repo>/patroni_<version>-1.pgdg24.04+1_all.deb"
+patroni_rpm_package_repo: []
+#  - "https://<my_repo>/patroni-<version>-2PGDG.rhel9.noarch.rpm"
+
+# if patroni_installation_method: "pip"
+patroni_install_version: "latest" # or a specific version (e.q., '4.0.5')
+# pip packages are installed from the public PyPI repository. You can preload the pip packages to your own repository.
+pip_package_repo: "https://bootstrap.pypa.io/get-pip.py" # latest version pip3 for python3 (or use "pip-<version>.tar.gz").
+patroni_pip_package_repo: []
+# - "https://<my_repo>/patroni-<version>.tar.gz"
+patroni_pip_requirements_repo: []
+#  - "https://<my_repo>/<package_1>.tar.gz"
+#  - "https://<my_repo>/<package_n>.tar.gz"
+
+# if with_haproxy_load_balancing: true
+haproxy_installation_method: "{{ pkg_type }}" # deb/rpm or "src"
+
+# if haproxy_installation_method: "src"
+haproxy_major: "{{ haproxy_version.split('.')[:2] | join('.') }}"
+# renovate: datasource=github-tags depName=haproxy/haproxy extractVersion=^v(?<version>.*)$
+haproxy_version: "1.8.31" # version to build from source
+# renovate: datasource=github-releases depName=lua/lua extractVersion=^v(?<version>.*)$
+lua_version: 5.4.7
+lua_src_repo: "https://www.lua.org/ftp/lua-{{ lua_version }}.tar.gz" # required for build haproxy
+haproxy_src_repo: "https://www.haproxy.org/download/{{ haproxy_major }}/src/haproxy-{{ haproxy_version }}.tar.gz"
+haproxy_os_specific_packages:
+  Debian:
+    - unzip
+    - gzip
+    - make
+    - gcc
+    - build-essential
+    - libc6-dev
+    - libpcre3-dev
+    - liblua5.3-dev
+    - libreadline-dev
+    - zlib1g-dev
+    - libsystemd-dev
+    - ca-certificates
+    - libssl-dev
+  RedHat:
+    - unzip
+    - gzip
+    - make
+    - gcc
+    - gcc-c++
+    - pcre-devel
+    - zlib-devel
+    - readline-devel
+    - openssl
+    - openssl-devel
+    - openssl-libs
+    - systemd-devel
+haproxy_compile_requirements: "{{ haproxy_os_specific_packages[ansible_os_family] }}"
+
+############################################################
+# Offline installation (if installation_method: "file")
+############################################################
+
+# You can also download the required packages into the /autobase/automation/files/ directory.
+# Packages from this directory will be used during installation.
+# Note: You are responsible for providing all required package dependencies for your specific Linux distribution version.
+
+# if patroni_installation_method: "deb" or "rpm"
+patroni_deb_package_file: ""
+patroni_rpm_package_file: ""
+
+# if patroni_installation_method: "pip"
+pip_package_file: ""
+patroni_pip_requirements_file: []
+patroni_pip_package_file: []
+
+# additional packages
+etcd_package_file: ""
+vip_manager_package_file: ""
+wal_g_package_file: ""
+
+# if with_haproxy_load_balancing: true
+haproxy_package_file: []
+confd_package_file: ""
+# if haproxy_installation_method: 'src'
+lua_src_file: ""
+haproxy_src_file: ""
+
+# Specify any required packages, these packages will be installed before all other dependencies (for any installation method).
+packages_from_file: []
+#  - "<package_file_name>.{{ pkg_type }}"
+
+############################################################
+# Other variables
+############################################################
+
+# (optional) - Fetch files from the server in the "master" group. These files can later be copied to all servers.
+fetch_files_from_master: []
+#  - { src: "/etc/ssl/certs/ssl-cert-snakeoil.pem", dest: "files/ssl-cert-snakeoil.pem" }
+#  - { src: "/etc/ssl/private/ssl-cert-snakeoil.key", dest: "files/ssl-cert-snakeoil.key" }
+#  - { src: "/path/to/myfile", dest: "files/myfile" }
+
+# (optional) - Copy this files to all servers in the cluster ("master" and "replica" groups)
+copy_files_to_all_server: []
+#  - { src: "files/ssl-cert-snakeoil.pem", dest: "/etc/ssl/certs/ssl-cert-snakeoil.pem", owner: "postgres", group: "postgres", mode: "0644" }
+#  - { src: "files/ssl-cert-snakeoil.key", dest: "/etc/ssl/private/ssl-cert-snakeoil.key", owner: "postgres", group: "postgres", mode: "0600" }
+#  - { src: "files/myfile", dest: "/path/to/myfile", owner: "postgres", group: "postgres", mode: "0640" }
+
+# (optional) Execute custom commands or scripts
+# This can be a direct command, a bash script content, or a path to a script on the host
+pre_deploy_command: "" # Command or script to be executed before the Postgres cluster deployment
+pre_deploy_command_timeout: 3600 # Timeout in seconds
+pre_deploy_command_hosts: "postgres_cluster" # host groups where the pre_deploy_command should be executed
+pre_deploy_command_print: true # Print the command in the ansible log
+pre_deploy_command_print_result: true # Print the result of the command execution to the ansible log
+pre_deploy_command_log: "/var/tmp/pre_deploy_command.log"
+
+post_deploy_command: "" # Command or script to be executed after the Postgres cluster deployment
+post_deploy_command_timeout: 3600 # Timeout in seconds
+post_deploy_command_hosts: "postgres_cluster" # host groups where the post_deploy_command should be executed
+post_deploy_command_print: true # Print the command in the ansible log
+post_deploy_command_print_result: true # Print the result of the command execution to the ansible log
+post_deploy_command_log: "/var/tmp/post_deploy_command.log"
+
+# Supported Linux versions
+os_valid_distributions:
+  - RedHat
+  - CentOS
+  - Rocky
+  - OracleLinux
+  - Ubuntu
+  - Debian
+  - AlmaLinux
+
+os_minimum_versions:
+  RedHat: 8
+  CentOS: 8
+  Rocky: 8.4
+  AlmaLinux: 8.3
+  OracleLinux: 8
+  Ubuntu: 22.04
+  Debian: 11

@@ -158,7 +158,7 @@
     # Debian
     - name: Install patroni package
       ansible.builtin.package:
-        name: "{{ patroni_packages | default('patroni') }}"
+        name: "{{ patroni_packages | flatten }}"
         state: present
       register: package_status
       until: package_status is success
@@ -169,7 +169,7 @@
     # RedHat
     - name: Install patroni package
       ansible.builtin.package:
-        name: "{{ patroni_packages | default('patroni') }}"
+        name: "{{ patroni_packages | flatten }}"
         state: present
       register: package_status
       until: package_status is success

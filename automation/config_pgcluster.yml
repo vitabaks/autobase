@@ -4,9 +4,6 @@
   gather_facts: true
   any_errors_fatal: true
   pre_tasks:
-    - name: Include main variables
-      ansible.builtin.include_vars: "roles/common/defaults/main.yml"
-      tags: always
     # set_fact: 'pgbackrest_install' to configure Postgres backups (TODO: Add the ability to configure backups in the UI)
     # Note: Applicable only for "aws", "gcp", "azure", because:
     # "digitalocean" - requires the Spaces access keys ("AWS_ACCESS_KEY_ID" and "AWS_SECRET_ACCESS_KEY" variables)
@@ -15,7 +12,7 @@
       ansible.builtin.set_fact:
         pgbackrest_install: true
       when:
-        - not (pgbackrest_install | bool or wal_g_install | bool)
+        - not (pgbackrest_install | default(false) | bool or wal_g_install | default(false) | bool)
         - cloud_provider | default('') | lower in ['aws', 'gcp', 'azure']
         - pgbackrest_auto_conf | default(true) | bool # to be able to disable auto backup settings
       tags: always
@@ -32,22 +29,13 @@
   become_method: sudo
   gather_facts: true
   pre_tasks:
-    - name: Include main variables
-      ansible.builtin.include_vars: "roles/common/defaults/main.yml"
-
-    - name: Include system variables
-      ansible.builtin.include_vars: "roles/common/defaults/system.yml"
-
-    - name: Include OS-specific variables
-      ansible.builtin.include_vars: "roles/common/defaults/{{ ansible_os_family }}.yml"
-
     - name: "[Prepare] Set maintenance variable"
       ansible.builtin.set_fact:
         postgresql_cluster_maintenance: true
 
     - name: "[Prepare] Get Patroni Cluster Leader Node"
       ansible.builtin.uri:
-        url: http://{{ inventory_hostname }}:{{ patroni_restapi_port }}/leader
+        url: http://{{ inventory_hostname }}:{{ patroni_restapi_port | default('8008') }}/leader
         status_code: 200
       register: patroni_leader_result
       changed_when: false
@@ -93,7 +81,7 @@
     - name: "Print Patroni Cluster info"
       ansible.builtin.debug:
         msg:
-          - "Cluster Name: {{ patroni_cluster_name }}"
+          - "Cluster Name: {{ patroni_cluster_name | default('postgres-cluster') }}"
           - "Cluster Leader: {{ ansible_hostname }}"
       when: inventory_hostname in groups['primary']
 
@@ -103,7 +91,7 @@
       ansible.builtin.set_fact:
         pgbackrest_install: true
       when:
-        - not (pgbackrest_install | bool or wal_g_install | bool)
+        - not (pgbackrest_install | default(false) | bool or wal_g_install | default(false) | bool)
         - cloud_provider | default('') | lower in ['aws', 'gcp', 'azure']
         - pgbackrest_auto_conf | default(true) | bool # to be able to disable auto backup settings
   tags:
@@ -120,44 +108,32 @@
     - ansible.builtin.import_tasks: roles/patroni/handlers/main.yml
     - ansible.builtin.import_tasks: roles/pgbouncer/handlers/main.yml
   pre_tasks:
-    - name: Include main variables
-      ansible.builtin.include_vars: "roles/common/defaults/main.yml"
-      tags: always
-
-    - name: Include system variables
-      ansible.builtin.include_vars: "roles/common/defaults/system.yml"
-      tags: always
-
-    - name: Include OS-specific variables
-      ansible.builtin.include_vars: "roles/common/defaults/{{ ansible_os_family }}.yml"
-      tags: always
-
     - name: Build a firewall_ports_dynamic_var
       ansible.builtin.set_fact:
         firewall_ports_dynamic_var: "{{ firewall_ports_dynamic_var | default([]) + (firewall_allowed_tcp_ports_for[item] | default([])) }}"
       loop: "{{ hostvars[inventory_hostname].group_names }}"
-      when: firewall_enabled_at_boot | bool
+      when: firewall_enabled_at_boot | default(false) | bool
       tags: config_firewall, firewall
 
     - name: Build a firewall_rules_dynamic_var
       ansible.builtin.set_fact:
         firewall_rules_dynamic_var: "{{ firewall_rules_dynamic_var | default([]) + (firewall_additional_rules_for[item] | default([])) }}"
       loop: "{{ hostvars[inventory_hostname].group_names }}"
-      when: firewall_enabled_at_boot | bool
+      when: firewall_enabled_at_boot | default(false) | bool
       tags: firewall
 
     # if 'dcs_type' is 'consul'
     - name: Add a nameserver entry poining to localhost for dnsmasq
       ansible.builtin.set_fact:
         nameservers: "{{ ['127.0.0.1'] + (nameservers | default([])) }}"
-      when: dcs_type == "consul" and consul_dnsmasq_enable | bool and ('127.0.0.1' not in (nameservers | default([])))
+      when: dcs_type | default('etcd') == "consul" and consul_dnsmasq_enable | default(true) | bool and ('127.0.0.1' not in (nameservers | default([])))
 
   roles:
     - role: firewall
       vars:
         firewall_allowed_tcp_ports: "{{ firewall_ports_dynamic_var | default([]) | unique }}"
         firewall_additional_rules: "{{ firewall_rules_dynamic_var | default([]) | unique }}"
-      when: firewall_enabled_at_boot | bool
+      when: firewall_enabled_at_boot | default(false) | bool
       tags: firewall
 
     - role: hostname
@@ -182,10 +158,10 @@
     - role: patroni/config
 
     - role: pgbouncer/config
-      when: pgbouncer_install | bool
+      when: pgbouncer_install | default(true) | bool
 
     - role: vip_manager
-      when: not with_haproxy_load_balancing | bool and
+      when: not with_haproxy_load_balancing | default(false) | bool and
         (cluster_vip is defined and cluster_vip | length > 0)
 
     - role: postgresql_users
@@ -201,7 +177,7 @@
       when: inventory_hostname in groups['primary']
 
     - role: wal_g
-      when: wal_g_install | bool
+      when: wal_g_install | default(false) | bool
 
 - name: config_pgcluster | Configure pgBackRest
   hosts: pgbackrest:postgres_cluster
@@ -210,27 +186,19 @@
   gather_facts: true
   any_errors_fatal: true
   pre_tasks:
-    - name: Include main variables
-      ansible.builtin.include_vars: "roles/common/defaults/main.yml"
-      tags: always
-
-    - name: Include OS-specific variables
-      ansible.builtin.include_vars: "roles/common/defaults/{{ ansible_os_family }}.yml"
-      tags: always
-
     # if 'cloud_provider' is 'aws', 'gcp', or 'azure'
     # set_fact: 'pgbackrest_install' to configure Postgres backups (TODO: Add the ability to configure backups in the UI)
     - name: "Set variable: 'pgbackrest_install' to configure Postgres backups"
       ansible.builtin.set_fact:
         pgbackrest_install: true
       when:
-        - not (pgbackrest_install | bool or wal_g_install | bool)
+        - not (pgbackrest_install | default(false) | bool or wal_g_install | default(false) | bool)
         - cloud_provider | default('') | lower in ['aws', 'gcp', 'azure']
         - pgbackrest_auto_conf | default(true) | bool # to be able to disable auto backup settings
       tags: always
   roles:
     - role: pgbackrest
-      when: pgbackrest_install | bool
+      when: pgbackrest_install | default(false) | bool
 
 - name: config_pgcluster.yml | Restart patroni on secondary after config settings if need
   hosts: secondary
@@ -239,47 +207,38 @@
   become: true
   become_method: sudo
   any_errors_fatal: true
-  pre_tasks:
-    - name: Include main variables
-      ansible.builtin.include_vars: "roles/common/defaults/main.yml"
-      tags: always
-
-    - name: Include OS-specific variables
-      ansible.builtin.include_vars: "roles/common/defaults/{{ ansible_os_family }}.yml"
-      tags: always
-
   tasks:
     - name: Stop read-only traffic
       ansible.builtin.include_role:
         name: update
         tasks_from: stop_traffic
       when:
-        - pending_restart | bool
-        - pg_pending_restart_settings | length > 0
+        - pending_restart | default(false) | bool
+        - pg_pending_restart_settings | default('') | length > 0
 
     - name: Stop Services
       ansible.builtin.include_role:
         name: update
         tasks_from: stop_services
       when:
-        - pending_restart | bool
-        - pg_pending_restart_settings | length > 0
+        - pending_restart | default(false) | bool
+        - pg_pending_restart_settings | default('') | length > 0
 
     - name: Start Services
       ansible.builtin.include_role:
         name: update
         tasks_from: start_services
       when:
-        - pending_restart | bool
-        - pg_pending_restart_settings | length > 0
+        - pending_restart | default(false) | bool
+        - pg_pending_restart_settings | default('') | length > 0
 
     - name: Start read-only traffic
       ansible.builtin.include_role:
         name: update
         tasks_from: start_traffic
       when:
-        - pending_restart | bool
-        - pg_pending_restart_settings | length > 0
+        - pending_restart | default(false) | bool
+        - pg_pending_restart_settings | default('') | length > 0
   tags:
     - patroni_conf
 
@@ -290,55 +249,46 @@
   become_method: sudo
   any_errors_fatal: true
   environment: "{{ proxy_env | default({}) }}"
-  pre_tasks:
-    - name: Include main variables
-      ansible.builtin.include_vars: "roles/common/defaults/main.yml"
-      tags: always
-
-    - name: Include OS-specific variables
-      ansible.builtin.include_vars: "roles/common/defaults/{{ ansible_os_family }}.yml"
-      tags: always
-
   tasks:
     - name: Switchover Patroni leader role
       ansible.builtin.include_role:
         name: update
         tasks_from: switchover
       when:
-        - pending_restart | bool
-        - pg_pending_restart_settings | length > 0
+        - pending_restart | default(false) | bool
+        - pg_pending_restart_settings | default('') | length > 0
 
     - name: Stop read-only traffic
       ansible.builtin.include_role:
         name: update
         tasks_from: stop_traffic
       when:
-        - pending_restart | bool
-        - pg_pending_restart_settings | length > 0
+        - pending_restart | default(false) | bool
+        - pg_pending_restart_settings | default('') | length > 0
 
     - name: Stop Services
       ansible.builtin.include_role:
         name: update
         tasks_from: stop_services
       when:
-        - pending_restart | bool
-        - pg_pending_restart_settings | length > 0
+        - pending_restart | default(false) | bool
+        - pg_pending_restart_settings | default('') | length > 0
 
     - name: Start Services
       ansible.builtin.include_role:
         name: update
         tasks_from: start_services
       when:
-        - pending_restart | bool
-        - pg_pending_restart_settings | length > 0
+        - pending_restart | default(false) | bool
+        - pg_pending_restart_settings | default('') | length > 0
 
     - name: Start read-only traffic
       ansible.builtin.include_role:
         name: update
         tasks_from: start_traffic
       when:
-        - pending_restart | bool
-        - pg_pending_restart_settings | length > 0
+        - pending_restart | default(false) | bool
+        - pg_pending_restart_settings | default('') | length > 0
   tags:
     - patroni_conf
 
@@ -348,18 +298,6 @@
   become_method: sudo
   gather_facts: true
   any_errors_fatal: true
-  pre_tasks:
-    - name: Include main variables
-      ansible.builtin.include_vars: "roles/common/defaults/main.yml"
-      tags: always
-
-    - name: Include system variables
-      ansible.builtin.include_vars: "roles/common/defaults/system.yml"
-      tags: always
-
-    - name: Include OS-specific variables
-      ansible.builtin.include_vars: "roles/common/defaults/{{ ansible_os_family }}.yml"
-      tags: always
   roles:
     - role: postgresql_extensions
 

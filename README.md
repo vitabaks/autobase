@@ -185,59 +185,49 @@ pip3 install ansible
 
 1. Install the Autobase Collection
 
-```sh
-# from Ansible Galaxy
+Install directly from Ansible Galaxy:
+
+```
 ansible-galaxy collection install vitabaks.autobase
 ```
 
-Or reference it in a `requirements.yml`:
+Or include it in your requirements.yml:
 
 ```yml
-# from Ansible Galaxy
 collections:
   - name: vitabaks.autobase
     version: 2.2.0
 ```
 
-2. Prepare the inventory
+2. Prepare your inventory
 
-See example of [inventory](./automation/inventory.example) file.
+See the example [inventory](https://github.com/vitabaks/autobase/blob/master/automation/inventory.example) file.
+Specify internal IP addresses and connection details such as `ansible_user`, `ansible_ssh_pass`, or `ansible_ssh_private_key_file`.
 
-Specify (non-public) IP addresses and connection settings (`ansible_user`, `ansible_ssh_pass` or `ansible_ssh_private_key_file` for your environment
+3. Define variables
 
-3. Prepare variables
+See the default collection [variables](https://github.com/vitabaks/autobase/blob/master/automation/roles/common/defaults/main.yml).\
+You can override any of them in your inventory, group_vars, or another method that suits your setup.
 
-See the [main.yml](./automation/roles/common/defaults/main.yml), [system.yml](./automation/roles/common/defaults/system.yml) and ([Debian.yml](./automation/roles/common/defaults/Debian.yml) or [RedHat.yml](./automation/roles/common/defaults/RedHat.yml)) variable files for more details.
-
-4. Test host connectivity
-
-```sh
-ansible all -m ping
-```
-
-5. Create playbook to execute the playbooks within the collection:
+4. Include the Autobase playbook in your project
 
 ```yaml
-- name: Playbook
-  hosts: <node group name>
-
-  tasks:
-    # Start with the 'deploy' playbook, change to 'config' afterwards
-    - name: Run playbook
-      ansible.builtin.include_playbook: vitabaks.autobase.deploy_pgcluster
+- name: Run Autobase deployment
+  ansible.builtin.include_playbook: vitabaks.autobase.deploy_pgcluster
 ```
 
-#### How to start from scratch
+Start with the `deploy_pgcluster` playbook, and switch to `config_pgcluster` afterwards for reconfiguration.
+
+### How to start from scratch
 
 If you need to start from the very beginning, you can use the `remove_cluster` playbook.
 
 Available variables:
+- `remove_postgres`: stop the PostgreSQL service and remove data
+- `emove_etcd`: stop the ETCD service and remove data
+- `remove_consul`: stop the Consul service and remove data
 
-- `remove_postgres`: stop the PostgreSQL service and remove data.
-- `remove_etcd`: stop the ETCD service and remove data.
-- `remove_consul`: stop the Consul service and remove data.
-
-:warning: **Caution:** be careful when running this command in a production environment.
+⚠️ Caution: Only use this in non-production or when you’re absolutely sure.
 
 </p></details>
 

@@ -2,12 +2,6 @@
 # 🚀 These tasks aim to set up the conditions for creating a swap file
 # 🎯 The objective is to ensure that a swap file is created only if it does not already exist or if its size is not as expected
 
-# 📝 Loading system variables that may be needed for the swap file creation process
-- name: Molecule.tests.roles.swap.conditions.create | Load System Variables
-  run_once: true
-  ansible.builtin.include_vars:
-    file: ../../../../../roles/common/defaults/system.yml
-
 # 🔄 Setting up a test condition where no swap file exists
 # We initialize swap_exists with an empty stdout and stdout_lines
 - name: Molecule.tests.roles.swap.conditions.create | Establish Swap File Non-Existence Test Condition

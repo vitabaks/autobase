@@ -2,8 +2,7 @@
 ---
 # Variables for the pg_upgrade.yml playbook
 
-# Note:
-# There is no need to plan additional disk space, because when updating PostgreSQL, hard links are used instead of copying files.
+# Note: There is no need to plan additional disk space, because when updating PostgreSQL, hard links are used instead of copying files.
 # However, it is required that the pg_old_datadir and pg_new_datadir are located within the same top-level directory (pg_upper_datadir).
 # https://www.postgresql.org/docs/current/pgupgrade.html
 

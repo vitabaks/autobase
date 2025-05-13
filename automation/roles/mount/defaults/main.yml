@@ -2,9 +2,10 @@
 # Example for --extra-vars
 # '{"mount": [{"path": "/pgdata", "src": "UUID=83304ebb-d942-4093-975b-8253be2aabe1", "fstype": "ext4", "opts": "defaults,noatime", "state": "mounted"}]}'
 
-mount:
-  - path: ""
-    src: ""
-    fstype: ""
-    opts: ""
-    state: ""
+# Defined in roles/common/defaults/main.yml. Commented out here to prevent conflicts.
+# mount:
+#  - path: ""
+#    src: ""
+#    fstype: ""
+#    opts: ""
+#    state: ""

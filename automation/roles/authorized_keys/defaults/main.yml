@@ -1,2 +1,2 @@
 ---
-ssh_public_keys: []
+# ssh_public_keys: [] # Defined in roles/common/defaults/main.yml. Commented out here to prevent conflicts.

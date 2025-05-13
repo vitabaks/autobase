@@ -8,15 +8,9 @@
   become_user: postgres
   any_errors_fatal: true
   pre_tasks:
-    - name: Include main variables
-      ansible.builtin.include_vars: "roles/common/defaults/main.yml"
-
-    - name: Include upgrade variables
-      ansible.builtin.include_vars: "roles/common/defaults/upgrade.yml"
-
     - name: "[Prepare] Get Patroni Cluster Leader Node"
       ansible.builtin.uri:
-        url: http://{{ inventory_hostname }}:{{ patroni_restapi_port }}/leader
+        url: http://{{ inventory_hostname }}:{{ patroni_restapi_port | default('8008') }}/leader
         status_code: 200
       register: patroni_leader_result
       changed_when: false
@@ -50,7 +44,7 @@
     - name: "Print Patroni Cluster info"
       ansible.builtin.debug:
         msg:
-          - "Cluster Name: {{ patroni_cluster_name }}"
+          - "Cluster Name: {{ patroni_cluster_name | default('postgres-cluster') }}"
           - "Cluster Leader: {{ ansible_hostname }}"
       when: inventory_hostname in groups['primary']
   tags:
@@ -63,13 +57,6 @@
   become_user: postgres
   any_errors_fatal: true
   environment: "{{ proxy_env | default({}) }}"
-  pre_tasks:
-    - name: Include main variables
-      ansible.builtin.include_vars: "roles/common/defaults/main.yml"
-    - name: Include OS-specific variables
-      ansible.builtin.include_vars: "roles/common/defaults/{{ ansible_os_family }}.yml"
-    - name: Include upgrade variables
-      ansible.builtin.include_vars: "roles/common/defaults/upgrade.yml"
   tasks:
     - name: Running Pre-Checks
       ansible.builtin.include_role:
@@ -86,13 +73,6 @@
   become_user: root
   any_errors_fatal: true
   environment: "{{ proxy_env | default({}) }}"
-  pre_tasks:
-    - name: Include main variables
-      ansible.builtin.include_vars: "roles/common/defaults/main.yml"
-    - name: Include OS-specific variables
-      ansible.builtin.include_vars: "roles/common/defaults/{{ ansible_os_family }}.yml"
-    - name: Include upgrade variables
-      ansible.builtin.include_vars: "roles/common/defaults/upgrade.yml"
   tasks:
     - name: Install packages
       ansible.builtin.include_role:
@@ -109,13 +89,6 @@
   become: true
   become_user: postgres
   any_errors_fatal: true
-  pre_tasks:
-    - name: Include main variables
-      ansible.builtin.include_vars: "roles/common/defaults/main.yml"
-    - name: Include OS-specific variables
-      ansible.builtin.include_vars: "roles/common/defaults/{{ ansible_os_family }}.yml"
-    - name: Include upgrade variables
-      ansible.builtin.include_vars: "roles/common/defaults/upgrade.yml"
   tasks:
     - name: Create Data directory and initdb
       ansible.builtin.include_role:
@@ -128,13 +101,13 @@
       ansible.builtin.include_role:
         name: copy
       vars:
-        copy_files_to_all_server: "{{ upgrade_copy_files_to_all_server }}"
+        copy_files_to_all_server: "{{ upgrade_copy_files_to_all_server | default([]) }}"
 
     - name: Check Schema Compatibility
       ansible.builtin.import_role:
         name: upgrade
         tasks_from: schema_compatibility
-      when: schema_compatibility_check | bool
+      when: schema_compatibility_check | default(true) | bool
 
     - name: Check pg_upgrade
       ansible.builtin.import_role:
@@ -151,13 +124,6 @@
   become: true
   become_user: postgres
   any_errors_fatal: true
-  pre_tasks:
-    - name: Include main variables
-      ansible.builtin.include_vars: "roles/common/defaults/main.yml"
-    - name: Include OS-specific variables
-      ansible.builtin.include_vars: "roles/common/defaults/{{ ansible_os_family }}.yml"
-    - name: Include upgrade variables
-      ansible.builtin.include_vars: "roles/common/defaults/upgrade.yml"
   tasks:
     - name: Patroni config
       ansible.builtin.include_role:
@@ -173,13 +139,6 @@
   become: true
   become_user: postgres
   any_errors_fatal: true
-  pre_tasks:
-    - name: Include main variables
-      ansible.builtin.include_vars: "roles/common/defaults/main.yml"
-    - name: Include OS-specific variables
-      ansible.builtin.include_vars: "roles/common/defaults/{{ ansible_os_family }}.yml"
-    - name: Include upgrade variables
-      ansible.builtin.include_vars: "roles/common/defaults/upgrade.yml"
   tasks:
     - name: Enable maintenance mode
       ansible.builtin.include_role:
@@ -211,7 +170,7 @@
       ansible.builtin.include_role:
         name: upgrade
         tasks_from: custom_wal_dir
-      when: pg_new_wal_dir | length > 0
+      when: pg_new_wal_dir | default('') | length > 0
 
     - name: Remove old cluster from DCS
       ansible.builtin.include_role:
@@ -236,13 +195,6 @@
   become: true
   become_user: postgres
   any_errors_fatal: true
-  pre_tasks:
-    - name: Include main variables
-      ansible.builtin.include_vars: "roles/common/defaults/main.yml"
-    - name: Include OS-specific variables
-      ansible.builtin.include_vars: "roles/common/defaults/{{ ansible_os_family }}.yml"
-    - name: Include upgrade variables
-      ansible.builtin.include_vars: "roles/common/defaults/upgrade.yml"
   tasks:
     - name: Analyze database
       ansible.builtin.include_role:
@@ -254,7 +206,7 @@
       ansible.builtin.include_role:
         name: upgrade
         tasks_from: extensions
-      when: update_extensions | bool
+      when: update_extensions | default(true) | bool
       tags: update_extensions
 
     - name: Running Post-Checks
