@@ -155,7 +155,8 @@
     - role: vitabaks.autobase.patroni
       tasks_from: config
 
-    - role: vitabaks.autobase.pgbouncer/config
+    - role: vitabaks.autobase.pgbouncer
+      tasks_from: config
       when: pgbouncer_install | default(true) | bool
 
     - role: vitabaks.autobase.vip_manager
