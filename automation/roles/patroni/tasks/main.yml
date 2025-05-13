@@ -813,7 +813,7 @@
         - not keep_patroni_dynamic_json | bool
 
     - name: Edit patroni.dynamic.json | disable archive_command (if enabled)
-      yedit:
+      vitabaks.autobase.yedit:
         src: "{{ postgresql_data_dir }}/patroni.dynamic.json"
         key: postgresql.parameters.archive_command
         value: "cd ." # not doing anything yet with WAL-s
@@ -825,7 +825,7 @@
         - disable_archive_command | bool
 
     - name: Edit patroni.yml | disable archive_command (if enabled)
-      yedit:
+      vitabaks.autobase.yedit:
         src: /etc/patroni/patroni.yml
         key: bootstrap.dcs.postgresql.parameters.archive_command
         value: "cd ." # not doing anything yet with WAL-s
@@ -996,7 +996,7 @@
         - (postgresql_users is defined and postgresql_users | length > 0)
 
     - name: Update postgresql authentication in patroni.yml
-      yedit:
+      vitabaks.autobase.yedit:
         src: /etc/patroni/patroni.yml
         edits:
           - key: postgresql.authentication.replication.username
