@@ -323,7 +323,8 @@
 
     - role: vitabaks.autobase.patroni
 
-    - role: vitabaks.autobase.pgbackrest/stanza-create
+    - role: vitabaks.autobase.pgbackrest
+      tasks_from: stanza-create
       when: pgbackrest_install | default(false) | bool
 
     - role: vitabaks.autobase.vip_manager
