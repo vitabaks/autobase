@@ -400,6 +400,9 @@
 
     - role: netdata
 
+    - role: prometheus
+      when: with_metric_exporters | bool
+
     # finish (info)
     - role: deploy_finish
 
