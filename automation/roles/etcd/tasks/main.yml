@@ -100,7 +100,7 @@
     # if 'etcd_on_dedicated_nodes' is 'true'
     - name: Generate etcd TLS certificate
       ansible.builtin.include_role:
-        name: ../roles/tls_certificate/generate
+        name: ../roles/tls_certificate
       vars:
         tls_group_name: "etcd_cluster"
         generate_tls_owner: "etcd"

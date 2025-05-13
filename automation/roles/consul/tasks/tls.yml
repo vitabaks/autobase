@@ -16,7 +16,7 @@
     # if 'consul_on_dedicated_nodes' is 'true'
     - name: Generate Consul TLS certificate
       ansible.builtin.include_role:
-        name: ../roles/tls_certificate/generate
+        name: ../roles/tls_certificate
       vars:
         generate_tls_owner: "{{ consul_user }}"
         generate_tls_common_name: "{{ consul_tls_common_name | default('Consul') }}"

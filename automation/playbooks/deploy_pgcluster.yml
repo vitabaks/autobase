@@ -187,7 +187,7 @@
 
     - role: vitabaks.autobase.hostname
 
-    - role: vitabaks.autobase.tls_certificate/generate
+    - role: vitabaks.autobase.tls_certificate
       vars:
         tls_group_name: "postgres_cluster"
         tls_cert_regenerate: "{{ patroni_tls_cert_regenerate | default(false) }}" # Do not generate new certificates if they already exist.
