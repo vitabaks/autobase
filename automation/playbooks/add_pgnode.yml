@@ -35,7 +35,7 @@
 
     - name: Add a new node to pg_hba.conf on existing cluster nodes
       ansible.builtin.include_role:
-        name: patroni/config
+        name: vitabaks.autobase.patroni/config
         tasks_from: pg_hba
       when: not new_node | default(false) | bool
 
@@ -88,7 +88,7 @@
       tags: firewall
 
   roles:
-    - role: firewall
+    - role: vitabaks.autobase.firewall
       environment: "{{ proxy_env | default({}) }}"
       vars:
         firewall_allowed_tcp_ports: "{{ firewall_ports_dynamic_var | default([]) | unique }}"
@@ -98,17 +98,17 @@
         - firewall_enabled_at_boot | default(false)| bool
       tags: firewall
 
-    - role: pre_checks
+    - role: vitabaks.autobase.pre_checks
       vars:
         minimal_ansible_version: 2.16.0
         timescale_minimal_pg_version: 12 # if enable_timescale is defined
       tags: always
 
-    - role: sysctl
+    - role: vitabaks.autobase.sysctl
       when:
         - new_node | default(false) | bool
 
-    - role: ssh_keys
+    - role: vitabaks.autobase.ssh_keys
       when:
         - enable_ssh_key_based_authentication | default(false) | bool
 
@@ -136,21 +136,21 @@
       when: dcs_type | default('etcd') == "consul" and consul_dnsmasq_enable | default(true) | bool and ('127.0.0.1' not in (nameservers | default([])))
 
   roles:
-    - role: hostname
-    - role: resolv_conf
-    - role: etc_hosts
-    - role: add_repository
-    - role: packages
-    - role: sudo
-    - role: swap
-    - role: transparent_huge_pages
-    - role: pam_limits
-    - role: io_scheduler
-    - role: locales
-    - role: timezone
-    - role: ntp
-    - role: copy
-    - role: cron
+    - role: vitabaks.autobase.hostname
+    - role: vitabaks.autobase.resolv_conf
+    - role: vitabaks.autobase.etc_hosts
+    - role: vitabaks.autobase.add_repository
+    - role: vitabaks.autobase.packages
+    - role: vitabaks.autobase.sudo
+    - role: vitabaks.autobase.swap
+    - role: vitabaks.autobase.transparent_huge_pages
+    - role: vitabaks.autobase.pam_limits
+    - role: vitabaks.autobase.io_scheduler
+    - role: vitabaks.autobase.locales
+    - role: vitabaks.autobase.timezone
+    - role: vitabaks.autobase.ntp
+    - role: vitabaks.autobase.copy
+    - role: vitabaks.autobase.cron
 
 - name: add_pgnode.yml | Configure pgBackRest
   hosts: pgbackrest:postgres_cluster
@@ -159,7 +159,7 @@
   gather_facts: true
   any_errors_fatal: true
   roles:
-    - role: pgbackrest
+    - role: vitabaks.autobase.pgbackrest
       when: pgbackrest_install|bool
 
 - name: add_pgnode.yml | Import Consul playbook
@@ -177,27 +177,27 @@
     existing_pgcluster: true
 
   roles:
-    - role: wal_g
+    - role: vitabaks.autobase.wal_g
       when: wal_g_install | default(false) | bool
 
-    - role: pg_probackup
+    - role: vitabaks.autobase.pg_probackup
       when: pg_probackup_install | default(false) | bool
 
-    - role: tls_certificate/copy
+    - role: vitabaks.autobase.tls_certificate/copy
       when: tls_cert_generate | default(true) | bool
 
-    - role: pgbouncer
+    - role: vitabaks.autobase.pgbouncer
       when: pgbouncer_install | default(false) | bool
 
-    - role: pgpass
+    - role: vitabaks.autobase.pgpass
 
-    - role: patroni
+    - role: vitabaks.autobase.patroni
 
-    - role: vip_manager
+    - role: vitabaks.autobase.vip_manager
       when: not with_haproxy_load_balancing | default(false) | bool and
         (cluster_vip is defined and cluster_vip | length > 0)
 
-    - role: netdata
+    - role: vitabaks.autobase.netdata
 
     # finish (info)
-    - role: deploy_finish
+    - role: vitabaks.autobase.deploy_finish

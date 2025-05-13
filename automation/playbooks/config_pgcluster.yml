@@ -17,7 +17,7 @@
         - pgbackrest_auto_conf | default(true) | bool # to be able to disable auto backup settings
       tags: always
   roles:
-    - role: cloud_resources
+    - role: vitabaks.autobase.cloud_resources
       when: cloud_provider | default('') | length > 0
       vars:
         postgresql_cluster_maintenance: true
@@ -52,7 +52,7 @@
       when: patroni_leader_result is undefined or patroni_leader_result.status == -1
 
   roles:
-    - role: pre_checks
+    - role: vitabaks.autobase.pre_checks
       vars:
         minimal_ansible_version: 2.16.0
         timescale_minimal_pg_version: 12 # if enable_timescale is defined
@@ -129,54 +129,54 @@
       when: dcs_type | default('etcd') == "consul" and consul_dnsmasq_enable | default(true) | bool and ('127.0.0.1' not in (nameservers | default([])))
 
   roles:
-    - role: firewall
+    - role: vitabaks.autobase.firewall
       vars:
         firewall_allowed_tcp_ports: "{{ firewall_ports_dynamic_var | default([]) | unique }}"
         firewall_additional_rules: "{{ firewall_rules_dynamic_var | default([]) | unique }}"
       when: firewall_enabled_at_boot | default(false) | bool
       tags: firewall
 
-    - role: hostname
-    - role: resolv_conf
-    - role: etc_hosts
-    - role: timezone
-    - role: add_repository
-    - role: packages
-    - role: sudo
-    - role: swap
-    - role: sysctl
-    - role: transparent_huge_pages
-    - role: pam_limits
-    - role: io_scheduler
-    - role: locales
-    - role: ntp
-    - role: ssh_keys
-    - role: copy
-    - role: pgpass
-    - role: cron
+    - role: vitabaks.autobase.hostname
+    - role: vitabaks.autobase.resolv_conf
+    - role: vitabaks.autobase.etc_hosts
+    - role: vitabaks.autobase.timezone
+    - role: vitabaks.autobase.add_repository
+    - role: vitabaks.autobase.packages
+    - role: vitabaks.autobase.sudo
+    - role: vitabaks.autobase.swap
+    - role: vitabaks.autobase.sysctl
+    - role: vitabaks.autobase.transparent_huge_pages
+    - role: vitabaks.autobase.pam_limits
+    - role: vitabaks.autobase.io_scheduler
+    - role: vitabaks.autobase.locales
+    - role: vitabaks.autobase.ntp
+    - role: vitabaks.autobase.ssh_keys
+    - role: vitabaks.autobase.copy
+    - role: vitabaks.autobase.pgpass
+    - role: vitabaks.autobase.cron
 
-    - role: patroni/config
+    - role: vitabaks.autobase.patroni/config
 
-    - role: pgbouncer/config
+    - role: vitabaks.autobase.pgbouncer/config
       when: pgbouncer_install | default(true) | bool
 
-    - role: vip_manager
+    - role: vitabaks.autobase.vip_manager
       when: not with_haproxy_load_balancing | default(false) | bool and
         (cluster_vip is defined and cluster_vip | length > 0)
 
-    - role: postgresql_users
+    - role: vitabaks.autobase.postgresql_users
       when: inventory_hostname in groups['primary']
 
-    - role: postgresql_databases
+    - role: vitabaks.autobase.postgresql_databases
       when: inventory_hostname in groups['primary']
 
-    - role: postgresql_schemas
+    - role: vitabaks.autobase.postgresql_schemas
       when: inventory_hostname in groups['primary']
 
-    - role: postgresql_privs
+    - role: vitabaks.autobase.postgresql_privs
       when: inventory_hostname in groups['primary']
 
-    - role: wal_g
+    - role: vitabaks.autobase.wal_g
       when: wal_g_install | default(false) | bool
 
 - name: config_pgcluster | Configure pgBackRest
@@ -197,7 +197,7 @@
         - pgbackrest_auto_conf | default(true) | bool # to be able to disable auto backup settings
       tags: always
   roles:
-    - role: pgbackrest
+    - role: vitabaks.autobase.pgbackrest
       when: pgbackrest_install | default(false) | bool
 
 - name: config_pgcluster.yml | Restart patroni on secondary after config settings if need
@@ -210,7 +210,7 @@
   tasks:
     - name: Stop read-only traffic
       ansible.builtin.include_role:
-        name: update
+        name: vitabaks.autobase.update
         tasks_from: stop_traffic
       when:
         - pending_restart | default(false) | bool
@@ -218,7 +218,7 @@
 
     - name: Stop Services
       ansible.builtin.include_role:
-        name: update
+        name: vitabaks.autobase.update
         tasks_from: stop_services
       when:
         - pending_restart | default(false) | bool
@@ -226,7 +226,7 @@
 
     - name: Start Services
       ansible.builtin.include_role:
-        name: update
+        name: vitabaks.autobase.update
         tasks_from: start_services
       when:
         - pending_restart | default(false) | bool
@@ -234,7 +234,7 @@
 
     - name: Start read-only traffic
       ansible.builtin.include_role:
-        name: update
+        name: vitabaks.autobase.update
         tasks_from: start_traffic
       when:
         - pending_restart | default(false) | bool
@@ -252,7 +252,7 @@
   tasks:
     - name: Switchover Patroni leader role
       ansible.builtin.include_role:
-        name: update
+        name: vitabaks.autobase.update
         tasks_from: switchover
       when:
         - pending_restart | default(false) | bool
@@ -260,7 +260,7 @@
 
     - name: Stop read-only traffic
       ansible.builtin.include_role:
-        name: update
+        name: vitabaks.autobase.update
         tasks_from: stop_traffic
       when:
         - pending_restart | default(false) | bool
@@ -268,7 +268,7 @@
 
     - name: Stop Services
       ansible.builtin.include_role:
-        name: update
+        name: vitabaks.autobase.update
         tasks_from: stop_services
       when:
         - pending_restart | default(false) | bool
@@ -276,7 +276,7 @@
 
     - name: Start Services
       ansible.builtin.include_role:
-        name: update
+        name: vitabaks.autobase.update
         tasks_from: start_services
       when:
         - pending_restart | default(false) | bool
@@ -284,7 +284,7 @@
 
     - name: Start read-only traffic
       ansible.builtin.include_role:
-        name: update
+        name: vitabaks.autobase.update
         tasks_from: start_traffic
       when:
         - pending_restart | default(false) | bool
@@ -299,7 +299,7 @@
   gather_facts: true
   any_errors_fatal: true
   roles:
-    - role: postgresql_extensions
+    - role: vitabaks.autobase.postgresql_extensions
 
     # finish (info)
-    - role: deploy_finish
+    - role: vitabaks.autobase.deploy_finish

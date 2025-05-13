@@ -5,7 +5,7 @@
   pre_tasks:
     - name: Load common variables
       ansible.builtin.include_role:
-        name: common
+        name: vitabaks.autobase.common
   tasks:
     - block:
         - name: Stop Patroni service

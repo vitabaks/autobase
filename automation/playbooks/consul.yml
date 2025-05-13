@@ -119,23 +119,23 @@
     # Setting variables for Consul during cloud deployment
     - name: Redefine the consul_node_role and consul_bootstrap_expect variables
       ansible.builtin.set_fact:
-        consul_node_role: "{{ 'server' if not dcs_exists | default(false) else 'client' }}"
+        consul_node_role: vitabaks.autobase."{{ 'server' if not dcs_exists | default(false) else 'client' }}"
         consul_bootstrap_expect: "{{ not dcs_exists | default(false) }}"
         consul_datacenter: "{{ server_location | default('dc1') }}"
       when: cloud_provider | default('') | length > 0
 
   roles:
-    - role: firewall
+    - role: vitabaks.autobase.firewall
       vars:
         firewall_allowed_tcp_ports: "{{ firewall_ports_dynamic_var | default([]) | unique }}"
         firewall_additional_rules: "{{ firewall_rules_dynamic_var | default([]) | unique }}"
       when: firewall_enabled_at_boot | default(false) | bool
       tags: firewall
 
-    - role: hostname
-    - role: resolv_conf
-    - role: etc_hosts
-    - role: timezone
-    - role: ntp
+    - role: vitabaks.autobase.hostname
+    - role: vitabaks.autobase.resolv_conf
+    - role: vitabaks.autobase.etc_hosts
+    - role: vitabaks.autobase.timezone
+    - role: vitabaks.autobase.ntp
 
-    - role: consul
+    - role: vitabaks.autobase.consul
