@@ -7,6 +7,10 @@ driver:
 
 provisioner:
   name: ansible
+  inventory:
+    group_vars:
+      all:
+        patroni_cluster_name: "test-pgcluster"
   config_options:
     defaults:
       display_skipped_hosts: false
