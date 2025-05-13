@@ -104,9 +104,6 @@
   gather_facts: true
   any_errors_fatal: true
   environment: "{{ proxy_env | default({}) }}"
-  handlers:
-    - ansible.builtin.import_tasks: roles/patroni/handlers/main.yml
-    - ansible.builtin.import_tasks: roles/pgbouncer/handlers/main.yml
   pre_tasks:
     - name: Build a firewall_ports_dynamic_var
       ansible.builtin.set_fact:

@@ -290,8 +290,6 @@
   become_method: sudo
   gather_facts: true
   any_errors_fatal: true
-  handlers:
-    - ansible.builtin.import_tasks: roles/pgbouncer/handlers/main.yml
 
   pre_tasks:
     # if 'cloud_provider' is 'aws', 'gcp', or 'azure'
