@@ -116,10 +116,10 @@
         state: absent
 
 - name: Deploy PostgreSQL Cluster test
-  ansible.builtin.import_playbook: ../../deploy_pgcluster.yml
+  ansible.builtin.include_playbook: vitabaks.autobase.deploy_pgcluster
 
 - name: Config PostgreSQL Cluster test
-  ansible.builtin.import_playbook: ../../config_pgcluster.yml
+  ansible.builtin.include_playbook: vitabaks.autobase.config_pgcluster
 
 - name: Update PostgreSQL Cluster test
-  ansible.builtin.import_playbook: ../../update_pgcluster.yml
+  ansible.builtin.include_playbook: vitabaks.autobase.update_pgcluster
