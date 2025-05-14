@@ -293,7 +293,7 @@
 # ParadeDB - https://github.com/paradedb/paradedb
 # pg_search (if 'enable_paradedb' or 'enable_pg_search' is 'true')
 - block:
-    - name: Looking up the latest available of pg_search package
+    - name: Looking up the latest available pg_search package
       ansible.builtin.set_fact:
         pg_search_package_url: "{{ match.browser_download_url }}"
         pg_search_version: "{{ match.release_tag }}"
@@ -312,14 +312,21 @@
         match: >-
           {{
             releases
-            | map('extract', 'assets') | map('default', [])
-            | zip(releases)
-            | map('flatten')
-            | selectattr(0, 'name', 'search', pattern)
+            | selectattr('assets', 'defined')
             | map('combine', {
-                'browser_download_url': attribute(0, 'browser_download_url'),
-                'release_tag': attribute(1, 'tag_name')
-            })
+                'matched_asset': (
+                  attribute('assets')
+                  | selectattr('name', 'search', pattern)
+                  | list
+                  | first
+                )
+              })
+            | selectattr('matched_asset', 'defined')
+            | map('combine', {
+                'browser_download_url': attribute('matched_asset', 'browser_download_url'),
+                'release_tag': attribute('tag_name') | replace('v', '')
+              })
+            | list
             | first
           }}
       when: pg_search_version | default('latest') == 'latest'
@@ -348,7 +355,7 @@
 
 # pg_analytics (if 'enable_paradedb' or 'enable_pg_analytics' is 'true')
 - block:
-    - name: Looking up the latest available of pg_analytics package
+    - name: Looking up the latest available pg_analytics package
       ansible.builtin.set_fact:
         pg_analytics_package_url: "{{ match.browser_download_url }}"
         pg_analytics_version: "{{ match.release_tag }}"
@@ -367,14 +374,21 @@
         match: >-
           {{
             releases
-            | map('extract', 'assets') | map('default', [])
-            | zip(releases)
-            | map('flatten')
-            | selectattr(0, 'name', 'search', pattern)
+            | selectattr('assets', 'defined')
             | map('combine', {
-                'browser_download_url': attribute(0, 'browser_download_url'),
-                'release_tag': attribute(1, 'tag_name')
-            })
+                'matched_asset': (
+                  attribute('assets')
+                  | selectattr('name', 'search', pattern)
+                  | list
+                  | first
+                )
+              })
+            | selectattr('matched_asset', 'defined')
+            | map('combine', {
+                'browser_download_url': attribute('matched_asset', 'browser_download_url'),
+                'release_tag': attribute('tag_name') | replace('v', '')
+              })
+            | list
             | first
           }}
 
