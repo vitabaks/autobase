@@ -298,15 +298,15 @@
         pg_search_package_url: "{{ match.browser_download_url }}"
         pg_search_version: "{{ match.release_tag }}"
       vars:
-        pg_version: "{{ pg_version | default(postgresql_version) }}"
+        postgres_version: "{{ pg_version | default(postgresql_version) }}"
         releases: >-
           {{ lookup('url', 'https://api.github.com/repos/paradedb/paradedb/releases?per_page=10', split_lines=False) | from_json }}
         pattern: >-
           {{
             (ansible_os_family == 'RedHat')
             | ternary(
-                'pg_search_' ~ pg_version ~ '.*el' ~ ansible_distribution_major_version ~ '.*' ~ ansible_architecture ~ '\\.rpm$',
-                'postgresql-' ~ pg_version ~ '-pg-search_.*' ~ ansible_distribution_release ~ '.*' ~ ansible_architecture ~ '\\.deb$'
+                'pg_search_' ~ postgres_version ~ '.*el' ~ ansible_distribution_major_version ~ '.*' ~ ansible_architecture ~ '\\.rpm$',
+                'postgresql-' ~ postgres_version ~ '-pg-search_.*' ~ ansible_distribution_release ~ '.*' ~ ansible_architecture ~ '\\.deb$'
             )
           }}
         match: >-
@@ -353,15 +353,15 @@
         pg_analytics_package_url: "{{ match.browser_download_url }}"
         pg_analytics_version: "{{ match.release_tag }}"
       vars:
-        pg_version: "{{ pg_version | default(postgresql_version) }}"
+        postgres_version: "{{ pg_version | default(postgresql_version) }}"
         releases: >-
           {{ lookup('url', 'https://api.github.com/repos/paradedb/pg_analytics/releases?per_page=10', split_lines=False) | from_json }}
         pattern: >-
           {{
             (ansible_os_family == 'RedHat')
             | ternary(
-                'pg_analytics_' ~ pg_version ~ '.*el' ~ ansible_distribution_major_version ~ '.*' ~ ansible_architecture ~ '\\.rpm$',
-                'postgresql-' ~ pg_version ~ '-pg-analytics_.*' ~ ansible_distribution_release ~ '.*' ~ ansible_architecture ~ '\\.deb$'
+                'pg_analytics_' ~ postgres_version ~ '.*el' ~ ansible_distribution_major_version ~ '.*' ~ ansible_architecture ~ '\\.rpm$',
+                'postgresql-' ~ postgres_version ~ '-pg-analytics_.*' ~ ansible_distribution_release ~ '.*' ~ ansible_architecture ~ '\\.deb$'
             )
           }}
         match: >-
