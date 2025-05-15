@@ -325,6 +325,14 @@
           }}
       check_mode: false
 
+    # If not found, show the error and continue the playbook execution
+    - name: pg_search package not found
+      ansible.builtin.fail:
+        msg: "ERROR: No matching pg_search package found for this system."
+      ignore_errors: true
+      when: pg_search_package_url | length == 0
+
+    # If found, download and install
     - name: "Download pg_search package ({{ pg_search_package_url | basename }})"
       ansible.builtin.get_url:
         url: "{{ pg_search_package_url }}"
@@ -336,6 +344,7 @@
       retries: 3
       delay: 5
       check_mode: false
+      when: pg_search_package_url | length > 0
 
     - name: Install pg_search package
       ansible.builtin.apt:
@@ -344,7 +353,7 @@
       until: apt_status is succeeded
       retries: 3
       delay: 5
-      when: ansible_os_family == 'Debian'
+      when: ansible_os_family == 'Debian' and pg_search_package_url | length > 0
 
     - name: Install pg_search package
       ansible.builtin.dnf:
@@ -354,7 +363,7 @@
       until: dnf_status is succeeded
       retries: 3
       delay: 5
-      when: ansible_os_family == 'RedHat'
+      when: ansible_os_family == 'RedHat' and pg_search_package_url | length > 0
   when: enable_paradedb | default(false) | bool or enable_pg_search | default(false) | bool
   tags: paradedb, pg_search
 
