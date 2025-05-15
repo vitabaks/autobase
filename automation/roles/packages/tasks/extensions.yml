@@ -351,60 +351,34 @@
   tags: paradedb, pg_search
 
 # pg_analytics (if 'enable_paradedb' or 'enable_pg_analytics' is 'true')
+# Note: This repository was archived by the owner on Mar 20, 2025. Latest release: v0.3.7
 - block:
-    - name: Looking up the latest available pg_analytics package
-      ansible.builtin.set_fact:
-        pg_analytics_package_url: "{{ match_asset.browser_download_url | default(omit) }}"
-      vars:
-        releases: >-
-          {{ lookup('url', 'https://api.github.com/repos/paradedb/pg_analytics/releases?per_page=10', split_lines=False) | from_json }}
-        search_pattern: >-
-          {{
-            (ansible_os_family == 'RedHat')
-            | ternary(
-                'pg_analytics_' ~ (pg_version | default(postgresql_version)) ~ '.*el' ~ ansible_distribution_major_version ~ '.*' ~ (paradedb_architecture_map_rpm[ansible_architecture]) ~ '\.rpm$',
-                'postgresql-' ~ (pg_version | default(postgresql_version)) ~ '-pg-analytics_.*' ~ ansible_distribution_release ~ '.*' ~ (paradedb_architecture_map_dep[ansible_architecture]) ~ '\.deb$'
-            )
-          }}
-        match_asset: >-
-          {{
-            releases
-            | map(attribute='assets') | map('default', []) | flatten
-            | selectattr('name', 'match', search_pattern)
-            | list | first | default({})
-          }}
-      check_mode: false
-      when: pg_analytics_version | default('latest') == 'latest'
-
-    - name: "Download pg_analytics package ({{ pg_analytics_package_url | basename }})"
-      ansible.builtin.get_url:
-        url: "{{ pg_analytics_package_url }}"
-        dest: "/tmp/{{ pg_analytics_package_url | basename }}"
-        timeout: 60
-        validate_certs: false
-      register: get_url_status
-      until: get_url_status is succeeded
-      retries: 3
-      delay: 5
-      check_mode: false
-
-    - name: Install pg_analytics package
+    - name: "Install pg_analytics v{{ version }} package"
       ansible.builtin.apt:
-        deb: "/tmp/{{ pg_analytics_package_url | basename }}"
+        deb: "{{ pg_analytics_repo }}/postgresql-{{ pg_version | default(postgresql_version) }}-pg-analytics_{{ version }}-1PARADEDB-{{ ansible_distribution_release }}_{{ paradedb_architecture_map_dep[ansible_architecture] }}.deb"
       register: apt_status
-      until: apt_status is succeeded
-      retries: 3
+      until: apt_status is success
       delay: 5
-      when: ansible_os_family == 'Debian'
+      retries: 3
+      vars:
+        pg_analytics_package: 
+      when:
+        - ansible_os_family == "Debian"
+        - ansible_distribution_release in ['bookworm', 'jammy', 'noble']
 
-    - name: Install pg_analytics package
+    - name: "Install pg_analytics v{{ version) }} package"
       ansible.builtin.dnf:
-        name: "/tmp/{{ pg_analytics_package_url | basename }}"
-        state: present
+        name: "{{ pg_analytics_repo }}/pg_analytics_{{ pg_version | default(postgresql_version) }}-{{ version }}-1PARADEDB.el{{ ansible_distribution_major_version }}.{{ paradedb_architecture_map_rpm[ansible_architecture] }}.rpm"
+        disable_gpg_check: true
       register: dnf_status
-      until: dnf_status is succeeded
-      retries: 3
+      until: dnf_status is success
       delay: 5
-      when: ansible_os_family == 'RedHat'
+      retries: 3
+      when:
+        - ansible_os_family == "RedHat"
+        - ansible_distribution_major_version in ['8', '9']
+  vars:
+    version: "{{ pg_analytics_version | default('0.3.7') }}"
+    pg_analytics_repo: "https://github.com/paradedb/pg_analytics/releases/download/v{{ version }}/"
   when: enable_paradedb | default(false) | bool or pg_analytics | default(false) | bool
   tags: paradedb, pg_analytics
