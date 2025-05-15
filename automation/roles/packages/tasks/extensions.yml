@@ -361,8 +361,6 @@
       until: apt_status is success
       delay: 5
       retries: 3
-      vars:
-        pg_analytics_package: 
       when:
         - ansible_os_family == "Debian"
         - ansible_distribution_release in ['bookworm', 'jammy', 'noble']
