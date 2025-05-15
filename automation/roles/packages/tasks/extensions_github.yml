@@ -6,11 +6,12 @@
 # - github_repo (e.q, 'paradedb/paradedb')
 # - extension_name (e.q., 'pg_search')
 # - extension_version (e.q., '0.15.18') - optional
-# - search_pattern
+# - search_pattern (search in assets.browser_download_url)
 #
 # Example of a search pattern:
+#    search_pattern: >-
 #      {{
-#        '.*' ~ (pg_search_version | default('') ~ '/')
+#        '.*' ~ (pg_search_version ~ '/' if pg_search_version is defined else '')
 #        ~ (
 #          ansible_os_family == 'RedHat'
 #          | ternary(
