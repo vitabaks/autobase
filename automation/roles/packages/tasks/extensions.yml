@@ -293,77 +293,24 @@
 
 # ParadeDB - https://github.com/paradedb/paradedb
 # pg_search (if 'enable_paradedb' or 'enable_pg_search' is 'true')
-- block:
-    - name: "Looking up {{ pg_search_version | default('latest available') }} pg_search package"
-      ansible.builtin.set_fact:
-        # Set the download URL for the matched package (if found)
-        pg_search_package_url: "{{ match_asset.browser_download_url | default('') }}"
-      vars:
-        # Fetch and parse the latest 10 release entries from the GitHub API
-        releases: >-
-          {{ lookup('url', 'https://api.github.com/repos/paradedb/paradedb/releases?per_page=10', split_lines=False) | from_json }}
-        # Build regex to match the package by optional version, PG version, OS, arch
-        search_pattern: >-
-          {{
-            '.*'
-            ~ (pg_search_version | default('') ~ '/')
-            ~ (
-              ansible_os_family == 'RedHat'
-              | ternary(
-                  'pg_search_' ~ (pg_version | default(postgresql_version)) ~ '.*el' ~ ansible_distribution_major_version ~ '.*' ~ (paradedb_architecture_map_rpm[ansible_architecture]) ~ '\.rpm$',
-                  'postgresql-' ~ (pg_version | default(postgresql_version)) ~ '-pg-search_.*' ~ ansible_distribution_release ~ '.*' ~ (paradedb_architecture_map_dep[ansible_architecture]) ~ '\.deb$'
-              )
-            )
-          }}
-        # From all available release assets, find the first one matching our pattern
-        match_asset: >-
-          {{
-            releases
-            | map(attribute='assets') | map('default', []) | flatten
-            | selectattr('browser_download_url', 'match', search_pattern)
-            | list | first | default({})
-          }}
-      check_mode: false
-
-    # If not found, show the error and continue the playbook execution
-    - name: pg_search package not found
-      ansible.builtin.fail:
-        msg: "ERROR: No matching pg_search package found for this system."
-      ignore_errors: true
-      when: pg_search_package_url | length == 0
-
-    # If found, download and install
-    - name: "Download pg_search package ({{ pg_search_package_url | basename }})"
-      ansible.builtin.get_url:
-        url: "{{ pg_search_package_url }}"
-        dest: "/tmp/{{ pg_search_package_url | basename }}"
-        timeout: 60
-        validate_certs: false
-      register: get_url_status
-      until: get_url_status is succeeded
-      retries: 3
-      delay: 5
-      check_mode: false
-      when: pg_search_package_url | length > 0
-
-    - name: Install pg_search package
-      ansible.builtin.apt:
-        deb: "/tmp/{{ pg_search_package_url | basename }}"
-      register: apt_status
-      until: apt_status is succeeded
-      retries: 3
-      delay: 5
-      when: ansible_os_family == 'Debian' and pg_search_package_url | length > 0
-
-    - name: Install pg_search package
-      ansible.builtin.dnf:
-        name: "/tmp/{{ pg_search_package_url | basename }}"
-        state: present
-      register: dnf_status
-      until: dnf_status is succeeded
-      retries: 3
-      delay: 5
-      when: ansible_os_family == 'RedHat' and pg_search_package_url | length > 0
+- name: Install pg_search from GitHub
+  ansible.builtin.include_tasks: extensions_github.yml
+  vars:
+    github_repo: paradedb/paradedb
+    extension_name: pg_search
+    extension_version: "{{ pg_search_version | default(omit) }}"
+    # Build regex to match the package by optional version, PG version, OS, arch
+    search_pattern: >-
+      {{
+        '.*' ~ (pg_search_version | default('') ~ '/')
+        ~ (
+          ansible_os_family == 'RedHat'
+          | ternary(
+              'pg_search_' ~ (pg_version | default(postgresql_version)) ~ '.*el' ~ ansible_distribution_major_version ~ '.*' ~ (paradedb_architecture_map_rpm[ansible_architecture]) ~ '\.rpm$',
+              'postgresql-' ~ (pg_version | default(postgresql_version)) ~ '-pg-search_.*' ~ ansible_distribution_release ~ '.*' ~ (paradedb_architecture_map_dep[ansible_architecture]) ~ '\.deb$'
+          )
+        )
+      }}
   when: enable_paradedb | default(false) | bool or enable_pg_search | default(false) | bool
   tags: paradedb, pg_search
 
