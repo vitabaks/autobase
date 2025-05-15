@@ -294,29 +294,36 @@
 # ParadeDB - https://github.com/paradedb/paradedb
 # pg_search (if 'enable_paradedb' or 'enable_pg_search' is 'true')
 - block:
-    - name: Looking up the latest available pg_search package
+    - name: "Looking up {{ pg_search_version | default('latest available') }} pg_search package"
       ansible.builtin.set_fact:
+        # Set the download URL for the matched package (if found)
         pg_search_package_url: "{{ match_asset.browser_download_url | default('') }}"
       vars:
+        # Fetch and parse the latest 10 release entries from the GitHub API
         releases: >-
           {{ lookup('url', 'https://api.github.com/repos/paradedb/paradedb/releases?per_page=10', split_lines=False) | from_json }}
+        # Build regex to match the package by optional version, PG version, OS, arch
         search_pattern: >-
           {{
-            (ansible_os_family == 'RedHat')
-            | ternary(
-                'pg_search_' ~ (pg_version | default(postgresql_version)) ~ '.*el' ~ ansible_distribution_major_version ~ '.*' ~ (paradedb_architecture_map_rpm[ansible_architecture]) ~ '\.rpm$',
-                'postgresql-' ~ (pg_version | default(postgresql_version)) ~ '-pg-search_.*' ~ ansible_distribution_release ~ '.*' ~ (paradedb_architecture_map_dep[ansible_architecture]) ~ '\.deb$'
+            '.*'
+            ~ (pg_search_version | default('') ~ '/')
+            ~ (
+              ansible_os_family == 'RedHat'
+              | ternary(
+                  'pg_search_' ~ (pg_version | default(postgresql_version)) ~ '.*el' ~ ansible_distribution_major_version ~ '.*' ~ (paradedb_architecture_map_rpm[ansible_architecture]) ~ '\.rpm$',
+                  'postgresql-' ~ (pg_version | default(postgresql_version)) ~ '-pg-search_.*' ~ ansible_distribution_release ~ '.*' ~ (paradedb_architecture_map_dep[ansible_architecture]) ~ '\.deb$'
+              )
             )
           }}
+        # From all available release assets, find the first one matching our pattern
         match_asset: >-
           {{
             releases
             | map(attribute='assets') | map('default', []) | flatten
-            | selectattr('name', 'match', search_pattern)
+            | selectattr('browser_download_url', 'match', search_pattern)
             | list | first | default({})
           }}
       check_mode: false
-      when: pg_search_version | default('latest') == 'latest'
 
     - name: "Download pg_search package ({{ pg_search_package_url | basename }})"
       ansible.builtin.get_url:
@@ -339,7 +346,7 @@
       delay: 5
       when: ansible_os_family == 'Debian'
 
-    - name: "Install pg_search {{ version }} package"
+    - name: Install pg_search package
       ansible.builtin.dnf:
         name: "/tmp/{{ pg_search_package_url | basename }}"
         state: present
