@@ -348,7 +348,7 @@
       retries: 3
       delay: 5
       when: ansible_os_family == 'RedHat'
-  when: enable_paradedb | default(false) | bool or pg_search | default(false) | bool
+  when: enable_paradedb | default(false) | bool or enable_pg_search | default(false) | bool
   tags: paradedb, pg_search
 
 # pg_analytics (if 'enable_paradedb' or 'enable_pg_analytics' is 'true')
@@ -379,5 +379,5 @@
   vars:
     version: "{{ pg_analytics_version | default('0.3.7') }}"
     pg_analytics_repo: "https://github.com/paradedb/pg_analytics/releases/download/v{{ version }}/"
-  when: enable_paradedb | default(false) | bool or pg_analytics | default(false) | bool
+  when: enable_paradedb | default(false) | bool or enable_pg_analytics | default(false) | bool
   tags: paradedb, pg_analytics
