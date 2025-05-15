@@ -365,7 +365,7 @@
         - ansible_os_family == "Debian"
         - ansible_distribution_release in ['bookworm', 'jammy', 'noble']
 
-    - name: "Install pg_analytics v{{ version) }} package"
+    - name: "Install pg_analytics v{{ version }} package"
       ansible.builtin.dnf:
         name: "{{ pg_analytics_repo }}/pg_analytics_{{ pg_version | default(postgresql_version) }}-{{ version }}-1PARADEDB.el{{ ansible_distribution_major_version }}.{{ paradedb_architecture_map_rpm[ansible_architecture] }}.rpm"
         disable_gpg_check: true
