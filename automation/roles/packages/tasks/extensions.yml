@@ -295,43 +295,29 @@
 - block:
     - name: Looking up the latest available pg_search package
       ansible.builtin.set_fact:
-        pg_search_package_url: "{{ match.browser_download_url }}"
-        pg_search_version: "{{ match.release_tag }}"
+        pg_search_package_url: "{{ match_asset.browser_download_url | default('') }}"
       vars:
-        postgres_version: "{{ pg_version | default(postgresql_version) }}"
         releases: >-
           {{ lookup('url', 'https://api.github.com/repos/paradedb/paradedb/releases?per_page=10', split_lines=False) | from_json }}
-        pattern: >-
+        search_pattern: >-
           {{
             (ansible_os_family == 'RedHat')
             | ternary(
-                'pg_search_' ~ postgres_version ~ '.*el' ~ ansible_distribution_major_version ~ '.*' ~ ansible_architecture ~ '\\.rpm$',
-                'postgresql-' ~ postgres_version ~ '-pg-search_.*' ~ ansible_distribution_release ~ '.*' ~ ansible_architecture ~ '\\.deb$'
+                'pg_search_' ~ (pg_version | default(postgresql_version)) ~ '.*el' ~ ansible_distribution_major_version ~ '.*' ~ (paradedb_architecture_map_rpm[ansible_architecture]) ~ '\.rpm$',
+                'postgresql-' ~ (pg_version | default(postgresql_version)) ~ '-pg-search_.*' ~ ansible_distribution_release ~ '.*' ~ (paradedb_architecture_map_dep[ansible_architecture]) ~ '\.deb$'
             )
           }}
-        match: >-
+        match_asset: >-
           {{
             releases
-            | selectattr('assets', 'defined')
-            | map('combine', {
-                'matched_asset': (
-                  attribute('assets')
-                  | selectattr('name', 'search', pattern)
-                  | list
-                  | first
-                )
-              })
-            | selectattr('matched_asset', 'defined')
-            | map('combine', {
-                'browser_download_url': attribute('matched_asset', 'browser_download_url'),
-                'release_tag': attribute('tag_name') | replace('v', '')
-              })
-            | list
-            | first
+            | map(attribute='assets') | map('default', []) | flatten
+            | selectattr('name', 'match', search_pattern)
+            | list | first | default({})
           }}
+      check_mode: false
       when: pg_search_version | default('latest') == 'latest'
 
-    - name: Download pg_search {{ pg_search_version }} package
+    - name: "Download pg_search package ({{ pg_search_package_url | basename }})"
       ansible.builtin.get_url:
         url: "{{ pg_search_package_url }}"
         dest: "/tmp/{{ pg_search_package_url | basename }}"
@@ -341,15 +327,26 @@
       until: get_url_status is succeeded
       retries: 3
       delay: 5
+      check_mode: false
 
-    - name: Install pg_search {{ pg_search_version }} package
-      ansible.builtin.package:
-        name: "/tmp/{{ pg_search_package_url | basename }}"
-        state: present
-      register: package_status
-      until: package_status is succeeded
+    - name: Install pg_search package
+      ansible.builtin.apt:
+        deb: "/tmp/{{ pg_search_package_url | basename }}"
+      register: apt_status
+      until: apt_status is succeeded
       retries: 3
       delay: 5
+      when: ansible_os_family == 'Debian'
+
+    - name: "Install pg_search {{ version }} package"
+      ansible.builtin.dnf:
+        name: "/tmp/{{ pg_search_package_url | basename }}"
+        state: present
+      register: dnf_status
+      until: dnf_status is succeeded
+      retries: 3
+      delay: 5
+      when: ansible_os_family == 'RedHat'
   when: enable_paradedb | default(false) | bool or pg_search | default(false) | bool
   tags: paradedb, pg_search
 
@@ -357,42 +354,29 @@
 - block:
     - name: Looking up the latest available pg_analytics package
       ansible.builtin.set_fact:
-        pg_analytics_package_url: "{{ match.browser_download_url }}"
-        pg_analytics_version: "{{ match.release_tag }}"
+        pg_analytics_package_url: "{{ match_asset.browser_download_url | default(omit) }}"
       vars:
-        postgres_version: "{{ pg_version | default(postgresql_version) }}"
         releases: >-
           {{ lookup('url', 'https://api.github.com/repos/paradedb/pg_analytics/releases?per_page=10', split_lines=False) | from_json }}
-        pattern: >-
+        search_pattern: >-
           {{
             (ansible_os_family == 'RedHat')
             | ternary(
-                'pg_analytics_' ~ postgres_version ~ '.*el' ~ ansible_distribution_major_version ~ '.*' ~ ansible_architecture ~ '\\.rpm$',
-                'postgresql-' ~ postgres_version ~ '-pg-analytics_.*' ~ ansible_distribution_release ~ '.*' ~ ansible_architecture ~ '\\.deb$'
+                'pg_analytics_' ~ (pg_version | default(postgresql_version)) ~ '.*el' ~ ansible_distribution_major_version ~ '.*' ~ (paradedb_architecture_map_rpm[ansible_architecture]) ~ '\.rpm$',
+                'postgresql-' ~ (pg_version | default(postgresql_version)) ~ '-pg-analytics_.*' ~ ansible_distribution_release ~ '.*' ~ (paradedb_architecture_map_dep[ansible_architecture]) ~ '\.deb$'
             )
           }}
-        match: >-
+        match_asset: >-
           {{
             releases
-            | selectattr('assets', 'defined')
-            | map('combine', {
-                'matched_asset': (
-                  attribute('assets')
-                  | selectattr('name', 'search', pattern)
-                  | list
-                  | first
-                )
-              })
-            | selectattr('matched_asset', 'defined')
-            | map('combine', {
-                'browser_download_url': attribute('matched_asset', 'browser_download_url'),
-                'release_tag': attribute('tag_name') | replace('v', '')
-              })
-            | list
-            | first
+            | map(attribute='assets') | map('default', []) | flatten
+            | selectattr('name', 'match', search_pattern)
+            | list | first | default({})
           }}
+      check_mode: false
+      when: pg_analytics_version | default('latest') == 'latest'
 
-    - name: Download pg_analytics {{ pg_analytics_version }} package
+    - name: "Download pg_analytics package ({{ pg_analytics_package_url | basename }})"
       ansible.builtin.get_url:
         url: "{{ pg_analytics_package_url }}"
         dest: "/tmp/{{ pg_analytics_package_url | basename }}"
@@ -402,14 +386,25 @@
       until: get_url_status is succeeded
       retries: 3
       delay: 5
+      check_mode: false
 
-    - name: Install pg_analytics {{ pg_analytics_version }} package
-      ansible.builtin.package:
-        name: "/tmp/{{ pg_analytics_package_url | basename }}"
-        state: present
-      register: package_status
-      until: package_status is succeeded
+    - name: Install pg_analytics package
+      ansible.builtin.apt:
+        deb: "/tmp/{{ pg_analytics_package_url | basename }}"
+      register: apt_status
+      until: apt_status is succeeded
       retries: 3
       delay: 5
+      when: ansible_os_family == 'Debian'
+
+    - name: Install pg_analytics package
+      ansible.builtin.dnf:
+        name: "/tmp/{{ pg_analytics_package_url | basename }}"
+        state: present
+      register: dnf_status
+      until: dnf_status is succeeded
+      retries: 3
+      delay: 5
+      when: ansible_os_family == 'RedHat'
   when: enable_paradedb | default(false) | bool or pg_analytics | default(false) | bool
   tags: paradedb, pg_analytics
