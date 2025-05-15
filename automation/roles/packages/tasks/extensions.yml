@@ -302,12 +302,11 @@
     # Build regex to match the package by optional version, PG version, OS, arch
     search_pattern: >-
       {{
-        '.*' ~ (pg_search_version ~ '/' if pg_search_version is defined else '')
-        ~ (
-          ansible_os_family == 'RedHat'
-          | ternary(
-              'pg_search_' ~ (pg_version | default(postgresql_version)) ~ '.*el' ~ ansible_distribution_major_version ~ '.*' ~ (paradedb_architecture_map_rpm[ansible_architecture]) ~ '\.rpm$',
-              'postgresql-' ~ (pg_version | default(postgresql_version)) ~ '-pg-search_.*' ~ ansible_distribution_release ~ '.*' ~ (paradedb_architecture_map_dep[ansible_architecture]) ~ '\.deb$'
+        '.*' ~ (pg_search_version ~ '/' if pg_search_version is defined else '') ~
+        (
+          (ansible_os_family == 'RedHat') | ternary(
+            'pg_search_' ~ (pg_version | default(postgresql_version)) ~ '.*el' ~ ansible_distribution_major_version ~ '.*' ~ (paradedb_architecture_map_rpm[ansible_architecture]) ~ '\.rpm$',
+            'postgresql-' ~ (pg_version | default(postgresql_version)) ~ '-pg-search_.*' ~ ansible_distribution_release ~ '.*' ~ (paradedb_architecture_map_dep[ansible_architecture]) ~ '\.deb$'
           )
         )
       }}
