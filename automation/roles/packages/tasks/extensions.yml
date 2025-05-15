@@ -302,7 +302,7 @@
     # Build regex to match the package by optional version, PG version, OS, arch
     search_pattern: >-
       {{
-        '.*' ~ (pg_search_version | default('') ~ '/')
+        '.*' ~ (extension_version | default('') ~ '/')
         ~ (
           ansible_os_family == 'RedHat'
           | ternary(
