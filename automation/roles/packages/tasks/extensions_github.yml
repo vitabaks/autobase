@@ -76,6 +76,7 @@
   ansible.builtin.dnf:
     name: "/tmp/{{ github_package_url | basename }}"
     state: present
+    disable_gpg_check: true
   register: dnf_status
   until: dnf_status is succeeded
   retries: 3
