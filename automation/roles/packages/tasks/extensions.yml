@@ -248,44 +248,28 @@
 # pgvectorscale - https://github.com/timescale/pgvectorscale
 # (if 'enable_pgvectorscale' is 'true')
 - block:
-    - name: Looking up the latest version of pgvectorscale
-      ansible.builtin.set_fact:
-        pgvectorscale_version: >-
+    - name: Install pgvectorscale from GitHub
+      ansible.builtin.include_tasks: extensions_github.yml
+      vars:
+        github_repo: timescale/pgvectorscale
+        extension_name: pgvectorscale
+        extension_version: "{{ pgvectorscale_version | default('') }}"
+        # Build regex to match the package by optional version, PG version, OS, arch
+        search_pattern: >-
           {{
-            (lookup('url', 'https://api.github.com/repos/timescale/pgvectorscale/releases/latest', split_lines=False)
-            | from_json).get('tag_name')
-            | replace('v', '')
+            '.*'
+            ~ (pgvectorscale_version ~ '/' if pgvectorscale_version is defined else '')
+            ~ 'pgvectorscale-.*-pg' ~ (pg_version | default(postgresql_version))
+            ~ '-' ~ pgvectorscale_architecture_map[ansible_architecture]
+            ~ '\.zip$'
           }}
-      check_mode: false
-      when: pgvectorscale_version | default('latest') == 'latest'
-
-    - name: Download pgvectorscale archive
-      ansible.builtin.get_url:
-        url: "{{ pgvectorscale_repo }}/{{ pgvectorscale_archive }}"
-        dest: "/tmp/{{ pgvectorscale_archive }}"
-        timeout: 60
-        validate_certs: false
-      check_mode: false
-
-    - name: Extract pgvectorscale package
-      ansible.builtin.unarchive:
-        src: "/tmp/{{ pgvectorscale_archive }}"
-        dest: "/tmp/"
-        remote_src: true
-      check_mode: false
-
-    # Debian (only deb packages are available)
-    - name: "Install pgvectorscale v{{ pgvectorscale_version }} package"
-      ansible.builtin.apt:
-        deb: "/tmp/{{ pgvectorscale_package }}"
-      register: apt_status
-      until: apt_status is success
-      delay: 5
-      retries: 3
-  vars:
-    pgvectorscale_repo: "https://github.com/timescale/pgvectorscale/releases/download/{{ pgvectorscale_version }}"
-    pgvectorscale_archive: "pgvectorscale-{{ pgvectorscale_version }}-pg{{ pg_version | default(postgresql_version) }}-{{ pgvectorscale_architecture_map[ansible_architecture] }}.zip" # yamllint disable rule:line-length
-    pgvectorscale_package: "pgvectorscale-postgresql-{{ pg_version | default(postgresql_version) }}_{{ pgvectorscale_version }}-Linux_{{ pgvectorscale_architecture_map[ansible_architecture] }}.deb" # yamllint disable rule:line-length
+        # Defining the expected package name pattern to match inside the archive
+        package_name_pattern: >-
+          {{
+            'pgvectorscale-postgresql-'
+            ~ (pg_version | default(postgresql_version)) ~ '.*'
+            ~ pgvectorscale_architecture_map[ansible_architecture] ~ '\.deb$'
+          }}
   when:
     - enable_pgvectorscale | default(false) | bool
     - ansible_os_family == "Debian"
@@ -298,7 +282,7 @@
   vars:
     github_repo: paradedb/paradedb
     extension_name: pg_search
-    extension_version: "{{ pg_search_version | default(omit) }}"
+    extension_version: "{{ pg_search_version | default('') }}"
     # Build regex to match the package by optional version, PG version, OS, arch
     search_pattern: >-
       {{

@@ -2,25 +2,16 @@
 ---
 # reusable task file: extensions_github.yml
 #
+# Extension Auto-Setup: packages fron GitHub
+#
 # Incoming options:
 # - github_repo (e.q, 'paradedb/paradedb')
 # - extension_name (e.q., 'pg_search')
 # - extension_version (e.q., '0.15.18') - optional
 # - search_pattern (search in assets.browser_download_url)
-#
-# Example of a search pattern:
-#    search_pattern: >-
-#      {{
-#        '.*' ~ (pg_search_version ~ '/' if pg_search_version is defined else '') ~
-#        (
-#          (ansible_os_family == 'RedHat') | ternary(
-#            'pg_search_' ~ (pg_version | default(postgresql_version)) ~ '.*el' ~ ansible_distribution_major_version ~ '.*' ~ (paradedb_architecture_map_rpm[ansible_architecture]) ~ '\.rpm$',
-#            'postgresql-' ~ (pg_version | default(postgresql_version)) ~ '-pg-search_.*' ~ ansible_distribution_release ~ '.*' ~ (paradedb_architecture_map_dep[ansible_architecture]) ~ '\.deb$'
-#          )
-#        )
-#      }}
+# - package_name_pattern - required when installing a file extracted from an archive.
 
-- name: "Looking up {{ extension_version | default('latest available') }} {{ extension_name }} package"
+- name: "Looking up {{ extension_version if extension_version | default('') | length > 0 else 'latest available' }} {{ extension_name }} package"
   ansible.builtin.set_fact:
     # Set the download URL for the matched package (if found)
     github_package_url: "{{ match_asset.browser_download_url | default('') }}"
@@ -49,7 +40,7 @@
   check_mode: false
   when: github_package_url | length == 0
 
-# If found, download and install
+# If found, download it
 - name: "Download {{ extension_name }} package ({{ github_package_url | basename }})"
   ansible.builtin.get_url:
     url: "{{ github_package_url }}"
@@ -60,25 +51,67 @@
   until: get_url_status is succeeded
   retries: 3
   delay: 5
-  check_mode: false
   when: github_package_url | length > 0
 
-- name: "Install {{ extension_name }} package"
-  ansible.builtin.apt:
-    deb: "/tmp/{{ github_package_url | basename }}"
-  register: apt_status
-  until: apt_status is succeeded
-  retries: 3
-  delay: 5
-  when: ansible_os_family == 'Debian' and github_package_url | length > 0
+# If it's an archive, unzip it
+- block:
+    - name: "Unarchive {{ extension_name }} package"
+      ansible.builtin.unarchive:
+        src: "/tmp/{{ github_package_url | basename }}"
+        dest: "/tmp/{{ extension_name }}"
+        remote_src: true
 
-- name: "Install {{ extension_name }} package"
-  ansible.builtin.dnf:
-    name: "/tmp/{{ github_package_url | basename }}"
-    state: present
-    disable_gpg_check: true
-  register: dnf_status
-  until: dnf_status is succeeded
-  retries: 3
-  delay: 5
-  when: ansible_os_family == 'RedHat' and github_package_url | length > 0
+    - name: "Search for {{ extension_name }} package in extracted archive"
+      ansible.builtin.find:
+        paths: "/tmp/{{ extension_name }}"
+        patterns: "{{ package_name_pattern }}"
+        use_regex: true
+      register: extracted_package
+      when: package_name_pattern is defined
+  when:
+    - github_package_url | length > 0
+    - github_package_url | regex_search('\.(zip|tar\.gz)$')
+
+# Install
+- block:
+    - name: "Install {{ extension_name }} package"
+      ansible.builtin.apt:
+        deb: "{{ item }}"
+      loop: "{{ files_to_install | select('match', '\\.deb$') | list }}"
+      register: apt_status
+      until: apt_status is succeeded
+      retries: 3
+      delay: 5
+      when: ansible_os_family == 'Debian'
+
+    - name: "Install {{ extension_name }} package"
+      ansible.builtin.dnf:
+        name: "{{ item }}"
+        state: present
+        disable_gpg_check: true
+      loop: "{{ files_to_install | select('match', '\\.rpm$') | list }}"
+      register: dnf_status
+      until: dnf_status is succeeded
+      retries: 3
+      delay: 5
+      when: ansible_os_family == 'RedHat'
+  vars:
+    files_to_install: >-
+      {{
+        (extracted_package is defined and extracted_package.files is defined and extracted_package.files | length > 0)
+        | ternary(
+            extracted_package.files | map(attribute='path') | list,
+            ["/tmp/" ~ github_package_url | basename]
+        )
+      }}
+  when: github_package_url | length > 0
+
+# Clean up
+- name: Clean up downloaded files
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - "/tmp/{{ github_package_url | basename }}"
+    - "/tmp/{{ extension_name }}"
+  when: github_package_url | length > 0
