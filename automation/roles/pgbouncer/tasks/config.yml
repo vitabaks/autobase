@@ -10,7 +10,7 @@
 
 - name: Update pgbouncer.ini
   ansible.builtin.template:
-    src: ../templates/pgbouncer.ini.j2
+    src: templates/pgbouncer.ini.j2
     dest: "{{ pgbouncer_conf_dir }}/pgbouncer{{ '-%d' % (idx + 1) if idx > 0 else '' }}.ini"
     owner: postgres
     group: postgres

@@ -30,7 +30,7 @@
 
 - name: Update conf file "/etc/patroni/patroni.yml"
   ansible.builtin.template:
-    src: ../templates/patroni.yml.j2
+    src: templates/patroni.yml.j2
     dest: /etc/patroni/patroni.yml
     owner: postgres
     group: postgres

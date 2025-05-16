@@ -37,7 +37,7 @@
   tasks:
     - name: Running rollback.yml
       ansible.builtin.include_role:
-        name: upgrade
+        name: vitabaks.autobase.upgrade
         tasks_from: rollback
   tags:
     - rollback
