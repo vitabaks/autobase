@@ -296,11 +296,11 @@
         (
           (ansible_os_family == 'RedHat') | ternary(
             'pg_search_' ~ (pg_version | default(postgresql_version)) ~ '.*el' ~ ansible_distribution_major_version ~ '.*' ~ (pg_search_architecture_map_rpm[ansible_architecture]) ~ '\.rpm$',
-            'postgresql-' ~ (pg_version | default(postgresql_version)) ~ '-pg-search_.*' ~ ansible_distribution_release ~ '.*' ~ (pg_search_architecture_map_dep[ansible_architecture]) ~ '\.deb$'
+            'postgresql-' ~ (pg_version | default(postgresql_version)) ~ '-pg-search_.*' ~ ansible_distribution_release ~ '.*' ~ (pg_search_architecture_map_deb[ansible_architecture]) ~ '\.deb$'
           )
         )
       }}
-    pg_search_architecture_map_dep:
+    pg_search_architecture_map_deb:
       x86_64: amd64
       amd64: amd64
       aarch64: arm64
@@ -318,7 +318,7 @@
 - block:
     - name: "Install pg_analytics v{{ version }} package"
       ansible.builtin.apt:
-        deb: "{{ pg_analytics_repo }}/postgresql-{{ pg_version | default(postgresql_version) }}-pg-analytics_{{ version }}-1PARADEDB-{{ ansible_distribution_release }}_{{ pg_analytics_architecture_map_dep[ansible_architecture] }}.deb"
+        deb: "{{ pg_analytics_repo }}/postgresql-{{ pg_version | default(postgresql_version) }}-pg-analytics_{{ version }}-1PARADEDB-{{ ansible_distribution_release }}_{{ pg_analytics_architecture_map_deb[ansible_architecture] }}.deb"
       register: apt_status
       until: apt_status is success
       delay: 5
@@ -341,7 +341,7 @@
   vars:
     version: "{{ pg_analytics_version | default('0.3.7') }}"
     pg_analytics_repo: "https://github.com/paradedb/pg_analytics/releases/download/v{{ version }}/"
-    pg_analytics_architecture_map_dep:
+    pg_analytics_architecture_map_deb:
       x86_64: amd64
       amd64: amd64
       aarch64: arm64
