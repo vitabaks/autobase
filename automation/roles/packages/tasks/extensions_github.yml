@@ -109,7 +109,7 @@
   vars:
     files_to_install: >-
       {{
-        (extracted_package is defined and extracted_package.files | default([]) | length > 0)
+        (extracted_package is defined and (extracted_package.files | default([]) | length > 0))
         | ternary(
             extracted_package.files | map(attribute='path') | list,
             ["/tmp/" ~ github_package_url | basename]
