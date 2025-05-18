@@ -23,6 +23,34 @@
       delegate_to: localhost
       run_once: true # noqa run-once
 
+    # Extension Auto-Setup
+    - name: Set variables for Extensions test
+      ansible.builtin.set_fact:
+        enable_timescale: true
+        enable_pg_repack: true
+        enable_pg_cron: true
+        enable_pgaudit: true
+        enable_pgvector: true
+        enable_postgis: true
+        enable_pgrouting: true
+        enable_pg_stat_kcache: true
+        enable_pg_wait_sampling: true
+        enable_pg_partman: true
+        enable_pg_search: true
+        pg_search_version: "0.15.18" # rpm packages of v0.15.19 are broken.
+        enable_citus: "{{ 'false' if ansible_distribution_release == 'noble' else 'true' }}" # no packages for Ubuntu 24.04 (TODO)
+        enable_pg_analytics: "{{ 'false' if ansible_distribution_release == 'bullseye' else 'true' }}" # no packages for debian 11
+        enable_pgvectorscale: "{{ 'true' if ansible_distribution_release in ['bookworm', 'jammy', 'noble'] else 'false' }}" # only deb packages are available
+        # create extension
+        postgresql_schemas:
+          - { schema: "paradedb", db: "postgres", owner: "postgres" } # pg_search must be installed in the paradedb schema.
+        postgresql_extensions:
+          - { ext: "vector", db: "postgres" }
+          - { ext: "vectorscale", db: "postgres" }
+          - { ext: "pg_search", db: "postgres", schema: "paradedb" }
+          - { ext: "pg_analytics", db: "postgres" }
+        #  - { ext: "", db: "" }
+
     # Consul package for OracleLinux missing in HashiCorp repository
     # Only the installation of a binary file is supported
     - name: "Set variables: 'consul_install_from_repo: false' and 'patroni_installation_method: pip'"
@@ -37,10 +65,6 @@
       ansible.builtin.set_fact:
         postgresql_data_dir: "/pgdata/{{ postgresql_version }}/main"
         postgresql_wal_dir: "/pgwal/{{ postgresql_version }}/pg_wal"
-
-    - name: Set variables for TimescaleDB cluster deployment test
-      ansible.builtin.set_fact:
-        enable_timescale: true
 
     - name: Set variables for PostgreSQL upgrade test
       ansible.builtin.set_fact:

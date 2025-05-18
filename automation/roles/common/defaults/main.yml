@@ -1010,7 +1010,6 @@ yum_repository: []
 
 install_postgresql_repo: true # or 'false' (installed from the package "pgdg-redhat-repo-latest.noarch.rpm")
 install_epel_repo: true # or 'false' (installed from the package "epel-release-latest.noarch.rpm")
-install_scl_repo: true # or 'false' (Redhat 7 family only)
 
 postgresql_os_specific_packages:
   Debian:
