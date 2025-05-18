@@ -3,7 +3,6 @@
 - add_repo
 - - install_epel_repo
 - - install_postgresql_repo
-- - install_scl_repo
 - install_packages
 - - install_postgres
 - - install_packages_from_file

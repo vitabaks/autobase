@@ -43,11 +43,11 @@
   ansible.builtin.fail:
     msg:
       - "ParadeDB (pg_search, pg_analytics) is not supported on {{ ansible_distribution }} {{ ansible_distribution_release }}."
-      - "Supported OS: Debian (bookworm), Ubuntu (jammy, noble) or RedHat (8, 9)."
+      - "Supported OS: Debian (bullseye, bookworm), Ubuntu (jammy, noble) or RedHat (8, 9)."
   when:
     - (enable_paradedb | default(false) | bool) or (enable_pg_search | default(false) | bool) or (enable_pg_analytics | default(false) | bool)
     - not (
-      (ansible_os_family == "Debian" and ansible_distribution_release in ['bookworm', 'jammy', 'noble']) or
+      (ansible_os_family == "Debian" and ansible_distribution_release in ['bullseye', 'bookworm', 'jammy', 'noble']) or
       (ansible_os_family == "RedHat" and ansible_distribution_major_version in ['8', '9'])
       )
 
