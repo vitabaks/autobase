@@ -87,32 +87,34 @@
     - name: "Install {{ extension_name }} package"
       ansible.builtin.apt:
         deb: "{{ item }}"
-      loop: "{{ files_to_install | select('match', '\\.deb$') | list }}"
+      loop: "{{ files_to_install }}"
+      loop_control:
+        label: "{{ item | basename }}"
       register: apt_status
       until: apt_status is succeeded
       retries: 3
       delay: 5
-      when: ansible_os_family == 'Debian'
+      when: ansible_os_family == 'Debian' and item is search('\.deb$')
 
     - name: "Install {{ extension_name }} package"
       ansible.builtin.dnf:
         name: "{{ item }}"
         state: present
         disable_gpg_check: true
-      loop: "{{ files_to_install | select('match', '\\.rpm$') | list }}"
+      loop: "{{ files_to_install }}"
+      loop_control:
+        label: "{{ item | basename }}"
       register: dnf_status
       until: dnf_status is succeeded
       retries: 3
       delay: 5
-      when: ansible_os_family == 'RedHat'
+      when: ansible_os_family == 'RedHat' and item is search('\.rpm$')
   ignore_errors: true
   vars:
     files_to_install: >-
       {{
-        (extracted_package is defined and (extracted_package.files | default([]) | length > 0))
-        | ternary(
-            extracted_package.files | map(attribute='path') | list,
-            ["/tmp/" ~ github_package_url | basename]
-        )
+        extracted_package.files | map(attribute='path') | reject('search', 'dbgsym') | list
+        if extracted_package is defined and extracted_package.files is defined
+        else ['/tmp/' ~ github_package_url | basename]
       }}
   when: github_package_url | length > 0
