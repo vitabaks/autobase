@@ -1,5 +1,5 @@
 ---
-- name: etcd_cluster.yml | Deploy etcd Cluster
+- name: vitabaks.autobase.etcd_cluster | Deploy etcd Cluster
   hosts: etcd_cluster
   become: true
   become_method: sudo

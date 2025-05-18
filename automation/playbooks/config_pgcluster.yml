@@ -1,5 +1,5 @@
 ---
-- name: config_pgcluster.yml | Configuration PostgreSQL HA Cluster (based on "Patroni")
+- name: vitabaks.autobase.config_pgcluster | Configuration PostgreSQL HA Cluster (based on "Patroni")
   hosts: localhost
   gather_facts: true
   any_errors_fatal: true
@@ -23,7 +23,7 @@
         postgresql_cluster_maintenance: true
       tags: always
 
-- name: config_pgcluster.yml | Check the PostgreSQL cluster state and perform pre-checks
+- name: vitabaks.autobase.config_pgcluster | Check the PostgreSQL cluster state and perform pre-checks
   hosts: postgres_cluster
   become: true
   become_method: sudo
@@ -97,7 +97,7 @@
   tags:
     - always
 
-- name: config_pgcluster.yml | Configure PostgreSQL Cluster
+- name: vitabaks.autobase.config_pgcluster | Configure PostgreSQL Cluster
   hosts: "primary:secondary"
   become: true
   become_method: sudo
@@ -199,7 +199,7 @@
     - role: vitabaks.autobase.pgbackrest
       when: pgbackrest_install | default(false) | bool
 
-- name: config_pgcluster.yml | Restart patroni on secondary after config settings if need
+- name: vitabaks.autobase.config_pgcluster | Restart patroni on secondary after config settings if need
   hosts: secondary
   serial: 1 # restart replicas one by one
   gather_facts: false
@@ -241,7 +241,7 @@
   tags:
     - patroni_conf
 
-- name: config_pgcluster.yml | Restart patroni on master after config settings if need
+- name: vitabaks.autobase.config_pgcluster | Restart patroni on master after config settings if need
   hosts: primary
   gather_facts: false
   become: true
@@ -291,7 +291,7 @@
   tags:
     - patroni_conf
 
-- name: config_pgcluster.yml | Configure PostgreSQL Cluster and info
+- name: vitabaks.autobase.config_pgcluster | Configure PostgreSQL Cluster and info
   hosts: primary
   become: true
   become_method: sudo

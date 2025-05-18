@@ -1,5 +1,5 @@
 ---
-- name: Deploy PostgreSQL HA Cluster (based on "Patroni")
+- name: vitabaks.autobase.deploy_pgcluster | Deploy PostgreSQL HA Cluster (based on "Patroni")
   hosts: localhost
   gather_facts: true
   any_errors_fatal: true
@@ -21,7 +21,7 @@
       when: cloud_provider | default('') | length > 0
       tags: always
 
-- name: deploy_pgcluster.yml | Perform pre-checks
+- name: vitabaks.autobase.deploy_pgcluster | Perform pre-checks
   hosts: all
   become: true
   become_method: sudo
@@ -193,17 +193,17 @@
         tls_cert_regenerate: "{{ patroni_tls_cert_regenerate | default(false) }}" # Do not generate new certificates if they already exist.
       when: tls_cert_generate | default(true) | bool
 
-- name: deploy_pgcluster.yml | Deploy etcd cluster
+- name: vitabaks.autobase.deploy_pgcluster | Deploy etcd cluster
   ansible.builtin.import_playbook: etcd_cluster.yml
   when: not dcs_exists | default(false) | bool and dcs_type | default('etcd') == "etcd"
   tags: etcd
 
-- name: deploy_pgcluster.yml | Deploy Consul
+- name: vitabaks.autobase.deploy_pgcluster | Deploy Consul
   ansible.builtin.import_playbook: consul.yml
   when: dcs_type | default('etcd') == "consul"
   tags: consul
 
-- name: deploy_pgcluster.yml | Postgres Cluster Configuration
+- name: vitabaks.autobase.deploy_pgcluster | Postgres Cluster Configuration
   hosts: postgres_cluster
   become: true
   become_method: sudo
@@ -257,12 +257,12 @@
     - role: vitabaks.autobase.ssh_keys
     - role: vitabaks.autobase.copy
 
-- name: deploy_pgcluster.yml | Deploy balancers
+- name: vitabaks.autobase.deploy_pgcluster | Deploy balancers
   ansible.builtin.import_playbook: balancers.yml
   when: with_haproxy_load_balancing | default(false) | bool
   tags: load_balancing, haproxy
 
-- name: deploy_pgcluster.yml | Install and configure pgBackRest
+- name: vitabaks.autobase.deploy_pgcluster | Install and configure pgBackRest
   hosts: pgbackrest:postgres_cluster
   become: true
   become_method: sudo
@@ -284,7 +284,7 @@
     - role: vitabaks.autobase.pgbackrest
       when: pgbackrest_install | default(false) | bool
 
-- name: deploy_pgcluster.yml | PostgreSQL Cluster Deployment
+- name: vitabaks.autobase.deploy_pgcluster | PostgreSQL Cluster Deployment
   hosts: postgres_cluster
   become: true
   become_method: sudo

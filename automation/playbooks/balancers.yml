@@ -1,5 +1,5 @@
 ---
-- name: balancers.yml | Configure HAProxy load balancers
+- name: vitabaks.autobase.balancers | Configure HAProxy load balancers
   hosts: balancers
   become: true
   become_method: sudo

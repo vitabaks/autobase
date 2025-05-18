@@ -1,5 +1,5 @@
 ---
-- name: vitabaks.autobase.update_pgcluster.yml | Update PostgreSQL HA Cluster (based on "Patroni")
+- name: vitabaks.autobase.update_pgcluster | Update PostgreSQL HA Cluster (based on "Patroni")
   hosts: postgres_cluster
   gather_facts: true
   become: true

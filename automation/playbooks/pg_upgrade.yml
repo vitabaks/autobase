@@ -1,7 +1,7 @@
 ---
 # TODO:
 # - Citus support
-- name: "pg_upgrade.yml | Upgrade PostgreSQL {{ pg_old_version }} to the new version {{ pg_new_version }}"
+- name: "vitabaks.autobase.pg_upgrade | Upgrade PostgreSQL {{ pg_old_version }} to the new version {{ pg_new_version }}"
   hosts: postgres_cluster
   gather_facts: true
   become: true

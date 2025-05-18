@@ -1,5 +1,5 @@
 ---
-- name: consul.yml | Configure Consul instances
+- name: vitabaks.autobase.consul | Configure Consul instances
   hosts: consul_instances
   become: true
   become_method: sudo

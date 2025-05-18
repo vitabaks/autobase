@@ -1,5 +1,5 @@
 ---
-- name: add_balancer.yml | Add HAProxy balancer node
+- name: vitabaks.autobase.add_balancer | Add HAProxy balancer node
   hosts: balancers
   become: true
   become_method: sudo
@@ -98,7 +98,7 @@
       changed_when: false
       tags: always
 
-- name: add_balancer.yml | Add load balancer
+- name: vitabaks.autobase.add_balancer | Add load balancer
   hosts: new_balancer
   become: true
   become_method: sudo
