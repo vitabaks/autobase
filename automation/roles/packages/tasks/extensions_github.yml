@@ -58,16 +58,26 @@
     - name: "Unarchive {{ extension_name }} package"
       ansible.builtin.unarchive:
         src: "/tmp/{{ github_package_url | basename }}"
-        dest: "/tmp/{{ extension_name }}"
+        dest: "/tmp/"
         remote_src: true
 
     - name: "Search for {{ extension_name }} package in extracted archive"
       ansible.builtin.find:
-        paths: "/tmp/{{ extension_name }}"
+        paths: "/tmp/"
         patterns: "{{ package_name_pattern }}"
         use_regex: true
       register: extracted_package
       when: package_name_pattern is defined
+
+    - name: "ERROR: No matching {{ extension_name }} package found"
+      run_once: true
+      ansible.builtin.fail:
+        msg: >-
+          ERROR: No matching {{ extension_name }} package found.
+          Search pattern: {{ package_name_pattern }}
+      ignore_errors: true
+      check_mode: false
+      when: extracted_package is defined and extracted_package.files | default([]) | length == 0
   when:
     - github_package_url | length > 0
     - github_package_url | regex_search('\.(zip|tar\.gz)$')
@@ -95,23 +105,14 @@
       retries: 3
       delay: 5
       when: ansible_os_family == 'RedHat'
+  ignore_errors: true
   vars:
     files_to_install: >-
       {{
-        (extracted_package is defined and extracted_package.files is defined and extracted_package.files | length > 0)
+        (extracted_package is defined and extracted_package.files | default([]) | length > 0)
         | ternary(
             extracted_package.files | map(attribute='path') | list,
             ["/tmp/" ~ github_package_url | basename]
         )
       }}
-  when: github_package_url | length > 0
-
-# Clean up
-- name: Clean up downloaded files
-  ansible.builtin.file:
-    path: "{{ item }}"
-    state: absent
-  loop:
-    - "/tmp/{{ github_package_url | basename }}"
-    - "/tmp/{{ extension_name }}"
   when: github_package_url | length > 0
