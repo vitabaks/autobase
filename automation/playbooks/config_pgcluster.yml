@@ -152,13 +152,6 @@
     - role: vitabaks.autobase.pgpass
     - role: vitabaks.autobase.cron
 
-    - role: vitabaks.autobase.patroni
-      tasks_from: config
-
-    - role: vitabaks.autobase.pgbouncer
-      tasks_from: config
-      when: pgbouncer_install | default(true) | bool
-
     - role: vitabaks.autobase.vip_manager
       when: not with_haproxy_load_balancing | default(false) | bool and
         (cluster_vip is defined and cluster_vip | length > 0)
@@ -177,6 +170,18 @@
 
     - role: vitabaks.autobase.wal_g
       when: wal_g_install | default(false) | bool
+
+  tasks:
+    - name: Configure patroni
+      ansible.builtin.include_role:
+        name: vitabaks.autobase.patroni
+        tasks_from: config
+
+    - name: Configure pgbouncer
+      ansible.builtin.include_role:
+        name: vitabaks.autobase.pgbouncer
+        tasks_from: config
+      when: pgbouncer_install | default(true) | bool
 
 - name: config_pgcluster | Configure pgBackRest
   hosts: pgbackrest:postgres_cluster

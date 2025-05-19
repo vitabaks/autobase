@@ -303,6 +303,12 @@
         - pgbackrest_auto_conf | default(true) | bool # to be able to disable auto backup settings
       tags: always
 
+    - name: Copy certificates
+      ansible.builtin.include_role:
+        name: vitabaks.autobase.tls_certificate
+        tasks_from: copy
+      when: tls_cert_generate | default(true) | bool
+
   roles:
     - role: vitabaks.autobase.wal_g
       when: wal_g_install | default(false) | bool
@@ -312,20 +318,12 @@
 
     - role: vitabaks.autobase.cron
 
-    - role: vitabaks.autobase.tls_certificate
-      tasks_from: copy
-      when: tls_cert_generate | default(true) | bool
-
     - role: vitabaks.autobase.pgbouncer
       when: pgbouncer_install | default(false) | bool
 
     - role: vitabaks.autobase.pgpass
 
     - role: vitabaks.autobase.patroni
-
-    - role: vitabaks.autobase.pgbackrest
-      tasks_from: stanza_create
-      when: pgbackrest_install | default(false) | bool
 
     - role: vitabaks.autobase.vip_manager
       when: not with_haproxy_load_balancing | default(false) | bool and
@@ -347,16 +345,21 @@
     - role: vitabaks.autobase.postgresql_extensions
       when: inventory_hostname == groups['master'][0]
 
-    - role: vitabaks.autobase.pgbouncer
-      tasks_from: config
-      when: pgbouncer_install | default(false) | bool
-
     - role: vitabaks.autobase.netdata
 
-    # finish (info)
-    - role: vitabaks.autobase.deploy_finish
-
   tasks:
+    - name: Create pgbackrest stanza
+      ansible.builtin.include_role:
+        name: vitabaks.autobase.pgbackrest
+        tasks_from: stanza_create
+      when: pgbackrest_install | default(false) | bool
+
+    - name: Install and configure pgbouncer
+      ansible.builtin.include_role:
+        name: vitabaks.autobase.pgbouncer
+        tasks_from: config
+      when: pgbouncer_install | default(true) | bool
+
     # (optional) Command or script to be executed after the Postgres cluster deployment.
     - block:
         - name: Print post-deploy command
@@ -415,3 +418,8 @@
       run_once: true # noqa run-once
       when: post_deploy_command | default('') | length > 0
       tags: post_deploy, post_deploy_command
+
+    # finish (info)
+    - name: Cluster deployment completed
+      ansible.builtin.include_role:
+        name: vitabaks.autobase.deploy_finish
