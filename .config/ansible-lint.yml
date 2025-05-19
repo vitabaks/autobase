@@ -22,5 +22,4 @@ skip_list:
   - galaxy[no-changelog]
 
 exclude_paths:
-  - ../.venv
-  - ../.github
+  - automation/molecule/
