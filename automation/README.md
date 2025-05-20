@@ -1,29 +1,22 @@
-# Autobase: Automation
+# Autobase Automation: Ansible Collection
 
-**Autobase for PostgreSQL®** automates the deployment and management of highly available PostgreSQL clusters in production environments.
-It’s designed for dedicated physical servers, virtual machines, and both on-premises and cloud-based infrastructures.
+**Autobase for PostgreSQL®** automates the deployment and management of highly available PostgreSQL clusters in production environments. This solution is tailored for use on dedicated physical servers, virtual machines, and within both on-premises and cloud-based infrastructures.
 
 For a detailed overview of the cluster components, see the [Architecture](https://autobase.tech/docs/overview/architecture) page.
 
 ## Getting Started
-0. [Install Ansible](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html) on one control node (which could easily be a laptop)
-
-```sh
-sudo apt update && sudo apt install -y python3-pip sshpass git
-pip3 install ansible
-```
 
 1. Install the Autobase Collection
 
 Install directly from Ansible Galaxy:
 
-```
+```sh
 ansible-galaxy collection install vitabaks.autobase
 ```
 
 Or include it in your requirements.yml:
 
-```yml
+```yaml
 collections:
   - name: vitabaks.autobase
     version: 2.2.0
@@ -31,22 +24,20 @@ collections:
 
 2. Prepare your inventory
 
-See the example [inventory](https://github.com/vitabaks/autobase/blob/master/automation/inventory.example) file.
-Specify internal IP addresses and connection details such as `ansible_user`, `ansible_ssh_pass`, or `ansible_ssh_private_key_file`.
+See the example [inventory](https://github.com/vitabaks/autobase/blob/master/automation/inventory.example) file. Specify internal IP addresses and connection details such as `ansible_user`, `ansible_ssh_pass`, or `ansible_ssh_private_key_file`.
 
 3. Define variables
 
-See the default collection [variables](https://github.com/vitabaks/autobase/blob/master/automation/roles/common/defaults/main.yml).\
-You can override any of them in your inventory, group_vars, or another method that suits your setup.
+Review default [variables](https://github.com/vitabaks/autobase/blob/master/automation/roles/common/defaults/main.yml). Override them in your inventory, group_vars, or other appropriate locations.
 
-4. Include the Autobase playbook in your project
+4. Use Autobase playbook
 
 ```yaml
 - name: Run Autobase deployment
   ansible.builtin.include_playbook: vitabaks.autobase.deploy_pgcluster
 ```
 
-Start with the `deploy_pgcluster` playbook, and switch to `config_pgcluster` afterwards for reconfiguration.
+Note: Start with `deploy_pgcluster`, and use `config_pgcluster` later for reconfiguration.
 
 ### How to start from scratch
 
@@ -54,12 +45,36 @@ If you need to start from the very beginning, you can use the `remove_cluster` p
 
 Available variables:
 - `remove_postgres`: stop the PostgreSQL service and remove data
-- `emove_etcd`: stop the ETCD service and remove data
+- `remove_etcd`: stop the ETCD service and remove data
 - `remove_consul`: stop the Consul service and remove data
 
 ⚠️ Caution: Only use this in non-production or when you’re absolutely sure.
 
-## Support
+## Internal Structure: Roles and Playbooks
 
-We provide expert guidance and commercial support — so you can focus on building your project with confidence.\
-Choose a support plan that fits your needs: https://autobase.tech/docs/support
+Autobase adheres to a modular design separating atomic logic (roles) and orchestration logic (playbooks):
+
+- **Roles** under `roles/` are designed to perform focused, reusable tasks (e.g., configuring Patroni, setting up firewall rules, installing extensions).  
+  Most roles are not intended to be used standalone, but instead serve as building blocks.
+- **Playbooks** under `playbooks/` implement orchestration logic — combining roles into coherent workflows such as deploying a cluster, upgrading PostgreSQL, or performing cleanup.  
+  These playbooks represent full automation scenarios and manage host group coordination, conditions, and lifecycle sequencing.
+
+### List of Playbooks
+
+###### 🚀 Deployment
+- `deploy_pgcluster` – Deploy a new highly available PostgreSQL cluster. This playbook also includes:
+  - `etcd_cluster` – Provision and configure a new etcd cluster as the DCS (used if dcs_type: etcd).
+  - `consul_cluster` – Provision and configure a new Consul cluster as the DCS (used if dcs_type: consul).
+  - `balancers` – Deploy HAProxy for routing client traffic (used if with_haproxy_load_balancing: true).
+
+###### 🛠️ Maintenance
+- `config_pgcluster` – Reconfigure PostgreSQL cluster settings (users, databases, extensions, etc.) after the initial deployment.
+- `update_pgcluster` – Perform rolling updates of PostgreSQL or system packages with minimal downtime.
+- `pg_upgrade` – Perform a major version in-place upgrade of PostgreSQL with minimal downtime.
+
+###### ⬆️ Scaling
+- `add_pgnode` – Add a new PostgreSQL replica node to an existing cluster.
+- `add_balancer` – Add a new HAProxy load balancer node to the cluster (used if with_haproxy_load_balancing: true).
+
+###### 🧹 Removal
+- `remove_cluster` – Remove the PostgreSQL cluster and optionally its DCS (etcd or Consul), including all data from the server.
