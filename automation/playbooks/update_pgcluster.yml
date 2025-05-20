@@ -89,7 +89,7 @@
       ansible.builtin.include_role:
         name: vitabaks.autobase.update
         tasks_from: postgres
-      when: target | default('postgres') == 'postgres' or target | default('postgres')  == 'system'
+      when: target | default('postgres') == 'postgres' or target | default('postgres') == 'system'
 
     - name: Update Patroni
       ansible.builtin.include_role:
@@ -143,7 +143,7 @@
       ansible.builtin.include_role:
         name: vitabaks.autobase.update
         tasks_from: postgres
-      when: target | default('postgres') == 'postgres' or target | default('postgres')  == 'system'
+      when: target | default('postgres') == 'postgres' or target | default('postgres') == 'system'
 
     - name: Update Patroni
       ansible.builtin.include_role:
