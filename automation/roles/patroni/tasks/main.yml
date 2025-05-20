@@ -652,7 +652,7 @@
       ansible.builtin.systemd:
         name: patroni
         state: stopped
-      when: inventory_hostname in groups['replica']
+      when: "'replica' in groups and groups['replica'] | length > 0 and inventory_hostname in groups['replica']"
 
     - name: Stop patroni service on the Master server (if running)
       ansible.builtin.systemd:
@@ -709,7 +709,9 @@
           async: "{{ cluster_restore_timeout | default(86400) }}" # timeout 24 hours
           poll: 0
           register: pgbackrest_restore_replica
-          when: inventory_hostname in groups['replica'] and 'pgbackrest' in patroni_create_replica_methods
+          when:
+            - "'replica' in groups and groups['replica'] | length > 0 and inventory_hostname in groups['replica']"
+            - "'pgbackrest' in patroni_create_replica_methods"
 
         - name: Waiting for restore from backup
           ansible.builtin.async_status:
@@ -745,7 +747,9 @@
           async: "{{ pg_ctl_timeout | default(3600) }}" # run the command asynchronously
           poll: 0
           register: pg_ctl_start_result
-          when: inventory_hostname == groups['master'][0] or (inventory_hostname in groups['replica'] and 'pgbackrest' in patroni_create_replica_methods)
+          when: inventory_hostname == groups['master'][0] or
+            ('replica' in groups and groups['replica'] | length > 0 and inventory_hostname in groups['replica']
+            and 'pgbackrest' in patroni_create_replica_methods)
 
         - name: Wait for the PostgreSQL start command to complete
           ansible.builtin.async_status:
@@ -754,7 +758,9 @@
           until: pg_ctl_start_job_result.finished
           retries: "{{ (pg_ctl_timeout | default(3600) | int) // 10 }}"
           delay: 10
-          when: inventory_hostname == groups['master'][0] or (inventory_hostname in groups['replica'] and 'pgbackrest' in patroni_create_replica_methods)
+          when: inventory_hostname == groups['master'][0] or
+            ('replica' in groups and groups['replica'] | length > 0 and inventory_hostname in groups['replica']
+            and 'pgbackrest' in patroni_create_replica_methods)
 
         - name: Wait for PostgreSQL recovery to complete (WAL apply)
           ansible.builtin.command: >-
@@ -934,7 +940,7 @@
         mode: "0640"
       register: generate_pg_hba
       when: inventory_hostname == groups['master'][0] or
-        ((inventory_hostname in groups['replica'] and postgresql_conf_dir != postgresql_data_dir)
+        (('replica' in groups and groups['replica'] | length > 0 and inventory_hostname in groups['replica'] and postgresql_conf_dir != postgresql_data_dir)
         or postgresql_exists | default(false) | bool)
 
     - name: Prepare PostgreSQL | reload for apply the pg_hba.conf
@@ -1067,7 +1073,7 @@
       environment:
         no_proxy: "{{ inventory_hostname }}"
       when: not ansible_check_mode
-  when: inventory_hostname in groups['replica']
+  when: "'replica' in groups and groups['replica'] | length > 0 and inventory_hostname in groups['replica']"
   tags: patroni, patroni_start_replica, point_in_time_recovery
 
 # create symlink pg_xlog/pg_wal to custom WAL dir

@@ -14,8 +14,10 @@
     - name: "[Pre-Check] Check if there is a node with new_node set to true"
       ansible.builtin.set_fact:
         new_nodes: "{{ new_nodes | default([]) + [item] }}"
-      when: hostvars[item]['new_node'] | default(false) | bool
-      loop: "{{ groups['replica'] }}"
+      loop: "{{ groups['replica'] | default([]) }}"
+      when:
+        - "'replica' in groups and groups['replica'] | length > 0"
+        - hostvars[item]['new_node'] | default(false) | bool
       tags: always
 
     # Stop, if no nodes found with new_node variable
@@ -24,6 +26,7 @@
       ansible.builtin.fail:
         msg: "Please specify the new_node=true variable for the new server to add it to the existing cluster."
       when: new_nodes | default([]) | length < 1
+      tags: always
 
     - name: Print a list of new nodes
       run_once: true # noqa run-once
