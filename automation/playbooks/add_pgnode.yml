@@ -161,7 +161,7 @@
       when: pgbackrest_install|bool
 
 - name: vitabaks.autobase.add_pgnode | Import Consul playbook
-  ansible.builtin.import_playbook: consul.yml
+  ansible.builtin.import_playbook: consul_cluster.yml
   when: dcs_type | default('etcd') == "consul"
   tags: consul
 

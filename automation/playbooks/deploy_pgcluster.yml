@@ -199,7 +199,7 @@
   tags: etcd
 
 - name: vitabaks.autobase.deploy_pgcluster | Deploy Consul
-  ansible.builtin.import_playbook: consul.yml
+  ansible.builtin.import_playbook: consul_cluster.yml
   when: dcs_type | default('etcd') == "consul"
   tags: consul
 
