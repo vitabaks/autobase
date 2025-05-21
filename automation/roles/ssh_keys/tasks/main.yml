@@ -18,7 +18,7 @@
     - name: Fetch key files from remote servers to ansible server
       ansible.builtin.fetch:
         src: "~{{ ssh_key_user }}/.ssh/id_rsa.pub"
-        dest: "files/{{ ansible_hostname }}-id_rsa.pub"
+        dest: "{{ files_dir | default(playbook_dir ~ '/files') }}/{{ ansible_hostname }}-id_rsa.pub"
         flat: true
       changed_when: false
 
@@ -26,8 +26,10 @@
       ansible.posix.authorized_key:
         user: "{{ ssh_key_user }}"
         state: "{{ ssh_key_state }}"
-        key: "{{ lookup('pipe', 'cat files/*id_rsa.pub') }}"
+        key: "{{ lookup('pipe', 'cat ' ~ public_keys_file_path) }}"
         exclusive: false
+      vars:
+        public_keys_file_path: "{{ files_dir | default(playbook_dir ~ '/files') }}/*id_rsa.pub"
 
     # known_hosts
     - name: known_hosts | for each host, scan for its ssh public key

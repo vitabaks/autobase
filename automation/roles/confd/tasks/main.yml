@@ -76,7 +76,7 @@
       run_once: true
       ansible.builtin.fetch:
         src: "{{ item }}"
-        dest: files/
+        dest: "{{ files_dir | default(playbook_dir ~ '/files') }}/"
         validate_checksum: true
         flat: true
       loop:
@@ -87,7 +87,7 @@
 
     - name: Copy confd.toml, haproxy.toml, haproxy.tmpl conf files to replica
       ansible.builtin.copy:
-        src: "files/{{ item.conf }}"
+        src: "{{ files_dir | default(playbook_dir ~ '/files') }}/{{ item.conf }}"
         dest: "{{ item.dest }}"
       loop:
         - { conf: "confd.toml", dest: "/etc/confd/confd.toml" }
@@ -101,7 +101,7 @@
       become: false
       run_once: true
       ansible.builtin.file:
-        path: "files/{{ item }}"
+        path: "{{ files_dir | default(playbook_dir ~ '/files') }}/{{ item }}"
         state: absent
       loop:
         - confd.toml
