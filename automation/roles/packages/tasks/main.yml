@@ -3,7 +3,7 @@
 - block:
     - name: Copy packages into /tmp
       ansible.builtin.copy:
-        src: "{{ item }}"
+        src: "{{ files_dir | default(playbook_dir ~ '/files') }}/{{ item }}"
         dest: /tmp/
       loop: "{{ packages_from_file }}"
       register: copy_packages_result

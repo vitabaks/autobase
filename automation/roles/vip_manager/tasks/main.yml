@@ -41,7 +41,7 @@
 - block: # install vip-manager package from file
     - name: Copy vip-manager package into /tmp
       ansible.builtin.copy:
-        src: "{{ vip_manager_package_file }}"
+        src: "{{ files_dir | default(playbook_dir ~ '/files') }}/{{ vip_manager_package_file }}"
         dest: /tmp/
 
     - name: Install vip-manager
