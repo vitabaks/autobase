@@ -1,20 +1,26 @@
 # Autobase Automation: Ansible Collection
 
+This repository contains the `vitabaks.autobase` Ansible Collection — part of the Autobase project for automating the PostgreSQL cluster lifecycle.
+
 **Autobase for PostgreSQL®** automates the deployment and management of highly available PostgreSQL clusters in production environments. This solution is tailored for use on dedicated physical servers, virtual machines, and within both on-premises and cloud-based infrastructures.
 
-For a detailed overview of the cluster components, see the [Architecture](https://autobase.tech/docs/overview/architecture) page.
+For a detailed overview of cluster components, see the [Architecture](https://autobase.tech/docs/overview/architecture) page.
 
-## Getting Started
+## Using this collection
 
-1. Install the Autobase Collection
+To install the latest version of the collection from [Ansible Galaxy](https://galaxy.ansible.com/vitabaks/autobase), use the following:
 
-Install directly from Ansible Galaxy:
-
-```sh
+```bash
 ansible-galaxy collection install vitabaks.autobase
 ```
 
-Or include it in your requirements.yml:
+You can also install a specific version of the collection, for example, if you need to downgrade when something is broken in the latest version (please report an issue in this repository). Use the following syntax where `X.Y.Z` can be any [available version](https://galaxy.ansible.com/ui/repo/published/vitabaks/autobase/):
+
+```bash
+ansible-galaxy collection install vitabaks.autobase:X.Y.Z
+```
+
+You can also include it in a `requirements.yml` file and install it via `ansible-galaxy collection install -r requirements.yml` using the format:
 
 ```yaml
 collections:
@@ -22,24 +28,24 @@ collections:
     version: 2.2.0
 ```
 
-2. Prepare your inventory
+#### Use Autobase playbook in your project
 
-See the example [inventory](https://github.com/vitabaks/autobase/blob/master/automation/inventory.example) file. Specify internal IP addresses and connection details such as `ansible_user`, `ansible_ssh_pass`, or `ansible_ssh_private_key_file`.
+Prepare your inventory. See the example [inventory](https://github.com/vitabaks/autobase/blob/master/automation/inventory.example) file.
 
-3. Define variables
+- Note: The inventory must use private IP addresses (not hostnames) to prevent cluster components from listening on public interfaces. It should follow the [example structure](https://github.com/vitabaks/autobase/blob/master/automation/inventory.example) and include required groups such as `master`, `replica` (as part of the `postgres_cluster` group), `etcd_cluster`, and etc.
 
 Review default [variables](https://github.com/vitabaks/autobase/blob/master/automation/roles/common/defaults/main.yml). Override them in your inventory, group_vars, or other appropriate locations.
 
-4. Use Autobase playbook
+Include the playbook from the collection:
 
 ```yaml
 - name: Run Autobase deployment
   ansible.builtin.include_playbook: vitabaks.autobase.deploy_pgcluster
 ```
 
-Note: Start with `deploy_pgcluster`, and use `config_pgcluster` later for reconfiguration.
+- Note: Start with `deploy_pgcluster`, and use `config_pgcluster` later for reconfiguration.
 
-### How to start from scratch
+#### How to start from scratch
 
 If you need to start from the very beginning, you can use the `remove_cluster` playbook.
 
