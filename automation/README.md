@@ -28,22 +28,32 @@ collections:
     version: 2.2.0
 ```
 
-#### Use Autobase playbook in your project
+#### Use Autobase playbook
 
-Prepare your inventory. See the example [inventory](https://github.com/vitabaks/autobase/blob/master/automation/inventory.example) file.
+1. Prepare your [inventory](https://github.com/vitabaks/autobase/blob/master/automation/inventory.example)
 
-- Note: The inventory must use private IP addresses (not hostnames) to prevent cluster components from listening on public interfaces. It should follow the [example structure](https://github.com/vitabaks/autobase/blob/master/automation/inventory.example) and include required groups such as `master`, `replica` (as part of the `postgres_cluster` group), `etcd_cluster`, and etc.
+- Note: The inventory must use private IP addresses (not hostnames) to prevent cluster components from listening on public interfaces. It should follow the [example structure](https://github.com/vitabaks/autobase/blob/master/automation/inventory.example) and include required groups such as `master`, `replica` (as part of the `postgres_cluster` group), `etcd_cluster`, and others.
 
-Review default [variables](https://github.com/vitabaks/autobase/blob/master/automation/roles/common/defaults/main.yml). Override them in your inventory, group_vars, or other appropriate locations.
+2. Review and override default [variables](https://github.com/vitabaks/autobase/blob/master/automation/roles/common/defaults/main.yml)
 
-Include the playbook from the collection:
+- See [roles/common/defaults/main.yml](https://github.com/vitabaks/autobase/blob/master/automation/roles/common/defaults/main.yml) for all configurable options. You can override them via group_vars, host_vars, or directly in your inventory.
+
+3. Run the Autobase playbook
+
+Include the playbook in your project:
 
 ```yaml
 - name: Run Autobase deployment
-  ansible.builtin.include_playbook: vitabaks.autobase.deploy_pgcluster
+  ansible.builtin.import_playbook: vitabaks.autobase.deploy_pgcluster
 ```
 
-- Note: Start with `deploy_pgcluster`, and use `config_pgcluster` later for reconfiguration.
+Or execute it directly:
+
+```bash
+ansible-playbook -i inventory vitabaks.autobase.deploy_pgcluster
+```
+
+- Tip: Start with `deploy_pgcluster` for initial provisioning, then use `config_pgcluster` for further configuration changes.
 
 #### How to start from scratch
 
