@@ -32,11 +32,11 @@ collections:
 
 1. Prepare your [inventory](https://github.com/vitabaks/autobase/blob/master/automation/inventory.example)
 
-- Note: The inventory must use private IP addresses (not hostnames) to prevent cluster components from listening on public interfaces. It should follow the [example structure](https://github.com/vitabaks/autobase/blob/master/automation/inventory.example) and include required groups such as `master`, `replica` (as part of the `postgres_cluster` group), `etcd_cluster`, and others.
+Note: The inventory must use private IP addresses (not hostnames) to prevent cluster components from listening on public interfaces. It should follow the [example structure](https://github.com/vitabaks/autobase/blob/master/automation/inventory.example) and include required groups such as `master`, `replica` (as part of the `postgres_cluster` group), `etcd_cluster`, and others.
 
 2. Review and override default [variables](https://github.com/vitabaks/autobase/blob/master/automation/roles/common/defaults/main.yml)
 
-- See [roles/common/defaults/main.yml](https://github.com/vitabaks/autobase/blob/master/automation/roles/common/defaults/main.yml) for all configurable options. You can override them via group_vars, host_vars, or directly in your inventory.
+See [roles/common/defaults/main.yml](https://github.com/vitabaks/autobase/blob/master/automation/roles/common/defaults/main.yml) for all configurable options. You can override them via group_vars, host_vars, or directly in your inventory.
 
 3. Run the Autobase playbook
 
@@ -53,7 +53,7 @@ Or execute it directly:
 ansible-playbook -i inventory vitabaks.autobase.deploy_pgcluster
 ```
 
-- Tip: Start with `deploy_pgcluster` for initial provisioning, then use `config_pgcluster` for further configuration changes.
+Tip: Start with `deploy_pgcluster` for initial provisioning, then use `config_pgcluster` for further configuration changes.
 
 #### How to start from scratch
 
