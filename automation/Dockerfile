@@ -30,10 +30,15 @@ RUN apt-get clean && rm -rf /var/lib/apt/lists/partial \
   && rm -rf /var/lib/apt/lists/* /tmp/* \
   && chmod +x /autobase/automation/entrypoint.sh
 
-# Set environment variable for Ansible collections paths
+# Link collection source for Ansible runtime
+RUN mkdir -p /root/.ansible/collections/ansible_collections/vitabaks && \
+  ln -sfn /autobase/automation /root/.ansible/collections/ansible_collections/vitabaks/autobase
+
+# Set environment variables
 ENV ANSIBLE_COLLECTIONS_PATH=/root/.ansible/collections/ansible_collections:/usr/local/lib/python3.11/dist-packages/ansible_collections
+ENV ANSIBLE_CONFIG=/autobase/automation/ansible.cfg
 ENV USER=root
 
-WORKDIR /autobase/automation
+WORKDIR /autobase/automation/playbooks
 
-ENTRYPOINT ["./entrypoint.sh"]
+ENTRYPOINT ["/autobase/automation/entrypoint.sh"]

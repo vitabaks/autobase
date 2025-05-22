@@ -41,7 +41,7 @@
 - block: # install vip-manager package from file
     - name: Copy vip-manager package into /tmp
       ansible.builtin.copy:
-        src: "{{ vip_manager_package_file }}"
+        src: "{{ files_dir | default(playbook_dir ~ '/files') }}/{{ vip_manager_package_file }}"
         dest: /tmp/
 
     - name: Install vip-manager
@@ -96,14 +96,14 @@
       run_once: true
       ansible.builtin.fetch:
         src: "{{ vip_manager_conf }}"
-        dest: "files/{{ vip_manager_conf | basename }}"
+        dest: "{{ files_dir | default(playbook_dir ~ '/files') }}/{{ vip_manager_conf | basename }}"
         validate_checksum: true
         flat: true
       delegate_to: "{{ groups.master[0] }}"
 
     - name: Copy "{{ vip_manager_conf | basename }}" conf file to replica
       ansible.builtin.copy:
-        src: "files/{{ vip_manager_conf | basename }}"
+        src: "{{ files_dir | default(playbook_dir ~ '/files') }}/{{ vip_manager_conf | basename }}"
         dest: "{{ vip_manager_conf | dirname }}"
       notify: "restart vip-manager"
 

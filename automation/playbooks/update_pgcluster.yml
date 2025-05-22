@@ -1,5 +1,5 @@
 ---
-- name: update_pgcluster.yml | Update PostgreSQL HA Cluster (based on "Patroni")
+- name: vitabaks.autobase.update_pgcluster | Update PostgreSQL HA Cluster (based on "Patroni")
   hosts: postgres_cluster
   gather_facts: true
   become: true
@@ -52,14 +52,14 @@
   tasks:
     - name: Running Pre-Checks
       ansible.builtin.include_role:
-        name: update
+        name: vitabaks.autobase.update
         tasks_from: pre_checks
 
     # This task updates the pgBackRest package on the backup server (Dedicated Repository Host).
     # It runs only if the 'pgbackrest' group is defined in the inventory and the update target is set to 'system'.
     - name: Update pgBackRest package (Dedicated Repository Host)
       ansible.builtin.include_role:
-        name: update
+        name: vitabaks.autobase.update
         tasks_from: pgbackrest_host
       when: groups['pgbackrest'] | default([]) | length > 0 and target | default('postgres') == 'system'
   tags:
@@ -77,40 +77,40 @@
   tasks:
     - name: Stop read-only traffic
       ansible.builtin.include_role:
-        name: update
+        name: vitabaks.autobase.update
         tasks_from: stop_traffic
 
     - name: Stop Services
       ansible.builtin.include_role:
-        name: update
+        name: vitabaks.autobase.update
         tasks_from: stop_services
 
     - name: Update PostgreSQL
       ansible.builtin.include_role:
-        name: update
+        name: vitabaks.autobase.update
         tasks_from: postgres
-      when: target | default('postgres') == 'postgres' or target | default('postgres')  == 'system'
+      when: target | default('postgres') == 'postgres' or target | default('postgres') == 'system'
 
     - name: Update Patroni
       ansible.builtin.include_role:
-        name: update
+        name: vitabaks.autobase.update
         tasks_from: patroni
       when: target | default('postgres') == 'patroni' or target | default('postgres') == 'system'
 
     - name: Update all system packages
       ansible.builtin.include_role:
-        name: update
+        name: vitabaks.autobase.update
         tasks_from: system
       when: target | default('postgres') == 'system'
 
     - name: Start Services
       ansible.builtin.include_role:
-        name: update
+        name: vitabaks.autobase.update
         tasks_from: start_services
 
     - name: Start read-only traffic
       ansible.builtin.include_role:
-        name: update
+        name: vitabaks.autobase.update
         tasks_from: start_traffic
   tags:
     - update
@@ -126,45 +126,45 @@
   tasks:
     - name: "Switchover Patroni leader role"
       ansible.builtin.include_role:
-        name: update
+        name: vitabaks.autobase.update
         tasks_from: switchover
 
     - name: Stop read-only traffic
       ansible.builtin.include_role:
-        name: update
+        name: vitabaks.autobase.update
         tasks_from: stop_traffic
 
     - name: Stop Services
       ansible.builtin.include_role:
-        name: update
+        name: vitabaks.autobase.update
         tasks_from: stop_services
 
     - name: Update PostgreSQL
       ansible.builtin.include_role:
-        name: update
+        name: vitabaks.autobase.update
         tasks_from: postgres
-      when: target | default('postgres') == 'postgres' or target | default('postgres')  == 'system'
+      when: target | default('postgres') == 'postgres' or target | default('postgres') == 'system'
 
     - name: Update Patroni
       ansible.builtin.include_role:
-        name: update
+        name: vitabaks.autobase.update
         tasks_from: patroni
       when: target | default('postgres') == 'patroni' or target | default('postgres') == 'system'
 
     - name: Update all system packages
       ansible.builtin.include_role:
-        name: update
+        name: vitabaks.autobase.update
         tasks_from: system
       when: target | default('postgres') == 'system'
 
     - name: Start Services
       ansible.builtin.include_role:
-        name: update
+        name: vitabaks.autobase.update
         tasks_from: start_services
 
     - name: Start read-only traffic
       ansible.builtin.include_role:
-        name: update
+        name: vitabaks.autobase.update
         tasks_from: start_traffic
   tags:
     - update
@@ -179,7 +179,7 @@
   tasks:
     - name: Update extensions
       ansible.builtin.include_role:
-        name: update
+        name: vitabaks.autobase.update
         tasks_from: extensions
       when: update_extensions | default(true) | bool
 

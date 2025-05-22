@@ -1,5 +1,5 @@
 ---
-- name: Deploy PostgreSQL HA Cluster (based on "Patroni")
+- name: vitabaks.autobase.deploy_pgcluster | Deploy PostgreSQL HA Cluster (based on "Patroni")
   hosts: localhost
   gather_facts: true
   any_errors_fatal: true
@@ -17,11 +17,11 @@
         - pgbackrest_auto_conf | default(true) | bool # to be able to disable auto backup settings
       tags: always
   roles:
-    - role: cloud_resources
+    - role: vitabaks.autobase.cloud_resources
       when: cloud_provider | default('') | length > 0
       tags: always
 
-- name: deploy_pgcluster.yml | Perform pre-checks
+- name: vitabaks.autobase.deploy_pgcluster | Perform pre-checks
   hosts: all
   become: true
   become_method: sudo
@@ -176,34 +176,34 @@
 
   roles:
     # (optional) if 'ssh_public_keys' is defined
-    - role: authorized_keys
+    - role: vitabaks.autobase.authorized_keys
       tags: ssh_public_keys
 
-    - role: pre_checks
+    - role: vitabaks.autobase.pre_checks
       vars:
         minimal_ansible_version: 2.16.0
         timescale_minimal_pg_version: 12 # if enable_timescale is defined
       tags: always
 
-    - role: hostname
+    - role: vitabaks.autobase.hostname
 
-    - role: tls_certificate/generate
+    - role: vitabaks.autobase.tls_certificate
       vars:
         tls_group_name: "postgres_cluster"
         tls_cert_regenerate: "{{ patroni_tls_cert_regenerate | default(false) }}" # Do not generate new certificates if they already exist.
       when: tls_cert_generate | default(true) | bool
 
-- name: deploy_pgcluster.yml | Deploy etcd cluster
+- name: vitabaks.autobase.deploy_pgcluster | Deploy etcd cluster
   ansible.builtin.import_playbook: etcd_cluster.yml
   when: not dcs_exists | default(false) | bool and dcs_type | default('etcd') == "etcd"
   tags: etcd
 
-- name: deploy_pgcluster.yml | Deploy Consul
-  ansible.builtin.import_playbook: consul.yml
+- name: vitabaks.autobase.deploy_pgcluster | Deploy Consul
+  ansible.builtin.import_playbook: consul_cluster.yml
   when: dcs_type | default('etcd') == "consul"
   tags: consul
 
-- name: deploy_pgcluster.yml | Postgres Cluster Configuration
+- name: vitabaks.autobase.deploy_pgcluster | Postgres Cluster Configuration
   hosts: postgres_cluster
   become: true
   become_method: sudo
@@ -233,36 +233,36 @@
       when: dcs_type | default('etcd') == "consul" and consul_dnsmasq_enable | default(true) | bool and ('127.0.0.1' not in (nameservers | default([])))
 
   roles:
-    - role: firewall
+    - role: vitabaks.autobase.firewall
       vars:
         firewall_allowed_tcp_ports: "{{ firewall_ports_dynamic_var | default([]) | unique }}"
         firewall_additional_rules: "{{ firewall_rules_dynamic_var | default([]) | unique }}"
       when: firewall_enabled_at_boot | default(false) | bool
       tags: firewall
 
-    - role: resolv_conf
-    - role: etc_hosts
-    - role: add_repository
-    - role: packages
-    - role: sudo
-    - role: mount
-    - role: swap
-    - role: sysctl
-    - role: transparent_huge_pages
-    - role: pam_limits
-    - role: io_scheduler
-    - role: locales
-    - role: timezone
-    - role: ntp
-    - role: ssh_keys
-    - role: copy
+    - role: vitabaks.autobase.resolv_conf
+    - role: vitabaks.autobase.etc_hosts
+    - role: vitabaks.autobase.add_repository
+    - role: vitabaks.autobase.packages
+    - role: vitabaks.autobase.sudo
+    - role: vitabaks.autobase.mount
+    - role: vitabaks.autobase.swap
+    - role: vitabaks.autobase.sysctl
+    - role: vitabaks.autobase.transparent_huge_pages
+    - role: vitabaks.autobase.pam_limits
+    - role: vitabaks.autobase.io_scheduler
+    - role: vitabaks.autobase.locales
+    - role: vitabaks.autobase.timezone
+    - role: vitabaks.autobase.ntp
+    - role: vitabaks.autobase.ssh_keys
+    - role: vitabaks.autobase.copy
 
-- name: deploy_pgcluster.yml | Deploy balancers
+- name: vitabaks.autobase.deploy_pgcluster | Deploy balancers
   ansible.builtin.import_playbook: balancers.yml
   when: with_haproxy_load_balancing | default(false) | bool
   tags: load_balancing, haproxy
 
-- name: deploy_pgcluster.yml | Install and configure pgBackRest
+- name: vitabaks.autobase.deploy_pgcluster | Install and configure pgBackRest
   hosts: pgbackrest:postgres_cluster
   become: true
   become_method: sudo
@@ -281,17 +281,15 @@
         - pgbackrest_auto_conf | default(true) | bool # to be able to disable auto backup settings
       tags: always
   roles:
-    - role: pgbackrest
+    - role: vitabaks.autobase.pgbackrest
       when: pgbackrest_install | default(false) | bool
 
-- name: deploy_pgcluster.yml | PostgreSQL Cluster Deployment
+- name: vitabaks.autobase.deploy_pgcluster | PostgreSQL Cluster Deployment
   hosts: postgres_cluster
   become: true
   become_method: sudo
   gather_facts: true
   any_errors_fatal: true
-  handlers:
-    - ansible.builtin.import_tasks: roles/pgbouncer/handlers/main.yml
 
   pre_tasks:
     # if 'cloud_provider' is 'aws', 'gcp', or 'azure'
@@ -305,57 +303,63 @@
         - pgbackrest_auto_conf | default(true) | bool # to be able to disable auto backup settings
       tags: always
 
-  roles:
-    - role: wal_g
-      when: wal_g_install | default(false) | bool
-
-    - role: pg_probackup
-      when: pg_probackup_install | default(false) | bool
-
-    - role: cron
-
-    - role: tls_certificate/copy
+    - name: Copy certificates
+      ansible.builtin.include_role:
+        name: vitabaks.autobase.tls_certificate
+        tasks_from: copy
       when: tls_cert_generate | default(true) | bool
 
-    - role: pgbouncer
+  roles:
+    - role: vitabaks.autobase.wal_g
+      when: wal_g_install | default(false) | bool
+
+    - role: vitabaks.autobase.pg_probackup
+      when: pg_probackup_install | default(false) | bool
+
+    - role: vitabaks.autobase.cron
+
+    - role: vitabaks.autobase.pgbouncer
       when: pgbouncer_install | default(false) | bool
 
-    - role: pgpass
+    - role: vitabaks.autobase.pgpass
 
-    - role: patroni
+    - role: vitabaks.autobase.patroni
 
-    - role: pgbackrest/stanza-create
-      when: pgbackrest_install | default(false) | bool
-
-    - role: vip_manager
+    - role: vitabaks.autobase.vip_manager
       when: not with_haproxy_load_balancing | default(false) | bool and
         (cluster_vip is defined and cluster_vip | length > 0)
 
     # optional
-    - role: postgresql_users
+    - role: vitabaks.autobase.postgresql_users
       when: inventory_hostname == groups['master'][0]
 
-    - role: postgresql_databases
+    - role: vitabaks.autobase.postgresql_databases
       when: inventory_hostname == groups['master'][0]
 
-    - role: postgresql_schemas
+    - role: vitabaks.autobase.postgresql_schemas
       when: inventory_hostname == groups['master'][0]
 
-    - role: postgresql_privs
+    - role: vitabaks.autobase.postgresql_privs
       when: inventory_hostname == groups['master'][0]
 
-    - role: postgresql_extensions
+    - role: vitabaks.autobase.postgresql_extensions
       when: inventory_hostname == groups['master'][0]
 
-    - role: pgbouncer/config
-      when: pgbouncer_install | default(false) | bool
-
-    - role: netdata
-
-    # finish (info)
-    - role: deploy_finish
+    - role: vitabaks.autobase.netdata
 
   tasks:
+    - name: Create pgbackrest stanza
+      ansible.builtin.include_role:
+        name: vitabaks.autobase.pgbackrest
+        tasks_from: stanza_create
+      when: pgbackrest_install | default(false) | bool
+
+    - name: Install and configure pgbouncer
+      ansible.builtin.include_role:
+        name: vitabaks.autobase.pgbouncer
+        tasks_from: config
+      when: pgbouncer_install | default(true) | bool
+
     # (optional) Command or script to be executed after the Postgres cluster deployment.
     - block:
         - name: Print post-deploy command
@@ -414,3 +418,8 @@
       run_once: true # noqa run-once
       when: post_deploy_command | default('') | length > 0
       tags: post_deploy, post_deploy_command
+
+    # finish (info)
+    - name: Cluster deployment completed
+      ansible.builtin.include_role:
+        name: vitabaks.autobase.deploy_finish

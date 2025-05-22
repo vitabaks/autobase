@@ -1,5 +1,5 @@
 ---
-- name: add_balancer.yml | Add HAProxy balancer node
+- name: vitabaks.autobase.add_balancer | Add HAProxy balancer node
   hosts: balancers
   become: true
   become_method: sudo
@@ -75,7 +75,7 @@
       tags: firewall
 
   roles:
-    - role: firewall
+    - role: vitabaks.autobase.firewall
       environment: "{{ proxy_env | default({}) }}"
       vars:
         firewall_allowed_tcp_ports: "{{ firewall_ports_dynamic_var | default([]) | unique }}"
@@ -85,7 +85,7 @@
         - firewall_enabled_at_boot | default(false)| bool
       tags: firewall
 
-    - role: sysctl
+    - role: vitabaks.autobase.sysctl
       when:
         - new_node | default(false) | bool
 
@@ -98,7 +98,7 @@
       changed_when: false
       tags: always
 
-- name: add_balancer.yml | Add load balancer
+- name: vitabaks.autobase.add_balancer | Add load balancer
   hosts: new_balancer
   become: true
   become_method: sudo
@@ -108,16 +108,16 @@
     add_balancer: true
 
   roles:
-    - role: hostname
-    - role: resolv_conf
+    - role: vitabaks.autobase.hostname
+    - role: vitabaks.autobase.resolv_conf
 
-    - role: haproxy
+    - role: vitabaks.autobase.haproxy
       when: with_haproxy_load_balancing | default(false) | bool
 
-    - role: confd
+    - role: vitabaks.autobase.confd
       when: dcs_type | default('etcd') == "etcd" and
         with_haproxy_load_balancing | default(false) | bool
 
-    - role: keepalived
+    - role: vitabaks.autobase.keepalived
       when: cluster_vip is defined and cluster_vip | length > 0 and
         with_haproxy_load_balancing | default(false) | bool

@@ -7,4 +7,5 @@ exclude =
     old,
     build,
     dist,
-    .venv
+    .venv,
+    .ansible

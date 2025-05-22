@@ -16,7 +16,7 @@
 # install confd package from file
 - name: Copy "confd" binary file to /usr/local/bin/
   ansible.builtin.copy:
-    src: "{{ confd_package_file }}"
+    src: "{{ files_dir | default(playbook_dir ~ '/files') }}/{{ confd_package_file }}"
     dest: /usr/local/bin/confd
     mode: u+x,g+x,o+x
   when: installation_method == "file" and confd_package_file | length > 0
@@ -34,7 +34,8 @@
 # TLS (etcd)
 - name: Copy etcd cert files for confd
   ansible.builtin.include_role:
-    name: ../roles/tls_certificate/copy
+    name: vitabaks.autobase.tls_certificate
+    tasks_from: copy
   vars:
     tls_group_name: "etcd_cluster"
     fetch_tls_dir: "{{ etcd_tls_dir | default('/etc/etcd/tls') }}"
@@ -75,7 +76,7 @@
       run_once: true
       ansible.builtin.fetch:
         src: "{{ item }}"
-        dest: files/
+        dest: "{{ files_dir | default(playbook_dir ~ '/files') }}/"
         validate_checksum: true
         flat: true
       loop:
@@ -86,7 +87,7 @@
 
     - name: Copy confd.toml, haproxy.toml, haproxy.tmpl conf files to replica
       ansible.builtin.copy:
-        src: "files/{{ item.conf }}"
+        src: "{{ files_dir | default(playbook_dir ~ '/files') }}/{{ item.conf }}"
         dest: "{{ item.dest }}"
       loop:
         - { conf: "confd.toml", dest: "/etc/confd/confd.toml" }
@@ -100,7 +101,7 @@
       become: false
       run_once: true
       ansible.builtin.file:
-        path: "files/{{ item }}"
+        path: "{{ files_dir | default(playbook_dir ~ '/files') }}/{{ item }}"
         state: absent
       loop:
         - confd.toml

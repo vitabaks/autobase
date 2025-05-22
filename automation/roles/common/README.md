@@ -12,7 +12,7 @@ This role serves as a centralized place to define default variables shared acros
 - This role must be listed as a dependency in other roles via `meta/main.yml`:
   ```yaml
   dependencies:
-    - role: common
+    - role: vitabaks.autobase.common
   ```
 
 - Variables defined in `roles/common/defaults/main.yml` have the lowest precedence  

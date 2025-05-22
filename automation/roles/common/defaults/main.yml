@@ -1172,7 +1172,7 @@ haproxy_compile_requirements: "{{ haproxy_os_specific_packages[ansible_os_family
 # Offline installation (if installation_method: "file")
 ############################################################
 
-# You can also download the required packages into the /autobase/automation/files/ directory.
+# You can also download the required packages into the 'files/' directory.
 # Packages from this directory will be used during installation.
 # Note: You are responsible for providing all required package dependencies for your specific Linux distribution version.
 

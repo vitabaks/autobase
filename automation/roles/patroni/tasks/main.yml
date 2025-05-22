@@ -15,7 +15,7 @@
 - block: # installation_method: "repo" and patroni_installation_method: "pip"
     - name: Copy patroni requirements.txt file
       ansible.builtin.copy:
-        src: requirements.txt
+        src: "{{ files_dir | default(playbook_dir ~ '/files') }}/requirements.txt"
         dest: /tmp/requirements.txt
       when: patroni_pip_requirements_repo | length < 1
 
@@ -116,14 +116,14 @@
 - block: # installation_method: "file" and patroni_installation_method: "pip"
     - name: Copy patroni requirements
       ansible.builtin.copy:
-        src: "{{ item }}"
+        src: "{{ files_dir | default(playbook_dir ~ '/files') }}/{{ item }}"
         dest: /tmp/
       loop: "{{ patroni_pip_requirements_file }}"
       when: patroni_pip_requirements_file | length > 0
 
     - name: Copy patroni package
       ansible.builtin.copy:
-        src: "{{ item }}"
+        src: "{{ files_dir | default(playbook_dir ~ '/files') }}/{{ item }}"
         dest: /tmp/
       loop: "{{ patroni_pip_package_file }}"
       when: patroni_pip_package_file | length > 0
@@ -229,7 +229,7 @@
     # Debian
     - name: Copy patroni deb package into /tmp
       ansible.builtin.copy:
-        src: "{{ patroni_deb_package_file }}"
+        src: "{{ files_dir | default(playbook_dir ~ '/files') }}/{{ patroni_deb_package_file }}"
         dest: /tmp/
       when: ansible_os_family == "Debian"
 
@@ -247,7 +247,7 @@
     # RedHat
     - name: Copy patroni rpm package into /tmp
       ansible.builtin.copy:
-        src: "{{ patroni_rpm_package_file }}"
+        src: "{{ files_dir | default(playbook_dir ~ '/files') }}/{{ patroni_rpm_package_file }}"
         dest: /tmp/
       when: ansible_os_family == "RedHat"
 
@@ -276,7 +276,8 @@
 # TLS (etcd)
 - name: Copy etcd cert files for patroni
   ansible.builtin.include_role:
-    name: ../roles/tls_certificate/copy
+    name: vitabaks.autobase.tls_certificate
+    tasks_from: copy
   vars:
     tls_group_name: "etcd_cluster"
     fetch_tls_dir: "{{ etcd_tls_dir | default('/etc/etcd/tls') }}"
@@ -291,7 +292,8 @@
 # TLS (consul)
 - name: Copy consul cert files for patroni
   ansible.builtin.include_role:
-    name: ../roles/tls_certificate/copy
+    name: vitabaks.autobase.tls_certificate
+    tasks_from: copy
   vars:
     tls_group_name: "consul_instances"
     fetch_tls_dir: "{{ consul_tls_dir | default('/etc/consul/tls') }}"
@@ -328,14 +330,14 @@
       run_once: true
       ansible.builtin.fetch:
         src: /etc/patroni/patroni.yml
-        dest: files/patroni.yml
+        dest: "{{ files_dir | default(playbook_dir ~ '/files') }}/patroni.yml"
         validate_checksum: true
         flat: true
       delegate_to: "{{ groups.master[0] }}"
 
     - name: Copy patroni.yml conf file to replica
       ansible.builtin.copy:
-        src: files/patroni.yml
+        src: "{{ files_dir | default(playbook_dir ~ '/files') }}/patroni.yml"
         dest: /etc/patroni/patroni.yml
         owner: postgres
         group: postgres
@@ -345,7 +347,7 @@
       become: false
       run_once: true
       ansible.builtin.file:
-        path: files/patroni.yml
+        path: "{{ files_dir | default(playbook_dir ~ '/files') }}/patroni.yml"
         state: absent
       delegate_to: localhost
 
@@ -650,7 +652,7 @@
       ansible.builtin.systemd:
         name: patroni
         state: stopped
-      when: inventory_hostname in groups['replica']
+      when: "'replica' in groups and groups['replica'] | length > 0 and inventory_hostname in groups['replica']"
 
     - name: Stop patroni service on the Master server (if running)
       ansible.builtin.systemd:
@@ -707,7 +709,9 @@
           async: "{{ cluster_restore_timeout | default(86400) }}" # timeout 24 hours
           poll: 0
           register: pgbackrest_restore_replica
-          when: inventory_hostname in groups['replica'] and 'pgbackrest' in patroni_create_replica_methods
+          when:
+            - "'replica' in groups and groups['replica'] | length > 0 and inventory_hostname in groups['replica']"
+            - "'pgbackrest' in patroni_create_replica_methods"
 
         - name: Waiting for restore from backup
           ansible.builtin.async_status:
@@ -743,7 +747,9 @@
           async: "{{ pg_ctl_timeout | default(3600) }}" # run the command asynchronously
           poll: 0
           register: pg_ctl_start_result
-          when: inventory_hostname == groups['master'][0] or (inventory_hostname in groups['replica'] and 'pgbackrest' in patroni_create_replica_methods)
+          when: inventory_hostname == groups['master'][0] or
+            ('replica' in groups and groups['replica'] | length > 0 and inventory_hostname in groups['replica']
+            and 'pgbackrest' in patroni_create_replica_methods)
 
         - name: Wait for the PostgreSQL start command to complete
           ansible.builtin.async_status:
@@ -752,7 +758,9 @@
           until: pg_ctl_start_job_result.finished
           retries: "{{ (pg_ctl_timeout | default(3600) | int) // 10 }}"
           delay: 10
-          when: inventory_hostname == groups['master'][0] or (inventory_hostname in groups['replica'] and 'pgbackrest' in patroni_create_replica_methods)
+          when: inventory_hostname == groups['master'][0] or
+            ('replica' in groups and groups['replica'] | length > 0 and inventory_hostname in groups['replica']
+            and 'pgbackrest' in patroni_create_replica_methods)
 
         - name: Wait for PostgreSQL recovery to complete (WAL apply)
           ansible.builtin.command: >-
@@ -813,7 +821,7 @@
         - not keep_patroni_dynamic_json | bool
 
     - name: Edit patroni.dynamic.json | disable archive_command (if enabled)
-      yedit:
+      vitabaks.autobase.yedit:
         src: "{{ postgresql_data_dir }}/patroni.dynamic.json"
         key: postgresql.parameters.archive_command
         value: "cd ." # not doing anything yet with WAL-s
@@ -825,7 +833,7 @@
         - disable_archive_command | bool
 
     - name: Edit patroni.yml | disable archive_command (if enabled)
-      yedit:
+      vitabaks.autobase.yedit:
         src: /etc/patroni/patroni.yml
         key: bootstrap.dcs.postgresql.parameters.archive_command
         value: "cd ." # not doing anything yet with WAL-s
@@ -932,7 +940,7 @@
         mode: "0640"
       register: generate_pg_hba
       when: inventory_hostname == groups['master'][0] or
-        ((inventory_hostname in groups['replica'] and postgresql_conf_dir != postgresql_data_dir)
+        (('replica' in groups and groups['replica'] | length > 0 and inventory_hostname in groups['replica'] and postgresql_conf_dir != postgresql_data_dir)
         or postgresql_exists | default(false) | bool)
 
     - name: Prepare PostgreSQL | reload for apply the pg_hba.conf
@@ -996,7 +1004,7 @@
         - (postgresql_users is defined and postgresql_users | length > 0)
 
     - name: Update postgresql authentication in patroni.yml
-      yedit:
+      vitabaks.autobase.yedit:
         src: /etc/patroni/patroni.yml
         edits:
           - key: postgresql.authentication.replication.username
@@ -1021,14 +1029,14 @@
       run_once: true
       ansible.builtin.fetch:
         src: "{{ postgresql_conf_dir }}/pg_hba.conf"
-        dest: files/pg_hba.conf
+        dest: "{{ files_dir | default(playbook_dir ~ '/files') }}/pg_hba.conf"
         validate_checksum: true
         flat: true
       delegate_to: "{{ groups.master[0] }}"
 
     - name: Prepare PostgreSQL | copy pg_hba.conf file to replica
       ansible.builtin.copy:
-        src: files/pg_hba.conf
+        src: "{{ files_dir | default(playbook_dir ~ '/files') }}/pg_hba.conf"
         dest: "{{ postgresql_conf_dir }}/pg_hba.conf"
         owner: postgres
         group: postgres
@@ -1065,7 +1073,7 @@
       environment:
         no_proxy: "{{ inventory_hostname }}"
       when: not ansible_check_mode
-  when: inventory_hostname in groups['replica']
+  when: "'replica' in groups and groups['replica'] | length > 0 and inventory_hostname in groups['replica']"
   tags: patroni, patroni_start_replica, point_in_time_recovery
 
 # create symlink pg_xlog/pg_wal to custom WAL dir

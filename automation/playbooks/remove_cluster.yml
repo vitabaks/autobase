@@ -1,11 +1,11 @@
 ---
-- name: remove_cluster.yml | Remove PostgreSQL HA Cluster
+- name: vitabaks.autobase.remove_cluster | Remove PostgreSQL HA Cluster
   hosts: postgres_cluster
   become: true
   pre_tasks:
     - name: Load common variables
       ansible.builtin.include_role:
-        name: common
+        name: vitabaks.autobase.common
   tasks:
     - block:
         - name: Stop Patroni service
@@ -32,7 +32,7 @@
       when: pgbackrest_install | default(false) | bool
       ignore_errors: true
 
-- name: remove_cluster.yml | Consul Cluster Play
+- name: vitabaks.autobase.remove_cluster | Consul Cluster Play
   hosts: consul_instances
   become: true
   tasks:
@@ -53,7 +53,7 @@
       when: remove_consul | default(false) | bool
       ignore_errors: true
 
-- name: remove_cluster.yml | Etcd Cluster Play
+- name: vitabaks.autobase.remove_cluster | Etcd Cluster Play
   hosts: etcd_cluster
   become: true
   tasks:

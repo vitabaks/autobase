@@ -44,7 +44,7 @@
 - block:
     - name: Copy packages into /tmp
       ansible.builtin.copy:
-        src: "{{ item }}"
+        src: "{{ files_dir | default(playbook_dir ~ '/files') }}/{{ item }}"
         dest: /tmp/
       loop: "{{ haproxy_package_file }}"
       register: copy_packages_result
@@ -288,7 +288,7 @@
       run_once: true
       ansible.builtin.fetch:
         src: /etc/haproxy/haproxy.cfg
-        dest: files/haproxy.cfg
+        dest: "{{ files_dir | default(playbook_dir ~ '/files') }}/haproxy.cfg"
         validate_checksum: true
         flat: true
       notify: "restart haproxy"
@@ -296,7 +296,7 @@
 
     - name: Copy haproxy.cfg file to replica
       ansible.builtin.copy:
-        src: files/haproxy.cfg
+        src: "{{ files_dir | default(playbook_dir ~ '/files') }}/haproxy.cfg"
         dest: /etc/haproxy/haproxy.cfg
         owner: haproxy
         group: haproxy
@@ -306,7 +306,7 @@
       become: false
       run_once: true
       ansible.builtin.file:
-        path: files/haproxy.cfg
+        path: "{{ files_dir | default(playbook_dir ~ '/files') }}/haproxy.cfg"
         state: absent
       delegate_to: localhost
 

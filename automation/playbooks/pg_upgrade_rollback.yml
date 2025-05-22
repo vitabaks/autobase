@@ -5,7 +5,7 @@
 # The playbook first checks the health of the current cluster, verifies the version of PostgreSQL, and ensures the new PostgreSQL is not running.
 # If these checks pass, the playbook switches back to the old PostgreSQL paths and restarts the Patroni service.
 
-- name: "pg_upgrade_rollback.yml | Rollback the PostgreSQL upgrade"
+- name: "vitabaks.autobase.pg_upgrade_rollback | Rollback the PostgreSQL upgrade"
   hosts: postgres_cluster
   gather_facts: true
   any_errors_fatal: true
@@ -23,8 +23,9 @@
         name: "{{ item }}"
         groups: secondary
       # As Secondary we specify the hosts in the 'replica' group in the inventory file.
-      loop: "{{ groups['replica'] }}"
+      loop: "{{ groups['replica'] | default([]) }}"
       changed_when: false
+      when: "'replica' in groups and groups['replica'] | length > 0"
   tags:
     - always
 
@@ -37,7 +38,7 @@
   tasks:
     - name: Running rollback.yml
       ansible.builtin.include_role:
-        name: upgrade
+        name: vitabaks.autobase.upgrade
         tasks_from: rollback
   tags:
     - rollback

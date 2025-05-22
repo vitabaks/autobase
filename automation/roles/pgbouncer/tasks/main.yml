@@ -158,7 +158,7 @@
       run_once: true
       ansible.builtin.fetch:
         src: "{{ pgbouncer_conf_dir }}/pgbouncer{{ '-%d' % (idx + 1) if idx > 0 else '' }}.ini"
-        dest: files/
+        dest: "{{ files_dir | default(playbook_dir ~ '/files') }}/"
         validate_checksum: true
         flat: true
       loop: "{{ range(0, (pgbouncer_processes | default(1) | int)) | list }}"
@@ -171,7 +171,7 @@
       run_once: true
       ansible.builtin.fetch:
         src: "{{ pgbouncer_conf_dir }}/userlist.txt"
-        dest: files/
+        dest: "{{ files_dir | default(playbook_dir ~ '/files') }}/"
         validate_checksum: true
         flat: true
       delegate_to: "{{ groups.master[0] }}"
@@ -179,7 +179,7 @@
 
     - name: Copy pgbouncer.ini file to replica
       ansible.builtin.copy:
-        src: "files/pgbouncer{{ '-%d' % (idx + 1) if idx > 0 else '' }}.ini"
+        src: "{{ files_dir | default(playbook_dir ~ '/files') }}/pgbouncer{{ '-%d' % (idx + 1) if idx > 0 else '' }}.ini"
         dest: "{{ pgbouncer_conf_dir }}"
         owner: postgres
         group: postgres
@@ -191,7 +191,7 @@
 
     - name: Copy userlist.txt conf file to replica
       ansible.builtin.copy:
-        src: files/userlist.txt
+        src: "{{ files_dir | default(playbook_dir ~ '/files') }}/userlist.txt"
         dest: "{{ pgbouncer_conf_dir }}"
         owner: postgres
         group: postgres
@@ -202,7 +202,7 @@
       become: false
       run_once: true
       ansible.builtin.file:
-        path: "files/pgbouncer{{ '-%d' % (idx + 1) if idx > 0 else '' }}.ini"
+        path: "{{ files_dir | default(playbook_dir ~ '/files') }}/pgbouncer{{ '-%d' % (idx + 1) if idx > 0 else '' }}.ini"
         state: absent
       loop: "{{ range(0, (pgbouncer_processes | default(1) | int)) | list }}"
       loop_control:
@@ -214,7 +214,7 @@
       become: false
       run_once: true
       ansible.builtin.file:
-        path: files/userlist.txt
+        path: "{{ files_dir | default(playbook_dir ~ '/files') }}/userlist.txt"
         state: absent
       delegate_to: localhost
       when: not pgbouncer_auth_user|bool

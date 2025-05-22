@@ -1,5 +1,5 @@
 ---
-- name: consul.yml | Configure Consul instances
+- name: vitabaks.autobase.consul | Configure Consul instances
   hosts: consul_instances
   become: true
   become_method: sudo
@@ -125,17 +125,17 @@
       when: cloud_provider | default('') | length > 0
 
   roles:
-    - role: firewall
+    - role: vitabaks.autobase.firewall
       vars:
         firewall_allowed_tcp_ports: "{{ firewall_ports_dynamic_var | default([]) | unique }}"
         firewall_additional_rules: "{{ firewall_rules_dynamic_var | default([]) | unique }}"
       when: firewall_enabled_at_boot | default(false) | bool
       tags: firewall
 
-    - role: hostname
-    - role: resolv_conf
-    - role: etc_hosts
-    - role: timezone
-    - role: ntp
+    - role: vitabaks.autobase.hostname
+    - role: vitabaks.autobase.resolv_conf
+    - role: vitabaks.autobase.etc_hosts
+    - role: vitabaks.autobase.timezone
+    - role: vitabaks.autobase.ntp
 
-    - role: consul
+    - role: vitabaks.autobase.consul

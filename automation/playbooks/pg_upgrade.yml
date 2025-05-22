@@ -1,7 +1,7 @@
 ---
 # TODO:
 # - Citus support
-- name: "pg_upgrade.yml | Upgrade PostgreSQL {{ pg_old_version }} to the new version {{ pg_new_version }}"
+- name: "vitabaks.autobase.pg_upgrade | Upgrade PostgreSQL {{ pg_old_version }} to the new version {{ pg_new_version }}"
   hosts: postgres_cluster
   gather_facts: true
   become: true
@@ -60,7 +60,7 @@
   tasks:
     - name: Running Pre-Checks
       ansible.builtin.include_role:
-        name: upgrade
+        name: vitabaks.autobase.upgrade
         tasks_from: pre_checks
   tags:
     - upgrade
@@ -76,7 +76,7 @@
   tasks:
     - name: Install packages
       ansible.builtin.include_role:
-        name: upgrade
+        name: vitabaks.autobase.upgrade
         tasks_from: packages
   tags:
     - upgrade
@@ -92,26 +92,26 @@
   tasks:
     - name: Create Data directory and initdb
       ansible.builtin.include_role:
-        name: upgrade
+        name: vitabaks.autobase.upgrade
         tasks_from: initdb
 
     # (optional) copy files specified in variable:
     # 'copy_files_to_all_server'
     - name: Copy files
       ansible.builtin.include_role:
-        name: copy
+        name: vitabaks.autobase.copy
       vars:
         copy_files_to_all_server: "{{ upgrade_copy_files_to_all_server | default([]) }}"
 
     - name: Check Schema Compatibility
       ansible.builtin.import_role:
-        name: upgrade
+        name: vitabaks.autobase.upgrade
         tasks_from: schema_compatibility
       when: schema_compatibility_check | default(true) | bool
 
     - name: Check pg_upgrade
       ansible.builtin.import_role:
-        name: upgrade
+        name: vitabaks.autobase.upgrade
         tasks_from: upgrade_check
   tags:
     - upgrade
@@ -127,7 +127,7 @@
   tasks:
     - name: Patroni config
       ansible.builtin.include_role:
-        name: upgrade
+        name: vitabaks.autobase.upgrade
         tasks_from: update_config
   tags:
     - upgrade
@@ -142,49 +142,49 @@
   tasks:
     - name: Enable maintenance mode
       ansible.builtin.include_role:
-        name: upgrade
+        name: vitabaks.autobase.upgrade
         tasks_from: maintenance_enable
 
     - name: Stop Services
       ansible.builtin.include_role:
-        name: upgrade
+        name: vitabaks.autobase.upgrade
         tasks_from: stop_services
 
     - name: Check 'Latest checkpoint location'
       ansible.builtin.include_role:
-        name: upgrade
+        name: vitabaks.autobase.upgrade
         tasks_from: checkpoint_location
 
     - name: Upgrade Primary
       ansible.builtin.include_role:
-        name: upgrade
+        name: vitabaks.autobase.upgrade
         tasks_from: upgrade_primary
 
     - name: Upgrade Secondary
       ansible.builtin.include_role:
-        name: upgrade
+        name: vitabaks.autobase.upgrade
         tasks_from: upgrade_secondary
 
     # if pg_new_wal_dir is defined
     - name: Create WAL dir symlink
       ansible.builtin.include_role:
-        name: upgrade
+        name: vitabaks.autobase.upgrade
         tasks_from: custom_wal_dir
       when: pg_new_wal_dir | default('') | length > 0
 
     - name: Remove old cluster from DCS
       ansible.builtin.include_role:
-        name: upgrade
+        name: vitabaks.autobase.upgrade
         tasks_from: dcs_remove_cluster
 
     - name: Start Services
       ansible.builtin.include_role:
-        name: upgrade
+        name: vitabaks.autobase.upgrade
         tasks_from: start_services
 
     - name: Disable maintenance mode
       ansible.builtin.include_role:
-        name: upgrade
+        name: vitabaks.autobase.upgrade
         tasks_from: maintenance_disable
   tags:
     - upgrade
@@ -198,25 +198,25 @@
   tasks:
     - name: Analyze database
       ansible.builtin.include_role:
-        name: upgrade
+        name: vitabaks.autobase.upgrade
         tasks_from: statistics
       tags: analyze, statistics
 
     - name: Update extensions
       ansible.builtin.include_role:
-        name: upgrade
+        name: vitabaks.autobase.upgrade
         tasks_from: extensions
       when: update_extensions | default(true) | bool
       tags: update_extensions
 
     - name: Running Post-Checks
       ansible.builtin.include_role:
-        name: upgrade
+        name: vitabaks.autobase.upgrade
         tasks_from: post_checks
 
     - name: Running Post-Upgrade tasks
       ansible.builtin.include_role:
-        name: upgrade
+        name: vitabaks.autobase.upgrade
         tasks_from: post_upgrade
   tags:
     - upgrade

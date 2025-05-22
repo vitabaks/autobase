@@ -58,14 +58,14 @@
       run_once: true
       ansible.builtin.fetch:
         src: /etc/keepalived/keepalived.conf
-        dest: files/keepalived.conf
+        dest: "{{ files_dir | default(playbook_dir ~ '/files') }}/keepalived.conf"
         validate_checksum: true
         flat: true
       delegate_to: "{{ groups.balancers[0] }}"
 
     - name: Copy keepalived.conf conf file to replica
       ansible.builtin.copy:
-        src: files/keepalived.conf
+        src: "{{ files_dir | default(playbook_dir ~ '/files') }}/keepalived.conf"
         dest: /etc/keepalived/keepalived.conf
       notify: "restart keepalived"
 
@@ -73,7 +73,7 @@
       become: false
       run_once: true
       ansible.builtin.file:
-        path: files/keepalived.conf
+        path: "{{ files_dir | default(playbook_dir ~ '/files') }}/keepalived.conf"
         state: absent
       delegate_to: localhost
 

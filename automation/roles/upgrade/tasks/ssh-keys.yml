@@ -26,7 +26,7 @@
 - name: Fetch public SSH keys from database servers
   ansible.builtin.fetch:
     src: "~{{ ssh_key_user }}/.ssh/id_rsa.pub"
-    dest: "files/{{ inventory_hostname }}-id_rsa.pub"
+    dest: "{{ files_dir | default(playbook_dir ~ '/files') }}/{{ inventory_hostname }}-id_rsa.pub"
     flat: true
   changed_when: false
 
@@ -34,14 +34,16 @@
   ansible.posix.authorized_key:
     user: "{{ ssh_key_user }}"
     state: present
-    key: "{{ lookup('pipe', 'cat files/*id_rsa.pub') }}"
+    key: "{{ lookup('pipe', 'cat ' ~ public_keys_file_path) }}"
     exclusive: false
+  vars:
+    public_keys_file_path: "{{ files_dir | default(playbook_dir ~ '/files') }}/*id_rsa.pub"
 
 - name: Remove public SSH keys from localhost
   run_once: true
   become: false
   ansible.builtin.file:
-    path: files/{{ item }}-id_rsa.pub
+    path: "{{ files_dir | default(playbook_dir ~ '/files') }}/{{ item }}-id_rsa.pub"
     state: absent
   loop: "{{ groups['postgres_cluster'] }}"
   delegate_to: localhost

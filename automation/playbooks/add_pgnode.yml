@@ -1,12 +1,10 @@
 ---
-- name: add_pgnode.yml | PostgreSQL HA Cluster Scaling (add a replica node)
+- name: vitabaks.autobase.add_pgnode | PostgreSQL HA Cluster Scaling (add a replica node)
   hosts: postgres_cluster
   become: true
   become_method: sudo
   any_errors_fatal: true
   gather_facts: true
-  handlers:
-    - ansible.builtin.import_tasks: roles/patroni/handlers/main.yml
 
   pre_tasks:
     - name: Set maintenance variable
@@ -16,8 +14,10 @@
     - name: "[Pre-Check] Check if there is a node with new_node set to true"
       ansible.builtin.set_fact:
         new_nodes: "{{ new_nodes | default([]) + [item] }}"
-      when: hostvars[item]['new_node'] | default(false) | bool
-      loop: "{{ groups['replica'] }}"
+      loop: "{{ groups['replica'] | default([]) }}"
+      when:
+        - "'replica' in groups and groups['replica'] | length > 0"
+        - hostvars[item]['new_node'] | default(false) | bool
       tags: always
 
     # Stop, if no nodes found with new_node variable
@@ -26,6 +26,7 @@
       ansible.builtin.fail:
         msg: "Please specify the new_node=true variable for the new server to add it to the existing cluster."
       when: new_nodes | default([]) | length < 1
+      tags: always
 
     - name: Print a list of new nodes
       run_once: true # noqa run-once
@@ -35,7 +36,7 @@
 
     - name: Add a new node to pg_hba.conf on existing cluster nodes
       ansible.builtin.include_role:
-        name: patroni/config
+        name: vitabaks.autobase.patroni
         tasks_from: pg_hba
       when: not new_node | default(false) | bool
 
@@ -88,7 +89,7 @@
       tags: firewall
 
   roles:
-    - role: firewall
+    - role: vitabaks.autobase.firewall
       environment: "{{ proxy_env | default({}) }}"
       vars:
         firewall_allowed_tcp_ports: "{{ firewall_ports_dynamic_var | default([]) | unique }}"
@@ -98,17 +99,17 @@
         - firewall_enabled_at_boot | default(false)| bool
       tags: firewall
 
-    - role: pre_checks
+    - role: vitabaks.autobase.pre_checks
       vars:
         minimal_ansible_version: 2.16.0
         timescale_minimal_pg_version: 12 # if enable_timescale is defined
       tags: always
 
-    - role: sysctl
+    - role: vitabaks.autobase.sysctl
       when:
         - new_node | default(false) | bool
 
-    - role: ssh_keys
+    - role: vitabaks.autobase.ssh_keys
       when:
         - enable_ssh_key_based_authentication | default(false) | bool
 
@@ -121,7 +122,7 @@
       changed_when: false
       tags: always
 
-- name: add_pgnode.yml | Configure new PostgreSQL node
+- name: vitabaks.autobase.add_pgnode | Configure new PostgreSQL node
   hosts: new_replica
   become: true
   become_method: sudo
@@ -136,38 +137,38 @@
       when: dcs_type | default('etcd') == "consul" and consul_dnsmasq_enable | default(true) | bool and ('127.0.0.1' not in (nameservers | default([])))
 
   roles:
-    - role: hostname
-    - role: resolv_conf
-    - role: etc_hosts
-    - role: add_repository
-    - role: packages
-    - role: sudo
-    - role: swap
-    - role: transparent_huge_pages
-    - role: pam_limits
-    - role: io_scheduler
-    - role: locales
-    - role: timezone
-    - role: ntp
-    - role: copy
-    - role: cron
+    - role: vitabaks.autobase.hostname
+    - role: vitabaks.autobase.resolv_conf
+    - role: vitabaks.autobase.etc_hosts
+    - role: vitabaks.autobase.add_repository
+    - role: vitabaks.autobase.packages
+    - role: vitabaks.autobase.sudo
+    - role: vitabaks.autobase.swap
+    - role: vitabaks.autobase.transparent_huge_pages
+    - role: vitabaks.autobase.pam_limits
+    - role: vitabaks.autobase.io_scheduler
+    - role: vitabaks.autobase.locales
+    - role: vitabaks.autobase.timezone
+    - role: vitabaks.autobase.ntp
+    - role: vitabaks.autobase.copy
+    - role: vitabaks.autobase.cron
 
-- name: add_pgnode.yml | Configure pgBackRest
+- name: vitabaks.autobase.add_pgnode | Configure pgBackRest
   hosts: pgbackrest:postgres_cluster
   become: true
   become_method: sudo
   gather_facts: true
   any_errors_fatal: true
   roles:
-    - role: pgbackrest
+    - role: vitabaks.autobase.pgbackrest
       when: pgbackrest_install|bool
 
-- name: add_pgnode.yml | Import Consul playbook
-  ansible.builtin.import_playbook: consul.yml
+- name: vitabaks.autobase.add_pgnode | Import Consul playbook
+  ansible.builtin.import_playbook: consul_cluster.yml
   when: dcs_type | default('etcd') == "consul"
   tags: consul
 
-- name: add_pgnode.yml | Add new PostgreSQL replica to the cluster
+- name: vitabaks.autobase.add_pgnode | Add new PostgreSQL replica to the cluster
   hosts: new_replica
   become: true
   become_method: sudo
@@ -176,28 +177,32 @@
   vars:
     existing_pgcluster: true
 
-  roles:
-    - role: wal_g
-      when: wal_g_install | default(false) | bool
-
-    - role: pg_probackup
-      when: pg_probackup_install | default(false) | bool
-
-    - role: tls_certificate/copy
+  pre_tasks:
+    - name: Copy certificates
+      ansible.builtin.include_role:
+        name: vitabaks.autobase.tls_certificate
+        tasks_from: copy
       when: tls_cert_generate | default(true) | bool
 
-    - role: pgbouncer
+  roles:
+    - role: vitabaks.autobase.wal_g
+      when: wal_g_install | default(false) | bool
+
+    - role: vitabaks.autobase.pg_probackup
+      when: pg_probackup_install | default(false) | bool
+
+    - role: vitabaks.autobase.pgbouncer
       when: pgbouncer_install | default(false) | bool
 
-    - role: pgpass
+    - role: vitabaks.autobase.pgpass
 
-    - role: patroni
+    - role: vitabaks.autobase.patroni
 
-    - role: vip_manager
+    - role: vitabaks.autobase.vip_manager
       when: not with_haproxy_load_balancing | default(false) | bool and
         (cluster_vip is defined and cluster_vip | length > 0)
 
-    - role: netdata
+    - role: vitabaks.autobase.netdata
 
     # finish (info)
-    - role: deploy_finish
+    - role: vitabaks.autobase.deploy_finish

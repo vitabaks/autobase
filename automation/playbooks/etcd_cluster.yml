@@ -1,5 +1,5 @@
 ---
-- name: etcd_cluster.yml | Deploy etcd Cluster
+- name: vitabaks.autobase.etcd_cluster | Deploy etcd Cluster
   hosts: etcd_cluster
   become: true
   become_method: sudo
@@ -46,7 +46,7 @@
       tags: firewall
 
   roles:
-    - role: firewall
+    - role: vitabaks.autobase.firewall
       environment: "{{ proxy_env | default({}) }}"
       vars:
         firewall_allowed_tcp_ports: "{{ firewall_ports_dynamic_var | default([]) | unique }}"
@@ -54,10 +54,10 @@
       when: firewall_enabled_at_boot | default(false) | bool
       tags: firewall
 
-    - role: hostname
-    - role: resolv_conf
-    - role: etc_hosts
-    - role: timezone
-    - role: ntp
+    - role: vitabaks.autobase.hostname
+    - role: vitabaks.autobase.resolv_conf
+    - role: vitabaks.autobase.etc_hosts
+    - role: vitabaks.autobase.timezone
+    - role: vitabaks.autobase.ntp
 
-    - role: etcd
+    - role: vitabaks.autobase.etcd
