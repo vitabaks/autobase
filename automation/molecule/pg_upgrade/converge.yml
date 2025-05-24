@@ -100,7 +100,7 @@
         state: absent
 
 - name: Deploy PostgreSQL Cluster
-  ansible.builtin.import_playbook: ../../deploy_pgcluster.yml
+  ansible.builtin.import_playbook: ../../playbooks/deploy_pgcluster.yml
 
 - name: PostgreSQL upgrade test
-  ansible.builtin.import_playbook: ../../pg_upgrade.yml
+  ansible.builtin.import_playbook: ../../playbooks/pg_upgrade.yml
