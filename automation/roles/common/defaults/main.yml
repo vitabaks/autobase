@@ -293,7 +293,7 @@ postgresql_extensions: []
 
 # Example PostgreSQL parameters (stored in DCS)
 postgresql_parameters:
-  - { option: "max_connections", value: "1000" }
+  - { option: "max_connections", value: "1000" } # the actual limit is enforced at the connection pooler level (pool_size)
   - { option: "superuser_reserved_connections", value: "5" }
   - { option: "password_encryption", value: "{{ postgresql_password_encryption_algorithm }}" }
   - { option: "ssl", value: "{{ 'on' if tls_cert_generate | bool else 'off' }}" }
@@ -307,13 +307,19 @@ postgresql_parameters:
   - { option: "huge_pages", value: "try" } # "vm.nr_hugepages" is auto-configured for shared_buffers >= 8GB (if huge_pages_auto_conf is true)
   - { option: "shared_buffers", value: "{{ (ansible_memtotal_mb * 0.25) | int }}MB" } # by default, 25% of RAM
   - { option: "effective_cache_size", value: "{{ (ansible_memtotal_mb * 0.75) | int }}MB" } # by default, 75% of RAM
-  - { option: "work_mem", value: "128MB" } # please change this value
-  - { option: "maintenance_work_mem", value: "256MB" } # please change this value
-  - { option: "checkpoint_timeout", value: "15min" }
+  - { option: "work_mem", value: "64MB" } # increase it if possible
+  - { option: "maintenance_work_mem", value: "512MB" } # or 2GB/4GB
+  - { option: "checkpoint_timeout", value: "15min" } # or 30min
   - { option: "checkpoint_completion_target", value: "0.9" }
-  - { option: "min_wal_size", value: "2GB" }
-  - { option: "max_wal_size", value: "8GB" } # or 16GB/32GB
+  - { option: "min_wal_size", value: "1GB" }
+  - { option: "max_wal_size", value: "8GB" } # or 32GB/64GB
   - { option: "wal_buffers", value: "32MB" }
+  - { option: "wal_level", value: "logical" }
+  - { option: "wal_keep_size", value: "1GB" }
+  - { option: "wal_log_hints", value: "on" }
+  - { option: "wal_compression", value: "on" } # or lz4/zstd
+  - { option: "bgwriter_delay", value: "20" } # or 10ms
+  - { option: "bgwriter_lru_maxpages", value: "1000" } # or 5000/10000
   - { option: "default_statistics_target", value: "1000" }
   - { option: "seq_page_cost", value: "1" }
   - { option: "random_page_cost", value: "1.1" } # or "4" for HDDs with slower random access
@@ -321,57 +327,54 @@ postgresql_parameters:
   - { option: "synchronous_commit", value: "on" } # or 'off' if you can you lose single transactions in case of a crash
   - { option: "autovacuum", value: "on" } # never turn off the autovacuum!
   - { option: "autovacuum_max_workers", value: "5" }
-  - { option: "autovacuum_vacuum_scale_factor", value: "0.01" } # or 0.005/0.001
   - { option: "autovacuum_analyze_scale_factor", value: "0.01" }
+  - { option: "autovacuum_vacuum_scale_factor", value: "0.01" } # or 0.005/0.001
+  - { option: "autovacuum_vacuum_insert_scale_factor", value: "0.1" } # or 0.05/0.01
   - { option: "autovacuum_vacuum_cost_limit", value: "500" } # or 1000/5000
   - { option: "autovacuum_vacuum_cost_delay", value: "2" }
   - { option: "autovacuum_naptime", value: "1s" }
-  - { option: "max_files_per_process", value: "4096" }
   - { option: "archive_mode", value: "on" }
-  - { option: "archive_timeout", value: "1800s" }
+  - { option: "archive_timeout", value: "1800s" } # or 600s
   - { option: "archive_command", value: "cd ." } # not doing anything yet with WAL-s
   #  - { option: "archive_command", value: "{{ wal_g_archive_command }}" }  # archive WAL-s using WAL-G
   #  - { option: "archive_command", value: "{{ pgbackrest_archive_command }}" }  # archive WAL-s using pgbackrest
-  - { option: "wal_level", value: "logical" }
-  - { option: "wal_keep_size", value: "2GB" }
-  - { option: "max_wal_senders", value: "10" }
-  - { option: "max_replication_slots", value: "10" }
+  - { option: "max_wal_senders", value: "20" } # the maximum number of standby servers you might possibly have
+  - { option: "max_replication_slots", value: "20" } # the maximum number of slots for standby servers
   - { option: "hot_standby", value: "on" }
-  - { option: "wal_log_hints", value: "on" }
-  - { option: "wal_compression", value: "on" }
-  - { option: "shared_preload_libraries", value: "pg_stat_statements,auto_explain" }
+  - { option: "hot_standby_feedback", value: "on" } # allows feedback from a hot standby to the primary that will avoid query conflicts
+  - { option: "max_standby_streaming_delay", value: "30s" }
+  - { option: "wal_receiver_status_interval", value: "10s" }
+  - { option: "shared_preload_libraries", value: "pg_stat_statements,auto_explain" } # pg_stat_kcache, pg_wait_sampling are recommended
   - { option: "pg_stat_statements.max", value: "10000" }
   - { option: "pg_stat_statements.track", value: "all" }
+  - { option: "pg_stat_statements.track_planning", value: "true" }
   - { option: "pg_stat_statements.track_utility", value: "false" }
   - { option: "pg_stat_statements.save", value: "true" }
-  - { option: "auto_explain.log_min_duration", value: "10s" } # enable auto_explain for 10-second logging threshold. Decrease this value if necessary
+  - { option: "auto_explain.log_min_duration", value: "10s" } # decrease this value if necessary
   - { option: "auto_explain.log_analyze", value: "true" }
   - { option: "auto_explain.log_buffers", value: "true" }
   - { option: "auto_explain.log_timing", value: "false" }
   - { option: "auto_explain.log_triggers", value: "true" }
   - { option: "auto_explain.log_verbose", value: "true" }
   - { option: "auto_explain.log_nested_statements", value: "true" }
-  - { option: "auto_explain.sample_rate", value: "0.01" } # enable auto_explain for 1% of queries logging threshold
+  - { option: "auto_explain.sample_rate", value: "0.01" } # enable for 1% of queries logging threshold
   - { option: "track_io_timing", value: "on" }
-  - { option: "log_lock_waits", value: "on" }
-  - { option: "log_temp_files", value: "0" }
   - { option: "track_activities", value: "on" }
   - { option: "track_activity_query_size", value: "4096" }
   - { option: "track_counts", value: "on" }
   - { option: "track_functions", value: "all" }
+  - { option: "log_lock_waits", value: "on" }
+  - { option: "log_temp_files", value: "0" }
   - { option: "log_checkpoints", value: "on" }
-  - { option: "logging_collector", value: "on" }
-  - { option: "log_truncate_on_rotation", value: "on" }
   - { option: "log_rotation_age", value: "1d" }
   - { option: "log_rotation_size", value: "0" }
   - { option: "log_line_prefix", value: "%t [%p-%l] %r %q%u@%d " }
   - { option: "log_filename", value: "postgresql-%a.log" }
   - { option: "log_directory", value: "{{ postgresql_log_dir }}" }
-  - { option: "hot_standby_feedback", value: "on" } # allows feedback from a hot standby to the primary that will avoid query conflicts
-  - { option: "max_standby_streaming_delay", value: "30s" }
-  - { option: "wal_receiver_status_interval", value: "10s" }
-  - { option: "idle_in_transaction_session_timeout", value: "10min" } # reduce this timeout if possible
+  - { option: "log_truncate_on_rotation", value: "on" }
+  - { option: "logging_collector", value: "on" }
   - { option: "jit", value: "off" }
+  - { option: "max_files_per_process", value: "4096" }
   - { option: "max_worker_processes", value: "{{ [ansible_processor_vcpus | int, 16] | max }}" }
   - { option: "max_parallel_workers", value: "{{ [(ansible_processor_vcpus | int // 2), 8] | max }}" }
   - { option: "max_parallel_workers_per_gather", value: "2" }
@@ -379,7 +382,11 @@ postgresql_parameters:
   - { option: "tcp_keepalives_count", value: "10" }
   - { option: "tcp_keepalives_idle", value: "300" }
   - { option: "tcp_keepalives_interval", value: "30" }
-#  - { option: "", value: "" }
+  - { option: "idle_in_transaction_session_timeout", value: "10min" } # reduce this timeout if possible
+#  - { option: "transaction_timeout", value: "10min" } # reduce this timeout if possible
+#  - { option: "statement_timeout", value: "1min" } # reduce this timeout if possible
+#  - { option: "lock_timeout", value: "10s" } # reduce this timeout if possible
+#  - { option: "deadlock_timeout", value: "2s" }
 #  - { option: "", value: "" }
 
 # Set this variable to 'true' if you want the cluster to be automatically restarted
