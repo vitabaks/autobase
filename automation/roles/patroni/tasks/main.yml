@@ -157,22 +157,23 @@
 - block: # installation_method: "repo" and patroni_installation_method: "rpm/deb"
     # Debian
     - name: Install patroni package
-      ansible.builtin.package:
+      ansible.builtin.apt:
         name: "{{ patroni_packages | flatten }}"
         state: present
-      register: package_status
-      until: package_status is success
+      register: apt_status
+      until: apt_status is success
       delay: 5
       retries: 3
       when: ansible_os_family == "Debian" and patroni_deb_package_repo | length < 1
 
     # RedHat
     - name: Install patroni package
-      ansible.builtin.package:
+      ansible.builtin.dnf:
         name: "{{ patroni_packages | flatten }}"
         state: present
-      register: package_status
-      until: package_status is success
+        disable_gpg_check: true
+      register: dnf_status
+      until: dnf_status is success
       delay: 5
       retries: 3
       when: ansible_os_family == "RedHat" and patroni_rpm_package_repo | length < 1
@@ -194,8 +195,8 @@
         deb: "/tmp/{{ item }}"
         state: present
       loop: "{{ patroni_deb_package_repo | map('basename') | list }}"
-      register: apt_status
-      until: apt_status is success
+      register: deb_package_status
+      until: deb_package_status is success
       delay: 5
       retries: 3
       when: ansible_os_family == "Debian" and patroni_deb_package_repo | length > 0
@@ -211,12 +212,13 @@
       when: ansible_os_family == "RedHat" and patroni_rpm_package_repo | length > 0
 
     - name: Install patroni from rpm package
-      ansible.builtin.package:
+      ansible.builtin.dnf:
         name: "/tmp/{{ item }}"
         state: present
+        disable_gpg_check: true
       loop: "{{ patroni_rpm_package_repo | map('basename') | list }}"
-      register: package_status
-      until: package_status is success
+      register: rpm_package_status
+      until: rpm_package_status is success
       delay: 5
       retries: 3
       when: ansible_os_family == "RedHat" and patroni_rpm_package_repo | length > 0
@@ -238,8 +240,8 @@
         force_apt_get: true
         deb: "/tmp/{{ patroni_deb_package_file | basename }}"
         state: present
-      register: apt_status
-      until: apt_status is success
+      register: deb_package_file_status
+      until: deb_package_file_status is success
       delay: 5
       retries: 3
       when: ansible_os_family == "Debian"
@@ -252,11 +254,12 @@
       when: ansible_os_family == "RedHat"
 
     - name: Install patroni from rpm package
-      ansible.builtin.package:
+      ansible.builtin.dnf:
         name: "/tmp/{{ patroni_rpm_package_file | basename }}"
         state: present
-      register: package_status
-      until: package_status is success
+        disable_gpg_check: true
+      register: rpm_package_file_status
+      until: rpm_package_file_status is success
       delay: 5
       retries: 3
       when: ansible_os_family == "RedHat"
