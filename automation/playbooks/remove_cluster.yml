@@ -60,11 +60,6 @@
           loop:
             - "{{ consul_data_path }}"
             - "{{ consul_config_path }}"
-
-        - name: Delete Consul serivce
-          ansible.builtin.file:
-            path: /lib/systemd/system/consul.service
-            state: absent
       ignore_errors: true
       when: remove_consul | default(false) | bool
 
