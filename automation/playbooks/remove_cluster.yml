@@ -25,18 +25,21 @@
       when: remove_postgres | default(false) | bool
 
     - block:
-        - name: Delete PgBackRest repository
-          ansible.builtin.file:
-            # path: pgbackrest_conf global repo1-path
-            path: /var/lib/pgbackrest
-            state: absent
+        - name: Delete pgBackRest stanza
+          become: true
+          become_user: postgres
+          ansible.builtin.command: "pgbackrest --stanza={{ pgbackrest_stanza }} stanza-delete --force"
 
-        - name: Delete PgBackRest cron
+        - name: Delete pgBackRest cron job
           ansible.builtin.file:
-            path: /etc/cron.d/pgbackrest
+            path: "{{ item.file }}"
             state: absent
+          loop: "{{ pgbackrest_cron_jobs | unique(attribute='file') }}"
+          loop_control:
+            label: "{{ item.file }}"
       ignore_errors: true
-      when: remove_pgbackrest | default(false) | bool
+      when: remove_pgbackrest | default(false) | bool or
+        (remove_postgres | default(false) | bool and pgbackrest_install | default(false) | bool)
 
 - name: vitabaks.autobase.remove_cluster | Remove Consul
   hosts: consul_instances
