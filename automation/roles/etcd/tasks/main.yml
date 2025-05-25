@@ -125,7 +125,7 @@
 
 - name: Create etcd data directory
   ansible.builtin.file:
-    path: "{{ etcd_data_dir }}"
+    path: "{{ etcd_data_dir | default('/var/lib/etcd') }}"
     state: directory
     owner: etcd
     mode: "0700"
