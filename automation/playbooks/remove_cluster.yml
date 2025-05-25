@@ -8,64 +8,87 @@
         name: vitabaks.autobase.common
   tasks:
     - block:
-        - name: Stop Patroni service
+        - name: Stop and disable patroni service
           ansible.builtin.service:
             name: patroni
             state: stopped
             enabled: false
-        - name: Delete PostgreSQL database content
+
+        - name: Delete PostgreSQL content
           ansible.builtin.file:
-            path: "{{ postgresql_data_dir | default('/var/lib/postgresql') }}"
+            path: "{{ item }}"
             state: absent
-      when: remove_postgres | default(false) | bool
+          loop:
+            - "{{ postgresql_data_dir }}"
+            - "{{ postgresql_conf_dir }}"
       ignore_errors: true
+      when: remove_postgres | default(false) | bool
+
     - block:
         - name: Delete PgBackRest repository
           ansible.builtin.file:
             # path: pgbackrest_conf global repo1-path
             path: /var/lib/pgbackrest
             state: absent
+
         - name: Delete PgBackRest cron
           ansible.builtin.file:
             path: /etc/cron.d/pgbackrest
             state: absent
-      when: pgbackrest_install | default(false) | bool
       ignore_errors: true
+      when: remove_pgbackrest | default(false) | bool
 
 - name: vitabaks.autobase.remove_cluster | Consul Cluster Play
   hosts: consul_instances
   become: true
+  pre_tasks:
+    - name: Load common variables
+      ansible.builtin.include_role:
+        name: vitabaks.autobase.common
   tasks:
     - block:
-        - name: Stop Consul service
+        - name: Stop and disable consul service
           ansible.builtin.service:
             name: consul
             state: stopped
             enabled: false
-        - name: Delete Consul content
+
+        - name: Delete consul content
           ansible.builtin.file:
-            path: "{{ consul_data_path | default('/var/lib/consul') }}"
+            path: "{{ item }}"
             state: absent
+          loop:
+            - "{{ consul_data_path }}"
+            - "{{ consul_config_path }}"
+
         - name: Delete Consul serivce
           ansible.builtin.file:
             path: /lib/systemd/system/consul.service
             state: absent
-      when: remove_consul | default(false) | bool
       ignore_errors: true
+      when: remove_consul | default(false) | bool
 
 - name: vitabaks.autobase.remove_cluster | Etcd Cluster Play
   hosts: etcd_cluster
   become: true
+  pre_tasks:
+    - name: Load common variables
+      ansible.builtin.include_role:
+        name: vitabaks.autobase.common
   tasks:
     - block:
-        - name: Stop Etcd service
+        - name: Stop and disable etcd service
           ansible.builtin.service:
             name: etcd
             state: stopped
             enabled: false
-        - name: Delete Etcd content
+
+        - name: Delete etcd content
           ansible.builtin.file:
-            path: "{{ etcd_data_dir | default('/var/lib/etcd') }}/member"
+            path: "{{ item }}"
             state: absent
-      when: remove_etcd | default(false) | bool
+          loop:
+            - "{{ etcd_data_dir }}"
+            - "{{ etcd_conf_dir }}"
       ignore_errors: true
+      when: remove_etcd | default(false) | bool
