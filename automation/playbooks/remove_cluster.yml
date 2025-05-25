@@ -18,9 +18,14 @@
           ansible.builtin.file:
             path: "{{ item }}"
             state: absent
-          loop:
-            - "{{ postgresql_data_dir }}"
-            - "{{ postgresql_conf_dir }}"
+          loop: >-
+            {{
+              [
+                postgresql_data_dir,
+                postgresql_conf_dir,
+                postgresql_wal_dir
+              ] | reject('equalto', '') | list
+            }}
       ignore_errors: true
       when: remove_postgres | default(false) | bool
 
