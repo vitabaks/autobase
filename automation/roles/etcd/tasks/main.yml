@@ -131,7 +131,7 @@
     mode: "0700"
   tags: etcd, etcd_conf
 
-- name: Generate conf file "{{ etcd_conf_dir | default('/etc/etcd') }}/etcd.conf"
+- name: Generate etcd conf file
   ansible.builtin.template:
     src: templates/etcd.conf.j2
     dest: "{{ etcd_conf_dir | default('/etc/etcd') }}/etcd.conf"
