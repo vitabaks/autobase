@@ -38,7 +38,7 @@
       ignore_errors: true
       when: remove_pgbackrest | default(false) | bool
 
-- name: vitabaks.autobase.remove_cluster | Consul Cluster Play
+- name: vitabaks.autobase.remove_cluster | Remove Consul
   hosts: consul_instances
   become: true
   pre_tasks:
@@ -63,7 +63,7 @@
       ignore_errors: true
       when: remove_consul | default(false) | bool
 
-- name: vitabaks.autobase.remove_cluster | Etcd Cluster Play
+- name: vitabaks.autobase.remove_cluster | Remove Etcd
   hosts: etcd_cluster
   become: true
   pre_tasks:
