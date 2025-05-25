@@ -37,7 +37,7 @@
               {% if ansible_os_family == 'Debian' %}\
               /etc/postgresql/{{ default_postgresql_version }}/{{ default_postgresql_cluster_name }}\
               {% else %}\
-              {{ postgresql_data_dir }}\
+              {{ default_postgresql_data_dir }}\
               {% endif %}"
       ignore_errors: true
       when: remove_postgres | default(false) | bool
