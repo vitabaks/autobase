@@ -6,8 +6,8 @@ Wants=network-online.target
 
 [Service]
 Type=notify
-WorkingDirectory={{ etcd_data_dir }}
-EnvironmentFile=-/etc/etcd/etcd.conf
+WorkingDirectory={{ etcd_data_dir | default('/var/lib/etcd') }}
+EnvironmentFile=-{{ etcd_conf_dir | default('/etc/etcd') }}/etcd.conf
 User=etcd
 # set GOMAXPROCS to number of processors
 ExecStart=/bin/bash -c "GOMAXPROCS=$(nproc) /usr/local/bin/etcd"
