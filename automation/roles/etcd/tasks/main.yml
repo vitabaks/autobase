@@ -81,7 +81,7 @@
 
 - name: Create etcd conf directory
   ansible.builtin.file:
-    path: /etc/etcd
+    path: "{{ etcd_conf_dir }}"
     state: directory
   tags: etcd, etcd_conf
 
