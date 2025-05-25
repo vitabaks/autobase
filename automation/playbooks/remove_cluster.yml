@@ -2,10 +2,7 @@
 - name: vitabaks.autobase.remove_cluster | Remove PostgreSQL HA Cluster
   hosts: postgres_cluster
   become: true
-  pre_tasks:
-    - name: Load common variables
-      ansible.builtin.include_role:
-        name: vitabaks.autobase.common
+  gather_facts: true
   tasks:
     - block:
         - name: Stop and disable patroni service
@@ -21,38 +18,57 @@
           loop: >-
             {{
               [
-                postgresql_data_dir,
-                postgresql_conf_dir,
-                postgresql_wal_dir
+                postgresql_data_dir | default(default_postgresql_data_dir),
+                postgresql_conf_dir | default(default_postgresql_conf_dir),
+                postgresql_wal_dir | default('')
               ] | reject('equalto', '') | list
             }}
+          vars:
+            default_postgresql_version: 17
+            default_postgresql_home_dir: "{{ '/var/lib/postgresql' if ansible_os_family == 'Debian' else '/var/lib/pgsql' }}"
+            default_postgresql_cluster_name: "{{ 'main' if ansible_os_family == 'Debian' else 'data' }}"
+            default_postgresql_data_dir: "\
+              {% if cloud_provider | default('') | length > 0 %}\
+              {{ pg_data_mount_path | default('/pgdata') }}/{{ default_postgresql_version }}/{{ default_postgresql_cluster_name }}\
+              {% else %}\
+              {{ default_postgresql_home_dir }}/{{ default_postgresql_version }}/{{ default_postgresql_cluster_name }}\
+              {% endif %}"
+            default_postgresql_conf_dir: "\
+              {% if ansible_os_family == 'Debian' %}\
+              /etc/postgresql/{{ default_postgresql_version }}/{{ default_postgresql_cluster_name }}\
+              {% else %}\
+              {{ postgresql_data_dir }}\
+              {% endif %}"
       ignore_errors: true
       when: remove_postgres | default(false) | bool
 
     - block:
+        - name: Run pgBackRest stop
+          become: true
+          become_user: postgres
+          ansible.builtin.command: "pgbackrest --stanza={{ stanza_name }} stop --force"
+
         - name: Delete pgBackRest stanza
           become: true
           become_user: postgres
-          ansible.builtin.command: "pgbackrest --stanza={{ pgbackrest_stanza }} stanza-delete --force"
+          ansible.builtin.command: "pgbackrest --stanza={{ stanza_name }} stanza-delete"
 
         - name: Delete pgBackRest cron job
           ansible.builtin.file:
             path: "{{ item.file }}"
             state: absent
-          loop: "{{ pgbackrest_cron_jobs | unique(attribute='file') }}"
+          loop: "{{ cron_jobs | unique(attribute='file') }}"
           loop_control:
             label: "{{ item.file }}"
+      vars:
+        stanza_name: "{{ pgbackrest_stanza | default(patroni_cluster_name | default('postgres-cluster')) }}"
+        cron_jobs: "{{ pgbackrest_cron_jobs | default([{ 'file': '/etc/cron.d/pgbackrest-' ~ stanza_name }]) }}"
       ignore_errors: true
-      when: remove_pgbackrest | default(false) | bool or
-        (remove_postgres | default(false) | bool and pgbackrest_install | default(false) | bool)
+      when: remove_pgbackrest | default(false) | bool
 
-- name: vitabaks.autobase.remove_cluster | Remove Consul
+- name: vitabaks.autobase.remove_cluster | Remove Consul Cluster
   hosts: consul_instances
   become: true
-  pre_tasks:
-    - name: Load common variables
-      ansible.builtin.include_role:
-        name: vitabaks.autobase.common
   tasks:
     - block:
         - name: Stop and disable consul service
@@ -66,18 +82,14 @@
             path: "{{ item }}"
             state: absent
           loop:
-            - "{{ consul_data_path }}"
-            - "{{ consul_config_path }}"
+            - "{{ consul_data_path | default('/var/lib/consul') }}"
+            - "{{ consul_config_path | default('/etc/consul') }}"
       ignore_errors: true
       when: remove_consul | default(false) | bool
 
-- name: vitabaks.autobase.remove_cluster | Remove Etcd
+- name: vitabaks.autobase.remove_cluster | Remove Etcd Cluster
   hosts: etcd_cluster
   become: true
-  pre_tasks:
-    - name: Load common variables
-      ansible.builtin.include_role:
-        name: vitabaks.autobase.common
   tasks:
     - block:
         - name: Stop and disable etcd service
@@ -91,7 +103,7 @@
             path: "{{ item }}"
             state: absent
           loop:
-            - "{{ etcd_data_dir }}"
-            - "{{ etcd_conf_dir }}"
+            - "{{ etcd_data_dir | default('/var/lib/etcd') }}"
+            - "{{ etcd_conf_dir | default('/etc/etcd') }}"
       ignore_errors: true
       when: remove_etcd | default(false) | bool
