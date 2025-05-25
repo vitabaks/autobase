@@ -131,10 +131,10 @@
     mode: "0700"
   tags: etcd, etcd_conf
 
-- name: Generate conf file "/etc/etcd/etcd.conf"
+- name: Generate conf file "{{ etcd_conf_dir | default('/etc/etcd') }}/etcd.conf"
   ansible.builtin.template:
     src: templates/etcd.conf.j2
-    dest: /etc/etcd/etcd.conf
+    dest: "{{ etcd_conf_dir | default('/etc/etcd') }}/etcd.conf"
   tags: etcd, etcd_conf
 
 - name: Copy systemd service file
