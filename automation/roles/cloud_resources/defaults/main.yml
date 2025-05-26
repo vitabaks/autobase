@@ -33,6 +33,7 @@ database_public_allowed_ips: "" # (comma-separated list of IP addresses in CIDR 
 # Load balancer
 cloud_load_balancer: true # Create a Load Balancer in the Cloud.
 
+assign_public_ip: true #either to assign public ip or not to the instance created
 # Backups (if 'pgbackrest_install' or 'wal_g_install' is 'true')
 aws_s3_bucket_create: true # if 'cloud_provider=aws'
 aws_s3_bucket_name: "{{ patroni_cluster_name }}-backup" # Name of the S3 bucket. Bucket naming rules: https://docs.aws.amazon.com/AmazonS3/latest/userguide/bucketnamingrules.html
