@@ -25,11 +25,12 @@
         PIP_BREAK_SYSTEM_PACKAGES: "1"
       when: patroni_pip_requirements_repo | length < 1
 
+    # Use master requirements if patroni_install_version is 'latest' or explicitly forced via patroni_latest_requirements
     - name: Download Patroni requirements.txt
       ansible.builtin.get_url:
         url: >-
           https://raw.githubusercontent.com/patroni/patroni/{{
-            'refs/heads/master' if patroni_install_version == 'latest'
+            'refs/heads/master' if patroni_install_version == 'latest' or patroni_latest_requirements | default(false)
             else 'refs/tags/v' ~ (patroni_install_version | regex_replace('^v', ''))
           }}/requirements.txt
         dest: /tmp/requirements.txt
