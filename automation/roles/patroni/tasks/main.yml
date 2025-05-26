@@ -13,12 +13,6 @@
 
 # Patroni install
 - block: # installation_method: "repo" and patroni_installation_method: "pip"
-    - name: Copy patroni requirements.txt file
-      ansible.builtin.copy:
-        src: "{{ files_dir | default(playbook_dir ~ '/files') }}/requirements.txt"
-        dest: /tmp/requirements.txt
-      when: patroni_pip_requirements_repo | length < 1
-
     - name: Install setuptools
       ansible.builtin.pip:
         name: setuptools<66.0.0 # https://github.com/pypa/setuptools/issues/3772
@@ -29,6 +23,19 @@
       environment:
         PATH: "{{ ansible_env.PATH }}:/usr/local/bin:/usr/bin"
         PIP_BREAK_SYSTEM_PACKAGES: "1"
+      when: patroni_pip_requirements_repo | length < 1
+
+    # Use master requirements if patroni_install_version is 'latest' or explicitly forced via patroni_latest_requirements
+    - name: Download Patroni requirements.txt
+      ansible.builtin.get_url:
+        url: >-
+          https://raw.githubusercontent.com/patroni/patroni/{{
+            'refs/heads/master' if patroni_install_version == 'latest' or patroni_latest_requirements | default(false)
+            else 'refs/tags/v' ~ (patroni_install_version | regex_replace('^v', ''))
+          }}/requirements.txt
+        dest: /tmp/requirements.txt
+        timeout: 60
+        validate_certs: false
       when: patroni_pip_requirements_repo | length < 1
 
     - name: Install requirements
