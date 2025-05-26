@@ -267,8 +267,7 @@
         label: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}"
       register: server_result
       until:
-        - server_result.instances[0].public_ip_address is defined
-        - server_result.instances[0].public_ip_address | length > 0
+        - (assign_public_ip | bool) == false or (server_result.instances[0].public_ip_address is defined and server_result.instances[0].public_ip_address | length > 0)
       retries: 3
       delay: 10
       when: not server_spot | default(aws_ec2_spot_instance | default(false)) | bool
@@ -306,7 +305,7 @@
               network_interfaces:
                 - subnet_id: "{{ server_network }}"
                   groups: "{{ ec2_security_group_result.group_id }}"
-                  associate_public_ip_address: true
+                  associate_public_ip_address: "{{ assign_public_ip }}"
                   delete_on_termination: true
                   device_index: 0
               block_device_mappings:
@@ -345,6 +344,7 @@
           until:
             - ec2_spot_instance_result.instances[0].public_ip_address is defined
             - ec2_spot_instance_result.instances[0].public_ip_address | length > 0
+            - (assign_public_ip | bool) == false or (ec2_spot_instance_result.instances[0].public_ip_address is defined and ec2_spot_instance_result.instances[0].public_ip_address | length > 0)
           retries: 3
           delay: 10
           when: item.spot_request.spot_instance_request_id is defined
@@ -422,7 +422,7 @@
 
 - name: Wait for host to be available via SSH
   ansible.builtin.wait_for:
-    host: "{{ item.instances[0].public_ip_address }}"
+    host: "{{ item.instances[0].private_ip_address }}"
     port: 22
     delay: 5
     timeout: 300
@@ -442,7 +442,7 @@
       image: "{{ item.instances[0].image_id }}"
       type: "{{ item.instances[0].instance_type }}"
       volume_size: "{{ volume_size }} GB"
-      public_ip: "{{ item.instances[0].public_ip_address }}"
+      public_ip: "{{ item.instances[0].public_ip_address if assign_public_ip | bool else '' }}"
       private_ip: "{{ item.instances[0].private_ip_address }}"
   loop: "{{ server_result.results }}"
   loop_control:
@@ -461,12 +461,12 @@
       ansible.builtin.set_fact:
         ip_addresses: >-
           {{ ip_addresses +
-            [{'public_ip': item.instances[0].public_ip_address,
+            [{'public_ip': "{{ item.instances[0].public_ip_address if assign_public_ip | bool else '' }}",
               'private_ip': item.instances[0].private_ip_address}]
           }}
       loop: "{{ server_result.results | selectattr('instances', 'defined') }}"
       loop_control:
-        label: "public_ip: {{ item.instances[0].public_ip_address }}, private_ip: {{ item.instances[0].private_ip_address }}"
+        label: "public_ip: {{ item.instances[0].public_ip_address if assign_public_ip | bool else '' }}, private_ip: {{ item.instances[0].private_ip_address }}"
 
     - name: "Inventory | Generate in-memory inventory"
       ansible.builtin.import_tasks: inventory.yml
