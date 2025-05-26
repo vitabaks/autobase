@@ -248,7 +248,7 @@
         security_groups: "{{ ([] if not cloud_firewall | bool else [patroni_cluster_name + '-security-group']) }}"
         vpc_subnet_id: "{{ server_network }}"
         network_interfaces:
-          - assign_public_ip: {{ assign_public_ip }}
+          - assign_public_ip: "{{ assign_public_ip }}"
             delete_on_termination: true
         volumes:
           - device_name: /dev/sda1
