@@ -81,7 +81,7 @@
 
 - name: Create etcd conf directory
   ansible.builtin.file:
-    path: /etc/etcd
+    path: "{{ etcd_conf_dir }}"
     state: directory
   tags: etcd, etcd_conf
 
@@ -125,16 +125,16 @@
 
 - name: Create etcd data directory
   ansible.builtin.file:
-    path: "{{ etcd_data_dir }}"
+    path: "{{ etcd_data_dir | default('/var/lib/etcd') }}"
     state: directory
     owner: etcd
     mode: "0700"
   tags: etcd, etcd_conf
 
-- name: Generate conf file "/etc/etcd/etcd.conf"
+- name: Generate etcd conf file
   ansible.builtin.template:
     src: templates/etcd.conf.j2
-    dest: /etc/etcd/etcd.conf
+    dest: "{{ etcd_conf_dir | default('/etc/etcd') }}/etcd.conf"
   tags: etcd, etcd_conf
 
 - name: Copy systemd service file

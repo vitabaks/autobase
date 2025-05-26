@@ -110,13 +110,14 @@ dcs_exists: false # or 'true' if you do not want Autobase to deploy and manage e
 # if dcs_type: "etcd" and dcs_exists: false
 # renovate: datasource=github-releases depName=etcd-io/etcd extractVersion=^v(?<version>.*)$
 etcd_version: 3.5.21
+etcd_conf_dir: "/etc/etcd"
 etcd_data_dir: "/var/lib/etcd"
 etcd_cluster_name: "etcd-{{ patroni_cluster_name }}" # ETCD_INITIAL_CLUSTER_TOKEN
 etcd_on_dedicated_nodes: "{{ groups['etcd_cluster'] | difference(groups['postgres_cluster']) | length > 0 }}" # 'true' or 'false'
 # TLS
 # Enables TLS encryption with a self-signed certificate if 'tls_cert_generate' is true.
 etcd_tls_enable: "{{ tls_cert_generate | default(true) }}"
-etcd_tls_dir: "/etc/etcd/tls"
+etcd_tls_dir: "{{ etcd_conf_dir }}/tls"
 etcd_tls_ca_crt: "ca.crt"
 etcd_tls_ca_key: "ca.key"
 etcd_tls_server_crt: "server.crt"
@@ -159,7 +160,7 @@ consul_on_dedicated_nodes: "{{ groups['consul_instances'] | difference(groups['p
 # Enables TLS encryption with a self-signed certificate if 'tls_cert_generate' is true.
 # If 'tls_cert_generate' is false, you must provide your own CA certificate, server certificate, and server key in the 'files/' directory.
 consul_tls_enable: "{{ tls_cert_generate | default(true) }}"
-consul_tls_dir: "/etc/consul/tls"
+consul_tls_dir: "{{ consul_config_path }}/tls"
 consul_tls_ca_crt: "ca.crt"
 consul_tls_ca_key: "ca.key"
 consul_tls_server_crt: "server.crt"
