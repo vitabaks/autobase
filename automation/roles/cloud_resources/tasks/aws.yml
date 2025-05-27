@@ -342,8 +342,6 @@
             label: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}"
           register: ec2_spot_instance_result
           until:
-            - ec2_spot_instance_result.instances[0].public_ip_address is defined
-            - ec2_spot_instance_result.instances[0].public_ip_address | length > 0
             - (assign_public_ip | bool) == false or (ec2_spot_instance_result.instances[0].public_ip_address is defined and ec2_spot_instance_result.instances[0].public_ip_address | length > 0)
           retries: 3
           delay: 10
@@ -428,7 +426,7 @@
     timeout: 300
   loop: "{{ server_result.results }}"
   loop_control:
-    label: "{{ item.instances[0].public_ip_address | default('N/A') }}"
+    label: "{{ item.instances[0].private_ip_address | default('N/A') }}"
   when:
     - server_result.results is defined
     - item.instances is defined
@@ -446,7 +444,8 @@
       private_ip: "{{ item.instances[0].private_ip_address }}"
   loop: "{{ server_result.results }}"
   loop_control:
-    label: "{{ item.instances[0].public_ip_address | default('N/A') }}"
+    #label: "{{ item.instances[0].public_ip_address | default('N/A') }}"
+    label: "{{ item.instances[0].private_ip_address | default('N/A') }}"
   when:
     - server_result.results is defined
     - item.instances is defined
@@ -461,12 +460,14 @@
       ansible.builtin.set_fact:
         ip_addresses: >-
           {{ ip_addresses +
-            [{'public_ip': "{{ item.instances[0].public_ip_address if assign_public_ip | bool else '' }}",
-              'private_ip': item.instances[0].private_ip_address}]
+            [{
+              'public_ip': (item.instances[0].public_ip_address if (assign_public_ip | bool and item.instances[0].public_ip_address is defined) else ''),
+              'private_ip': item.instances[0].private_ip_address
+            }]
           }}
       loop: "{{ server_result.results | selectattr('instances', 'defined') }}"
       loop_control:
-        label: "public_ip: {{ item.instances[0].public_ip_address if assign_public_ip | bool else '' }}, private_ip: {{ item.instances[0].private_ip_address }}"
+        label: "public_ip: {{ item.instances[0].public_ip_address | default('N/A') }}, private_ip: {{ item.instances[0].private_ip_address | default('N/A') }}"
 
     - name: "Inventory | Generate in-memory inventory"
       ansible.builtin.import_tasks: inventory.yml
