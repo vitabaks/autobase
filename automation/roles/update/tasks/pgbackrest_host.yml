@@ -37,6 +37,8 @@
       until: update_pgbackrest_package is success
       delay: 5
       retries: 3
+  become: true
+  become_user: root
   when:
     - pgbackrest_install | bool
     - pgbackrest_repo_host | default('') | length > 0
