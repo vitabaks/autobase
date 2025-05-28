@@ -3,7 +3,7 @@
 # if 'cloud_provider' is 'aws', 'gcp', 'azure', 'digitalocean'.
 - ansible.builtin.import_tasks: auto_conf.yml
   when:
-    - cloud_provider | default('') | length > 0
+    - cloud_provider | default('') | length > 0 or backup_provider != ''
     - pgbackrest_auto_conf | default(true) | bool # to be able to disable auto backup settings
   tags: pgbackrest, pgbackrest_conf
 
