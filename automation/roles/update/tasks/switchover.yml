@@ -30,6 +30,7 @@
         url: http://{{ inventory_hostname }}:{{ patroni_restapi_port | default('8008') }}/leader
         status_code: 200
       register: patroni_leader_recheck
+      ignore_errors: true
       environment:
         no_proxy: "{{ inventory_hostname }}"
       changed_when: false
@@ -61,5 +62,5 @@
     no_proxy: "{{ inventory_hostname }}"
   when:
     (patronictl_switchover_result is defined and patronictl_switchover_result is success) or
-    (patroni_leader_recheck is defined and patroni_leader_recheck.status != 200) or
+    (patroni_leader_recheck is defined and patroni_leader_recheck.status | default('') != 200) or
     (patronictl_switchover_retry_result is defined and patronictl_switchover_retry_result is success)
