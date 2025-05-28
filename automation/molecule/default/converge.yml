@@ -19,8 +19,6 @@
         consul_bootstrap_expect: true # if dcs_type: "consul"
         postgresql_version: 17 # to test custom WAL dir
         pgbouncer_processes: 2 # Test multiple pgbouncer processes (so_reuseport)
-        patroni_installation_method: "{{ ([ 'deb' if ansible_os_family == 'Debian' else 'rpm', 'pip' ] | random) }}" # Randomly set to deb/rpm or pip
-        patroni_install_version: "{{ ['latest', '4.0.5'] | random }}"  # Randomly set Patroni version to 4.0.5 or latest
         patroni_tags: "datacenter=dc1,key1=value1"
         balancer_tags: "datacenter=dc1"
         cacheable: true
