@@ -442,10 +442,10 @@
 - name: Server info
   ansible.builtin.debug:
     msg:
-      id: "{{ item.instances[0].instance_id }}"
-      name: "{{ item.instances[0].tags.Name }}"
-      image: "{{ item.instances[0].image_id }}"
-      type: "{{ item.instances[0].instance_type }}"
+      id: "{{ item.instances[0].instance_id | default('N/A') }}"
+      name: "{{ item.instances[0].tags.Name | default('N/A') }}"
+      image: "{{ item.instances[0].image_id | default('N/A') }}"
+      type: "{{ item.instances[0].instance_type | default('N/A') }}"
       volume_size: "{{ volume_size }} GB"
       public_ip: "{{ item.instances[0].public_ip_address | default('N/A') }}"
       private_ip: "{{ item.instances[0].private_ip_address | default('N/A') }}"
