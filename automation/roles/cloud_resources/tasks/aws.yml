@@ -248,7 +248,7 @@
         security_groups: "{{ ([] if not cloud_firewall | bool else [patroni_cluster_name + '-security-group']) }}"
         vpc_subnet_id: "{{ server_network }}"
         network_interfaces:
-          - assign_public_ip: "{{ assign_public_ip }}"
+          - assign_public_ip: "{{ server_public_ip }}"
             delete_on_termination: true
         volumes:
           - device_name: /dev/sda1
@@ -267,7 +267,7 @@
         label: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}"
       register: server_result
       until:
-        - (assign_public_ip | bool) == false or (server_result.instances[0].public_ip_address is defined and server_result.instances[0].public_ip_address | length > 0)
+        - (server_public_ip | bool) == false or (server_result.instances[0].public_ip_address is defined and server_result.instances[0].public_ip_address | length > 0)
       retries: 3
       delay: 10
       when: not server_spot | default(aws_ec2_spot_instance | default(false)) | bool
@@ -305,7 +305,7 @@
               network_interfaces:
                 - subnet_id: "{{ server_network }}"
                   groups: "{{ ec2_security_group_result.group_id }}"
-                  associate_public_ip_address: "{{ assign_public_ip }}"
+                  associate_public_ip_address: "{{ server_public_ip }}"
                   delete_on_termination: true
                   device_index: 0
               block_device_mappings:
@@ -342,7 +342,7 @@
             label: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}"
           register: ec2_spot_instance_result
           until:
-            - (assign_public_ip | bool) == false or (ec2_spot_instance_result.instances[0].public_ip_address is defined and ec2_spot_instance_result.instances[0].public_ip_address | length > 0)
+            - (server_public_ip | bool) == false or (ec2_spot_instance_result.instances[0].public_ip_address is defined and ec2_spot_instance_result.instances[0].public_ip_address | length > 0)
           retries: 3
           delay: 10
           when: item.spot_request.spot_instance_request_id is defined
@@ -440,7 +440,7 @@
       image: "{{ item.instances[0].image_id }}"
       type: "{{ item.instances[0].instance_type }}"
       volume_size: "{{ volume_size }} GB"
-      public_ip: "{{ item.instances[0].public_ip_address if assign_public_ip | bool else '' }}"
+      public_ip: "{{ item.instances[0].public_ip_address if server_public_ip | bool else '' }}"
       private_ip: "{{ item.instances[0].private_ip_address }}"
   loop: "{{ server_result.results }}"
   loop_control:
@@ -461,7 +461,7 @@
         ip_addresses: >-
           {{ ip_addresses +
             [{
-              'public_ip': (item.instances[0].public_ip_address if (assign_public_ip | bool and item.instances[0].public_ip_address is defined) else ''),
+              'public_ip': (item.instances[0].public_ip_address if (server_public_ip | bool and item.instances[0].public_ip_address is defined) else ''),
               'private_ip': item.instances[0].private_ip_address
             }]
           }}

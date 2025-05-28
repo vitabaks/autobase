@@ -10,6 +10,7 @@ server_image: "" # (required) OS image for the server. For Azure, use variables 
 server_location: "" # (required) Server location or region.
 server_network: "" # (optional) If provided, the server will be added to this network (needs to be created beforehand).
 server_spot: false # Spot instance. Applicable for AWS, GCP, Azure.
+server_public_ip: true # Determines if a public IP should be assigned to the created instance.
 
 volume_type: "" # Volume type. Defaults: 'gp3' for AWS, 'pd-ssd' for GCP, 'StandardSSD_LRS' for Azure.
 volume_size: 100 # Storage size for the data directory (in gigabytes).
@@ -32,9 +33,6 @@ database_public_allowed_ips: "" # (comma-separated list of IP addresses in CIDR 
 
 # Load balancer
 cloud_load_balancer: true # Create a Load Balancer in the Cloud.
-
-# EC2 Instance Assign Public IP
-assign_public_ip: true # either to assign public ip or not to the instance created
 
 # Backups (if 'pgbackrest_install' or 'wal_g_install' is 'true')
 aws_s3_bucket_create: true # if 'cloud_provider=aws'
