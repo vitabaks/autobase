@@ -447,8 +447,8 @@
       image: "{{ item.instances[0].image_id }}"
       type: "{{ item.instances[0].instance_type }}"
       volume_size: "{{ volume_size }} GB"
-      public_ip: "{{ item.instances[0].public_ip_address if server_public_ip | bool else '' }}"
-      private_ip: "{{ item.instances[0][ip_address_type] }}"
+      public_ip: "{{ item.instances[0].public_ip_address | default('N/A') }}"
+      private_ip: "{{ item.instances[0].private_ip_address | default('N/A') }}"
   loop: "{{ server_result.results }}"
   loop_control:
     label: "{{ item.instances[0][ip_address_type] | default('N/A') }}"
@@ -468,12 +468,12 @@
           {{ ip_addresses +
             [{
               'public_ip': (item.instances[0].public_ip_address if (server_public_ip | bool and item.instances[0].public_ip_address is defined) else ''),
-              'private_ip': item.instances[0][ip_address_type]
+              'private_ip': item.instances[0].private_ip_address
             }]
           }}
       loop: "{{ server_result.results | selectattr('instances', 'defined') }}"
       loop_control:
-        label: "public_ip: {{ item.instances[0].public_ip_address | default('N/A') }}, private_ip: {{ item.instances[0][ip_address_type] | default('N/A') }}"
+        label: "public_ip: {{ item.instances[0].public_ip_address | default('N/A') }}, private_ip: {{ item.instances[0].private_ip_address | default('N/A') }}"
 
     - name: "Inventory | Generate in-memory inventory"
       ansible.builtin.import_tasks: inventory.yml
