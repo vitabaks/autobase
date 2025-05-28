@@ -458,16 +458,12 @@
 
 # Inventory
 - block:
-    - name: "Inventory | Initialize ip_addresses variable"
-      ansible.builtin.set_fact:
-        ip_addresses: []
-
     - name: "Inventory | Extract IP addresses"
       ansible.builtin.set_fact:
         ip_addresses: >-
-          {{ ip_addresses +
+          {{ ip_addresses | default([]) +
             [{
-              'public_ip': (item.instances[0].public_ip_address if (server_public_ip | bool and item.instances[0].public_ip_address is defined) else ''),
+              'public_ip': item.instances[0].public_ip_address | default(''),
               'private_ip': item.instances[0].private_ip_address
             }]
           }}
