@@ -154,36 +154,20 @@ docker run -d --name autobase-console \
   --restart=unless-stopped \
   autobase/console:latest
 ```
-Alternatively, you can use Docker Compose. Create a `docker-compose.yml` file with the following content:
+Alternatively, you can use Docker Compose:
 
-```yaml
-version: '3.8'
+1. Clone the repository:
+   ```sh
+   git clone https://github.com/vitabaks/autobase.git
+   cd autobase
+   ```
 
-services:
-  autobase-console:
-    image: autobase/console:latest
-    container_name: autobase-console
-    ports:
-      - "80:80"
-      - "8080:8080"
-    environment:
-      - PG_CONSOLE_API_URL=http://localhost:8080/api/v1
-      - PG_CONSOLE_AUTHORIZATION_TOKEN=secret_token
-      - PG_CONSOLE_DOCKER_IMAGE=autobase/automation:latest
-    volumes:
-      - console_postgres:/var/lib/postgresql
-      - /var/run/docker.sock:/var/run/docker.sock
-      - /tmp/ansible:/tmp/ansible
-    restart: unless-stopped
-
-volumes:
-  console_postgres:
-```
-
-Then run:
-```sh
-docker compose up -d
-```
+2. Navigate to the `console` directory and run Docker Compose:
+   ```sh
+   cd console
+   docker compose up -d
+   ```
+You can find the Docker Compose file at [`console/docker-compose.yml`](console/docker-compose.yml:1).
 
 > [!NOTE]
 > If you are running the console on a dedicated server (rather than on your laptop), replace `localhost` with the server’s IP address in the `PG_CONSOLE_API_URL` variable.
