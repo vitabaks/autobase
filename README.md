@@ -154,26 +154,14 @@ docker run -d --name autobase-console \
   --restart=unless-stopped \
   autobase/console:latest
 ```
-Alternatively, you can use Docker Compose:
-
-1. Clone the repository:
-   ```sh
-   git clone https://github.com/vitabaks/autobase.git
-   cd autobase
-   ```
-
-2. Navigate to the `console` directory and run Docker Compose:
-   ```sh
-   cd console
-   docker compose up -d
-   ```
-You can find the Docker Compose file at [`console/docker-compose.yml`](console/docker-compose.yml:1).
 
 > [!NOTE]
 > If you are running the console on a dedicated server (rather than on your laptop), replace `localhost` with the server’s IP address in the `PG_CONSOLE_API_URL` variable.
 
 > [!TIP]
 > It is recommended to run the console in the same network as your database servers to enable monitoring of the cluster status.
+
+Alternatively, you can use [Docker Compose](console/README.md).
 
 **Open the Console UI**:
 
