@@ -5,7 +5,7 @@ Autobase stack running with Caddy as reverse proxy. The stack includes:
 - Caddy (reverse proxy with automatic HTTPS)
 - Console API
 - Console UI
-- Console Database (PostgreSQL)
+- Console DB (PostgreSQL)
 
 You can find the Docker Compose file at [`console/docker-compose.yml`](docker-compose.yml)
 
