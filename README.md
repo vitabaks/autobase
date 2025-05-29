@@ -161,6 +161,8 @@ docker run -d --name autobase-console \
 > [!TIP]
 > It is recommended to run the console in the same network as your database servers to enable monitoring of the cluster status.
 
+Alternatively, you can use [Docker Compose](console/README.md).
+
 **Open the Console UI**:
 
 Go to http://localhost:80 (or the address of your server) and use `secret_token` for authorization.

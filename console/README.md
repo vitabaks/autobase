@@ -1,33 +1,42 @@
-# Console Stack
+# Autobase Console Stack
 
 Autobase stack running with Caddy as reverse proxy. The stack includes:
 
-- Caddy reverse proxy with automatic HTTPS
+- Caddy (reverse proxy with automatic HTTPS)
 - Console API
 - Console UI
-- PostgreSQL database
+- Console DB (PostgreSQL)
+
+You can find the Docker Compose file at [`console/docker-compose.yml`](docker-compose.yml)
 
 ## Quick Start
 
-1. Setup environment:
+1. Clone the repository:
+    ```sh
+    git clone https://github.com/vitabaks/autobase.git
+    ```
 
-```bash
-cp .env.example .env
-```
+2. Navigate to the `console` directory:
+    ```sh
+    cd autobase/console
+    ```
 
-2. Configure your `.env`:
+3. Setup environment:
+    ```sh
+    cp .env.example .env
+    ```
 
-```bash
-DOMAIN=your-domain.com  # Set your domain
-EMAIL=your@email.com    # Required for Caddy SSL
-AUTH_TOKEN=your-token   # Your authorization token
-```
+4. Configure your `.env`:
+    ```sh
+    DOMAIN=your-domain.com  # Set your domain
+    EMAIL=your@email.com    # Required for Caddy SSL
+    AUTH_TOKEN=your-token   # Your authorization token
+    ```
 
-3. Run the stack:
-
-```bash
-docker compose up -d
-```
+5. Run Docker Compose:
+    ```sh
+    docker compose up -d
+    ```
 
 ## Notes
 
