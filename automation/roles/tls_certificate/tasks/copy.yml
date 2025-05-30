@@ -3,7 +3,6 @@
   run_once: true
   ansible.builtin.slurp:
     src: "{{ fetch_tls_dir | default(tls_dir | default('/etc/tls')) }}/{{ item }}"
-  delegate_to: "{{ selected_group[0] }}"
   register: tls_files
   loop:
     - "{{ fetch_tls_privatekey | default(tls_privatekey | default('server.key')) }}"
