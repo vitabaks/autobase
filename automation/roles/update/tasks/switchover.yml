@@ -1,22 +1,57 @@
 ---
-- name: Perform switchover of the leader for the Patroni cluster "{{ patroni_cluster_name }}"
+# Check if switchover is required
+- name: Check current Patroni node role
   ansible.builtin.uri:
-    url: http://{{ inventory_hostname }}:{{ patroni_restapi_port }}/switchover
-    method: POST
-    user: "{{ patroni_restapi_username | default(omit) }}"
-    password: "{{ patroni_restapi_password | default(omit) }}"
-    body: '{"leader":"{{ ansible_hostname }}"}'
-    body_format: json
-  register: patroni_switchover_result
-  until: patroni_switchover_result.status == 200
-  retries: 300
-  delay: 2
+    url: http://{{ inventory_hostname }}:{{ patroni_restapi_port | default('8008') }}/leader
+    status_code: 200
+  register: patroni_leader_result
   environment:
     no_proxy: "{{ inventory_hostname }}"
+  changed_when: false
 
+# If the node is the current leader, perform switchover
+- name: Perform switchover of the Patroni leader role to another node
+  become: true
+  become_user: postgres
+  ansible.builtin.command: "patronictl -c /etc/patroni/patroni.yml switchover {{ patroni_cluster_name }} --force"
+  register: patronictl_switchover_result
+  ignore_errors: true # show the error and continue the playbook execution
+  environment:
+    PATH: "{{ ansible_env.PATH }}:/usr/bin:/usr/local/bin"
+  when:
+    - patroni_leader_result.status is defined
+    - patroni_leader_result.status == 200
+
+# Retry switchover if the first attempt failed and the node is still leader
+- block:
+    # Recheck if the node is still the leader
+    - name: Check Patroni node role
+      ansible.builtin.uri:
+        url: http://{{ inventory_hostname }}:{{ patroni_restapi_port | default('8008') }}/leader
+        status_code: 200
+      register: patroni_leader_recheck
+      changed_when: false
+      environment:
+        no_proxy: "{{ inventory_hostname }}"
+
+    # If still leader, retry switchover
+    - name: Perform switchover of the Patroni leader role to another node (RETRY)
+      become: true
+      become_user: postgres
+      ansible.builtin.command: "patronictl -c /etc/patroni/patroni.yml switchover {{ patroni_cluster_name }} --force"
+      register: patronictl_switchover_retry_result
+      environment:
+        PATH: "{{ ansible_env.PATH }}:/usr/bin:/usr/local/bin"
+      when: patroni_leader_recheck.status | default('') == 200
+  ignore_errors: true # show the error and continue the playbook execution
+  when:
+    - patronictl_switchover_result is defined
+    - not patronictl_switchover_result is success
+
+# If the switchover is performed, make sure that the node is now a replica
 - name: Make sure that the Patroni is healthy and is a replica
   ansible.builtin.uri:
-    url: http://{{ inventory_hostname }}:{{ patroni_restapi_port }}/replica
+    url: http://{{ inventory_hostname }}:{{ patroni_restapi_port | default('8008') }}/replica
     status_code: 200
   register: patroni_replica_result
   until: patroni_replica_result.status == 200
@@ -24,3 +59,7 @@
   delay: 2
   environment:
     no_proxy: "{{ inventory_hostname }}"
+  when:
+    (patronictl_switchover_result is defined and patronictl_switchover_result is success) or
+    (patroni_leader_recheck is defined and patroni_leader_recheck.status | default('') != 200) or
+    (patronictl_switchover_retry_result is defined and patronictl_switchover_retry_result is success)
