@@ -1,7 +1,7 @@
 ansible==9.13.0
 ansible-compat==25.5.0
 ansible-core==2.16.14
-ansible-lint==25.4.0
+ansible-lint==25.5.0
 attrs==25.3.0
 black==25.1.0
 bracex==2.5.post1
