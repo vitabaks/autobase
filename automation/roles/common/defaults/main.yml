@@ -1117,7 +1117,7 @@ packages_from_file: []
 # ----------------------------------------------------------------------------------------------------
 # Redefine the installation method (optional)
 # ----------------------------------------------------------------------------------------------------
-installation_method: "packages" # "packages" = install via deb/rpm packages; "docker" = use container images (TODO).
+installation_method: "packages" # "packages" = install via deb/rpm packages; "docker" = use container images.
 
 # The Patroni package will be installed from the deb/rpm package by default.
 # You also have the option of choosing an installation method using the pip package.
@@ -1140,6 +1140,25 @@ patroni_pip_requirements_repo: []
 #  - "https://<my_repo>/<package_1>.tar.gz"
 #  - "https://<my_repo>/<package_n>.tar.gz"
 pip_package_repo: "https://bootstrap.pypa.io/get-pip.py" # latest version pip3 for python3 (or use "pip-<version>.tar.gz").
+
+############################################################
+# Docker images (if installation_method: "docker")
+############################################################
+
+# Image with PostgreSQL, extensions, Patroni, and backup tools.
+postgresql_image: "autobase/postgresql-cluster:{{ postgresql_version }}"
+
+# if dcs_type: "etcd" and dcs_exists: false
+etcd_image: "bitnami/etcd:{{ etcd_version }}"
+
+# if dcs_type: "consul" and dcs_exists: false
+consul_image: "bitnami/consul:{{ consul_version }}"
+
+# if pgbouncer_install: true
+pgbouncer_image: "bitnami/pgbouncer{{ pgbouncer_version | default('latest') }}"
+
+# if with_haproxy_load_balancing: true
+haproxy_image: "bitnami/haproxy:{{ haproxy_version | default('3.2.0') }}"
 
 ############################################################
 # Other variables
