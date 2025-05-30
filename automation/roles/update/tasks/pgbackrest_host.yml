@@ -12,7 +12,7 @@
       ansible.builtin.shell: dnf clean all && dnf -y makecache
       args:
         executable: /bin/bash
-      when: 
+      when:
         - ansible_os_family == "RedHat"
         - "'pgbackrest' in group_names"
 
@@ -25,7 +25,7 @@
       until: apt_status is success
       delay: 5
       retries: 3
-      when: 
+      when:
         - ansible_os_family == "Debian"
         - "'pgbackrest' in group_names"
 

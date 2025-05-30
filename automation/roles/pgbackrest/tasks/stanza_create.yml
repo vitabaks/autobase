@@ -39,7 +39,7 @@
       run_once: true
       ansible.builtin.set_fact:
         repo1_path: "{{ pgbackrest_server_conf['global'] | selectattr('option', 'equalto', 'repo1-path') | map(attribute='value') | list | first }}"
-      when: 
+      when:
         - pgbackrest_repo_type | lower == 'posix'
         - "'pgbackrest' in group_names"
 
@@ -51,7 +51,7 @@
         owner: "{{ pgbackrest_repo_user }}"
         group: "{{ pgbackrest_repo_user }}"
         mode: "0750"
-      when: 
+      when:
         - repo1_path | default('') | length > 0
         - "'pgbackrest' in group_names"
 

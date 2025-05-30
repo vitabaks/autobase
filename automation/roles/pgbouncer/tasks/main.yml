@@ -174,7 +174,7 @@
         dest: "{{ files_dir | default(playbook_dir ~ '/files') }}/"
         validate_checksum: true
         flat: true
-      when: 
+      when:
         - not pgbouncer_auth_user|bool
         - when: "'master' in group_names"
 
