@@ -30,10 +30,9 @@
         url: http://{{ inventory_hostname }}:{{ patroni_restapi_port | default('8008') }}/leader
         status_code: 200
       register: patroni_leader_recheck
-      ignore_errors: true
+      changed_when: false
       environment:
         no_proxy: "{{ inventory_hostname }}"
-      changed_when: false
 
     # If still leader, retry switchover
     - name: Perform switchover of the Patroni leader role to another node (RETRY)
@@ -41,10 +40,10 @@
       become_user: postgres
       ansible.builtin.command: "patronictl -c /etc/patroni/patroni.yml switchover {{ patroni_cluster_name }} --force"
       register: patronictl_switchover_retry_result
-      ignore_errors: false
       environment:
         PATH: "{{ ansible_env.PATH }}:/usr/bin:/usr/local/bin"
-      when: patroni_leader_recheck.status == 200
+      when: patroni_leader_recheck.status | default('') == 200
+  ignore_errors: true # show the error and continue the playbook execution
   when:
     - patronictl_switchover_result is defined
     - not patronictl_switchover_result is success
