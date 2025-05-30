@@ -7,223 +7,32 @@
   when: hostvars[groups['postgres_cluster'][0]].ansible_hostname is not defined
 
 # Install HAProxy from rpm/deb packages
-
-# RedHat
-- name: Install HAProxy package
-  ansible.builtin.package:
-    name: haproxy
-    state: present
-  register: package_status
-  until: package_status is success
-  delay: 5
-  retries: 3
-  environment: "{{ proxy_env | default({}) }}"
-  when:
-    - ansible_os_family == "RedHat"
-    - installation_method == "repo"
-    - haproxy_installation_method == "rpm"
-  tags: haproxy, load_balancing
-
-# Debian
-- name: Install HAProxy package
-  ansible.builtin.apt:
-    name: haproxy
-    state: present
-  register: apt_status
-  until: apt_status is success
-  delay: 5
-  retries: 3
-  environment: "{{ proxy_env | default({}) }}"
-  when:
-    - ansible_os_family == "Debian"
-    - installation_method == "repo"
-    - haproxy_installation_method == "deb"
-  tags: haproxy, load_balancing
-
-# from file (rpm/deb packages)
 - block:
-    - name: Copy packages into /tmp
-      ansible.builtin.copy:
-        src: "{{ files_dir | default(playbook_dir ~ '/files') }}/{{ item }}"
-        dest: /tmp/
-      loop: "{{ haproxy_package_file }}"
-      register: copy_packages_result
-
-    - name: Install packages
-      ansible.builtin.apt:
-        force_apt_get: true
-        deb: "/tmp/{{ item }}"
-        state: present
-      loop: "{{ haproxy_package_file | map('basename') | list }}"
-      register: apt_status
-      until: apt_status is success
-      delay: 5
-      retries: 3
-      when: ansible_os_family == "Debian" and copy_packages_result.changed
-
-    - name: Install packages
+    # RedHat
+    - name: Install HAProxy package
       ansible.builtin.package:
-        name: "/tmp/{{ item }}"
+        name: haproxy
         state: present
-      loop: "{{ haproxy_package_file | map('basename') | list }}"
       register: package_status
       until: package_status is success
       delay: 5
       retries: 3
-      when: ansible_os_family == "RedHat" and copy_packages_result.changed
-  when: haproxy_package_file is defined and haproxy_package_file | length > 0
-  tags: haproxy, load_balancing
-
-# Build and install HAproxy from source
-- name: Setting facts
-  ansible.builtin.set_fact:
-    target_linux: "{% if haproxy_major is version('2.0', '>=') %}linux-glibc{% else %}linux2628{% endif %}"
-  when: haproxy_installation_method == "src"
-  tags: haproxy, load_balancing
-
-# from repo
-- block:
-    - name: "Download HAProxy and lua source files"
-      ansible.builtin.get_url:
-        url: "{{ item }}"
-        dest: /tmp/
-        timeout: 120
-        validate_certs: false
-      loop:
-        - "{{ haproxy_src_repo }}"
-        - "{{ lua_src_repo }}"
       environment: "{{ proxy_env | default({}) }}"
+      when: ansible_os_family == "RedHat"
+      tags: haproxy, load_balancing
 
-    - name: "Extract HAProxy source files into /tmp"
-      ansible.builtin.unarchive:
-        src: "/tmp/{{ haproxy_src_repo | basename }}"
-        dest: /tmp/
-        extra_opts:
-          - --no-same-owner
-        remote_src: true
-      when: haproxy_src_repo | length > 0
-
-    - name: "Extract lua source files into /tmp"
-      ansible.builtin.unarchive:
-        src: "/tmp/{{ lua_src_repo | basename }}"
-        dest: /tmp/
-        extra_opts:
-          - --no-same-owner
-        remote_src: true
-      when: lua_src_repo | length > 0
-      tags: lua
-  when: installation_method == "repo" and haproxy_installation_method == "src"
-  tags: haproxy, load_balancing
-
-# from file
-- block:
-    - name: "Extract HAProxy source files into /tmp"
-      ansible.builtin.unarchive:
-        src: "{{ haproxy_src_file }}"
-        dest: /tmp/
-        extra_opts:
-          - --no-same-owner
-      when: haproxy_src_file | length > 0
-
-    - name: "Extract lua source files into /tmp"
-      ansible.builtin.unarchive:
-        src: "{{ lua_src_file }}"
-        dest: /tmp/
-        extra_opts:
-          - --no-same-owner
-      when: lua_src_file | length > 0
-      tags: lua
-  when: installation_method == "file" and haproxy_installation_method == "src"
-  tags: haproxy, load_balancing
-
-- name: Install the prerequisites packages to compile HAProxy
-  ansible.builtin.package:
-    name: "{{ item }}"
-    state: present
-  loop: "{{ haproxy_compile_requirements | flatten }}"
-  register: package_status
-  until: package_status is success
-  delay: 5
-  retries: 3
-  environment: "{{ proxy_env | default({}) }}"
-  when: haproxy_installation_method == "src"
-  tags: haproxy, haproxy_requirements, load_balancing
-
-- block:
-    - name: Build and install lua (required for haproxy)
-      become: true
-      become_user: root
-      ansible.builtin.shell: "make INSTALL_TOP=/opt/{{ lua_src_repo.split('.tar.gz')[0] | basename }} linux install"
-      args:
-        chdir: "/tmp/{{ lua_src_repo.split('.tar.gz')[0] | basename }}"
-      tags: lua
-
-    - name: Build HAProxy
-      become: true
-      become_user: root
-      community.general.make:
-        chdir: "/tmp/{{ haproxy_src_repo.split('.tar.gz')[0] | basename }}"
-        params:
-          TARGET: "{{ target_linux }}"
-          USE_GETADDRINFO: 1
-          USE_ZLIB: 1
-          USE_REGPARM: 1
-          USE_OPENSSL: 1
-          USE_LIBCRYPT: 1
-          USE_SYSTEMD: 1
-          USE_PCRE: 1
-          USE_NS: 1
-          USE_TFO: 1
-          USE_LUA: 1
-          LUA_INC: "/opt/{{ lua_src_repo.split('.tar.gz')[0] | basename }}/include"
-          LUA_LIB: "/opt/{{ lua_src_repo.split('.tar.gz')[0] | basename }}/lib"
-
-    - name: Install HAProxy
-      become: true
-      become_user: root
-      community.general.make:
-        chdir: "/tmp/{{ haproxy_src_repo.split('.tar.gz')[0] | basename }}"
-        target: install
-  when: installation_method == "repo" and haproxy_installation_method == "src"
-  tags: haproxy, load_balancing
-
-# installation_method: "file"
-- block:
-    - name: Build and install lua (required for haproxy)
-      become: true
-      become_user: root
-      ansible.builtin.shell: "make INSTALL_TOP=/opt/{{ lua_src_file.split('.tar.gz')[0] | basename }} linux install"
-      args:
-        chdir: "/tmp/{{ lua_src_file.split('.tar.gz')[0] | basename }}"
-      tags: lua
-
-    - name: Build HAProxy
-      become: true
-      become_user: root
-      community.general.make:
-        chdir: "/tmp/{{ haproxy_src_file.split('.tar.gz')[0] | basename }}"
-        params:
-          TARGET: "{{ target_linux }}"
-          USE_GETADDRINFO: 1
-          USE_ZLIB: 1
-          USE_REGPARM: 1
-          USE_OPENSSL: 1
-          USE_LIBCRYPT: 1
-          USE_SYSTEMD: 1
-          USE_PCRE: 1
-          USE_NS: 1
-          USE_TFO: 1
-          USE_LUA: 1
-          LUA_INC: "/opt/{{ lua_src_file.split('.tar.gz')[0] | basename }}/include"
-          LUA_LIB: "/opt/{{ lua_src_file.split('.tar.gz')[0] | basename }}/lib"
-
-    - name: Install HAProxy
-      become: true
-      become_user: root
-      community.general.make:
-        chdir: "/tmp/{{ haproxy_src_file.split('.tar.gz')[0] | basename }}"
-        target: install
-  when: installation_method == "file" and haproxy_installation_method == "src"
+    # Debian
+    - name: Install HAProxy package
+      ansible.builtin.apt:
+        name: haproxy
+        state: present
+      register: apt_status
+      until: apt_status is success
+      delay: 5
+      retries: 3
+      environment: "{{ proxy_env | default({}) }}"
+      when: ansible_os_family == "Debian"
+  when: installation_method == "packages"
   tags: haproxy, load_balancing
 
 # Configure
@@ -375,8 +184,7 @@
       environment: "{{ proxy_env | default({}) }}"
       when:
         - ansible_os_family == "RedHat"
-        - installation_method == "repo"
-        - haproxy_installation_method == "rpm"
+        - installation_method == "packages"
 
     - name: selinux | set haproxy_connect_any flag to enable tcp connections
       ansible.posix.seboolean:

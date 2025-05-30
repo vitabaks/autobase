@@ -2,11 +2,7 @@
 prefix = "/{{ patroni_etcd_namespace | default('service') }}/{{ patroni_cluster_name }}"
 src = "haproxy.tmpl"
 dest = "/etc/haproxy/haproxy.cfg"
-{% if haproxy_installation_method == "src" %}
-check_cmd = "/usr/local/sbin/haproxy -c -f {% raw %}{{ .src }}{% endraw %}"
-{% else %}
 check_cmd = "/usr/sbin/haproxy -c -f {% raw %}{{ .src }}{% endraw %}"
-{% endif %}
 reload_cmd = "/bin/systemctl reload haproxy"
 
 keys = [

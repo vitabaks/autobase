@@ -7,7 +7,7 @@
         name: tzdata
         state: present
       environment: "{{ proxy_env | default({}) }}"
-      when: installation_method == "repo"
+      when: installation_method == "packages"
 
     - name: Set timezone to "{{ timezone }}"
       become: true

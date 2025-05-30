@@ -1052,6 +1052,15 @@ postgresql_os_specific_packages:
 #   - pg_partman_{{ postgresql_version }}
 postgresql_packages: "{{ postgresql_os_specific_packages[ansible_os_family] }}"
 
+patroni_os_specific_packages:
+  Debian:
+    - python3-{{ dcs_type }}
+  RedHat:
+    - patroni-{{ dcs_type }}
+patroni_packages:
+  - patroni
+  - "{{ patroni_os_specific_packages[ansible_os_family] }}"
+
 python_version: "3" # override the version (e.q, 3.11) only if patroni_installation_method: "pip" is used
 
 system_os_specific_packages:
@@ -1100,25 +1109,21 @@ etcd_package_repo: "https://github.com/etcd-io/etcd/releases/download/v{{ etcd_v
 vip_manager_package_repo: "https://github.com/cybertec-postgresql/vip-manager/releases/download/v{{ vip_manager_version }}/vip-manager_{{ vip_manager_version }}_Linux_{{ vip_manager_architecture_map[ansible_architecture] }}.{{ pkg_type }}" # yamllint disable rule:line-length
 confd_package_repo: "https://github.com/kelseyhightower/confd/releases/download/v0.16.0/confd-0.16.0-linux-{{ confd_architecture_map[ansible_architecture] }}"
 
+# You can also download the deb/rpm packages into the 'files/' directory.
+# Packages from this directory will be used during installation (optional).
+packages_from_file: []
+#  - "<package_file_name>.{{ pkg_type }}"
+
 # ----------------------------------------------------------------------------------------------------
 # Redefine the installation method (optional)
 # ----------------------------------------------------------------------------------------------------
-installation_method: "repo" # "repo" (default) or "file"
+installation_method: "packages" # "packages" = install via deb/rpm packages; "docker" = use container images (TODO).
 
 # The Patroni package will be installed from the deb/rpm package by default.
 # You also have the option of choosing an installation method using the pip package.
 patroni_installation_method: "{{ pkg_type }}" # deb/rpm (default) or "pip"
 
 # if patroni_installation_method: "deb" or "rpm"
-patroni_os_specific_packages:
-  Debian:
-    - python3-{{ dcs_type }}
-  RedHat:
-    - patroni-{{ dcs_type }}
-patroni_packages:
-  - patroni
-  - "{{ patroni_os_specific_packages[ansible_os_family] }}"
-
 # You can preload the Patroni package to your own repository.
 patroni_deb_package_repo: []
 #  - "https://<my_repo>/patroni_<version>-1.pgdg24.04+1_all.deb"
@@ -1127,87 +1132,14 @@ patroni_rpm_package_repo: []
 
 # if patroni_installation_method: "pip"
 patroni_install_version: "latest" # or a specific version (e.q., '4.0.5')
-# pip packages are installed from the public PyPI repository. You can preload the pip packages to your own repository.
-pip_package_repo: "https://bootstrap.pypa.io/get-pip.py" # latest version pip3 for python3 (or use "pip-<version>.tar.gz").
+# pip packages are installed from the public PyPI repository.
+# You can preload the pip packages to your own repository.
 patroni_pip_package_repo: []
 # - "https://<my_repo>/patroni-<version>.tar.gz"
 patroni_pip_requirements_repo: []
 #  - "https://<my_repo>/<package_1>.tar.gz"
 #  - "https://<my_repo>/<package_n>.tar.gz"
-
-# if with_haproxy_load_balancing: true
-haproxy_installation_method: "{{ pkg_type }}" # deb/rpm or "src"
-
-# if haproxy_installation_method: "src"
-haproxy_major: "{{ haproxy_version.split('.')[:2] | join('.') }}"
-# renovate: datasource=github-tags depName=haproxy/haproxy extractVersion=^v(?<version>.*)$
-haproxy_version: "1.8.31" # version to build from source
-# renovate: datasource=github-releases depName=lua/lua extractVersion=^v(?<version>.*)$
-lua_version: 5.4.7
-lua_src_repo: "https://www.lua.org/ftp/lua-{{ lua_version }}.tar.gz" # required for build haproxy
-haproxy_src_repo: "https://www.haproxy.org/download/{{ haproxy_major }}/src/haproxy-{{ haproxy_version }}.tar.gz"
-haproxy_os_specific_packages:
-  Debian:
-    - unzip
-    - gzip
-    - make
-    - gcc
-    - build-essential
-    - libc6-dev
-    - libpcre3-dev
-    - liblua5.3-dev
-    - libreadline-dev
-    - zlib1g-dev
-    - libsystemd-dev
-    - ca-certificates
-    - libssl-dev
-  RedHat:
-    - unzip
-    - gzip
-    - make
-    - gcc
-    - gcc-c++
-    - pcre-devel
-    - zlib-devel
-    - readline-devel
-    - openssl
-    - openssl-devel
-    - openssl-libs
-    - systemd-devel
-haproxy_compile_requirements: "{{ haproxy_os_specific_packages[ansible_os_family] }}"
-
-############################################################
-# Offline installation (if installation_method: "file")
-############################################################
-
-# You can also download the required packages into the 'files/' directory.
-# Packages from this directory will be used during installation.
-# Note: You are responsible for providing all required package dependencies for your specific Linux distribution version.
-
-# if patroni_installation_method: "deb" or "rpm"
-patroni_deb_package_file: ""
-patroni_rpm_package_file: ""
-
-# if patroni_installation_method: "pip"
-pip_package_file: ""
-patroni_pip_requirements_file: []
-patroni_pip_package_file: []
-
-# additional packages
-etcd_package_file: ""
-vip_manager_package_file: ""
-wal_g_package_file: ""
-
-# if with_haproxy_load_balancing: true
-haproxy_package_file: []
-confd_package_file: ""
-# if haproxy_installation_method: 'src'
-lua_src_file: ""
-haproxy_src_file: ""
-
-# Specify any required packages, these packages will be installed before all other dependencies (for any installation method).
-packages_from_file: []
-#  - "<package_file_name>.{{ pkg_type }}"
+pip_package_repo: "https://bootstrap.pypa.io/get-pip.py" # latest version pip3 for python3 (or use "pip-<version>.tar.gz").
 
 ############################################################
 # Other variables

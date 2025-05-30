@@ -38,7 +38,7 @@
       when:
         - new_node | default(false) | bool
         - ansible_os_family == "Debian"
-        - installation_method | default('repo') == "repo"
+        - installation_method | default('packages') == "packages"
 
     - name: Make sure the gnupg and apt-transport-https packages are present
       ansible.builtin.apt:
@@ -54,7 +54,7 @@
       when:
         - new_node | default(false) | bool
         - ansible_os_family == "Debian"
-        - installation_method | default('repo') == "repo"
+        - installation_method | default('packages') == "packages"
 
     - name: Build a firewall_ports_dynamic_var
       ansible.builtin.set_fact:

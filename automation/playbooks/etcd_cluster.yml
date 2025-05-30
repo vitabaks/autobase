@@ -16,7 +16,7 @@
       delay: 5
       retries: 3
       environment: "{{ proxy_env | default({}) }}"
-      when: ansible_os_family == "Debian" and installation_method | default('repo') == "repo"
+      when: ansible_os_family == "Debian" and installation_method | default('packages') == "packages"
 
     - name: Make sure the gnupg and apt-transport-https packages are present
       ansible.builtin.apt:
@@ -29,7 +29,7 @@
       delay: 5
       retries: 3
       environment: "{{ proxy_env | default({}) }}"
-      when: ansible_os_family == "Debian" and installation_method | default('repo') == "repo"
+      when: ansible_os_family == "Debian" and installation_method | default('packages') == "packages"
 
     - name: Build a firewall_ports_dynamic_var
       ansible.builtin.set_fact:

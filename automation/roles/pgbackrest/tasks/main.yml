@@ -42,7 +42,7 @@
       retries: 3
   environment: "{{ proxy_env | default({}) }}"
   when:
-    - installation_method == "repo"
+    - installation_method == "packages"
     - ansible_os_family == "Debian"
     - pgbackrest_install_from_pgdg_repo|bool
   tags: pgbackrest, pgbackrest_repo, pgbackrest_install
@@ -69,7 +69,7 @@
       ansible.builtin.command: dnf clean all
   environment: "{{ proxy_env | default({}) }}"
   when:
-    - installation_method == "repo"
+    - installation_method == "packages"
     - ansible_os_family == "RedHat"
     - pgbackrest_install_from_pgdg_repo|bool
   tags: pgbackrest, pgbackrest_repo, pgbackrest_install
