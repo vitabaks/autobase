@@ -1114,9 +1114,9 @@ confd_package_repo: "https://github.com/kelseyhightower/confd/releases/download/
 packages_from_file: []
 #  - "<package_file_name>.{{ pkg_type }}"
 
-# ----------------------------------------------------------------------------------------------------
+# ----------------------------------------------------------
 # Redefine the installation method (optional)
-# ----------------------------------------------------------------------------------------------------
+# ----------------------------------------------------------
 installation_method: "packages" # "packages" = install via deb/rpm packages; "docker" = use container images.
 
 # The Patroni package will be installed from the deb/rpm package by default.
