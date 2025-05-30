@@ -34,7 +34,7 @@
         "SELECT concat('\"', usename, '\" \"', passwd, '\"') FROM pg_shadow where usename != '{{ patroni_replication_username }}'"
       register: pg_shadow_result
       changed_when: false
-      delegate_to: "{{ groups.master[0] }}"
+      when: "'master' in group_names"
 
     - name: "Generate {{ pgbouncer_conf_dir }}/userlist.txt"
       become: true

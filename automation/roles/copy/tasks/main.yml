@@ -9,10 +9,10 @@
     flat: true
     validate_checksum: true
   loop: "{{ fetch_files_from_master }}"
-  delegate_to: "{{ groups.master[0] }}"
   when:
     - fetch_files_from_master is defined
     - fetch_files_from_master | length > 0
+    - "'master' in group_names"
   tags: fetch_files
 
 - name: Copy files to all servers

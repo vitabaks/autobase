@@ -165,7 +165,7 @@
       loop_control:
         index_var: idx
         label: "{{ 'pgbouncer' if idx == 0 else 'pgbouncer-%d' % (idx + 1) }}"
-      delegate_to: "{{ groups.master[0] }}"
+      when: "'master' in group_names"
 
     - name: Fetch userlist.txt conf file from master
       run_once: true
@@ -174,8 +174,9 @@
         dest: "{{ files_dir | default(playbook_dir ~ '/files') }}/"
         validate_checksum: true
         flat: true
-      delegate_to: "{{ groups.master[0] }}"
-      when: not pgbouncer_auth_user|bool
+      when: 
+        - not pgbouncer_auth_user|bool
+        - when: "'master' in group_names"
 
     - name: Copy pgbouncer.ini file to replica
       ansible.builtin.copy:

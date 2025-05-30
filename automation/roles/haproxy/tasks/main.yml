@@ -284,7 +284,7 @@
   tags: haproxy, haproxy_service, load_balancing
 
 - block: # for add_balancer.yml
-    - name: "Fetch haproxy.cfg file from {{ groups.balancers[0] }}"
+    - name: "Fetch haproxy.cfg file from {{ inventory_hostname }}"
       run_once: true
       ansible.builtin.fetch:
         src: /etc/haproxy/haproxy.cfg
@@ -292,7 +292,7 @@
         validate_checksum: true
         flat: true
       notify: "restart haproxy"
-      delegate_to: "{{ groups.balancers[0] }}"
+      when: "'balancers' in group_names"
 
     - name: Copy haproxy.cfg file to replica
       ansible.builtin.copy:

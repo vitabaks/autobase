@@ -99,7 +99,7 @@
         dest: "{{ files_dir | default(playbook_dir ~ '/files') }}/{{ vip_manager_conf | basename }}"
         validate_checksum: true
         flat: true
-      delegate_to: "{{ groups.master[0] }}"
+      when: "'master' in group_names"
 
     - name: Copy "{{ vip_manager_conf | basename }}" conf file to replica
       ansible.builtin.copy:

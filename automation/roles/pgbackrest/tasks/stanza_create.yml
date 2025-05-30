@@ -36,14 +36,14 @@
     # The delegate_to parameter is used to execute the task on a different host than the one specified in the play's hosts parameter.
     # In this case, the task is delegated to the first host in the pgbackrest group in the invetory.
     - name: Get repo1-path value
-      delegate_to: "{{ groups['pgbackrest'][0] }}"
       run_once: true
       ansible.builtin.set_fact:
         repo1_path: "{{ pgbackrest_server_conf['global'] | selectattr('option', 'equalto', 'repo1-path') | map(attribute='value') | list | first }}"
-      when: pgbackrest_repo_type | lower == 'posix'
+      when: 
+        - pgbackrest_repo_type | lower == 'posix'
+        - "'pgbackrest' in group_names"
 
     - name: "Make sure the {{ repo1_path }} directory exists"
-      delegate_to: "{{ groups['pgbackrest'][0] }}"
       run_once: true
       ansible.builtin.file:
         path: "{{ repo1_path }}"
@@ -51,15 +51,17 @@
         owner: "{{ pgbackrest_repo_user }}"
         group: "{{ pgbackrest_repo_user }}"
         mode: "0750"
-      when: repo1_path | default('') | length > 0
+      when: 
+        - repo1_path | default('') | length > 0
+        - "'pgbackrest' in group_names"
 
     - name: Create stanza "{{ pgbackrest_stanza }}"
       become: true
       become_user: "{{ pgbackrest_repo_user }}"
-      delegate_to: "{{ groups['pgbackrest'][0] }}"
       run_once: true
       ansible.builtin.command: "pgbackrest --stanza={{ pgbackrest_stanza }} --no-online stanza-create"
       register: stanza_create_result
+      when: "'pgbackrest' in group_names"
       changed_when:
         - stanza_create_result.rc == 0
         - stanza_create_result.stdout is not search("already exists")
