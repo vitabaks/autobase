@@ -6,7 +6,7 @@ COPY console/service/ .
 RUN make build_in_docker
 
 FROM debian:bookworm-slim
-LABEL maintainer="Vitaliy Kukharik vitabaks@gmail.com"
+LABEL maintainer="Autobase <info@autobase.tech>"
 
 COPY --from=builder /go/src/pg-console/pg-console /usr/local/bin/
 COPY console/db/migrations /etc/db/migrations

@@ -15,7 +15,7 @@ RUN yarn install --frozen-lockfile --network-timeout 1000000 && yarn vite build
 
 # Build the console image
 FROM nginx:1.26-bookworm
-LABEL maintainer="Vitaliy Kukharik vitabaks@gmail.com"
+LABEL maintainer="Autobase <info@autobase.tech>"
 
 COPY --from=api-builder /go/src/pg-console/pg-console /usr/local/bin/
 COPY console/db/migrations /etc/db/migrations
