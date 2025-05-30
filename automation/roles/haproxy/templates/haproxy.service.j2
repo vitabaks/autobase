@@ -5,15 +5,9 @@ After=network.target
 [Service]
 Environment="CONFIG=/etc/haproxy/haproxy.cfg" "PIDFILE=/run/haproxy/haproxy.pid"
 ExecStartPre=/bin/mkdir -p /run/haproxy
-{% if haproxy_installation_method == "src" %}
-ExecStartPre=/usr/local/sbin/haproxy -f $CONFIG -c -q
-ExecStart=/usr/local/sbin/haproxy -Ws -f $CONFIG -p $PIDFILE
-ExecReload=/usr/local/sbin/haproxy -f $CONFIG -c -q
-{% else %}
 ExecStartPre=/usr/sbin/haproxy -f $CONFIG -c -q
 ExecStart=/usr/sbin/haproxy -Ws -f $CONFIG -p $PIDFILE
 ExecReload=/usr/sbin/haproxy -f $CONFIG -c -q
-{% endif %}
 ExecReload=/bin/kill -USR2 $MAINPID
 KillMode=mixed
 Restart=always
