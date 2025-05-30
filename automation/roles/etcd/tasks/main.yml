@@ -44,31 +44,8 @@
         - etcd
         - etcdctl
   when:
-    - installation_method == "repo"
+    - installation_method == "packages"
     - etcd_package_repo | length > 0
-    - not ansible_check_mode
-  tags: etcd, etcd_install
-
-- block: # install etcd package from file
-    - name: Extract "etcd" into /tmp
-      ansible.builtin.unarchive:
-        src: "{{ etcd_package_file }}"
-        dest: /tmp/
-        extra_opts:
-          - --no-same-owner
-
-    - name: Copy "etcd" and "etcdctl" binary files to /usr/local/bin/
-      ansible.builtin.copy:
-        src: "/tmp/{{ etcd_package_file.split('.tar.gz')[0] | basename }}/{{ item }}"
-        dest: /usr/local/bin/
-        mode: u+x,g+x,o+x
-        remote_src: true
-      loop:
-        - etcd
-        - etcdctl
-  when:
-    - installation_method == "file"
-    - etcd_package_file | length > 0
     - not ansible_check_mode
   tags: etcd, etcd_install
 

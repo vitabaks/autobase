@@ -12,7 +12,7 @@
   tags: patroni, patroni_install, pip
 
 # Patroni install
-- block: # installation_method: "repo" and patroni_installation_method: "pip"
+- block: # installation_method: "packages" and patroni_installation_method: "pip"
     - name: Install setuptools
       ansible.builtin.pip:
         name: setuptools<66.0.0 # https://github.com/pypa/setuptools/issues/3772
@@ -71,7 +71,7 @@
         PATH: "{{ ansible_env.PATH }}:/usr/local/bin:/usr/bin"
         PIP_BREAK_SYSTEM_PACKAGES: "1"
       when: patroni_pip_package_repo | length < 1 and patroni_install_version != "latest"
-  when: installation_method == "repo" and patroni_installation_method == "pip"
+  when: installation_method == "packages" and patroni_installation_method == "pip"
   environment: "{{ proxy_env | default({}) }}"
   tags: patroni, patroni_install
 
@@ -117,51 +117,10 @@
         PATH: "{{ ansible_env.PATH }}:/usr/local/bin:/usr/bin"
         PIP_BREAK_SYSTEM_PACKAGES: "1"
       when: patroni_pip_package_repo | length > 0
-  when: installation_method == "repo" and patroni_installation_method == "pip"
+  when: installation_method == "packages" and patroni_installation_method == "pip"
   tags: patroni, patroni_install
 
-- block: # installation_method: "file" and patroni_installation_method: "pip"
-    - name: Copy patroni requirements
-      ansible.builtin.copy:
-        src: "{{ files_dir | default(playbook_dir ~ '/files') }}/{{ item }}"
-        dest: /tmp/
-      loop: "{{ patroni_pip_requirements_file }}"
-      when: patroni_pip_requirements_file | length > 0
-
-    - name: Copy patroni package
-      ansible.builtin.copy:
-        src: "{{ files_dir | default(playbook_dir ~ '/files') }}/{{ item }}"
-        dest: /tmp/
-      loop: "{{ patroni_pip_package_file }}"
-      when: patroni_pip_package_file | length > 0
-
-    - name: Install requirements
-      ansible.builtin.pip:
-        name: "file:///tmp/{{ item }}"
-        executable: pip3
-        extra_args: "--no-index --find-links=file:///tmp --ignore-installed"
-        umask: "0022"
-      loop: "{{ patroni_pip_requirements_file | map('basename') | list }}"
-      environment:
-        PATH: "{{ ansible_env.PATH }}:/usr/local/bin:/usr/bin"
-        PIP_BREAK_SYSTEM_PACKAGES: "1"
-      when: patroni_pip_requirements_file | length > 0
-
-    - name: Install patroni
-      ansible.builtin.pip:
-        name: "file:///tmp/{{ item }}"
-        executable: pip3
-        extra_args: "--no-index --find-links=file:///tmp --ignore-installed"
-        umask: "0022"
-      loop: "{{ patroni_pip_package_file | map('basename') | list }}"
-      environment:
-        PATH: "{{ ansible_env.PATH }}:/usr/local/bin:/usr/bin"
-        PIP_BREAK_SYSTEM_PACKAGES: "1"
-      when: patroni_pip_package_file | length > 0
-  when: installation_method == "file" and patroni_installation_method == "pip"
-  tags: patroni, patroni_install
-
-- block: # installation_method: "repo" and patroni_installation_method: "rpm/deb"
+- block: # installation_method: "packages" and patroni_installation_method: "rpm/deb"
     # Debian
     - name: Install patroni package
       ansible.builtin.apt:
@@ -230,47 +189,7 @@
       retries: 3
       when: ansible_os_family == "RedHat" and patroni_rpm_package_repo | length > 0
   environment: "{{ proxy_env | default({}) }}"
-  when: installation_method == "repo" and (patroni_installation_method == "rpm" or patroni_installation_method == "deb")
-  tags: patroni, patroni_install
-
-# installation_method: "file" and patroni_installation_method: "rpm/deb"
-- block:
-    # Debian
-    - name: Copy patroni deb package into /tmp
-      ansible.builtin.copy:
-        src: "{{ files_dir | default(playbook_dir ~ '/files') }}/{{ patroni_deb_package_file }}"
-        dest: /tmp/
-      when: ansible_os_family == "Debian"
-
-    - name: Install patroni from deb package
-      ansible.builtin.apt:
-        force_apt_get: true
-        deb: "/tmp/{{ patroni_deb_package_file | basename }}"
-        state: present
-      register: deb_package_file_status
-      until: deb_package_file_status is success
-      delay: 5
-      retries: 3
-      when: ansible_os_family == "Debian"
-
-    # RedHat
-    - name: Copy patroni rpm package into /tmp
-      ansible.builtin.copy:
-        src: "{{ files_dir | default(playbook_dir ~ '/files') }}/{{ patroni_rpm_package_file }}"
-        dest: /tmp/
-      when: ansible_os_family == "RedHat"
-
-    - name: Install patroni from rpm package
-      ansible.builtin.dnf:
-        name: "/tmp/{{ patroni_rpm_package_file | basename }}"
-        state: present
-        disable_gpg_check: true
-      register: rpm_package_file_status
-      until: rpm_package_file_status is success
-      delay: 5
-      retries: 3
-      when: ansible_os_family == "RedHat"
-  when: installation_method == "file" and (patroni_installation_method == "rpm" or patroni_installation_method == "deb")
+  when: installation_method == "packages" and (patroni_installation_method == "rpm" or patroni_installation_method == "deb")
   tags: patroni, patroni_install
 
 # Patroni configure

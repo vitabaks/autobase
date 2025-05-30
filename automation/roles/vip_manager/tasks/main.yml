@@ -32,42 +32,8 @@
       retries: 3
       when: ansible_os_family == "RedHat"
   when:
-    - installation_method == "repo"
+    - installation_method == "packages"
     - vip_manager_package_repo | length > 0
-    - not ansible_check_mode
-    - not postgresql_cluster_maintenance | default(false) | bool
-  tags: vip, vip_manager, vip_manager_install
-
-- block: # install vip-manager package from file
-    - name: Copy vip-manager package into /tmp
-      ansible.builtin.copy:
-        src: "{{ files_dir | default(playbook_dir ~ '/files') }}/{{ vip_manager_package_file }}"
-        dest: /tmp/
-
-    - name: Install vip-manager
-      ansible.builtin.apt:
-        force_apt_get: true
-        deb: "/tmp/{{ vip_manager_package_file | basename }}"
-        state: present
-      register: apt_status
-      until: apt_status is success
-      delay: 5
-      retries: 3
-      when: ansible_os_family == "Debian"
-
-    - name: Install vip-manager
-      ansible.builtin.package:
-        name: "/tmp/{{ vip_manager_package_file | basename }}"
-        state: present
-        disable_gpg_check: true
-      register: package_status
-      until: package_status is success
-      delay: 5
-      retries: 3
-      when: ansible_os_family == "RedHat"
-  when:
-    - installation_method == "file"
-    - vip_manager_package_file | length > 0
     - not ansible_check_mode
     - not postgresql_cluster_maintenance | default(false) | bool
   tags: vip, vip_manager, vip_manager_install

@@ -31,7 +31,7 @@
       delay: 5
       retries: 3
   environment: "{{ proxy_env | default({}) }}"
-  when: installation_method == "repo" and ansible_os_family == "Debian"
+  when: installation_method == "packages" and ansible_os_family == "Debian"
   tags: add_repo
 
 - block: # RedHat/CentOS
@@ -159,9 +159,9 @@
         debuginfo_package: "postgresql{{ postgresql_version }}-debuginfo"
       tags: install_postgresql_repo, debuginfo
   environment: "{{ proxy_env | default({}) }}"
-  when: installation_method == "repo" and ansible_os_family == "RedHat"
+  when: installation_method == "packages" and ansible_os_family == "RedHat"
   tags: add_repo
 
 - name: Extensions repository
   ansible.builtin.import_tasks: extensions.yml
-  when: installation_method == "repo"
+  when: installation_method == "packages"

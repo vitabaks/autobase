@@ -1,38 +1,4 @@
 ---
-# Install packages from files
-- block:
-    - name: Copy packages into /tmp
-      ansible.builtin.copy:
-        src: "{{ files_dir | default(playbook_dir ~ '/files') }}/{{ item }}"
-        dest: /tmp/
-      loop: "{{ packages_from_file }}"
-      register: copy_packages_result
-
-    - name: Install packages
-      ansible.builtin.apt:
-        force_apt_get: true
-        deb: "/tmp/{{ item }}"
-        state: present
-      loop: "{{ packages_from_file | map('basename') | list }}"
-      register: apt_status
-      until: apt_status is success
-      delay: 5
-      retries: 3
-      when: ansible_os_family == "Debian" and copy_packages_result.changed
-
-    - name: Install packages
-      ansible.builtin.package:
-        name: "/tmp/{{ item }}"
-        state: present
-      loop: "{{ packages_from_file | map('basename') | list }}"
-      register: package_status
-      until: package_status is success
-      delay: 5
-      retries: 3
-      when: ansible_os_family == "RedHat" and copy_packages_result.changed
-  when: packages_from_file is defined and packages_from_file | length > 0
-  tags: install_packages_from_file
-
 # Install packages from repository
 
 # RedHat
@@ -45,7 +11,7 @@
   delay: 5
   retries: 3
   when:
-    - installation_method == "repo"
+    - installation_method == "packages"
     - ansible_os_family == "RedHat"
   environment: "{{ proxy_env | default({}) }}"
   tags: install_packages, install_postgres
@@ -62,7 +28,7 @@
   retries: 3
   environment: "{{ proxy_env | default({}) }}"
   when:
-    - installation_method == "repo"
+    - installation_method == "packages"
     - ansible_os_family == "RedHat"
     - system_packages | default('') | length > 0
   tags: install_packages
@@ -75,7 +41,7 @@
     priority: 1100
     state: selected
   when:
-    - installation_method == "repo"
+    - installation_method == "packages"
     - ansible_os_family == "RedHat"
     - python_version | default('') | length > 1
   tags: install_packages
@@ -88,7 +54,7 @@
     priority: 1100
     state: selected
   when:
-    - installation_method == "repo"
+    - installation_method == "packages"
     - ansible_os_family == "RedHat"
     - python_version | default('') | length > 1
     - pip_package in system_packages
@@ -106,7 +72,7 @@
   retries: 3
   environment: "{{ proxy_env | default({}) }}"
   when:
-    - installation_method == "repo"
+    - installation_method == "packages"
     - ansible_os_family == "Debian"
 
 - name: Install system packages
@@ -120,7 +86,7 @@
   retries: 3
   environment: "{{ proxy_env | default({}) }}"
   when:
-    - installation_method == "repo"
+    - installation_method == "packages"
     - ansible_os_family == "Debian"
     - system_packages | default('') | length > 0
   tags: install_packages
@@ -138,7 +104,7 @@
       ansible.builtin.command: "dnf -y -C module disable postgresql"
       when: "'[x] ' not in postgresql_module_result.stdout"
   when:
-    - installation_method == "repo"
+    - installation_method == "packages"
     - ansible_os_family == "RedHat"
     - ansible_distribution_major_version >= '8'
   ignore_errors: true
@@ -155,7 +121,7 @@
   retries: 3
   environment: "{{ proxy_env | default({}) }}"
   when:
-    - installation_method == "repo"
+    - installation_method == "packages"
     - ansible_os_family == "RedHat"
     - postgresql_packages | default('') | length > 0
   tags: install_packages, install_postgres
@@ -183,7 +149,7 @@
         dest: /etc/logrotate.d/postgresql-common
         state: absent
   when:
-    - installation_method == "repo"
+    - installation_method == "packages"
     - ansible_os_family == "Debian"
   tags: install_postgres
 
@@ -197,7 +163,7 @@
     - name: PostgreSQL | disable appstream module
       ansible.builtin.command: "dnf -y -C module disable postgresql"
       when: "'[x] ' not in postgresql_module_result.stdout"
-  when: installation_method == "repo" and ansible_os_family == "RedHat"
+  when: installation_method == "packages" and ansible_os_family == "RedHat"
   ignore_errors: true
   tags: install_postgres
 
@@ -214,7 +180,7 @@
   retries: 3
   environment: "{{ proxy_env | default({}) }}"
   when:
-    - installation_method == "repo"
+    - installation_method == "packages"
     - ansible_os_family == "RedHat"
     - postgresql_packages | default('') | length > 0
   tags: install_packages, install_postgres
@@ -231,7 +197,7 @@
   delay: 5
   retries: 3
   when:
-    - installation_method == "repo"
+    - installation_method == "packages"
     - ansible_os_family == "Debian"
     - postgresql_packages | default('') | length > 0
   tags: install_packages, install_postgres
@@ -239,7 +205,7 @@
 # Extensions
 - name: Install PostgreSQL Extensions
   ansible.builtin.import_tasks: extensions.yml
-  when: installation_method == "repo"
+  when: installation_method == "packages"
   tags: install_packages, install_postgres, install_extensions
 
 # Install perf (if 'install_perf' is 'true')
@@ -247,3 +213,37 @@
   ansible.builtin.import_tasks: perf.yml
   when: install_perf | bool
   tags: install_packages, install_perf, perf
+
+# Install packages from files (optional)
+- block:
+    - name: Copy packages into /tmp
+      ansible.builtin.copy:
+        src: "{{ files_dir | default(playbook_dir ~ '/files') }}/{{ item }}"
+        dest: /tmp/
+      loop: "{{ packages_from_file }}"
+      register: copy_packages_result
+
+    - name: Install packages
+      ansible.builtin.apt:
+        force_apt_get: true
+        deb: "/tmp/{{ item }}"
+        state: present
+      loop: "{{ packages_from_file | map('basename') | list }}"
+      register: apt_status
+      until: apt_status is success
+      delay: 5
+      retries: 3
+      when: ansible_os_family == "Debian" and copy_packages_result.changed
+
+    - name: Install packages
+      ansible.builtin.dnf:
+        name: "/tmp/{{ item }}"
+        state: present
+      loop: "{{ packages_from_file | map('basename') | list }}"
+      register: package_status
+      until: package_status is success
+      delay: 5
+      retries: 3
+      when: ansible_os_family == "RedHat" and copy_packages_result.changed
+  when: packages_from_file is defined and packages_from_file | length > 0
+  tags: install_packages_from_file

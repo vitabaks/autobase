@@ -69,7 +69,7 @@
       until: apt_status is success
       delay: 5
       retries: 3
-      when: ansible_os_family == "Debian" and installation_method | default('repo') == "repo"
+      when: ansible_os_family == "Debian" and installation_method | default('packages') == "packages"
 
     - name: Make sure the gnupg and apt-transport-https packages are present
       ansible.builtin.apt:
@@ -81,7 +81,7 @@
       until: apt_status is success
       delay: 5
       retries: 3
-      when: ansible_os_family == "Debian" and installation_method | default('repo') == "repo"
+      when: ansible_os_family == "Debian" and installation_method | default('packages') == "packages"
 
     - name: Make sure the python3-pip package are present
       ansible.builtin.package:
