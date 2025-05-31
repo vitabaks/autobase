@@ -32,7 +32,7 @@ RUN apt-get clean && rm -rf /var/lib/apt/lists/partial \
          wget --quiet -O - https://packagecloud.io/timescale/timescaledb/gpgkey | gpg --dearmor -o /etc/apt/trusted.gpg.d/timescaledb.gpg \
          && echo "deb https://packagecloud.io/timescale/timescaledb/debian/ $(lsb_release -cs) main" | tee /etc/apt/sources.list.d/timescaledb.list \
          && apt-get update -o Acquire::CompressionTypes::Order::=gz \
-         && apt-get install --no-install-recommends -y timescaledb-2-postgresql-${POSTGRES_VERSION}; \
+         && apt-get install --no-install-recommends -y timescaledb-2-postgresql-"${POSTGRES_VERSION}"; \
        fi \
     # citus extension
     && if [ "${POSTGRES_VERSION}" -gt "10" ]; then \
@@ -48,41 +48,39 @@ RUN apt-get clean && rm -rf /var/lib/apt/lists/partial \
          && apt-get install --no-install-recommends -y postgresql-"${POSTGRES_VERSION}"-citus-"${CITUS_VERSION}"; \
        fi \
     # pg_stat_kcache extension
-    && apt-get install --no-install-recommends -y postgresql-${POSTGRES_VERSION}-pg-stat-kcache \
+    && apt-get install --no-install-recommends -y postgresql-"${POSTGRES_VERSION}"-pg-stat-kcache \
     # pg_wait_sampling extension
-    && apt-get install --no-install-recommends -y postgresql-${POSTGRES_VERSION}-pg-wait-sampling \
+    && apt-get install --no-install-recommends -y postgresql-"${POSTGRES_VERSION}"-pg-wait-sampling \
     # pg_repack extension
-    && apt-get install --no-install-recommends -y postgresql-${POSTGRES_VERSION}-repack \
+    && apt-get install --no-install-recommends -y postgresql-"${POSTGRES_VERSION}"-repack \
     # pg_cron extension
-    && apt-get install --no-install-recommends -y postgresql-${POSTGRES_VERSION}-cron \
+    && apt-get install --no-install-recommends -y postgresql-"${POSTGRES_VERSION}"-cron \
     # pgaudit extension
-    && apt-get install --no-install-recommends -y postgresql-${POSTGRES_VERSION}-pgaudit \
+    && apt-get install --no-install-recommends -y postgresql-"${POSTGRES_VERSION}"-pgaudit \
     # pgvector extension
-    && apt-get install --no-install-recommends -y postgresql-${POSTGRES_VERSION}-pgvector \
+    && apt-get install --no-install-recommends -y postgresql-"${POSTGRES_VERSION}"-pgvector \
     # pgvectorscale extension
     && if [ "${POSTGRES_VERSION}" -gt "12" ]; then \
-    wget --quiet https://github.com/timescale/pgvectorscale/releases/download/${PGVECTORSCALE_VERSION}/pgvectorscale-${PGVECTORSCALE_VERSION}-pg${POSTGRES_VERSION}-amd64.zip \
-    && unzip pgvectorscale-${PGVECTORSCALE_VERSION}-pg${POSTGRES_VERSION}-amd64.zip \
-    && dpkg -i pgvectorscale-postgresql-${POSTGRES_VERSION}_${PGVECTORSCALE_VERSION}-Linux_amd64.deb \
+    wget --quiet https://github.com/timescale/pgvectorscale/releases/download/"${PGVECTORSCALE_VERSION}"/pgvectorscale-"${PGVECTORSCALE_VERSION}"-pg"${POSTGRES_VERSION}"-"$(dpkg --print-architecture)".zip \
+    && unzip pgvectorscale-"${PGVECTORSCALE_VERSION}"-pg"${POSTGRES_VERSION}"-"$(dpkg --print-architecture)".zip \
+    && dpkg -i pgvectorscale-postgresql-"${POSTGRES_VERSION}"_"${PGVECTORSCALE_VERSION}"-Linux_"$(dpkg --print-architecture)".deb \
     && rm -f pgvectorscale-*.{deb,zip}; \
     fi \
     # postgis extension
-    && apt-get install --no-install-recommends -y postgresql-${POSTGRES_VERSION}-postgis-3 \
+    && apt-get install --no-install-recommends -y postgresql-"${POSTGRES_VERSION}"-postgis-3 \
     # pgrouting extension
-    && apt-get install --no-install-recommends -y postgresql-${POSTGRES_VERSION}-pgrouting \
+    && apt-get install --no-install-recommends -y postgresql-"${POSTGRES_VERSION}"-pgrouting \
     # partman extension
-    && apt-get install --no-install-recommends -y postgresql-${POSTGRES_VERSION}-partman \
+    && apt-get install --no-install-recommends -y postgresql-"${POSTGRES_VERSION}"-partman \
     # pgBackRest
     && apt-get install --no-install-recommends -y pgbackrest \
     # WAL-G
-    && wget --quiet https://github.com/wal-g/wal-g/releases/download/v"${WALG_VERSION}"/wal-g-pg-ubuntu-20.04-amd64.tar.gz \
-      && tar -zxvf wal-g-pg-ubuntu-20.04-amd64.tar.gz \
-      && mv wal-g-pg-ubuntu-20.04-amd64 /usr/local/bin/wal-g \
+    && wget --quiet https://github.com/wal-g/wal-g/releases/download/v"${WALG_VERSION}"/wal-g-pg-ubuntu-20.04-"$(dpkg --print-architecture)".tar.gz \
+      && tar -zxvf wal-g-pg-ubuntu-20.04-"$(dpkg --print-architecture)".tar.gz \
+      && mv wal-g-pg-ubuntu-20.04-"$(dpkg --print-architecture)" /usr/local/bin/wal-g \
       && chmod +x /usr/local/bin/wal-g \
-      && rm wal-g-pg-ubuntu-20.04-amd64.tar.gz \
+      && rm wal-g-pg-ubuntu-20.04-"$(dpkg --print-architecture)".tar.gz \
       && wal-g --version \
-    # Debug postgres packages
-    && dpkg -l | grep postgres \
     # Clean up
     && apt-get autoremove -y --purge gnupg wget unzip \
       && apt-get clean -y autoclean \
@@ -93,4 +91,4 @@ EXPOSE ${POSTGRES_PORT}
 
 ENTRYPOINT []
 
-CMD ["/pg_start.sh"]
+CMD ["/usr/bin/patroni", "/etc/patroni/patroni.yml"]
