@@ -54,14 +54,14 @@
   tags: keepalived_conf, keepalived
 
 - block: # for add_balancer.yml
-    - name: "Fetch keepalived.conf conf file from {{ groups.balancers[0] }}"
+    - name: "Fetch keepalived.conf conf file from {{ inventory_hostname }}"
       run_once: true
       ansible.builtin.fetch:
         src: /etc/keepalived/keepalived.conf
         dest: "{{ files_dir | default(playbook_dir ~ '/files') }}/keepalived.conf"
         validate_checksum: true
         flat: true
-      delegate_to: "{{ groups.balancers[0] }}"
+      when: "'balancers' in group_names"
 
     - name: Copy keepalived.conf conf file to replica
       ansible.builtin.copy:
