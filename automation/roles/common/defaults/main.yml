@@ -228,6 +228,7 @@ postgresql_data_dir: "\
   {% else %}\
   {{ postgresql_home_dir }}/{{ postgresql_version }}/{{ postgresql_cluster_name }}\
   {% endif %}"
+postgresql_base_dir: "{{ postgresql_data_dir | regex_replace('/$', '') | dirname | dirname }}"
 # You can specify custom WAL dir path. Example: "/pgwal/{{ postgresql_version }}/pg_wal"
 postgresql_wal_dir: "" # if defined, symlink will be created [optional]
 postgresql_conf_dir: "\
