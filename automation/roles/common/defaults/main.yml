@@ -1142,23 +1142,38 @@ patroni_pip_requirements_repo: []
 pip_package_repo: "https://bootstrap.pypa.io/get-pip.py" # latest version pip3 for python3 (or use "pip-<version>.tar.gz").
 
 ############################################################
-# Docker images (if installation_method: "docker")
+# Docker containers (if installation_method: "docker")
 ############################################################
 
 # Image with PostgreSQL, extensions, Patroni, and backup tools.
-postgresql_image: "autobase/postgresql-cluster:{{ postgresql_version }}"
+postgresql_container:
+  name: "postgres"
+  image: "autobase/patroni:{{ postgresql_container.tag }}"
+  tag: "postgresql-{{ postgresql_version }}"  # major or minor version, e.g. 17 or 17.5
 
 # if dcs_type: "etcd" and dcs_exists: false
-etcd_image: "bitnami/etcd:{{ etcd_version }}"
+etcd_container:
+  name: "etcd"
+  image: "bitnami/etcd:{{ etcd_container.tag }}"
+  tag: "{{ etcd_version }}"
 
 # if dcs_type: "consul" and dcs_exists: false
-consul_image: "bitnami/consul:{{ consul_version }}"
+consul_container:
+  name: "consul"
+  image: "bitnami/consul:{{ consul_container.tag }}"
+  tag: "{{ consul_version }}"
 
 # if pgbouncer_install: true
-pgbouncer_image: "bitnami/pgbouncer{{ pgbouncer_version | default('latest') }}"
+pgbouncer_container:
+  name: "pgbouncer"
+  image: "bitnami/pgbouncer:{{ pgbouncer_container.tag }}"
+  tag: "{{ pgbouncer_version | default('latest') }}"
 
 # if with_haproxy_load_balancing: true
-haproxy_image: "bitnami/haproxy:{{ haproxy_version | default('3.2.0') }}"
+haproxy_container:
+  name: "haproxy"
+  image: "bitnami/haproxy:{{ haproxy_container.tag }}"
+  tag: "{{ haproxy_version | default('3.2.0') }}"
 
 ############################################################
 # Other variables
