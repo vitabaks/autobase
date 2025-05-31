@@ -10,10 +10,10 @@ TimeoutStopSec=30s
 RestartSec=15s
 Restart=always
 
-# Delete the patroni container (if any)
+# Delete patroni container (if any)
 ExecStartPre=-/usr/bin/docker rm -f {{ postgresql_container.name }}
 
-# Start the patroni container
+# Start patroni container
 ExecStart=/usr/bin/docker run -d \
   --name {{ postgresql_container.name }} \
   --network host \
@@ -33,7 +33,7 @@ ExecStart=/usr/bin/docker run -d \
       {{ postgresql_unix_socket_dir }}; \
     exec su - postgres -c "/usr/bin/patroni /etc/patroni/patroni.yml"'
 
-# Stop the patroni container
+# Stop patroni container
 ExecStop=-/usr/bin/docker stop {{ postgresql_container.name }}
 ExecStopPost=-/usr/bin/docker rm -f {{ postgresql_container.name }}
 
