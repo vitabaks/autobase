@@ -22,10 +22,11 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get clean && rm -rf /var/lib/apt/lists/partial \
-    && apt-get update -o Acquire::CompressionTypes::Order::=gz && apt-get upgrade -y \
+    && apt-get update -o Acquire::CompressionTypes::Order::=gz \
     && apt-get install --no-install-recommends -y \
-      gnupg apt-transport-https ca-certificates lsb-release zstd openssh-client \
-      wget curl unzip vim-tiny postgresql-${POSTGRES_VERSION}-dbgsym \
+      gnupg apt-transport-https ca-certificates lsb-release zstd openssh-client wget curl unzip \
+    # patroni
+    && apt-get install --no-install-recommends -y patroni python3-etcd python3-consul python3-psycopg2 \
     # timescaledb extension
     && if [ "${POSTGRES_VERSION}" -gt "11" ]; then \
          wget --quiet -O - https://packagecloud.io/timescale/timescaledb/gpgkey | gpg --dearmor -o /etc/apt/trusted.gpg.d/timescaledb.gpg \
@@ -77,6 +78,7 @@ RUN apt-get clean && rm -rf /var/lib/apt/lists/partial \
     && wget --quiet https://github.com/wal-g/wal-g/releases/download/v"${WALG_VERSION}"/wal-g-pg-ubuntu-20.04-amd64.tar.gz \
       && tar -zxvf wal-g-pg-ubuntu-20.04-amd64.tar.gz \
       && mv wal-g-pg-ubuntu-20.04-amd64 /usr/local/bin/wal-g \
+      && chmod +x /usr/local/bin/wal-g \
       && rm wal-g-pg-ubuntu-20.04-amd64.tar.gz \
       && wal-g --version \
     # Debug postgres packages
@@ -85,8 +87,10 @@ RUN apt-get clean && rm -rf /var/lib/apt/lists/partial \
     && apt-get autoremove -y --purge gnupg wget unzip \
       && apt-get clean -y autoclean \
       && rm -rf /var/lib/apt/lists/* \
-      && rm -rf /var/lib/postgresql/${POSTGRES_VERSION}/
+      && rm -rf /var/lib/postgresql/*
 
 EXPOSE ${POSTGRES_PORT}
+
+ENTRYPOINT []
 
 CMD ["/pg_start.sh"]
