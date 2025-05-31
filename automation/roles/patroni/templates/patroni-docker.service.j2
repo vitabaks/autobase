@@ -1,0 +1,35 @@
+[Unit]
+Description=Patroni docker wrapper
+Requires=docker.service
+After=docker.service
+
+[Service]
+Type=simple
+TimeoutStartSec=60s
+TimeoutStopSec=30s
+RestartSec=15s
+Restart=always
+
+# Delete the patroni container (if any)
+ExecStartPre=-/usr/bin/docker rm -f {{ postgresql_container.name }}
+
+# Start the patroni container
+ExecStart=/usr/bin/docker run -d \
+  --name {{ postgresql_container.name }} \
+  --network host \
+  --volume /etc/patroni:/etc/patroni:ro \
+  --volume /var/lib/postgresql:/var/lib/postgresql \
+  --volume /var/log/postgresql:/var/log/postgresql \
+  --volume /var/log/patroni:/var/log/patroni \
+  {{ postgresql_container.image }} \
+  /usr/bin/patroni /etc/patroni/patroni.yml
+
+# Stop the patroni container
+ExecStop=-/usr/bin/docker stop {{ postgresql_container.name }}
+ExecStopPost=-/usr/bin/docker rm -f {{ postgresql_container.name }}
+
+# Send HUP to reload from patroni.yml
+ExecReload=/usr/bin/docker exec {{ postgresql_container.name }} kill -SIGHUP 1
+
+[Install]
+WantedBy=multi-user.target
