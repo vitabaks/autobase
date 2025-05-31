@@ -228,6 +228,7 @@ postgresql_data_dir: "\
   {% else %}\
   {{ postgresql_home_dir }}/{{ postgresql_version }}/{{ postgresql_cluster_name }}\
   {% endif %}"
+postgresql_base_dir: "{{ postgresql_data_dir | regex_replace('/$', '') | dirname | dirname }}"
 # You can specify custom WAL dir path. Example: "/pgwal/{{ postgresql_version }}/pg_wal"
 postgresql_wal_dir: "" # if defined, symlink will be created [optional]
 postgresql_conf_dir: "\
@@ -1114,10 +1115,10 @@ confd_package_repo: "https://github.com/kelseyhightower/confd/releases/download/
 packages_from_file: []
 #  - "<package_file_name>.{{ pkg_type }}"
 
-# ----------------------------------------------------------------------------------------------------
+# ----------------------------------------------------------
 # Redefine the installation method (optional)
-# ----------------------------------------------------------------------------------------------------
-installation_method: "packages" # "packages" = install via deb/rpm packages; "docker" = use container images (TODO).
+# ----------------------------------------------------------
+installation_method: "packages" # "packages" = install via deb/rpm packages; "docker" = use container images.
 
 # The Patroni package will be installed from the deb/rpm package by default.
 # You also have the option of choosing an installation method using the pip package.
@@ -1140,6 +1141,40 @@ patroni_pip_requirements_repo: []
 #  - "https://<my_repo>/<package_1>.tar.gz"
 #  - "https://<my_repo>/<package_n>.tar.gz"
 pip_package_repo: "https://bootstrap.pypa.io/get-pip.py" # latest version pip3 for python3 (or use "pip-<version>.tar.gz").
+
+############################################################
+# Docker containers (if installation_method: "docker")
+############################################################
+
+# Image with PostgreSQL, extensions, Patroni, and backup tools.
+postgresql_container:
+  name: "postgres"
+  image: "autobase/patroni:{{ postgresql_container.tag }}"
+  tag: "postgresql-{{ postgresql_version }}"  # major or minor version, e.g. 17 or 17.5
+
+# if dcs_type: "etcd" and dcs_exists: false
+etcd_container:
+  name: "etcd"
+  image: "bitnami/etcd:{{ etcd_container.tag }}"
+  tag: "{{ etcd_version }}"
+
+# if dcs_type: "consul" and dcs_exists: false
+consul_container:
+  name: "consul"
+  image: "bitnami/consul:{{ consul_container.tag }}"
+  tag: "{{ consul_version }}"
+
+# if pgbouncer_install: true
+pgbouncer_container:
+  name: "pgbouncer"
+  image: "bitnami/pgbouncer:{{ pgbouncer_container.tag }}"
+  tag: "{{ pgbouncer_version | default('latest') }}"
+
+# if with_haproxy_load_balancing: true
+haproxy_container:
+  name: "haproxy"
+  image: "bitnami/haproxy:{{ haproxy_container.tag }}"
+  tag: "{{ haproxy_version | default('3.2.0') }}"
 
 ############################################################
 # Other variables

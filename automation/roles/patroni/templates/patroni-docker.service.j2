@@ -1,0 +1,44 @@
+[Unit]
+Description=Patroni docker wrapper
+Requires=docker.service
+After=docker.service
+
+[Service]
+Type=simple
+TimeoutStartSec=60s
+TimeoutStopSec=30s
+RestartSec=15s
+Restart=always
+
+# Delete the patroni container (if any)
+ExecStartPre=-/usr/bin/docker rm -f {{ postgresql_container.name }}
+
+# Start the patroni container
+ExecStart=/usr/bin/docker run -d \
+  --name {{ postgresql_container.name }} \
+  --network host \
+  --volume /etc/patroni:/etc/patroni \
+  --volume /etc/postgresql:/etc/postgresql \
+  --volume {{ postgresql_base_dir }}:{{ postgresql_base_dir }} \
+  --volume {{ postgresql_log_dir }}:{{ postgresql_log_dir }} \
+  --volume {{ postgresql_unix_socket_dir }}:{{ postgresql_unix_socket_dir }} \
+  --volume /var/log/patroni:/var/log/patroni \
+  {{ postgresql_container.image }} \
+  bash -c '/usr/bin/patroni --version && \
+    mkdir -p {{ postgresql_conf_dir }} {{ postgresql_data_dir }}; \
+    chown -R postgres:postgres \
+      {{ postgresql_conf_dir }} \
+      {{ postgresql_data_dir }} \
+      {{ postgresql_log_dir }} \
+      {{ postgresql_unix_socket_dir }}; \
+    exec su - postgres -c "/usr/bin/patroni /etc/patroni/patroni.yml"'
+
+# Stop the patroni container
+ExecStop=-/usr/bin/docker stop {{ postgresql_container.name }}
+ExecStopPost=-/usr/bin/docker rm -f {{ postgresql_container.name }}
+
+# Send HUP to reload from patroni.yml
+ExecReload=/usr/bin/docker exec {{ postgresql_container.name }} kill -SIGHUP 1
+
+[Install]
+WantedBy=multi-user.target
