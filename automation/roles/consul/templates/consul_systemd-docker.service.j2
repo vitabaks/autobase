@@ -20,6 +20,9 @@ ExecStart=/usr/bin/docker run -d \
   --volume {{ consul_configd_path }}:{{ consul_configd_path }} \
   --volume {{ consul_data_path }}:{{ consul_data_path }} \
   --volume {{ consul_run_path }}:{{ consul_run_path }} \
+  {% for var in consul_env_vars | default([]) %}
+  --env {{ var }} \
+  {% endfor %} \
   {{ consul_container.image | default('bitnami/consul:latest') }} \
   {{ consul_bin_path }}/consul agent \
     -config-file={{ consul_config_path }}/config.json \
@@ -29,6 +32,9 @@ ExecStart=/usr/bin/docker run -d \
 # Stop consul container
 ExecStop=-/usr/bin/docker stop {{ consul_container.name | default('consul') }}
 ExecStopPost=-/usr/bin/docker rm -f {{ consul_container.name | default('consul') }}
+
+# Send HUP to reload config
+ExecReload=/usr/bin/docker exec {{ consul_container.name | default('consul') }} kill -SIGHUP 1
 
 [Install]
 WantedBy=multi-user.target
