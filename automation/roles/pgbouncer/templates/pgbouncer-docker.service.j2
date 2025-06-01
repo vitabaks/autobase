@@ -9,9 +9,6 @@ TimeoutSec=30
 RestartSec=15
 Restart=always
 
-User=postgres
-Group=postgres
-
 # Delete PgBouncer container (if any)
 ExecStartPre=-/usr/bin/docker rm -f {{ pgbouncer_container.name | default('pgbouncer') }}
 
@@ -21,6 +18,7 @@ ExecStart=/usr/bin/docker run -d \
   --network host \
   --volume {{ pgbouncer_conf_dir }}:{{ pgbouncer_conf_dir }} \
   --volume {{ pgbouncer_log_dir }}:{{ pgbouncer_log_dir }} \
+  --volume /var/run/pgbouncer{{ '-%d' % (idx + 1) if idx > 0 else '' }}:/var/run/pgbouncer{{ '-%d' % (idx + 1) if idx > 0 else '' }} \
   {{ pgbouncer_container.image | default('bitnami/pgbouncer:latest') }} \
   pgbouncer -d {{ pgbouncer_conf_dir }}/pgbouncer{{ '-%d' % (idx + 1) if idx > 0 else '' }}.ini
 
