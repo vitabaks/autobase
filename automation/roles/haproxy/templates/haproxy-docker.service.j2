@@ -16,7 +16,7 @@ ExecStartPre=-/usr/bin/docker rm -f {{ haproxy_container.name | default('haproxy
 ExecStart=/usr/bin/docker run -d \
   --name {{ haproxy_container.name | default('haproxy') }} \
   --network host \
-  --volume /etc/haproxy:/etc/haproxy \
+  --volume /etc/haproxy:/etc/haproxy:ro \
   --volume /run/haproxy:/run/haproxy \
   {{ haproxy_container.image | default('bitnami/haproxy:latest') }} \
   {{ haproxy_bin_path | default(omit) }}/haproxy -Ws -f /etc/haproxy/haproxy.cfg -p /run/haproxy/haproxy.pid
@@ -26,8 +26,7 @@ ExecStop=-/usr/bin/docker stop {{ haproxy_container.name | default('haproxy') }}
 ExecStopPost=-/usr/bin/docker rm -f {{ haproxy_container.name | default('haproxy') }}
 
 # Send HUP to reload config
-ExecReload=/usr/bin/docker exec {{ haproxy_container.name | default('haproxy') }} \
-  {{ haproxy_bin_path | default(omit) }}/haproxy -f /etc/haproxy/haproxy.cfg -c -q
+ExecReload=/usr/bin/docker exec {{ haproxy_container.name | default('haproxy') }} kill -USR2 1
 
 [Install]
 WantedBy=multi-user.target
