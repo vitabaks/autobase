@@ -16,7 +16,7 @@ ExecStartPre=-/usr/bin/docker rm -f {{ haproxy_container.name | default('haproxy
 ExecStart=/usr/bin/docker run -d \
   --name {{ haproxy_container.name | default('haproxy') }} \
   --network host \
-  --volume /etc/haproxy:/etc/haproxy:ro \
+  --volume /etc/haproxy:/etc/haproxy \
   --volume /run/haproxy:/run/haproxy \
   {{ haproxy_container.image | default('bitnami/haproxy:latest') }} \
   {{ haproxy_bin_path | default(omit) }}/haproxy -Ws -f /etc/haproxy/haproxy.cfg -p /run/haproxy/haproxy.pid
