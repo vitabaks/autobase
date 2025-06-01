@@ -16,13 +16,13 @@ ExecStartPre=-/usr/bin/docker rm -f {{ consul_container.name | default('consul')
 ExecStart=/usr/bin/docker run -d \
   --name {{ consul_container.name | default('consul') }} \
   --network host \
+  {% for var in consul_env_vars | default([]) %}
+  --env {{ var }} \
+  {% endfor %} \
   --volume {{ consul_config_path }}:{{ consul_config_path }} \
   --volume {{ consul_configd_path }}:{{ consul_configd_path }} \
   --volume {{ consul_data_path }}:{{ consul_data_path }} \
   --volume {{ consul_run_path }}:{{ consul_run_path }} \
-  {% for var in consul_env_vars | default([]) %}
-  --env {{ var }} \
-  {% endfor %} \
   {{ consul_container.image | default('bitnami/consul:latest') }} \
   consul agent \
     -config-file={{ consul_config_path }}/config.json \
