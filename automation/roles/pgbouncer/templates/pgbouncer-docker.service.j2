@@ -1,0 +1,35 @@
+[Unit]
+Description=PgBouncer docker wrapper
+Requires=docker.service
+After=docker.service
+
+[Service]
+Type=simple
+TimeoutSec=30
+RestartSec=15
+Restart=always
+
+User=postgres
+Group=postgres
+
+# Delete PgBouncer container (if any)
+ExecStartPre=-/usr/bin/docker rm -f {{ pgbouncer_container.name | default('pgbouncer') }}
+
+# Start PgBouncer container
+ExecStart=/usr/bin/docker run -d \
+  --name {{ pgbouncer_container.name | default('pgbouncer') }} \
+  --network host \
+  --volume {{ pgbouncer_conf_dir }}:{{ pgbouncer_conf_dir }} \
+  --volume {{ pgbouncer_log_dir }}:{{ pgbouncer_log_dir }} \
+  {{ pgbouncer_container.image | default('bitnami/pgbouncer:latest') }} \
+  pgbouncer -d {{ pgbouncer_conf_dir }}/pgbouncer{{ '-%d' % (idx + 1) if idx > 0 else '' }}.ini
+
+# Stop PgBouncer container
+ExecStop=-/usr/bin/docker stop {{ pgbouncer_container.name | default('pgbouncer') }}
+ExecStopPost=-/usr/bin/docker rm -f {{ pgbouncer_container.name | default('pgbouncer') }}
+
+# Send HUP to reload config
+ExecReload=/usr/bin/docker exec {{ pgbouncer_container.name | default('pgbouncer') }} kill -SIGHUP 1
+
+[Install]
+WantedBy=multi-user.target
