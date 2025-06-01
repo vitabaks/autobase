@@ -1,4 +1,5 @@
 FROM debian:bookworm-slim
+LABEL maintainer="Autobase <info@autobase.tech>"
 
 ARG POSTGRES_VERSION
 ENV POSTGRES_VERSION=${POSTGRES_VERSION:-16}
