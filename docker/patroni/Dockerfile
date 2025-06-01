@@ -7,9 +7,6 @@ LABEL maintainer="Autobase <info@autobase.tech>"
 ARG POSTGRES_VERSION
 ENV POSTGRES_VERSION=${POSTGRES_VERSION:-17}
 
-ARG POSTGRES_PORT
-ENV POSTGRES_PORT=${POSTGRES_PORT:-5432}
-
 ARG WALG_VERSION
 ENV WALG_VERSION=${WALG_VERSION:-3.0.7}
 
@@ -86,8 +83,6 @@ RUN apt-get clean && rm -rf /var/lib/apt/lists/partial \
       && apt-get clean -y autoclean \
       && rm -rf /var/lib/apt/lists/* \
       && rm -rf /var/lib/postgresql/*
-
-EXPOSE ${POSTGRES_PORT}
 
 ENTRYPOINT []
 
