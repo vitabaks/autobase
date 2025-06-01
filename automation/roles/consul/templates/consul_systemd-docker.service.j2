@@ -24,7 +24,7 @@ ExecStart=/usr/bin/docker run -d \
   --env {{ var }} \
   {% endfor %} \
   {{ consul_container.image | default('bitnami/consul:latest') }} \
-  {{ consul_bin_path }}/consul agent \
+  consul agent \
     -config-file={{ consul_config_path }}/config.json \
     -config-dir={{ consul_configd_path }} \
     -pid-file={{ consul_run_path }}/consul.pid

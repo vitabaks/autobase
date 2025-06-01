@@ -20,7 +20,7 @@ ExecStart=/usr/bin/docker run -d \
   --volume {{ pgbouncer_log_dir }}:{{ pgbouncer_log_dir }} \
   --volume /var/run/pgbouncer{{ '-%d' % (idx + 1) if idx > 0 else '' }}:/var/run/pgbouncer{{ '-%d' % (idx + 1) if idx > 0 else '' }} \
   {{ pgbouncer_container.image | default('bitnami/pgbouncer:latest') }} \
-  {{ pgbouncer_bin_path | default(omit) }}/pgbouncer -d {{ pgbouncer_conf_dir }}/pgbouncer{{ '-%d' % (idx + 1) if idx > 0 else '' }}.ini
+  pgbouncer -d {{ pgbouncer_conf_dir }}/pgbouncer{{ '-%d' % (idx + 1) if idx > 0 else '' }}.ini
 
 # Stop PgBouncer container
 ExecStop=-/usr/bin/docker stop {{ pgbouncer_container.name | default('pgbouncer') }}

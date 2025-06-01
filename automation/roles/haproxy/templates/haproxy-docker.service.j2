@@ -19,7 +19,7 @@ ExecStart=/usr/bin/docker run -d \
   --volume /etc/haproxy:/etc/haproxy \
   --volume /run/haproxy:/run/haproxy \
   {{ haproxy_container.image | default('bitnami/haproxy:latest') }} \
-  {{ haproxy_bin_path | default(omit) }}/haproxy -Ws -f /etc/haproxy/haproxy.cfg -p /run/haproxy/haproxy.pid
+  haproxy -Ws -f /etc/haproxy/haproxy.cfg -p /run/haproxy/haproxy.pid
 
 # Stop HAProxy container
 ExecStop=-/usr/bin/docker stop {{ haproxy_container.name | default('haproxy') }}
