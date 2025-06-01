@@ -1,0 +1,33 @@
+[Unit]
+Description=HAProxy docker wrapper
+Requires=docker.service
+After=docker.service
+
+[Service]
+Type=simple
+TimeoutSec=30
+RestartSec=15
+Restart=always
+
+# Delete HAProxy container (if any)
+ExecStartPre=-/usr/bin/docker rm -f {{ haproxy_container.name | default('haproxy') }}
+
+# Start HAProxy container
+ExecStart=/usr/bin/docker run -d \
+  --name {{ haproxy_container.name | default('haproxy') }} \
+  --network host \
+  --volume /etc/haproxy:/etc/haproxy \
+  --volume /run/haproxy:/run/haproxy \
+  {{ haproxy_container.image | default('bitnami/haproxy:latest') }} \
+  {{ haproxy_bin_path | default(omit) }}/haproxy -Ws -f /etc/haproxy/haproxy.cfg -p /run/haproxy/haproxy.pid
+
+# Stop HAProxy container
+ExecStop=-/usr/bin/docker stop {{ haproxy_container.name | default('haproxy') }}
+ExecStopPost=-/usr/bin/docker rm -f {{ haproxy_container.name | default('haproxy') }}
+
+# Send HUP to reload config
+ExecReload=/usr/bin/docker exec {{ haproxy_container.name | default('haproxy') }} \
+  {{ haproxy_bin_path | default(omit) }}/haproxy -f /etc/haproxy/haproxy.cfg -c -q
+
+[Install]
+WantedBy=multi-user.target

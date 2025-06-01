@@ -1174,7 +1174,7 @@ pgbouncer_container:
 haproxy_container:
   name: "haproxy"
   image: "bitnami/haproxy:{{ haproxy_container.tag }}"
-  tag: "{{ haproxy_version | default('3.2.0') }}"
+  tag: "{{ haproxy_version | default('latest') }}"
 
 ############################################################
 # Other variables
