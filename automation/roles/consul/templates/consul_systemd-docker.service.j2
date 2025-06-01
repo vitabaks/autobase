@@ -1,0 +1,34 @@
+[Unit]
+Description=Consul docker wrapper
+Requires=docker.service
+After=docker.service
+
+[Service]
+Type=simple
+TimeoutSec=30
+RestartSec=15
+Restart=always
+
+# Delete consul container (if any)
+ExecStartPre=-/usr/bin/docker rm -f {{ consul_container.name | default('consul') }}
+
+# Start consul container
+ExecStart=/usr/bin/docker run -d \
+  --name {{ consul_container.name | default('consul') }} \
+  --network host \
+  --volume {{ consul_config_path }}:{{ consul_config_path }} \
+  --volume {{ consul_configd_path }}:{{ consul_configd_path }} \
+  --volume {{ consul_data_path }}:{{ consul_data_path }} \
+  --volume {{ consul_run_path }}:{{ consul_run_path }} \
+  {{ consul_container.image | default('bitnami/consul:latest') }} \
+  {{ consul_bin_path }}/consul agent \
+    -config-file={{ consul_config_path }}/config.json \
+    -config-dir={{ consul_configd_path }} \
+    -pid-file={{ consul_run_path }}/consul.pid
+
+# Stop consul container
+ExecStop=-/usr/bin/docker stop {{ consul_container.name | default('consul') }}
+ExecStopPost=-/usr/bin/docker rm -f {{ consul_container.name | default('consul') }}
+
+[Install]
+WantedBy=multi-user.target
