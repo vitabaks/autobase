@@ -5,9 +5,8 @@ After=docker.service
 
 [Service]
 Type=simple
-TimeoutStartSec=60s
-TimeoutStopSec=30s
-RestartSec=15s
+TimeoutSec=60
+RestartSec=15
 Restart=always
 
 # Delete patroni container (if any)
@@ -18,11 +17,11 @@ ExecStart=/usr/bin/docker run -d \
   --name {{ postgresql_container.name }} \
   --network host \
   --volume /etc/patroni:/etc/patroni \
+  --volume {{ patroni_log_dir }}:{{ patroni_log_dir }} \
   --volume /etc/postgresql:/etc/postgresql \
   --volume {{ postgresql_base_dir }}:{{ postgresql_base_dir }} \
   --volume {{ postgresql_log_dir }}:{{ postgresql_log_dir }} \
   --volume {{ postgresql_unix_socket_dir }}:{{ postgresql_unix_socket_dir }} \
-  --volume /var/log/patroni:/var/log/patroni \
   {{ postgresql_container.image }} \
   bash -c '/usr/bin/patroni --version && \
     mkdir -p {{ postgresql_conf_dir }} {{ postgresql_data_dir }}; \
