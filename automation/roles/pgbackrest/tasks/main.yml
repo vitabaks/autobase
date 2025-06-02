@@ -106,7 +106,10 @@
         group: postgres
         mode: "0750"
       loop: "{{ pgbackrest_conf.global }}"
-      when: item.option == 'repo1-path' and pgbackrest_repo_host | length < 1
+      when:
+        - item.option == 'repo1-path'
+        - pgbackrest_repo_type | lower == 'posix'
+        - pgbackrest_repo_host | length < 1
       loop_control:
         label: "{{ item.value }}"
 
