@@ -16,6 +16,11 @@ ExecStartPre=-/usr/bin/docker rm -f {{ postgresql_container.name | default('patr
 ExecStart=/usr/bin/docker run -d \
   --name {{ postgresql_container.name | default('patroni') }} \
   --network host \
+  --shm-size={{ postgresql_container_shm_size | default('4g') }} \
+  --env PGDATA={{ postgresql_data_dir }} \
+  {% if tls_cert_generate | bool %}
+  --volume {{ tls_dir }}:{{ tls_dir }} \
+  {% endif %}
   --volume /etc/patroni:/etc/patroni \
   --volume {{ patroni_log_dir }}:{{ patroni_log_dir }} \
   --volume /etc/postgresql:/etc/postgresql \
