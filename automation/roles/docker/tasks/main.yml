@@ -1,0 +1,106 @@
+---
+- name: Load OS-specific vars.
+  ansible.builtin.include_vars: "{{ lookup('first_found', params) }}"
+  vars:
+    params:
+      files:
+        - '{{ ansible_distribution }}.yml'
+        - '{{ ansible_os_family }}.yml'
+        - main.yml
+      paths:
+        - 'vars'
+
+- ansible.builtin.include_tasks: setup-RedHat.yml
+  when: ansible_os_family == 'RedHat'
+
+- ansible.builtin.include_tasks: setup-Debian.yml
+  when: ansible_os_family == 'Debian'
+
+- name: Install Docker packages.
+  ansible.builtin.package:
+    name: "{{ docker_packages }}"
+    state: "{{ docker_packages_state }}"
+  notify: restart docker
+  ignore_errors: "{{ ansible_check_mode }}"
+  when: ansible_version.full is version_compare('2.12', '<') or
+    ansible_os_family not in ['RedHat', 'Debian']
+
+- name: Install Docker packages (with downgrade option).
+  ansible.builtin.package:
+    name: "{{ docker_packages }}"
+    state: "{{ docker_packages_state }}"
+    allow_downgrade: true
+  notify: restart docker
+  ignore_errors: "{{ ansible_check_mode }}"
+  when:
+    - ansible_version.full is version_compare('2.12', '>=')
+    - ansible_os_family in ['RedHat', 'Debian']
+
+- name: Install docker-compose plugin.
+  ansible.builtin.package:
+    name: "{{ docker_compose_package }}"
+    state: "{{ docker_compose_package_state }}"
+  notify: restart docker
+  ignore_errors: "{{ ansible_check_mode }}"
+  when:
+    - docker_install_compose_plugin | bool
+    - ansible_version.full is version_compare('2.12', '<') or ansible_os_family not in ['RedHat', 'Debian']
+
+- name: Install docker-compose-plugin (with downgrade option).
+  ansible.builtin.package:
+    name: "{{ docker_compose_package }}"
+    state: "{{ docker_compose_package_state }}"
+    allow_downgrade: true
+  notify: restart docker
+  ignore_errors: "{{ ansible_check_mode }}"
+  when:
+    - docker_install_compose_plugin | bool
+    - ansible_version.full is version_compare('2.12', '>=')
+    - ansible_os_family in ['RedHat', 'Debian']
+
+- name: Ensure /etc/docker/ directory exists.
+  ansible.builtin.file:
+    path: /etc/docker
+    state: directory
+    mode: "0755"
+  when: docker_daemon_options.keys() | length > 0
+
+- name: Configure Docker daemon options.
+  ansible.builtin.copy:
+    content: "{{ docker_daemon_options | to_nice_json }}"
+    dest: /etc/docker/daemon.json
+    mode: "0644"
+  when: docker_daemon_options.keys() | length > 0
+  notify: restart docker
+
+- name: Ensure Docker is started and enabled at boot.
+  ansible.builtin.service:
+    name: docker
+    state: "{{ docker_service_state }}"
+    enabled: "{{ docker_service_enabled }}"
+  ignore_errors: "{{ ansible_check_mode }}"
+  when: docker_service_manage | bool
+
+- name: Ensure handlers are notified now to avoid firewall conflicts.
+  ansible.builtin.meta: flush_handlers
+
+- ansible.builtin.include_tasks: docker-compose.yml
+  when: docker_install_compose | bool
+
+- name: Get docker group info using getent.
+  ansible.builtin.getent:
+    database: group
+    key: docker
+    split: ':'
+  when: docker_users | length > 0
+
+- name: Check if there are any users to add to the docker group.
+  ansible.builtin.set_fact:
+    at_least_one_user_to_modify: true
+  when:
+    - docker_users | length > 0
+    - item not in ansible_facts.getent_group["docker"][2]
+  with_items: "{{ docker_users }}"
+
+- ansible.builtin.include_tasks: docker-users.yml
+  when: at_least_one_user_to_modify is defined

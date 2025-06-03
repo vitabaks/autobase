@@ -153,6 +153,10 @@
     - role: vitabaks.autobase.copy
     - role: vitabaks.autobase.cron
 
+    - role: vitabaks.autobase.docker
+      when: installation_method == "docker" and docker_install | bool
+      tags: docker
+
 - name: vitabaks.autobase.add_pgnode | Configure pgBackRest
   hosts: pgbackrest:postgres_cluster
   become: true

@@ -1146,11 +1146,13 @@ pip_package_repo: "https://bootstrap.pypa.io/get-pip.py" # latest version pip3 f
 # Docker containers (if installation_method: "docker")
 ############################################################
 
-# Image with PostgreSQL, extensions, Patroni, and backup tools.
+docker_install: true # Set to false if you prefer to install Docker yourself.
+docker_add_repo: true # Set to false if you want to use the default docker packages for your system or manage the package repository on your own.
+
 postgresql_container:
   name: "postgres"
-  image: "autobase/patroni:{{ postgresql_container.tag }}"
-  tag: "postgresql-{{ postgresql_version }}"  # major or minor version, e.g. 17 or 17.5
+  image: "autobase/patroni:{{ postgresql_container.tag }}" # image with PostgreSQL, extensions, Patroni, and backup tools.
+  tag: "postgresql-{{ postgresql_version }}" # major or minor version, e.g. 17 or 17.5
 
 # if dcs_type: "etcd" and dcs_exists: false
 etcd_container:
