@@ -203,7 +203,34 @@
     load_balancer_replica_sync: "{{ (hostvars['localhost']['aws_elb_classic_lb']['results'] | selectattr('item', 'equalto', 'sync') | first).elb.dns_name | default('N/A') }}"
     superuser_username: "{{ patroni_superuser_username }}"
     superuser_password: "{{ '********' if mask_password | default(false) | bool else patroni_superuser_password }}"
-  when: cloud_provider | default('') | lower == 'aws' and cloud_load_balancer | default(true) | bool
+  when:
+    - cloud_load_balancer | default(true) | bool
+    - cloud_provider | default('') | lower == 'aws'
+    - aws_load_balancer_type | default('nlb') | lower == 'clb'
+  tags: conn_info, cluster_info, cluster_status
+
+- name: Connection info
+  run_once: true
+  ansible.builtin.debug:
+    msg:
+      address:
+        primary: "{{ load_balancer_primary }}"
+        replica: "{{ load_balancer_replica if load_balancer_replica != 'N/A' else omit }}"
+        replica_sync: "{{ load_balancer_replica_sync if synchronous_mode | bool else omit }}"
+      port: "{{ pgbouncer_listen_port if pgbouncer_install | bool else postgresql_port }}"
+      superuser: "{{ superuser_username }}"
+      password: "{{ superuser_password }}"
+  ignore_errors: true
+  vars:
+    load_balancer_primary: "{{ (hostvars['localhost']['aws_elb_network_lb']['results'] | selectattr('item', 'equalto', 'primary') | first).load_balancer.dns_name | default('N/A') }}"
+    load_balancer_replica: "{{ (hostvars['localhost']['aws_elb_network_lb']['results'] | selectattr('item', 'equalto', 'replica') | first).load_balancer.dns_name | default('N/A') }}"
+    load_balancer_replica_sync: "{{ (hostvars['localhost']['aws_elb_network_lb']['results'] | selectattr('item', 'equalto', 'sync') | first).load_balancer.dns_name | default('N/A') }}"
+    superuser_username: "{{ patroni_superuser_username }}"
+    superuser_password: "{{ '********' if mask_password | default(false) | bool else patroni_superuser_password }}"
+  when:
+    - cloud_load_balancer | default(true) | bool
+    - cloud_provider | default('') | lower == 'aws'
+    - aws_load_balancer_type | default('nlb') | lower == 'nlb'
   tags: conn_info, cluster_info, cluster_status
 
 # GCP

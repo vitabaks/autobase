@@ -5,4 +5,5 @@
 __pycache__/
 *.log
 molecule/**/tmp
-.ansible/lock
+.ansible
+.ansible-lint-env

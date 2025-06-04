@@ -32,6 +32,7 @@ database_public_allowed_ips: "" # (comma-separated list of IP addresses in CIDR 
 
 # Load balancer
 cloud_load_balancer: true # Create a Load Balancer in the Cloud.
+aws_load_balancer_type: "nlb" # 'nlb' = Network Load Balancer; 'clb' = Classic Load Balancer (previous generation).
 
 # Backups (if 'pgbackrest_install' or 'wal_g_install' is 'true')
 aws_s3_bucket_create: true # if 'cloud_provider=aws'
