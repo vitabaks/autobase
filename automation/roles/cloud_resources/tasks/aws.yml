@@ -403,7 +403,7 @@
         (item in ['sync', 'async'] and server_count | int > 1 and synchronous_mode | bool))
 
     # Network Load Balancer (NLB)
-    - name: "AWS: Create Target Group for Network Load Balancer (NLB)"
+    - name: "AWS: Create NLB Target Group"
       community.aws.elb_target_group:
         access_key: "{{ lookup('ansible.builtin.env', 'AWS_ACCESS_KEY_ID') }}"
         secret_key: "{{ lookup('ansible.builtin.env', 'AWS_SECRET_ACCESS_KEY') }}"
