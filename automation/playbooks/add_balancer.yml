@@ -111,6 +111,10 @@
     - role: vitabaks.autobase.hostname
     - role: vitabaks.autobase.resolv_conf
 
+    - role: vitabaks.autobase.docker
+      when: installation_method == "docker" and docker_install | bool
+      tags: docker
+
     - role: vitabaks.autobase.haproxy
       when: with_haproxy_load_balancing | default(false) | bool
 
