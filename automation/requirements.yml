@@ -1,15 +1,17 @@
 ---
 collections:
   - name: amazon.aws
-    version: ">=9.3.0"
+    version: "==9.5.0" # TODO: bump when adding support for ansible-core ≥2.17
+  - name: community.aws
+    version: "==9.3.0" # TODO: bump when adding support for ansible-core ≥2.17
   - name: google.cloud
-    version: ">=1.5.1"
+    version: ">=1.5.3"
   - name: azure.azcollection
-    version: ">=3.3.1"
+    version: ">=3.4.0"
   - name: community.digitalocean
     version: ">=1.27.0"
   - name: hetzner.hcloud
-    version: ">=4.3.0"
+    version: "==4.3.0" # TODO: bump when adding support for ansible-core ≥2.17
   - name: community.postgresql
     version: ">=3.12.0"
   - name: community.docker

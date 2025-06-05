@@ -31,6 +31,7 @@ tags:
 
 dependencies:
   amazon.aws: ">=9.3.0"
+  community.aws: ">=9.3.0"
   google.cloud: ">=1.5.1"
   azure.azcollection: ">=3.3.1"
   community.digitalocean: ">=1.27.0"
