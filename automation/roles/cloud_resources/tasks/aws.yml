@@ -362,8 +362,8 @@
           when: not ec2_spot_instance_result.changed | default(false)
       when: server_spot | default(aws_ec2_spot_instance | default(false)) | bool
 
-    # Load Balancer (ELB)
-    - name: "AWS: Create or modify Elastic Load Balancer (ELB)"
+    # Classic Load Balancer (CLB) - previous generation
+    - name: "AWS: Create Classic Load Balancer (CLB)"
       amazon.aws.elb_classic_lb:
         access_key: "{{ lookup('ansible.builtin.env', 'AWS_ACCESS_KEY_ID') }}"
         secret_key: "{{ lookup('ansible.builtin.env', 'AWS_SECRET_ACCESS_KEY') }}"
@@ -380,8 +380,8 @@
             load_balancer_port: "{{ pgbouncer_listen_port | default('6432') if pgbouncer_install | bool else postgresql_port | default('5432') }}"
             instance_port: "{{ pgbouncer_listen_port | default('6432') if pgbouncer_install | bool else postgresql_port | default('5432') }}"
         health_check:
-          ping_protocol: "http"
-          ping_port: "{{ patroni_restapi_port }}"
+          ping_protocol: "{{ patroni_restapi_protocol | default('http') }}"
+          ping_port: "{{ patroni_restapi_port | default('8008') }}"
           ping_path: "/{{ item }}"
           interval: 5
           timeout: 2
@@ -397,7 +397,85 @@
       loop_control:
         label: "{{ patroni_cluster_name }}-{{ item }}"
       register: aws_elb_classic_lb
-      when: cloud_load_balancer | bool and
+      when: cloud_load_balancer | bool and aws_load_balancer_type | lower == 'clb' and
+        (item == 'primary' or
+        (item == 'replica' and server_count | int > 1) or
+        (item in ['sync', 'async'] and server_count | int > 1 and synchronous_mode | bool))
+
+    # Network Load Balancer (NLB)
+    - name: "AWS: Create NLB Target Group"
+      community.aws.elb_target_group:
+        access_key: "{{ lookup('ansible.builtin.env', 'AWS_ACCESS_KEY_ID') }}"
+        secret_key: "{{ lookup('ansible.builtin.env', 'AWS_SECRET_ACCESS_KEY') }}"
+        name: "{{ patroni_cluster_name }}-tg-{{ item }}"
+        region: "{{ server_location }}"
+        vpc_id: "{{ vpc_id }}"
+        protocol: "TCP"
+        port: "{{ target_port }}"
+        preserve_client_ip_enabled: true
+        health_check_protocol: "{{ patroni_restapi_protocol | default('http') }}"
+        health_check_port: "{{ patroni_restapi_port | default('8008') }}"
+        health_check_path: "/{{ item }}"
+        health_check_interval: 5
+        health_check_timeout: 2
+        unhealthy_threshold_count: 2
+        healthy_threshold_count: 3
+        successful_response_codes: "200"
+        target_type: instance
+        targets: >-
+          {{
+            server_result.results
+            | map(attribute='instances')
+            | map('first')
+            | map(attribute='instance_id')
+            | map('community.general.dict_kv', 'Id')
+            | map('combine', {'Port': target_port | int})
+            | list
+          }}
+        modify_targets: true
+        wait: false
+        state: present
+      loop:
+        - "primary"
+        - "replica"
+        - "sync"
+      loop_control:
+        label: "{{ patroni_cluster_name }}-tg-{{ item }}"
+      vars:
+        target_port: "{{ pgbouncer_listen_port | default('6432') if pgbouncer_install | bool else postgresql_port | default('5432') }}"
+      when: cloud_load_balancer | bool and aws_load_balancer_type | lower == 'nlb' and
+        (item == 'primary' or
+        (item == 'replica' and server_count | int > 1) or
+        (item in ['sync', 'async'] and server_count | int > 1 and synchronous_mode | bool))
+
+    - name: "AWS: Create Network Load Balancer (NLB)"
+      community.aws.elb_network_lb:
+        access_key: "{{ lookup('ansible.builtin.env', 'AWS_ACCESS_KEY_ID') }}"
+        secret_key: "{{ lookup('ansible.builtin.env', 'AWS_SECRET_ACCESS_KEY') }}"
+        name: "{{ patroni_cluster_name }}-{{ item }}"
+        region: "{{ server_location }}"
+        subnets:
+          - "{{ server_network }}"
+        listeners:
+          - Protocol: TCP
+            Port: "{{ target_port }}"
+            DefaultActions:
+              - Type: forward
+                TargetGroupName: "{{ patroni_cluster_name }}-tg-{{ item }}"
+        cross_zone_load_balancing: true
+        scheme: "{{ 'internet-facing' if database_public_access | bool else 'internal' }}"
+        wait: false
+        state: present
+      loop:
+        - "primary"
+        - "replica"
+        - "sync"
+      loop_control:
+        label: "{{ patroni_cluster_name }}-{{ item }}"
+      register: aws_elb_network_lb
+      vars:
+        target_port: "{{ pgbouncer_listen_port | default('6432') if pgbouncer_install | bool else postgresql_port | default('5432') }}"
+      when: cloud_load_balancer | bool and aws_load_balancer_type | lower == 'nlb' and
         (item == 'primary' or
         (item == 'replica' and server_count | int > 1) or
         (item in ['sync', 'async'] and server_count | int > 1 and synchronous_mode | bool))
@@ -502,7 +580,7 @@
         index_var: idx
         label: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}"
 
-    - name: "AWS: Delete Elastic Load Balancer (ELB)"
+    - name: "AWS: Delete Classic Load Balancer (CLB)"
       amazon.aws.elb_classic_lb:
         access_key: "{{ lookup('ansible.builtin.env', 'AWS_ACCESS_KEY_ID') }}"
         secret_key: "{{ lookup('ansible.builtin.env', 'AWS_SECRET_ACCESS_KEY') }}"
@@ -515,9 +593,46 @@
         - "sync"
       loop_control:
         label: "{{ patroni_cluster_name }}-{{ item }}"
-      when: item == 'primary' or
+      when: aws_load_balancer_type | lower == 'clb' and
+        (item == 'primary' or
         (item == 'replica' and server_count | int > 1) or
-        (item in ['sync', 'async'] and server_count | int > 1 and synchronous_mode | bool)
+        (item in ['sync', 'async'] and server_count | int > 1 and synchronous_mode | bool))
+
+    - name: "AWS: Delete Network Load Balancer (NLB)"
+      community.aws.elb_network_lb:
+        access_key: "{{ lookup('ansible.builtin.env', 'AWS_ACCESS_KEY_ID') }}"
+        secret_key: "{{ lookup('ansible.builtin.env', 'AWS_SECRET_ACCESS_KEY') }}"
+        name: "{{ patroni_cluster_name }}-{{ item }}"
+        region: "{{ server_location }}"
+        state: absent
+      loop:
+        - "primary"
+        - "replica"
+        - "sync"
+      loop_control:
+        label: "{{ patroni_cluster_name }}-{{ item }}"
+      when: aws_load_balancer_type | lower == 'nlb' and
+        (item == 'primary' or
+        (item == 'replica' and server_count | int > 1) or
+        (item in ['sync', 'async'] and server_count | int > 1 and synchronous_mode | bool))
+
+    - name: "AWS: Delete NLB Target Group"
+      community.aws.elb_target_group:
+        access_key: "{{ lookup('ansible.builtin.env', 'AWS_ACCESS_KEY_ID') }}"
+        secret_key: "{{ lookup('ansible.builtin.env', 'AWS_SECRET_ACCESS_KEY') }}"
+        name: "{{ patroni_cluster_name }}-tg-{{ item }}"
+        region: "{{ server_location }}"
+        state: absent
+      loop:
+        - "primary"
+        - "replica"
+        - "sync"
+      loop_control:
+        label: "{{ patroni_cluster_name }}-tg-{{ item }}"
+      when: aws_load_balancer_type | lower == 'nlb' and
+        (item == 'primary' or
+        (item == 'replica' and server_count | int > 1) or
+        (item in ['sync', 'async'] and server_count | int > 1 and synchronous_mode | bool))
 
     - name: "AWS: Delete Security Group"
       amazon.aws.ec2_security_group:
