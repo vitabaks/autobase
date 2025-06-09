@@ -49,6 +49,6 @@ export const sidebarLowData = (t: TFunction) => [
   },
 ];
 
-export const OPEN_SIDEBAR_WIDTH = '240px';
+export const OPEN_SIDEBAR_WIDTH = '220px';
 
-export const COLLAPSED_SIDEBAR_WIDTH = '61px';
+export const COLLAPSED_SIDEBAR_WIDTH = '62px';
