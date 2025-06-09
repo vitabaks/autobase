@@ -15,9 +15,9 @@ const SidebarItemContent: FC<SidebarItemProps> = ({
   return (
     <ListItemButton
       sx={{
-        gap: '16px',
-        borderLeft: `4px solid ${isActive ? theme.palette.primary.main : 'transparent'}`,
-        height: '50px',
+        gap: '12px',
+        borderLeft: `3px solid ${isActive ? theme.palette.primary.main : 'transparent'}`,
+        height: '48px',
       }}
       to={path}
       target={target}
@@ -26,7 +26,7 @@ const SidebarItemContent: FC<SidebarItemProps> = ({
         sx={{
           minWidth: 'fit-content',
         }}>
-        {SidebarIcon ? <SidebarIcon width="24px" height="24px" /> : null}
+        {SidebarIcon ? <SidebarIcon width="28px" height="28px" /> : null}
       </ListItemIcon>
       {!isCollapsed ? <ListItemText primary={label} /> : null}
     </ListItemButton>
