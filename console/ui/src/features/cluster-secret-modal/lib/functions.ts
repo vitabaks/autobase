@@ -166,4 +166,5 @@ export const mapFormValuesToRequestFields = ({
       ? getLocalMachineExtraVars(values, secretId)
       : getCloudProviderExtraVars(values),
   ),
+  existing_cluster: values[CLUSTER_FORM_FIELD_NAMES.EXISTING_CLUSTER] ?? false,
 });
