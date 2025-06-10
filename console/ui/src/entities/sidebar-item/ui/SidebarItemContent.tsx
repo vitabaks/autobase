@@ -26,7 +26,7 @@ const SidebarItemContent: FC<SidebarItemProps> = ({
         sx={{
           minWidth: 'fit-content',
         }}>
-        {SidebarIcon ? <SidebarIcon width="28px" height="28px" /> : null}
+        {SidebarIcon ? <SidebarIcon width="30px" height="30px" /> : null}
       </ListItemIcon>
       {!isCollapsed ? <ListItemText primary={label} /> : null}
     </ListItemButton>
