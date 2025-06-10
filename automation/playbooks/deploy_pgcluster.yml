@@ -21,8 +21,8 @@
       when: cloud_provider | default('') | length > 0
       tags: always
 
-- name: vitabaks.autobase.deploy_pgcluster | Perform pre-checks
-  hosts: all
+- name: vitabaks.autobase.deploy_pgcluster | Perform pre-checks and preparation
+  hosts: "etcd_cluster:consul_instances:balancers:postgres_cluster"
   become: true
   become_method: sudo
   gather_facts: true
