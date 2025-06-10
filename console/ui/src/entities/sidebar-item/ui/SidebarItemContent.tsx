@@ -17,7 +17,7 @@ const SidebarItemContent: FC<SidebarItemProps> = ({
       sx={{
         gap: '12px',
         borderLeft: `3px solid ${isActive ? theme.palette.primary.main : 'transparent'}`,
-        height: '48px',
+        height: '50px',
       }}
       to={path}
       target={target}
