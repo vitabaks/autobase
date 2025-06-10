@@ -4,7 +4,7 @@ import { Controller, useFormContext } from 'react-hook-form';
 import { Box, Typography } from '@mui/material';
 import { CLUSTER_FORM_FIELD_NAMES } from '@widgets/cluster-form/model/constants.ts';
 import ClusterSliderBox from '@shared/ui/slider-box';
-import ServersIcon from '@shared/assets/serversIcon.svg?react';
+import ServersIcon from '@shared/assets/instanceIcon.svg?react';
 
 const InstancesAmountBlock: FC = () => {
   const { t } = useTranslation('clusters');

@@ -28,7 +28,7 @@ const Header: FC = () => {
     <AppBar position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }} elevation={0} variant="outlined">
       <Toolbar sx={{ paddingLeft: '12px !important' }}>
         <Stack direction="row" justifyContent="space-between" alignItems="center" width="100%">
-          <Stack direction="row" alignItems="center" gap="46px">
+          <Stack direction="row" alignItems="center" gap="26px">
             <Stack direction="row" alignItems="center" gap="16px" marginLeft="4px">
               <Logo style={{ width: '35px', height: '35px' }} />
               <Box>
