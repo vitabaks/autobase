@@ -7,7 +7,7 @@ import { Controller, useFormContext } from 'react-hook-form';
 import ClusterFromInstanceConfigBox from '@entities/cluster-instance-config-box';
 
 const CloudFormInstancesBlock: FC = () => {
-  const { t } = useTranslation('clusters');
+  const { t } = useTranslation(['clusters', 'sharedVcpu']);
   const { control, watch, setValue } = useFormContext();
 
   const watchInstanceType = watch(CLUSTER_FORM_FIELD_NAMES.INSTANCE_TYPE);
@@ -59,7 +59,11 @@ const CloudFormInstancesBlock: FC = () => {
                           key={config.code}
                           isActive={value?.code === config.code}
                           onClick={handleInstanceConfigChange(onChange, config)}
-                          name={config.code}
+                          name={
+                            config.shared_cpu
+                              ? `${config.code} (${t('sharedVcpu', 'Shared vCPU')})`
+                              : config.code
+                          }
                           cpu={config.cpu}
                           ram={config.ram}
                         />

@@ -38,6 +38,7 @@ const cloudFormSchema = (t: TFunction) =>
               .object({
                 code: yup.string(),
                 cpu: yup.number(),
+                shared_cpu: yup.boolean(),
                 currency: yup.string(),
                 price_hourly: yup.number(),
                 price_monthly: yup.number(),
