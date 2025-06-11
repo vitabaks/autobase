@@ -13,14 +13,16 @@ Restart=always
 ExecStartPre=-/usr/bin/docker rm -f {{ pgbouncer_container.name | default('pgbouncer') }}
 
 # Start PgBouncer container
-ExecStart=/usr/bin/docker run -d \
-  --name {{ pgbouncer_container.name | default('pgbouncer') }} \
-  --network host \
-  --volume {{ pgbouncer_conf_dir }}:{{ pgbouncer_conf_dir }} \
-  --volume {{ pgbouncer_log_dir }}:{{ pgbouncer_log_dir }} \
-  {% if tls_cert_generate | bool %}
-  --volume {{ pgbouncer_tls_dir }}:{{ pgbouncer_tls_dir }} \
-  {% endif %}
+ExecStart=/usr/bin/docker run -d --name {{ pgbouncer_container.name | default('pgbouncer') }}{{ '-%d' % (idx + 1) if idx > 0 else '' }} \
+  {% for option in pgbouncer_container.options | default([]) %}
+  {{ option }} \
+  {% endfor %}
+  {% for env in pgbouncer_container.envs | default([]) %}
+  --env {{ env }} \
+  {% endfor %}
+  {% for volume in pgbouncer_container.volumes | default([]) %}
+  --volume {{ volume }} \
+  {% endfor %}
   --volume /var/run/pgbouncer{{ '-%d' % (idx + 1) if idx > 0 else '' }}:/var/run/pgbouncer{{ '-%d' % (idx + 1) if idx > 0 else '' }} \
   {{ pgbouncer_container.image | default('bitnami/pgbouncer:latest') }} \
   pgbouncer -d {{ pgbouncer_conf_dir }}/pgbouncer{{ '-%d' % (idx + 1) if idx > 0 else '' }}.ini

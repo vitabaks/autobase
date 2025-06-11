@@ -1215,6 +1215,13 @@ pgbouncer_container:
   name: "pgbouncer"
   image: "bitnami/pgbouncer:{{ pgbouncer_container.tag }}"
   tag: "{{ pgbouncer_version | default('latest') }}"
+  options:
+    - "--network host"
+  envs: []
+  volumes:
+    - "{{ pgbouncer_conf_dir }}:{{ pgbouncer_conf_dir }}"
+    - "{{ pgbouncer_log_dir }}:{{ pgbouncer_log_dir }}"
+    - "{{ pgbouncer_tls_dir }}:{{ pgbouncer_tls_dir }}"
 
 # if with_haproxy_load_balancing: true
 haproxy_container:
