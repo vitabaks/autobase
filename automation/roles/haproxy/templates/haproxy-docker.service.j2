@@ -13,13 +13,17 @@ Restart=always
 ExecStartPre=-/usr/bin/docker rm -f {{ haproxy_container.name | default('haproxy') }}
 
 # Start HAProxy container
-ExecStart=/usr/bin/docker run -d \
-  --name {{ haproxy_container.name | default('haproxy') }} \
-  --network host \
-  --volume /etc/haproxy:/etc/haproxy \
-  --volume /run/haproxy:/run/haproxy \
-  {{ haproxy_container.image | default('bitnami/haproxy:latest') }} \
-  haproxy -Ws -f /etc/haproxy/haproxy.cfg -p /run/haproxy/haproxy.pid
+ExecStart=/usr/bin/docker run -d --name {{ haproxy_container.name | default('haproxy') }} \
+  {% for option in haproxy_container.options | default([]) %}
+  {{ option }} \
+  {% endfor %}
+  {% for env in haproxy_container.envs | default([]) %}
+  --env {{ env }} \
+  {% endfor %}
+  {% for volume in haproxy_container.volumes | default([]) %}
+  --volume {{ volume }} \
+  {% endfor %}
+  {{ haproxy_container.image | default('bitnami/haproxy:latest') }} {{ haproxy_container.run_command | default('') }}
 
 # Stop HAProxy container
 ExecStop=-/usr/bin/docker stop {{ haproxy_container.name | default('haproxy') }}

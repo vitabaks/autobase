@@ -1228,6 +1228,13 @@ haproxy_container:
   name: "haproxy"
   image: "bitnami/haproxy:{{ haproxy_container.tag }}"
   tag: "{{ haproxy_version | default('latest') }}"
+  options:
+    - "--network host"
+  envs: []
+  volumes:
+    - "/etc/haproxy:/etc/haproxy"
+    - "/run/haproxy:/run/haproxy"
+  run_command: "haproxy -Ws -f /etc/haproxy/haproxy.cfg -p /run/haproxy/haproxy.pid"
 
 ############################################################
 # Other variables
