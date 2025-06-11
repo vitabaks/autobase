@@ -13,29 +13,17 @@ Restart=always
 ExecStartPre=-/usr/bin/docker rm -f {{ postgresql_container.name | default('patroni') }}
 
 # Start patroni container
-ExecStart=/usr/bin/docker run -d \
-  --name {{ postgresql_container.name | default('patroni') }} \
-  --network host \
-  --shm-size={{ postgresql_container_shm_size | default('4g') }} \
-  --env PGDATA={{ postgresql_data_dir }} \
-  {% if tls_cert_generate | bool %}
-  --volume {{ tls_dir }}:{{ tls_dir }} \
-  {% endif %}
-  --volume /etc/patroni:/etc/patroni \
-  --volume {{ patroni_log_dir }}:{{ patroni_log_dir }} \
-  --volume /etc/postgresql:/etc/postgresql \
-  --volume {{ postgresql_base_dir }}:{{ postgresql_base_dir }} \
-  --volume {{ postgresql_log_dir }}:{{ postgresql_log_dir }} \
-  --volume {{ postgresql_unix_socket_dir }}:{{ postgresql_unix_socket_dir }} \
-  {{ postgresql_container.image | default('autobase/patroni:postgresql-' ~ postgresql_version) }} \
-  bash -c '/usr/bin/patroni --version && \
-    mkdir -p {{ postgresql_conf_dir }} {{ postgresql_data_dir }}; \
-    chown -R postgres:postgres \
-      {{ postgresql_conf_dir }} \
-      {{ postgresql_data_dir }} \
-      {{ postgresql_log_dir }} \
-      {{ postgresql_unix_socket_dir }}; \
-    exec su - postgres -c "/usr/bin/patroni /etc/patroni/patroni.yml"'
+ExecStart=/usr/bin/docker run -d --name {{ postgresql_container.name | default('patroni') }} \
+  {% for option in postgresql_container.options | default([]) %}
+  {{ option }} \
+  {% endfor %}
+  {% for env in postgresql_container.envs | default([]) %}
+  --env {{ env }} \
+  {% endfor %}
+  {% for volume in postgresql_container.volumes | default([]) %}
+  --volume {{ volume }} \
+  {% endfor %}
+  {{ postgresql_container.image | default('autobase/patroni:postgresql-' ~ postgresql_version) }} {{ postgresql_container.run_command | default('') }}
 
 # Stop patroni container
 ExecStop=-/usr/bin/docker stop {{ postgresql_container.name | default('patroni') }}

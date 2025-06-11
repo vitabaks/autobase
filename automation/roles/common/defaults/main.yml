@@ -1151,8 +1151,30 @@ docker_add_repo: true # Set to false if you prefer to manage the Docker reposito
 
 postgresql_container:
   name: "postgres"
-  image: "autobase/patroni:{{ postgresql_container.tag }}" # image with PostgreSQL, extensions, Patroni, and backup tools.
+  image: "autobase/patroni:{{ postgresql_container.tag }}" # image with Patroni, PostgreSQL, extensions, and backup tools.
   tag: "postgresql-{{ postgresql_version }}" # major or minor version, e.g. 17 or 17.5
+  options:
+    - "--network host"
+    - "--shm-size=4g"
+  envs:
+    - "PGDATA={{ postgresql_data_dir }}"
+  volumes:
+    - "/etc/patroni:/etc/patroni"
+    - "{{ patroni_log_dir }}:{{ patroni_log_dir }}"
+    - "/etc/postgresql:/etc/postgresql"
+    - "{{ postgresql_base_dir }}:{{ postgresql_base_dir }}"
+    - "{{ postgresql_log_dir }}:{{ postgresql_log_dir }}"
+    - "{{ postgresql_unix_socket_dir }}:{{ postgresql_unix_socket_dir }}"
+    - "{{ tls_dir }}:{{ tls_dir }}"
+  run_command: |
+    bash -c '/usr/bin/patroni --version && \
+      mkdir -p {{ postgresql_conf_dir }} {{ postgresql_data_dir }}; \
+      chown -R postgres:postgres \
+        {{ postgresql_conf_dir }} \
+        {{ postgresql_data_dir }} \
+        {{ postgresql_log_dir }} \
+        {{ postgresql_unix_socket_dir }}; \
+      exec su - postgres -c "/usr/bin/patroni /etc/patroni/patroni.yml"'
 
 # if dcs_type: "etcd" and dcs_exists: false
 etcd_container:
