@@ -13,15 +13,17 @@ Restart=always
 ExecStartPre=-/usr/bin/docker rm -f {{ etcd_container.name | default('etcd') }}
 
 # Start etcd container
-ExecStart=/usr/bin/docker run -d \
-  --name {{ etcd_container.name | default('etcd') }} \
-  --env-file "{{ etcd_conf_dir }}/etcd.conf" \
-  --network host \
-  --volume {{ etcd_data_dir }}:{{ etcd_data_dir }} \
-  {% if etcd_tls_enable | bool %}
-  --volume {{ etcd_tls_dir }}:{{ etcd_tls_dir }} \
-  {% endif %}
-  {{ etcd_container.image | default('bitnami/etcd:3.5') }}
+ExecStart=/usr/bin/docker run -d --name {{ etcd_container.name | default('etcd') }} \
+  {% for option in etcd_container.options | default([]) %}
+  {{ option }} \
+  {% endfor %}
+  {% for env in etcd_container.envs | default([]) %}
+  --env {{ env }} \
+  {% endfor %}
+  {% for volume in etcd_container.volumes | default([]) %}
+  --volume {{ volume }} \
+  {% endfor %}
+  {{ etcd_container.image | default('bitnami/etcd:3.5') }} {{ etcd_container.run_command | default('') }}
 
 # Stop etcd container
 ExecStop=-/usr/bin/docker stop {{ etcd_container.name | default('etcd') }}

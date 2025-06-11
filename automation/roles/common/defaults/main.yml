@@ -1181,6 +1181,14 @@ etcd_container:
   name: "etcd"
   image: "bitnami/etcd:{{ etcd_container.tag }}"
   tag: "{{ etcd_version }}"
+  options:
+    - "--network host"
+    - "--env-file {{ etcd_conf_dir }}/etcd.conf"
+  envs: []
+  volumes:
+    - "{{ etcd_data_dir }}:{{ etcd_data_dir }}"
+    - "{{ etcd_tls_dir }}:{{ etcd_tls_dir }}"
+  run_command: ""
 
 # if dcs_type: "consul" and dcs_exists: false
 consul_container:
