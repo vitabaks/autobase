@@ -1,0 +1,191 @@
+---
+# pip install
+- ansible.builtin.import_tasks: pip.yml
+  vars:
+    pip_package: "python{{ python_version | default('3') }}-pip"
+  when:
+    - installation_method == "packages"
+    - patroni_installation_method == "pip"
+    - pip_package not in system_packages
+  tags: patroni, patroni_install, pip
+
+# Patroni install
+- block: # installation_method: "packages" and patroni_installation_method: "pip"
+    - name: Install setuptools
+      ansible.builtin.pip:
+        name: setuptools<66.0.0 # https://github.com/pypa/setuptools/issues/3772
+        state: latest
+        executable: pip3
+        extra_args: "--trusted-host=pypi.python.org --trusted-host=pypi.org --trusted-host=files.pythonhosted.org"
+        umask: "0022"
+      environment:
+        PATH: "{{ ansible_env.PATH }}:/usr/local/bin:/usr/bin"
+        PIP_BREAK_SYSTEM_PACKAGES: "1"
+      when: patroni_pip_requirements_repo | length < 1
+
+    # Use master requirements if patroni_install_version is 'latest' or explicitly forced via patroni_latest_requirements
+    - name: Download Patroni requirements.txt
+      ansible.builtin.get_url:
+        url: >-
+          https://raw.githubusercontent.com/patroni/patroni/{{
+            'refs/heads/master' if patroni_install_version == 'latest' or patroni_latest_requirements | default(false)
+            else 'refs/tags/v' ~ (patroni_install_version | regex_replace('^v', ''))
+          }}/requirements.txt
+        dest: /tmp/requirements.txt
+        timeout: 60
+        validate_certs: false
+      when: patroni_pip_requirements_repo | length < 1
+
+    - name: Install requirements
+      ansible.builtin.pip:
+        requirements: /tmp/requirements.txt
+        executable: pip3
+        extra_args: "--trusted-host=pypi.python.org --trusted-host=pypi.org --trusted-host=files.pythonhosted.org"
+        umask: "0022"
+      environment:
+        PATH: "{{ ansible_env.PATH }}:{{ postgresql_bin_dir }}:/usr/local/bin:/usr/bin"
+        PIP_BREAK_SYSTEM_PACKAGES: "1"
+      when: patroni_pip_requirements_repo | length < 1
+
+    - name: Install patroni
+      ansible.builtin.pip:
+        name: patroni
+        state: latest
+        executable: pip3
+        extra_args: "--trusted-host=pypi.python.org --trusted-host=pypi.org --trusted-host=files.pythonhosted.org"
+        umask: "0022"
+      environment:
+        PATH: "{{ ansible_env.PATH }}:/usr/local/bin:/usr/bin"
+        PIP_BREAK_SYSTEM_PACKAGES: "1"
+      when: patroni_pip_package_repo | length < 1 and patroni_install_version == "latest"
+
+    - name: "Install patroni {{ patroni_install_version }}"
+      ansible.builtin.pip:
+        name: "patroni=={{ patroni_install_version }}"
+        executable: pip3
+        extra_args: "--trusted-host=pypi.python.org --trusted-host=pypi.org --trusted-host=files.pythonhosted.org"
+        umask: "0022"
+      environment:
+        PATH: "{{ ansible_env.PATH }}:/usr/local/bin:/usr/bin"
+        PIP_BREAK_SYSTEM_PACKAGES: "1"
+      when: patroni_pip_package_repo | length < 1 and patroni_install_version != "latest"
+  when: installation_method == "packages" and patroni_installation_method == "pip"
+  environment: "{{ proxy_env | default({}) }}"
+  tags: patroni, patroni_install
+
+- block: # when "patroni_pip_requirements_repo" and "patroni_pip_package_repo" is defined
+    - name: Download patroni requirements
+      ansible.builtin.get_url:
+        url: "{{ item }}"
+        dest: /tmp/
+        timeout: 120
+        validate_certs: false
+      loop: "{{ patroni_pip_requirements_repo }}"
+      when: patroni_pip_requirements_repo | length > 0
+
+    - name: Download patroni package
+      ansible.builtin.get_url:
+        url: "{{ item }}"
+        dest: /tmp/
+        timeout: 60
+        validate_certs: false
+      loop: "{{ patroni_pip_package_repo | list }}"
+      when: patroni_pip_package_repo | length > 0
+
+    - name: Install requirements
+      ansible.builtin.pip:
+        name: "file:///tmp/{{ item }}"
+        executable: pip3
+        extra_args: "--no-index --find-links=file:///tmp --ignore-installed"
+        umask: "0022"
+      loop: "{{ patroni_pip_requirements_repo | map('basename') | list }}"
+      environment:
+        PATH: "{{ ansible_env.PATH }}:/usr/local/bin:/usr/bin"
+        PIP_BREAK_SYSTEM_PACKAGES: "1"
+      when: patroni_pip_requirements_repo | length > 0
+
+    - name: Install patroni
+      ansible.builtin.pip:
+        name: "file:///tmp/{{ item }}"
+        executable: pip3
+        extra_args: "--no-index --find-links=file:///tmp --ignore-installed"
+        umask: "0022"
+      loop: "{{ patroni_pip_package_repo | map('basename') | list }}"
+      environment:
+        PATH: "{{ ansible_env.PATH }}:/usr/local/bin:/usr/bin"
+        PIP_BREAK_SYSTEM_PACKAGES: "1"
+      when: patroni_pip_package_repo | length > 0
+  when: installation_method == "packages" and patroni_installation_method == "pip"
+  tags: patroni, patroni_install
+
+- block: # installation_method: "packages" and patroni_installation_method: "rpm/deb"
+    # Debian
+    - name: Install patroni package
+      ansible.builtin.apt:
+        name: "{{ patroni_packages | flatten }}"
+        state: present
+      register: apt_status
+      until: apt_status is success
+      delay: 5
+      retries: 3
+      when: ansible_os_family == "Debian" and patroni_deb_package_repo | length < 1
+
+    # RedHat
+    - name: Install patroni package
+      ansible.builtin.dnf:
+        name: "{{ patroni_packages | flatten }}"
+        state: present
+        disable_gpg_check: true
+      register: dnf_status
+      until: dnf_status is success
+      delay: 5
+      retries: 3
+      when: ansible_os_family == "RedHat" and patroni_rpm_package_repo | length < 1
+
+    # when patroni_deb_package_repo or patroni_rpm_package_repo URL is defined
+    # Debian
+    - name: Download patroni deb package
+      ansible.builtin.get_url:
+        url: "{{ item }}"
+        dest: /tmp/
+        timeout: 60
+        validate_certs: false
+      loop: "{{ patroni_deb_package_repo | list }}"
+      when: ansible_os_family == "Debian" and patroni_deb_package_repo | length > 0
+
+    - name: Install patroni from deb package
+      ansible.builtin.apt:
+        force_apt_get: true
+        deb: "/tmp/{{ item }}"
+        state: present
+      loop: "{{ patroni_deb_package_repo | map('basename') | list }}"
+      register: deb_package_status
+      until: deb_package_status is success
+      delay: 5
+      retries: 3
+      when: ansible_os_family == "Debian" and patroni_deb_package_repo | length > 0
+
+    # RedHat
+    - name: Download patroni rpm package
+      ansible.builtin.get_url:
+        url: "{{ item }}"
+        dest: /tmp/
+        timeout: 60
+        validate_certs: false
+      loop: "{{ patroni_rpm_package_repo | list }}"
+      when: ansible_os_family == "RedHat" and patroni_rpm_package_repo | length > 0
+
+    - name: Install patroni from rpm package
+      ansible.builtin.dnf:
+        name: "/tmp/{{ item }}"
+        state: present
+        disable_gpg_check: true
+      loop: "{{ patroni_rpm_package_repo | map('basename') | list }}"
+      register: rpm_package_status
+      until: rpm_package_status is success
+      delay: 5
+      retries: 3
+      when: ansible_os_family == "RedHat" and patroni_rpm_package_repo | length > 0
+  environment: "{{ proxy_env | default({}) }}"
+  when: installation_method == "packages" and (patroni_installation_method == "rpm" or patroni_installation_method == "deb")
+  tags: patroni, patroni_install
