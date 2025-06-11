@@ -1195,6 +1195,20 @@ consul_container:
   name: "consul"
   image: "bitnami/consul:{{ consul_container.tag }}"
   tag: "{{ consul_version }}"
+  options:
+    - "--network host"
+  envs: []
+  volumes:
+    - "{{ consul_config_path }}:{{ consul_config_path }}"
+    - "{{ consul_configd_path }}:{{ consul_configd_path }}"
+    - "{{ consul_data_path }}:{{ consul_data_path }}"
+    - "{{ consul_run_path }}:{{ consul_run_path }}"
+    - "{{ consul_tls_dir }}:{{ consul_tls_dir }}"
+  run_command: |
+    consul agent \
+      -config-file={{ consul_config_path }}/config.json \
+      -config-dir={{ consul_configd_path }} \
+      -pid-file={{ consul_run_path }}/consul.pid
 
 # if pgbouncer_install: true
 pgbouncer_container:

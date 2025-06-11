@@ -15,22 +15,16 @@ ExecStartPre=-/usr/bin/docker rm -f {{ consul_container.name | default('consul')
 # Start consul container
 ExecStart=/usr/bin/docker run -d \
   --name {{ consul_container.name | default('consul') }} \
-  --network host \
-  {% for var in consul_env_vars | default([]) %}
-  --env {{ var }} \
+  {% for option in consul_container.options | default([]) %}
+  {{ option }} \
   {% endfor %}
-  --volume {{ consul_config_path }}:{{ consul_config_path }} \
-  --volume {{ consul_configd_path }}:{{ consul_configd_path }} \
-  --volume {{ consul_data_path }}:{{ consul_data_path }} \
-  --volume {{ consul_run_path }}:{{ consul_run_path }} \
-  {% if consul_tls_enable | bool %}
-  --volume {{ consul_tls_dir }}:{{ consul_tls_dir }} \
-  {% endif %}
-  {{ consul_container.image | default('bitnami/consul:latest') }} \
-  consul agent \
-    -config-file={{ consul_config_path }}/config.json \
-    -config-dir={{ consul_configd_path }} \
-    -pid-file={{ consul_run_path }}/consul.pid
+  {% for env in consul_container.envs | default([]) %}
+  --env {{ env }} \
+  {% endfor %}
+  {% for volume in consul_container.volumes | default([]) %}
+  --volume {{ volume }} \
+  {% endfor %}
+  {{ consul_container.image | default('bitnami/consul:latest') }} {{ consul_container.run_command | default('') }}
 
 # Stop consul container
 ExecStop=-/usr/bin/docker stop {{ consul_container.name | default('consul') }}
