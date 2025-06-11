@@ -23,6 +23,9 @@ ExecStart=/usr/bin/docker run -d --name {{ postgresql_container.name | default('
   {% for volume in postgresql_container.volumes | default([]) %}
   --volume {{ volume }} \
   {% endfor %}
+  {% if postgresql_stats_temp_directory_path | default('') != 'none' and postgresql_version | int <= 14 %}
+  --volume {{ postgresql_stats_temp_directory_path }}:{{ postgresql_stats_temp_directory_path }} \
+  {% endif %}
   {{ postgresql_container.image | default('autobase/patroni:postgresql-' ~ postgresql_version) }} {{ postgresql_container.run_command | default('') }}
 
 # Stop patroni container
