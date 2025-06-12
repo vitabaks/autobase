@@ -1,0 +1,54 @@
+---
+# if installation_method: "docker"
+
+- name: "Pull patroni image: {{ docker_image_name }}"
+  community.docker.docker_image_pull:
+    name: "{{ docker_image_name }}"
+  vars:
+    docker_image_name: "{{ postgresql_container.image | default('autobase/patroni:postgresql-' ~ postgresql_version) }}"
+  environment: "{{ proxy_env | default({}) }}"
+
+# CLI wrappers
+- name: Create docker wrapper scripts for postgresql
+  ansible.builtin.copy:
+    # These wrapper scripts are intended to ensure compatibility of Ansible roles
+    # with both package-based and Docker-based PostgreSQL setups.
+    # This is not a full list of PostgreSQL tools — only commonly used ones.
+    content: |
+      #!/bin/bash
+      docker exec -it {{ postgresql_container.name | default('patroni') }} \
+        su - postgres -c '{{ item }} "$@"'
+    dest: "/usr/local/bin/{{ item }}"
+    owner: root
+    group: root
+    mode: "0755"
+  loop: "{{ postgresql_wrappers }}"  # Allows overriding the list via postgresql_wrappers.
+  loop_control:
+    label: "/usr/local/bin/{{ item }}"
+  vars:
+    postgresql_wrappers: "{{ postgresql_wrappers | default(default_postgresql_wrappers) }}"
+    default_postgresql_wrappers:
+      - psql
+      - pg_ctl
+      - pg_isready
+      - pg_dump
+      - pg_dumpall
+      - pg_lsclusters
+      - pg_upgrade
+      - pg_controldata
+      - initdb
+      - vacuumdb
+      - pgbench
+  tags: docker, docker_wrappers
+
+- name: Create Docker wrapper script for patronictl
+  ansible.builtin.copy:
+    content: |
+      #!/bin/bash
+      docker exec -e PATRONICTL_CONFIG_FILE=/etc/patroni/patroni.yml -it {{ postgresql_container.name | default('patroni') }} \
+        su - postgres -c 'patronictl "$@"'
+    dest: /usr/local/bin/patronictl
+    owner: root
+    group: root
+    mode: "0755"
+  tags: docker, docker_wrappers

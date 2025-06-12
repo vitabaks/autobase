@@ -7,6 +7,11 @@
   when: installation_method == "packages"
   tags: patroni, patroni_install
 
+# if installation_method: "docker"
+- ansible.builtin.import_tasks: docker.yml
+  when: installation_method == "docker"
+  tags: patroni, docker
+
 # Patroni configure
 - name: Create conf directory
   ansible.builtin.file:
