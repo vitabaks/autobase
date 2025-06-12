@@ -22,11 +22,10 @@
     owner: root
     group: root
     mode: "0755"
-  loop: "{{ postgresql_wrappers }}"  # Allows overriding the list via postgresql_wrappers.
+  loop: "{{ postgresql_wrappers | default(default_postgresql_wrappers) }}" # Allows overriding the list via postgresql_wrappers.
   loop_control:
     label: "/usr/local/bin/{{ item }}"
   vars:
-    postgresql_wrappers: "{{ postgresql_wrappers | default(default_postgresql_wrappers) }}"
     default_postgresql_wrappers:
       - psql
       - pg_ctl
