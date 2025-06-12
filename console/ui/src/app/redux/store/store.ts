@@ -7,6 +7,7 @@ import { secretsApi } from '@shared/api/api/secrets.ts';
 import { settingsApi } from '@shared/api/api/settings.ts';
 import { otherApi } from '@shared/api/api/other.ts';
 import { projectSlice } from '@app/redux/slices/projectSlice/projectSlice.ts';
+import { themeSlice } from '@app/redux/slices/themeSlice/themeSlice.ts';
 import { baseApi } from '@shared/api/baseApi.ts';
 import { toast } from 'react-toastify';
 import { setupListeners } from '@reduxjs/toolkit/query';
@@ -31,6 +32,7 @@ const rootReducer = {
   [settingsApi.reducerPath]: settingsApi.reducer,
   [otherApi.reducerPath]: otherApi.reducer,
   project: projectSlice.reducer,
+  theme: themeSlice.reducer,
 };
 
 // Infer the `RootState` type from the root reducer

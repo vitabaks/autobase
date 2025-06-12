@@ -3,6 +3,7 @@ import { AppBar, Box, MenuItem, SelectChangeEvent, Stack, TextField, Toolbar, Ty
 import Logo from '@shared/assets/AutobaseLogo.svg?react';
 import { grey } from '@mui/material/colors';
 import LogoutButton from '@features/logout-button';
+import ThemeToggle from '@features/theme-toggle';
 import { useGetProjectsQuery } from '@shared/api/api/projects.ts';
 import { setProject } from '@app/redux/slices/projectSlice/projectSlice.ts';
 import { selectCurrentProject } from '@app/redux/slices/projectSlice/projectSelectors.ts';
@@ -30,12 +31,12 @@ const Header: FC = () => {
         <Stack direction="row" justifyContent="space-between" alignItems="center" width="100%">
           <Stack direction="row" alignItems="center" gap="26px">
             <Stack direction="row" alignItems="center" gap="16px" marginLeft="4px">
-              <Logo style={{ width: '35px', height: '35px' }} />
+              <Logo style={{ width: '35px', height: '35px' }} data-logo="true" />
               <Box>
-                <Typography fontWeight="400" sx={{ color: '#384555', lineHeight: 1.2 }}>
+                <Typography fontWeight="400" sx={{ color: 'text.secondary', lineHeight: 1.2 }}>
                   autobase
                 </Typography>
-                <Typography fontWeight="500" color="common.black" sx={{ lineHeight: 1.2 }}>
+                <Typography fontWeight="500" sx={{ color: 'text.primary', lineHeight: 1.2 }}>
                   for PostgreSQL®
                 </Typography>
               </Box>
@@ -54,7 +55,10 @@ const Header: FC = () => {
               )) ?? []}
             </TextField>
           </Stack>
-          <LogoutButton />
+          <Stack direction="row" alignItems="center" gap="8px">
+            <ThemeToggle />
+            <LogoutButton />
+          </Stack>
         </Stack>
       </Toolbar>
     </AppBar>

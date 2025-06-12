@@ -19,11 +19,6 @@ const DefaultTable: FC = ({ tableConfig }: { tableConfig: MRT_TableOptions<MRT_R
       placeholder: t('defaultTableSearchPlaceholder'),
       sx: { minWidth: '300px' },
     },
-    muiTableHeadCellProps: {
-      sx: {
-        backgroundColor: '#F6F8FA',
-      },
-    },
     displayColumnDefOptions: {
       'mrt-row-select': {
         visibleInShowHideMenu: false,

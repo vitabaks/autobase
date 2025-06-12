@@ -120,12 +120,12 @@ const useGetCloudProviderConfig = () => {
                 )?.toFixed(2)}/${t('perDisk', { ns: 'clusters' })}`}
               </Typography>
             </Stack>
-            <Typography color="#575757" variant="caption" whiteSpace="pre-line">
+            <Typography color="text.secondary" variant="caption" whiteSpace="pre-line">
               <Trans i18nKey="estimatedCostAdditionalInfo" t={t}>
                 <Link
                   target="_blank"
                   href={providerNamePricingListMap[data[CLUSTER_FORM_FIELD_NAMES.PROVIDER]?.code]}
-                  color="#575757"
+                  color="text.secondary"
                 />
               </Trans>
             </Typography>
@@ -186,7 +186,7 @@ const useGetLocalMachineConfig = () => {
                 : t('off', { ns: 'shared' })}
             </Typography>
           </Stack>
-          <Typography variant="caption" color="#575757">
+          <Typography variant="caption" color="text.secondary">
             {t('highAvailabilityInfo')}
           </Typography>
         </Stack>

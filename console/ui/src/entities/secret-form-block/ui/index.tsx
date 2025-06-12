@@ -14,7 +14,7 @@ const SecretFormBlock: React.FC<SecretFormBlockProps> = ({ secretType, isAdditio
       <Typography variant="caption">
         {content.link ? (
           <Trans i18nKey={content.translationKey} t={t}>
-            <Link href={content.link} color="#575757" target="_blank" />
+            <Link href={content.link} color="text.secondary" target="_blank" />
           </Trans>
         ) : (
           t(content.translationKey)

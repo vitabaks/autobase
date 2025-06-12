@@ -1,12 +1,11 @@
 import { FC } from 'react';
-import { Box, Stack, Tooltip, Typography } from '@mui/material';
+import { Box, Stack, Tooltip, Typography, useTheme } from '@mui/material';
 import { Controller, useFormContext } from 'react-hook-form';
 import { CLUSTER_FORM_FIELD_NAMES } from '@widgets/cluster-form/model/constants.ts';
 import { useTranslation } from 'react-i18next';
 import { useNameIconProvidersMap } from '@entities/cluster-form-cloud-region-block/lib/hooks.tsx';
 import ErrorOutlineOutlinedIcon from '@mui/icons-material/ErrorOutlineOutlined';
 import ServersIcon from '@shared/assets/serversIcon.svg?react';
-import theme from '@shared/theme/theme.ts';
 import { ProvidersBlockProps } from '@entities/providers-block/model/types.ts';
 import { PROVIDERS } from '@shared/config/constants.ts';
 import ClusterFormCloudProviderBox from '@entities/providers-block/ui/ClusterFormCloudProviderBox.tsx';
@@ -14,6 +13,7 @@ import ClusterFormCloudProviderBox from '@entities/providers-block/ui/ClusterFor
 const ClusterFormProvidersBlock: FC<ProvidersBlockProps> = ({ providers }) => {
   const { t } = useTranslation('clusters');
   const { control, reset } = useFormContext();
+  const theme = useTheme();
 
   const nameIconProvidersMap = useNameIconProvidersMap();
 
