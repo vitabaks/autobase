@@ -1,0 +1,33 @@
+[Unit]
+Description=etcd docker wrapper
+Requires=docker.service
+After=docker.service
+
+[Service]
+Type=simple
+TimeoutSec=30
+RestartSec=15
+Restart=always
+
+# Delete etcd container (if any)
+ExecStartPre=-/usr/bin/docker rm -f {{ etcd_container.name | default('etcd') }}
+
+# Start etcd container
+ExecStart=/usr/bin/docker run -d --name {{ etcd_container.name | default('etcd') }} \
+  {% for option in etcd_container.options | default([]) %}
+  {{ option }} \
+  {% endfor %}
+  {% for env in etcd_container.envs | default([]) %}
+  --env {{ env }} \
+  {% endfor %}
+  {% for volume in etcd_container.volumes | default([]) %}
+  --volume {{ volume }} \
+  {% endfor %}
+  {{ etcd_container.image | default('bitnami/etcd:3.5') }} {{ etcd_container.run_command | default('') }}
+
+# Stop etcd container
+ExecStop=-/usr/bin/docker stop {{ etcd_container.name | default('etcd') }}
+ExecStopPost=-/usr/bin/docker rm -f {{ etcd_container.name | default('etcd') }}
+
+[Install]
+WantedBy=multi-user.target

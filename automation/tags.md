@@ -109,3 +109,6 @@
 - tls
   - tls_cert_generate
   - tls_cert_copy
+- docker
+  - docker_install
+  - docker_wrappers
