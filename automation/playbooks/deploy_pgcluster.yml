@@ -115,6 +115,15 @@
       retries: 3
       when: ansible_os_family == "Debian"
 
+    - name: Make sure that the postgres user exists (for Docker mode)
+      ansible.builtin.user:
+        name: postgres
+        shell: /bin/bash
+        state: present
+      when:
+        - installation_method | default('packages') == "docker"
+        - inventory_hostname in groups['postgres_cluster']
+
     # (optional) Command or script to be executed before the Postgres cluster deployment.
     - block:
         - name: Print pre-deploy command
@@ -194,8 +203,10 @@
       when: tls_cert_generate | default(true) | bool
 
     - role: vitabaks.autobase.docker
-      when: installation_method == "docker" and docker_install | bool
-      tags: docker
+      when:
+        - installation_method | default('packages') == "docker"
+        - docker_install | default(true) | bool
+      tags: docker, docker_install
 
 - name: vitabaks.autobase.deploy_pgcluster | Deploy etcd cluster
   ansible.builtin.import_playbook: etcd_cluster.yml
@@ -323,7 +334,7 @@
     - role: vitabaks.autobase.cron
 
     - role: vitabaks.autobase.pgbouncer
-      when: pgbouncer_install | default(false) | bool
+      when: pgbouncer_install | default(true) | bool
 
     - role: vitabaks.autobase.pgpass
 
