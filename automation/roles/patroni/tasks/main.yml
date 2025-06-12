@@ -209,39 +209,40 @@
         state: directory
         mode: "0700"
 
-    # for Debian based distros only
+    # for Debian based distros only (if installation_method: "packages")
     # patroni bootstrap failure is possible if the PostgreSQL config files are missing
-    - name: Prepare PostgreSQL | make sure PostgreSQL config directory exists
-      ansible.builtin.file:
-        path: /etc/postgresql
-        state: directory
-        owner: postgres
-        group: postgres
-        recurse: true
-      when: ansible_os_family == "Debian" and
-        postgresql_packages|join(" ") is not search("postgrespro")
+    - block:
+        - name: Prepare PostgreSQL | make sure PostgreSQL config directory exists
+          ansible.builtin.file:
+            path: /etc/postgresql
+            state: directory
+            owner: postgres
+            group: postgres
+            recurse: true
+          when: postgresql_packages|join(" ") is not search("postgrespro")
 
-    - name: Prepare PostgreSQL | make sure PostgreSQL config files exists
-      ansible.builtin.stat:
-        path: "{{ postgresql_conf_dir }}/postgresql.conf"
-      register: postgresql_conf_file
-      when: ansible_os_family == "Debian" and
-        postgresql_packages|join(" ") is not search("postgrespro")
+        - name: Prepare PostgreSQL | make sure PostgreSQL config files exists
+          ansible.builtin.stat:
+            path: "{{ postgresql_conf_dir }}/postgresql.conf"
+          register: postgresql_conf_file
+          when: postgresql_packages|join(" ") is not search("postgrespro")
 
-    - name: Prepare PostgreSQL | generate default PostgreSQL config files
-      become: true
-      become_user: postgres
-      ansible.builtin.command: >
-        /usr/bin/pg_createcluster {{ postgresql_version }} {{ postgresql_cluster_name }}
-        -d {{ postgresql_data_dir }}
-        -p {{ postgresql_port }}
-        -e {{ postgresql_encoding }}
-        --locale {{ postgresql_locale }}
-      register: pg_createcluster_result
-      failed_when: pg_createcluster_result.rc != 0
-      when: (ansible_os_family == "Debian" and
-        postgresql_packages|join(" ") is not search("postgrespro")) and
-        not postgresql_conf_file.stat.exists
+        - name: Prepare PostgreSQL | generate default PostgreSQL config files
+          become: true
+          become_user: postgres
+          ansible.builtin.command: >
+            /usr/bin/pg_createcluster {{ postgresql_version }} {{ postgresql_cluster_name }}
+            -d {{ postgresql_data_dir }}
+            -p {{ postgresql_port }}
+            -e {{ postgresql_encoding }}
+            --locale {{ postgresql_locale }}
+          register: pg_createcluster_result
+          failed_when: pg_createcluster_result.rc != 0
+          when: (postgresql_packages|join(" ") is not search("postgrespro")) and
+            not postgresql_conf_file.stat.exists
+      when:
+        - ansible_os_family == "Debian"
+        - installation_method == "packages"
 
     # When performing PITR, we do not clear the directory if pgbackrest is used to be able to use the '--delta restore' option.
     # In all other cases, we must clear the data directory before restore.
@@ -832,8 +833,9 @@
   when: postgresql_wal_dir is defined and postgresql_wal_dir | length > 0
   tags: patroni, custom_wal_dir, point_in_time_recovery
 
-# disable postgresql from autostart
-- block: # "Debian"
+# Disable postgresql service from autostart (if installation_method: "packages")
+- block:
+    # "Debian"
     - name: Turning off postgresql autostart from config "start.conf" (will be managed by patroni)
       ansible.builtin.copy:
         dest: "{{ postgresql_conf_dir }}/start.conf"
@@ -841,36 +843,39 @@
         owner: postgres
         group: postgres
         mode: "0644"
+      when: ansible_os_family == "Debian"
 
     - name: Disable "postgresql@{{ postgresql_version }}-{{ postgresql_cluster_name }}" service
       ansible.builtin.systemd:
         name: "postgresql@{{ postgresql_version }}-{{ postgresql_cluster_name }}"
         enabled: false
         daemon_reload: true
-  when: ansible_os_family == "Debian" and
-    postgresql_packages|join(" ") is not search("postgrespro")
+      when:
+        - ansible_os_family == "Debian"
+        - postgresql_packages|join(" ") is not search("postgrespro")
+
+    # "RedHat"
+    - name: Disable "postgresql-{{ postgresql_version }}" service (will be managed by patroni)
+      ansible.builtin.systemd:
+        name: "postgresql-{{ postgresql_version }}"
+        enabled: false
+        daemon_reload: true
+      when:
+        - ansible_os_family == "RedHat"
+        - postgresql_packages|join(" ") is not search("postgrespro")
+      tags: patroni, postgresql_disable
+
+    # PostgresPro
+    - name: Disable "postgrespro-std-{{ postgresql_version }}" service (will be managed by patroni)
+      ansible.builtin.systemd:
+        name: "postgrespro-std-{{ postgresql_version }}"
+        enabled: false
+        daemon_reload: true
+      when: postgresql_packages|join(" ") is search("postgrespro-std")
+  when: installation_method == "packages"
   tags: patroni, postgresql_disable
 
-# "RedHat"
-- name: Disable "postgresql-{{ postgresql_version }}" service (will be managed by patroni)
-  ansible.builtin.systemd:
-    name: "postgresql-{{ postgresql_version }}"
-    enabled: false
-    daemon_reload: true
-  when: ansible_os_family == "RedHat" and
-    postgresql_packages|join(" ") is not search("postgrespro")
-  tags: patroni, postgresql_disable
-
-# PostgresPro
-- name: Disable "postgrespro-std-{{ postgresql_version }}" service (will be managed by patroni)
-  ansible.builtin.systemd:
-    name: "postgrespro-std-{{ postgresql_version }}"
-    enabled: false
-    daemon_reload: true
-  when: postgresql_packages|join(" ") is search("postgrespro-std")
-  tags: patroni, postgresql_disable
-
-# PATRONICTL_CONFIG_FILE (patroni v1.6.1 and higher)
+# PATRONICTL_CONFIG_FILE
 - name: Add PATRONICTL_CONFIG_FILE environment variable into /etc/environment
   ansible.builtin.lineinfile:
     dest: "/etc/environment"
@@ -881,4 +886,5 @@
     group: root
     mode: "0644"
   ignore_errors: true
+  when: installation_method == "packages"
   tags: patroni, patroni_env
