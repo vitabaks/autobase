@@ -23,12 +23,12 @@ export const createAppTheme = (mode: PaletteMode) => {
           lighter10: 'rgba(51, 103, 214, 0.1)',
         },
         background: {
-          default: isLight ? '#ffffff' : '#0a0a0a',
+          default: isLight ? '#ffffff' : '#121212',
           paper: isLight ? '#ffffff' : '#1a1a1a',
         },
         text: {
-          primary: isLight ? '#384555' : '#e8e8e8',
-          secondary: isLight ? '#4B5563' : '#9CA3AF',
+          primary: isLight ? '#384555' : '#dddddd',
+          secondary: isLight ? '#4B5563' : '#aaaaaa',
         },
         divider: isLight ? '#e1e5e9' : '#333333',
       },
@@ -41,10 +41,10 @@ export const createAppTheme = (mode: PaletteMode) => {
             },
             // Apply default icon color to MUI icons only, leaving custom SVGs untouched
             'svg.MuiSvgIcon-root': {
-              fill: `${isLight ? '#384555' : '#e8e8e8'} !important`,
-              color: `${isLight ? '#384555' : '#e8e8e8'} !important`,
+              fill: `${isLight ? '#384555' : '#dddddd'} !important`,
+              color: `${isLight ? '#384555' : '#dddddd'} !important`,
               '& path, & circle, & rect, & polygon': {
-                fill: `${isLight ? '#384555' : '#e8e8e8'} !important`,
+                fill: `${isLight ? '#384555' : '#dddddd'} !important`,
               },
             },
             // Exception for brand logos that should keep their original colors
@@ -67,7 +67,7 @@ export const createAppTheme = (mode: PaletteMode) => {
           colorPrimary: {
               backgroundColor: isLight ? '#F6F8FA' : '#1a1a1a',
               borderBottomColor: isLight ? '#e1e5e9' : '#333333',
-              color: isLight ? '#384555' : '#e8e8e8',
+              color: isLight ? '#384555' : '#dddddd',
             },
           },
         },
@@ -103,11 +103,11 @@ export const createAppTheme = (mode: PaletteMode) => {
                   borderColor: isLight ? '#b91c1c' : '#dc2626',
                 },
                 '& input': {
-                  color: isLight ? '#384555' : '#e8e8e8',
+                  color: isLight ? '#384555' : '#dddddd',
                 },
               },
               '& .MuiInputLabel-root': {
-                color: isLight ? '#4B5563' : '#9CA3AF',
+                color: isLight ? '#4B5563' : '#aaaaaa',
                 '&.Mui-focused': {
                   color: isLight ? '#3367D6' : '#5A8DEE',
                 },
@@ -144,10 +144,10 @@ export const createAppTheme = (mode: PaletteMode) => {
             },
           },
         },
-                 MuiMenuItem: {
+        MuiMenuItem: {
            styleOverrides: {
              root: {
-               color: isLight ? '#384555' : '#e8e8e8',
+               color: isLight ? '#384555' : '#dddddd',
                '&:hover': {
                  backgroundColor: isLight ? '#f5f5f5' : '#404040',
                },
@@ -163,7 +163,7 @@ export const createAppTheme = (mode: PaletteMode) => {
          MuiListItemButton: {
            styleOverrides: {
              root: {
-               color: isLight ? '#384555' : '#e8e8e8',
+               color: isLight ? '#384555' : '#dddddd',
                '&:hover': {
                  backgroundColor: isLight ? '#f5f5f5' : '#2a2a2a',
                },
@@ -173,18 +173,18 @@ export const createAppTheme = (mode: PaletteMode) => {
          MuiListItemText: {
            styleOverrides: {
              primary: {
-               color: isLight ? '#384555' : '#e8e8e8',
+               color: isLight ? '#384555' : '#dddddd',
              },
            },
          },
          MuiListItemIcon: {
            styleOverrides: {
              root: {
-               color: isLight ? '#384555' : '#e8e8e8',
+               color: isLight ? '#384555' : '#dddddd',
                '& svg': {
-                 fill: isLight ? '#384555' : '#e8e8e8 !important',
+                 fill: isLight ? '#384555' : '#dddddd !important',
                  '& path': {
-                   fill: isLight ? '#384555' : '#e8e8e8 !important',
+                   fill: isLight ? '#384555' : '#dddddd !important',
                  },
                },
              },
@@ -193,12 +193,12 @@ export const createAppTheme = (mode: PaletteMode) => {
          MuiIconButton: {
            styleOverrides: {
              root: {
-               color: isLight ? '#384555' : '#e8e8e8',
+               color: isLight ? '#384555' : '#dddddd',
                '&:hover': {
                  backgroundColor: isLight ? '#f5f5f5' : '#2a2a2a',
                },
                '& svg': {
-                 fill: isLight ? '#384555' : '#e8e8e8',
+                 fill: isLight ? '#384555' : '#dddddd',
                },
              },
            },
@@ -212,11 +212,11 @@ export const createAppTheme = (mode: PaletteMode) => {
                },
                '& .MuiTableCell-root': {
                  borderBottomColor: isLight ? '#e1e5e9' : '#404040',
-                 color: isLight ? '#384555' : '#e8e8e8',
+                 color: isLight ? '#384555' : '#dddddd',
                },
                '& .MuiTableCell-head': {
                  backgroundColor: isLight ? '#F6F8FA' : '#2a2a2a',
-                 color: isLight ? '#384555' : '#e8e8e8',
+                 color: isLight ? '#384555' : '#dddddd',
                  fontWeight: 600,
                },
              },
@@ -235,7 +235,7 @@ export const createAppTheme = (mode: PaletteMode) => {
            styleOverrides: {
              root: {
                backgroundColor: isLight ? '#ffffff' : '#1a1a1a',
-               color: isLight ? '#384555' : '#e8e8e8',
+               color: isLight ? '#384555' : '#dddddd',
              },
            },
          },
@@ -251,7 +251,7 @@ export const createAppTheme = (mode: PaletteMode) => {
              },
              outlined: {
                borderColor: isLight ? '#e1e5e9' : '#404040',
-               color: isLight ? '#384555' : '#e8e8e8',
+               color: isLight ? '#384555' : '#dddddd',
                '&:hover': {
                  borderColor: isLight ? '#3367D6' : '#5A8DEE',
                  backgroundColor: isLight ? '#f5f5f5' : '#2a2a2a',
@@ -274,7 +274,7 @@ export const createAppTheme = (mode: PaletteMode) => {
            styleOverrides: {
              root: {
                backgroundColor: isLight ? '#f5f5f5' : '#2a2a2a',
-               color: isLight ? '#384555' : '#e8e8e8',
+               color: isLight ? '#384555' : '#dddddd',
              },
            },
          },
@@ -290,21 +290,21 @@ export const createAppTheme = (mode: PaletteMode) => {
            styleOverrides: {
              paper: {
                backgroundColor: isLight ? '#ffffff' : '#1a1a1a',
-               color: isLight ? '#384555' : '#e8e8e8',
+               color: isLight ? '#384555' : '#dddddd',
              },
            },
          },
          MuiDialogTitle: {
            styleOverrides: {
              root: {
-               color: isLight ? '#384555' : '#e8e8e8',
+               color: isLight ? '#384555' : '#dddddd',
              },
            },
          },
          MuiDialogContent: {
            styleOverrides: {
              root: {
-               color: isLight ? '#384555' : '#e8e8e8',
+               color: isLight ? '#384555' : '#dddddd',
              },
            },
          },
