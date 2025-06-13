@@ -163,7 +163,7 @@ const useGetLocalMachineConfig = () => {
       title: t('loadBalancing'),
       children: (
         <Stack direction={'row'} spacing={0.5} alignItems="center">
-          <LanIcon width="24px" height="24px" />
+          <LanIcon height="24px" width="24px" style={{ fill: theme.palette.text.primary }} />
           <Typography>
             {data[CLUSTER_FORM_FIELD_NAMES.IS_HAPROXY_LOAD_BALANCER]
               ? t('on', { ns: 'shared' })
@@ -178,7 +178,7 @@ const useGetLocalMachineConfig = () => {
         <Stack direction="column" spacing={0.5}>
           <Stack direction="row" spacing={0.5} alignItems="center">
             {data[CLUSTER_FORM_FIELD_NAMES.DATABASE_SERVERS]?.length >= 3 ? (
-              <CheckIcon width="24px" height="24px" />
+              <CheckIcon width="24px" height="24px" style={{ fill: theme.palette.text.primary }} />
             ) : (
               <WarningAmberOutlinedIcon />
             )}
