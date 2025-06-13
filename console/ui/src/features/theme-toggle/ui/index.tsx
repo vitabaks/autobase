@@ -1,113 +1,70 @@
-import { FC, useState } from 'react';
-import { 
-  IconButton, 
-  Menu, 
-  MenuItem, 
-  ListItemIcon, 
-  ListItemText, 
-  Tooltip 
-} from '@mui/material';
-import { 
-  LightMode, 
-  DarkMode, 
-  SettingsBrightness,
-  Brightness6
-} from '@mui/icons-material';
-import { useAppDispatch, useAppSelector } from '@app/redux/store/hooks';
-import { selectThemeMode } from '@app/redux/slices/themeSlice/themeSelectors';
-import { setThemeMode, type ThemeMode } from '@app/redux/slices/themeSlice/themeSlice';
+import { FC } from 'react';
+import { IconButton, Tooltip } from '@mui/material';
 import { useTranslation } from 'react-i18next';
+import { useAppDispatch, useAppSelector } from '@app/redux/store/hooks.ts';
+import { selectThemeMode } from '@app/redux/slices/themeSlice/themeSelectors.ts';
+import { setThemeMode } from '@app/redux/slices/themeSlice/themeSlice.ts';
+import LightModeIcon from '@mui/icons-material/LightMode';
+import DarkModeIcon from '@mui/icons-material/DarkMode';
+import SettingsBrightnessIcon from '@mui/icons-material/SettingsBrightness';
+import { ThemeMode } from '@app/redux/slices/themeSlice/themeSlice.ts';
 
 const ThemeToggle: FC = () => {
   const { t } = useTranslation('shared');
   const dispatch = useAppDispatch();
   const currentMode = useAppSelector(selectThemeMode);
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const open = Boolean(anchorEl);
 
-  const handleClick = (event: React.MouseEvent<HTMLElement>) => {
-    setAnchorEl(event.currentTarget);
-  };
-
-  const handleClose = () => {
-    setAnchorEl(null);
-  };
-
-  const handleThemeChange = (mode: ThemeMode) => {
-    dispatch(setThemeMode(mode));
-    handleClose();
-  };
-
-  const getThemeIcon = () => {
-    switch (currentMode) {
+  const getNextMode = (mode: ThemeMode): ThemeMode => {
+    switch (mode) {
       case 'light':
-        return <LightMode />;
+        return 'dark';
       case 'dark':
-        return <DarkMode />;
+        return 'system';
       case 'system':
-        return <SettingsBrightness />;
+        return 'light';
       default:
-        return <Brightness6 />;
+        return 'light';
     }
   };
 
-  const getThemeLabel = (mode: ThemeMode) => {
-    switch (mode) {
+  const handleToggle = () => {
+    const nextMode = getNextMode(currentMode);
+    dispatch(setThemeMode(nextMode));
+  };
+
+  const getIcon = () => {
+    switch (currentMode) {
       case 'light':
-        return t('theme.light', 'Light');
+        return <LightModeIcon />;
       case 'dark':
-        return t('theme.dark', 'Dark');
+        return <DarkModeIcon />;
       case 'system':
-        return t('theme.system', 'System');
+        return <SettingsBrightnessIcon />;
       default:
-        return mode;
+        return <LightModeIcon />;
+    }
+  };
+
+  const getTooltipText = () => {
+    const nextMode = getNextMode(currentMode);
+    switch (nextMode) {
+      case 'light':
+        return t('switchToLightMode');
+      case 'dark':
+        return t('switchToDarkMode');
+      case 'system':
+        return t('switchToSystemMode');
+      default:
+        return t('switchToLightMode');
     }
   };
 
   return (
-    <>
-      <Tooltip title={t('theme.changeTheme', 'Change theme')}>
-        <IconButton
-          onClick={handleClick}
-          size="small"
-          sx={{ 
-            color: 'text.primary',
-            '&:hover': {
-              backgroundColor: 'action.hover',
-            }
-          }}
-          aria-controls={open ? 'theme-menu' : undefined}
-          aria-haspopup="true"
-          aria-expanded={open ? 'true' : undefined}
-        >
-          {getThemeIcon()}
-        </IconButton>
-      </Tooltip>
-      <Menu
-        anchorEl={anchorEl}
-        id="theme-menu"
-        open={open}
-        onClose={handleClose}
-        onClick={handleClose}
-        transformOrigin={{ horizontal: 'right', vertical: 'top' }}
-        anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
-      >
-        {(['light', 'dark', 'system'] as ThemeMode[]).map((mode) => (
-          <MenuItem
-            key={mode}
-            onClick={() => handleThemeChange(mode)}
-            selected={currentMode === mode}
-          >
-            <ListItemIcon>
-              {mode === 'light' && <LightMode />}
-              {mode === 'dark' && <DarkMode />}
-              {mode === 'system' && <SettingsBrightness />}
-            </ListItemIcon>
-            <ListItemText>{getThemeLabel(mode)}</ListItemText>
-          </MenuItem>
-        ))}
-      </Menu>
-    </>
+    <Tooltip title={getTooltipText()}>
+      <IconButton onClick={handleToggle} size="small">
+        {getIcon()}
+      </IconButton>
+    </Tooltip>
   );
 };
 

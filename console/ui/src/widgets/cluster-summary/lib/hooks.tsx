@@ -1,4 +1,4 @@
-import { Icon, Link, Stack, Typography } from '@mui/material';
+import { Icon, Link, Stack, Typography, useTheme } from '@mui/material';
 import { CLUSTER_FORM_FIELD_NAMES } from '@widgets/cluster-form/model/constants.ts';
 import { Trans, useTranslation } from 'react-i18next';
 import { providerNamePricingListMap } from '@widgets/cluster-summary/model/constants.ts';
@@ -18,6 +18,7 @@ import {
 
 const useGetCloudProviderConfig = () => {
   const { t } = useTranslation(['clusters', 'shared']);
+  const theme = useTheme();
 
   return (data: CloudProviderClustersSummary) => {
     const defaultVolume = data[CLUSTER_FORM_FIELD_NAMES.PROVIDER]?.volumes?.find((volume) => volume?.is_default) ?? {};
@@ -39,7 +40,13 @@ const useGetCloudProviderConfig = () => {
               <img
                 src={data[CLUSTER_FORM_FIELD_NAMES.PROVIDER]?.icon}
                 alt={data[CLUSTER_FORM_FIELD_NAMES.PROVIDER]?.description?.[0]}
-                style={{ width: '30px' }}
+                style={{ 
+                  width: '30px',
+                  filter: theme.palette.mode === 'dark' 
+                    ? 'brightness(2.0) contrast(1.1) saturate(1.2)' 
+                    : 'none',
+                  transition: 'filter 0.3s ease-in-out',
+                }}
               />
             </Icon>
             <Typography>{data[CLUSTER_FORM_FIELD_NAMES.PROVIDER]?.description}</Typography>

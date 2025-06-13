@@ -47,5 +47,8 @@
     "light": "Light",
     "dark": "Dark",
     "system": "System"
-  }
+  },
+  "switchToLightMode": "Switch to Light Mode",
+  "switchToDarkMode": "Switch to Dark Mode",
+  "switchToSystemMode": "Switch to System Mode"
 }

@@ -7,12 +7,17 @@ interface ThemeSliceState {
   actualTheme: 'light' | 'dark'; // Resolved theme (system preference resolved to light/dark)
 }
 
-// Function to get system theme preference
+// Function to get system theme preference with better error handling
 const getSystemTheme = (): 'light' | 'dark' => {
-  if (typeof window !== 'undefined' && window.matchMedia) {
-    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  try {
+    if (typeof window !== 'undefined' && window.matchMedia) {
+      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      return mediaQuery.matches ? 'dark' : 'light';
+    }
+  } catch (error) {
+    console.warn('Failed to detect system theme:', error);
   }
-  return 'light';
+  return 'light'; // fallback
 };
 
 // Function to resolve actual theme based on mode

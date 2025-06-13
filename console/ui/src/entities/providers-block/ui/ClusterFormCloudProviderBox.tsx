@@ -16,7 +16,14 @@ const ClusterFormCloudProviderBox: FC<ClusterFormCloudProviderBoxProps> = ({ chi
         height: '120px',
         width: '120px',
         img: {
-          filter: theme.palette.mode === 'dark' ? 'invert(1)' : 'none',
+          filter: theme.palette.mode === 'dark' 
+            ? 'brightness(2.0) contrast(1.1) saturate(1.2)' 
+            : 'none',
+          transition: 'filter 0.3s ease-in-out',
+          backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
+          borderRadius: '8px',
+          padding: '8px',
+          boxShadow: theme.palette.mode === 'dark' ? '0 2px 8px rgba(255, 255, 255, 0.05)' : 'none',
         },
       }}
       isActive={isActive}
