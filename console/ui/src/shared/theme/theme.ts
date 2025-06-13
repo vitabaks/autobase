@@ -1,5 +1,4 @@
 import { createTheme, PaletteMode } from '@mui/material';
-import { blue } from '@mui/material/colors';
 import { enUS } from '@mui/material/locale';
 
 declare module '@mui/material/styles' {
@@ -14,33 +13,33 @@ declare module '@mui/material/styles' {
 
 export const createAppTheme = (mode: PaletteMode) => {
   const isLight = mode === 'light';
-  
+
   return createTheme(
-  {
-    palette: {
+    {
+      palette: {
         mode,
-      primary: {
-        main: '#3367D6',
-        lighter10: '#0D8CE91A',
-      },
+        primary: {
+          main: '#3367D6',
+          lighter10: 'rgba(51, 103, 214, 0.1)',
+        },
         background: {
           default: isLight ? '#ffffff' : '#0a0a0a',
           paper: isLight ? '#ffffff' : '#1a1a1a',
         },
         text: {
           primary: isLight ? '#384555' : '#e8e8e8',
-          secondary: isLight ? '#6B7280' : '#b0b0b0',
+          secondary: isLight ? '#4B5563' : '#9CA3AF',
         },
         divider: isLight ? '#e1e5e9' : '#333333',
-    },
-    components: {
+      },
+      components: {
         MuiCssBaseline: {
           styleOverrides: {
             // Remove heavy global transitions to avoid flash of white on theme load
             '*': {
               transition: 'color 0.15s ease-in-out, border-color 0.15s ease-in-out',
             },
-            // Apply default icon color to MUI icons only, leaving custom SVGs untouched (e.g., DatabaseIcon)
+            // Apply default icon color to MUI icons only, leaving custom SVGs untouched
             'svg.MuiSvgIcon-root': {
               fill: `${isLight ? '#384555' : '#e8e8e8'} !important`,
               color: `${isLight ? '#384555' : '#e8e8e8'} !important`,
@@ -108,7 +107,7 @@ export const createAppTheme = (mode: PaletteMode) => {
                 },
               },
               '& .MuiInputLabel-root': {
-                color: isLight ? '#6B7280' : '#b0b0b0',
+                color: isLight ? '#4B5563' : '#9CA3AF',
                 '&.Mui-focused': {
                   color: isLight ? '#3367D6' : '#5A8DEE',
                 },
