@@ -1,5 +1,5 @@
 import { FC } from 'react';
-import Logout from '@shared/assets/logoutIcon.svg?react';
+import Logout from '@mui/icons-material/LogoutOutlined';
 import { IconButton, Tooltip } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import RouterPaths from '@app/router/routerPathsConfig';
