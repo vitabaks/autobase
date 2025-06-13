@@ -30,7 +30,7 @@ export const createAppTheme = (mode: PaletteMode) => {
           primary: isLight ? '#384555' : '#dddddd',
           secondary: isLight ? '#4B5563' : '#aaaaaa',
         },
-        divider: isLight ? '#e1e5e9' : '#333333',
+        divider: isLight ? '#e1e5e9' : '#2a2a2a',
       },
       components: {
         MuiCssBaseline: {
@@ -62,11 +62,11 @@ export const createAppTheme = (mode: PaletteMode) => {
             },
           },
         },
-      MuiAppBar: {
-        styleOverrides: {
-          colorPrimary: {
+        MuiAppBar: {
+          styleOverrides: {
+            colorPrimary: {
               backgroundColor: isLight ? '#F6F8FA' : '#1a1a1a',
-              borderBottomColor: isLight ? '#e1e5e9' : '#333333',
+              borderBottomColor: isLight ? '#e1e5e9' : '#2a2a2a',
               color: isLight ? '#384555' : '#dddddd',
             },
           },
@@ -75,7 +75,7 @@ export const createAppTheme = (mode: PaletteMode) => {
           styleOverrides: {
             paper: {
               backgroundColor: isLight ? '#ffffff' : '#1a1a1a',
-              borderRightColor: isLight ? '#e1e5e9' : '#333333',
+              borderRightColor: isLight ? '#e1e5e9' : '#2a2a2a',
             },
           },
         },
@@ -128,7 +128,7 @@ export const createAppTheme = (mode: PaletteMode) => {
           styleOverrides: {
             root: {
               backgroundColor: isLight ? '#ffffff' : '#1a1a1a',
-              borderColor: isLight ? '#e1e5e9' : '#333333',
+              borderColor: isLight ? '#e1e5e9' : '#2a2a2a',
               // Enhanced shadows for dark mode
               boxShadow: isLight 
                 ? '0px 2px 8px rgba(0, 0, 0, 0.1)' 
@@ -281,8 +281,8 @@ export const createAppTheme = (mode: PaletteMode) => {
          MuiTooltip: {
            styleOverrides: {
              tooltip: {
-               backgroundColor: isLight ? '#333333' : '#ffffff',
-               color: isLight ? '#ffffff' : '#333333',
+               backgroundColor: isLight ? '#2a2a2a' : '#ffffff',
+               color: isLight ? '#ffffff' : '#2a2a2a',
              },
            },
          },
@@ -334,7 +334,7 @@ export const createAppTheme = (mode: PaletteMode) => {
            styleOverrides: {
              root: {
                backgroundColor: isLight ? '#ffffff' : '#1a1a1a',
-               border: `1px solid ${isLight ? '#e1e5e9' : '#333333'}`,
+               border: `1px solid ${isLight ? '#e1e5e9' : '#2a2a2a'}`,
                borderRadius: '8px !important',
                boxShadow: isLight 
                  ? '0px 1px 3px rgba(0, 0, 0, 0.1)' 
@@ -352,7 +352,7 @@ export const createAppTheme = (mode: PaletteMode) => {
            styleOverrides: {
              root: {
                backgroundColor: isLight ? '#f8f9fa' : '#222222',
-               borderBottom: `1px solid ${isLight ? '#e1e5e9' : '#333333'}`,
+               borderBottom: `1px solid ${isLight ? '#e1e5e9' : '#2a2a2a'}`,
                minHeight: '56px',
                '&.Mui-expanded': {
                  minHeight: '56px',
