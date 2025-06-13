@@ -23,7 +23,7 @@ const ThemeToggle: FC = () => {
       case 'system':
         return 'light';
       default:
-        return 'light';
+        return 'system';
     }
   };
 
