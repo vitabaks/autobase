@@ -4,9 +4,9 @@ import { useTranslation } from 'react-i18next';
 import { useAppDispatch, useAppSelector } from '@app/redux/store/hooks.ts';
 import { selectThemeMode } from '@app/redux/slices/themeSlice/themeSelectors.ts';
 import { setThemeMode } from '@app/redux/slices/themeSlice/themeSlice.ts';
-import LightModeIcon from '@mui/icons-material/LightMode';
-import DarkModeIcon from '@mui/icons-material/DarkMode';
-import SettingsBrightnessIcon from '@mui/icons-material/SettingsBrightness';
+import LightModeIcon from '@mui/icons-material/LightModeOutlined';
+import DarkModeIcon from '@mui/icons-material/DarkModeOutlined';
+import SystemModeIcon from '@mui/icons-material/ContrastOutlined';
 import { ThemeMode } from '@app/redux/slices/themeSlice/themeSlice.ts';
 
 const ThemeToggle: FC = () => {
@@ -39,7 +39,7 @@ const ThemeToggle: FC = () => {
       case 'dark':
         return <DarkModeIcon />;
       case 'system':
-        return <SettingsBrightnessIcon />;
+        return <SystemModeIcon />;
       default:
         return <LightModeIcon />;
     }
