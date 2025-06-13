@@ -1,13 +1,14 @@
 import { FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Controller, useFormContext } from 'react-hook-form';
-import { Box, Typography } from '@mui/material';
+import { Box, Typography, useTheme } from '@mui/material';
 import { CLUSTER_FORM_FIELD_NAMES } from '@widgets/cluster-form/model/constants.ts';
 import ClusterSliderBox from '@shared/ui/slider-box';
 import ServersIcon from '@shared/assets/instanceIcon.svg?react';
 
 const InstancesAmountBlock: FC = () => {
   const { t } = useTranslation('clusters');
+  const theme = useTheme();
 
   const {
     control,
@@ -30,7 +31,7 @@ const InstancesAmountBlock: FC = () => {
             marksAmount={10}
             amount={value as number}
             changeAmount={onChange}
-            icon={<ServersIcon width="24px" height="24px" />}
+            icon={<ServersIcon width="24px" height="24px" style={{ fill: theme.palette.text.primary }} />}
             error={errors[CLUSTER_FORM_FIELD_NAMES.INSTANCES_AMOUNT]}
           />
         )}

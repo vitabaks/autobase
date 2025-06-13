@@ -17,7 +17,7 @@ const Breadcrumbs: FC = () => {
         style={{ textDecoration: 'none', color: theme.palette.text.primary }}
         to={generateAbsoluteRouterPath(RouterPaths.clusters.absolutePath).pathname}>
         <Icon sx={{ display: 'flex' }}>
-          <HomeOutlinedIcon width={22} height={22} />
+          <HomeOutlinedIcon width={22} height={22} style={{ fill: theme.palette.text.primary }} />
         </Icon>
       </Link>
       {breadcrumbs.map((breadcrumb, index) =>
