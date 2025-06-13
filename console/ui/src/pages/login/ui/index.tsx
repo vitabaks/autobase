@@ -54,18 +54,19 @@ const Login: FC = () => {
             <Button variant="contained" fullWidth type="submit">
               {t('login')}
             </Button>
-            <Typography variant="caption" size="small">
-              v.{version}
-            </Typography>
+            <Typography variant="caption">
+  v.{version}
+</Typography>
           </Stack>
         </form>
         <Box position="absolute" bottom="24px" left="24px">
-          <Typography variant="caption" size="small">
-            Powered by&nbsp;
-            <Link href="https://gs-labs.ru/" underline="hover" target="_blank">
-              GS Labs
-            </Link>
-          </Typography>
+          <Typography variant="caption">
+  Powered by&nbsp;
+  <Link href="https://gs-labs.ru/" underline="hover" target="_blank">
+    GS Labs
+  </Link>
+</Typography>
+
         </Box>
       </Paper>
     </Stack>
