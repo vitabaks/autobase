@@ -2,7 +2,7 @@ import { FC } from 'react';
 import { ClusterFormSelectableBoxProps } from '@shared/ui/selectable-box/model/types.ts';
 import { Box, useTheme } from '@mui/material';
 
-const SelectableBox: FC<ClusterFormSelectableBoxProps> = ({ isActive, children, sx, ...props }) => {
+const SelectableBox: FC<ClusterFormSelectableBoxProps> = ({ isActive, children, sx, helperText, error, ...props }) => {
   const theme = useTheme();
   
   return (

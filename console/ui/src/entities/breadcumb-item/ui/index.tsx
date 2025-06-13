@@ -8,9 +8,9 @@ const BreadcrumbsItem: FC<BreadcrumbsItemProps> = ({ label, path }) => {
 
   return (
     <Link style={{ textDecoration: 'none', color: theme.palette.text.primary }} to={path}>
-      {label}
-    </Link>
-  );
+    {label}
+  </Link>
+);
 };
 
 export default BreadcrumbsItem;

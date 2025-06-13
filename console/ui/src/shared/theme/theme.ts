@@ -16,13 +16,13 @@ export const createAppTheme = (mode: PaletteMode) => {
   const isLight = mode === 'light';
   
   return createTheme(
-    {
-      palette: {
+  {
+    palette: {
         mode,
-        primary: {
-          main: '#3367D6',
-          lighter10: '#0D8CE91A',
-        },
+      primary: {
+        main: '#3367D6',
+        lighter10: '#0D8CE91A',
+      },
         background: {
           default: isLight ? '#ffffff' : '#0a0a0a',
           paper: isLight ? '#ffffff' : '#1a1a1a',
@@ -32,43 +32,40 @@ export const createAppTheme = (mode: PaletteMode) => {
           secondary: isLight ? '#6B7280' : '#b0b0b0',
         },
         divider: isLight ? '#e1e5e9' : '#333333',
-      },
-      components: {
+    },
+    components: {
         MuiCssBaseline: {
           styleOverrides: {
-            // Global theme transition for smooth dark mode switching
+            // Remove heavy global transitions to avoid flash of white on theme load
             '*': {
-              transition: 'background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1), color 0.3s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important',
+              transition: 'color 0.15s ease-in-out, border-color 0.15s ease-in-out',
             },
-            // Force all SVG icons to inherit theme colors globally
-            'svg': {
+            // Apply default icon color to MUI icons only, leaving custom SVGs untouched (e.g., DatabaseIcon)
+            'svg.MuiSvgIcon-root': {
               fill: `${isLight ? '#384555' : '#e8e8e8'} !important`,
               color: `${isLight ? '#384555' : '#e8e8e8'} !important`,
-              '& path': {
-                fill: `${isLight ? '#384555' : '#e8e8e8'} !important`,
-              },
-              '& circle': {
-                fill: `${isLight ? '#384555' : '#e8e8e8'} !important`,
-              },
-              '& rect': {
-                fill: `${isLight ? '#384555' : '#e8e8e8'} !important`,
-              },
-              '& polygon': {
+              '& path, & circle, & rect, & polygon': {
                 fill: `${isLight ? '#384555' : '#e8e8e8'} !important`,
               },
             },
-            // Exception for brand logos that should keep their colors
-            '[data-logo="true"] svg, .logo svg': {
+            // Exception for brand logos that should keep their original colors
+            '[data-logo="true"]': {
               fill: 'unset !important',
-              '& path': {
-                fill: 'unset !important',
+              color: 'unset !important',
+              '& path, & circle, & rect, & polygon': {
+                fill: '#FF5722 !important',
               },
+            },
+            // Fall-back for any element that uses a ".logo" class instead of the data attribute
+            '.logo, .logo *': {
+              fill: 'unset !important',
+              color: 'unset !important',
             },
           },
         },
-        MuiAppBar: {
-          styleOverrides: {
-            colorPrimary: {
+      MuiAppBar: {
+        styleOverrides: {
+          colorPrimary: {
               backgroundColor: isLight ? '#F6F8FA' : '#1a1a1a',
               borderBottomColor: isLight ? '#e1e5e9' : '#333333',
               color: isLight ? '#384555' : '#e8e8e8',
@@ -312,13 +309,6 @@ export const createAppTheme = (mode: PaletteMode) => {
              },
            },
          },
-         MuiCircularProgress: {
-           styleOverrides: {
-             root: {
-               color: isLight ? '#3367D6' : '#5A8DEE',
-             },
-           },
-         },
          MuiLinearProgress: {
            styleOverrides: {
              root: {
@@ -382,13 +372,13 @@ export const createAppTheme = (mode: PaletteMode) => {
              root: {
                backgroundColor: isLight ? '#ffffff' : '#1a1a1a',
                padding: '16px',
-             },
-           },
-         },
+          },
+        },
       },
     },
-    enUS,
-  );
+  },
+  enUS,
+);
 };
 
 // Default light theme for backward compatibility

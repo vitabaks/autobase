@@ -28,13 +28,13 @@ const AppContent: FC = () => {
   }, [dispatch]);
 
   return (
-    <ThemeProvider theme={theme}>
+      <ThemeProvider theme={theme}>
       <CssBaseline />
-      <LocalizationProvider dateAdapter={AdapterDateFns}>
-        <Router />
-        <ToastContainer />
-      </LocalizationProvider>
-    </ThemeProvider>
+        <LocalizationProvider dateAdapter={AdapterDateFns}>
+          <Router />
+          <ToastContainer theme={actualTheme} />
+        </LocalizationProvider>
+      </ThemeProvider>
   );
 };
 

@@ -1,7 +1,6 @@
-import { FC, useEffect } from 'react';
-import { AppBar, Box, MenuItem, SelectChangeEvent, Stack, TextField, Toolbar, Typography } from '@mui/material';
+import React, { FC, useEffect } from 'react';
+import { AppBar, Box, MenuItem, Stack, TextField, Toolbar, Typography } from '@mui/material';
 import Logo from '@shared/assets/AutobaseLogo.svg?react';
-import { grey } from '@mui/material/colors';
 import LogoutButton from '@features/logout-button';
 import ThemeToggle from '@features/theme-toggle';
 import { useGetProjectsQuery } from '@shared/api/api/projects.ts';
@@ -21,12 +20,20 @@ const Header: FC = () => {
     if (!currentProject && projects.data?.data) dispatch(setProject(String(projects.data?.data?.[0]?.id)));
   }, [projects.data?.data, dispatch, currentProject]);
 
-  const handleProjectChange = (e: SelectChangeEvent) => {
+  const handleProjectChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     dispatch(setProject(e.target.value));
   };
 
   return (
-    <AppBar position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }} elevation={0} variant="outlined">
+    <AppBar
+      position="fixed"
+      sx={(theme) => ({
+        zIndex: theme.zIndex.drawer + 1,
+        borderBottom: theme.palette.mode === 'light' ? '1px solid' : 'none',
+        borderBottomColor: theme.palette.mode === 'light' ? 'divider' : 'transparent',
+      })}
+      elevation={0}
+    >
       <Toolbar sx={{ paddingLeft: '12px !important' }}>
         <Stack direction="row" justifyContent="space-between" alignItems="center" width="100%">
           <Stack direction="row" alignItems="center" gap="26px">
@@ -57,7 +64,7 @@ const Header: FC = () => {
           </Stack>
           <Stack direction="row" alignItems="center" gap="8px">
             <ThemeToggle />
-            <LogoutButton />
+          <LogoutButton />
           </Stack>
         </Stack>
       </Toolbar>

@@ -40,13 +40,7 @@ const useGetCloudProviderConfig = () => {
               <img
                 src={data[CLUSTER_FORM_FIELD_NAMES.PROVIDER]?.icon}
                 alt={data[CLUSTER_FORM_FIELD_NAMES.PROVIDER]?.description?.[0]}
-                style={{ 
-                  width: '30px',
-                  filter: theme.palette.mode === 'dark' 
-                    ? 'brightness(2.0) contrast(1.1) saturate(1.2)' 
-                    : 'none',
-                  transition: 'filter 0.3s ease-in-out',
-                }}
+                style={{ width: '30px', height: '30px', objectFit: 'contain' }}
               />
             </Icon>
             <Typography>{data[CLUSTER_FORM_FIELD_NAMES.PROVIDER]?.description}</Typography>
@@ -59,7 +53,7 @@ const useGetCloudProviderConfig = () => {
           <Stack direction={'column'}>
             <Typography>{data[CLUSTER_FORM_FIELD_NAMES.REGION_CONFIG]?.code}</Typography>
             <Stack direction={'row'} spacing={1} alignItems="center">
-              <FlagIcon height="24px" width="24px" />
+              <FlagIcon height="24px" width="24px" style={{ fill: theme.palette.text.primary }} />
               <Typography>{data[CLUSTER_FORM_FIELD_NAMES.REGION_CONFIG]?.location}</Typography>
             </Stack>
           </Stack>
@@ -72,11 +66,11 @@ const useGetCloudProviderConfig = () => {
             <Typography>{data[CLUSTER_FORM_FIELD_NAMES.INSTANCE_CONFIG]?.code}</Typography>
             <Stack direction={'row'} spacing={1} alignItems="center">
               <Stack direction={'row'} spacing={0.5} alignItems="center">
-                <CpuIcon height="24px" width="24px" />
+                <CpuIcon height="24px" width="24px" style={{ fill: theme.palette.text.primary }} />
                 <Typography>{data[CLUSTER_FORM_FIELD_NAMES.INSTANCE_CONFIG]?.cpu} CPU</Typography>
               </Stack>
               <Stack direction={'row'} spacing={0.5} alignItems="center">
-                <RamIcon height="24px" width="24px" />
+                <RamIcon height="24px" width="24px" style={{ fill: theme.palette.text.primary }} />
                 <Typography>{data[CLUSTER_FORM_FIELD_NAMES.INSTANCE_CONFIG]?.ram} RAM</Typography>
               </Stack>
             </Stack>
@@ -87,7 +81,7 @@ const useGetCloudProviderConfig = () => {
         title: t('numberOfInstances'),
         children: (
           <Stack direction={'row'} spacing={0.5} alignItems="center">
-            <InstanceIcon height="24px" width="24px" />
+            <InstanceIcon height="24px" width="24px" style={{ fill: theme.palette.text.primary }} />
             <Typography>{data[CLUSTER_FORM_FIELD_NAMES.INSTANCES_AMOUNT]}</Typography>
           </Stack>
         ),
@@ -96,7 +90,7 @@ const useGetCloudProviderConfig = () => {
         title: t('dataDiskStorage'),
         children: (
           <Stack direction={'row'} spacing={0.5} alignItems="center" minHeight="20px">
-            <StorageIcon height="24px" width="24px" />
+            <StorageIcon height="24px" width="24px" style={{ fill: theme.palette.text.primary }} />
             <Typography>{data[CLUSTER_FORM_FIELD_NAMES.STORAGE_AMOUNT]} GB</Typography>
           </Stack>
         ),
@@ -159,7 +153,7 @@ const useGetLocalMachineConfig = () => {
       title: t('numberOfServers'),
       children: (
         <Stack direction={'row'} spacing={0.5} alignItems="center">
-          <InstanceIcon height="24px" width="24px" />
+          <InstanceIcon height="24px" width="24px" style={{ fill: theme.palette.text.primary }} />
           <Typography>{data[CLUSTER_FORM_FIELD_NAMES.DATABASE_SERVERS]?.length}</Typography>
         </Stack>
       ),

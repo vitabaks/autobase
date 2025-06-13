@@ -36,7 +36,7 @@ const SidebarItemContent: FC<SidebarItemProps> = ({
             color: 'text.primary',
           },
         }}>
-{SidebarIcon ? <SidebarIcon width="30px" height="30px" /> : null}
+        {SidebarIcon ? <SidebarIcon width="30px" height="30px" /> : null}
       </ListItemIcon>
       {!isCollapsed ? (
         <ListItemText 

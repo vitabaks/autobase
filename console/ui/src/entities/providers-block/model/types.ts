@@ -7,4 +7,5 @@ export interface ProvidersBlockProps {
 export interface ClusterFormCloudProviderBoxProps {
   children?: ReactElement;
   isActive?: boolean;
+  [key: string]: unknown;
 }
