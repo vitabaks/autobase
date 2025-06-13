@@ -139,6 +139,7 @@ const useGetCloudProviderConfig = () => {
 
 const useGetLocalMachineConfig = () => {
   const { t } = useTranslation(['clusters', 'shared']);
+  const theme = useTheme();
 
   return (data: LocalClustersSummary) => [
     {
