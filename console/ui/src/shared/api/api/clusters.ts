@@ -204,6 +204,7 @@ export type RequestClusterCreate = {
   environment_id?: number;
   envs?: string[];
   extra_vars?: string[];
+  existingCluster?: boolean;
 };
 export type ClusterInfoInstance = {
   id?: number;
