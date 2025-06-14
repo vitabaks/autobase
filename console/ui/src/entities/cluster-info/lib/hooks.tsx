@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { Typography } from '@mui/material';
 import { ClusterInfoProps } from '@entities/cluster-info/model/types.ts';
+import { WASI } from 'wasi';
 
 export const useGetClusterInfoConfig = ({
   postgresVersion,

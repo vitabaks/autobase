@@ -13,7 +13,7 @@ const InfoCardBody: FC<InfoCardBodyProps> = ({ config }) => {
     <Stack gap={1}>
       {config.map(({ title, children }, index) => (
         <Stack key={title} gap={0.5}>
-          <Typography color="#747474" fontWeight="bold">
+          <Typography color="text.secondary" fontWeight="bold">
             {title}
           </Typography>
           {children}

@@ -42,7 +42,7 @@ const ClustersTableRemoveButton: FC<ClustersTableRemoveButtonProps> = ({ cluster
 
   return (
     <>
-      <Button sx={{ textTransform: 'none', color: 'black' }} onClick={handleModalOpenState(true)} variant="text">
+      <Button sx={{ textTransform: 'none', color: 'text.primary' }} onClick={handleModalOpenState(true)} variant="text">
         <Stack direction="row" alignItems="center" justifyContent="flex-start" width="max-content">
           <DeleteOutlineIcon />
           <Typography>{t('removeFromList', { ns: 'shared' })}</Typography>
