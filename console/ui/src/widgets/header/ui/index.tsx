@@ -40,10 +40,10 @@ const Header: FC = () => {
             <Stack direction="row" alignItems="center" gap="16px" marginLeft="4px">
               <Logo style={{ width: '35px', height: '35px' }} data-logo="true" />
               <Box>
-                <Typography fontWeight="400" sx={{ color: 'text.secondary', lineHeight: 1.2 }}>
+                <Typography fontWeight="400" sx={{ color: 'text.primary', lineHeight: 1.2 }}>
                   autobase
                 </Typography>
-                <Typography fontWeight="500" sx={{ color: 'text.primary', lineHeight: 1.2 }}>
+                <Typography fontWeight="500" sx={{ color: 'text.secondary', lineHeight: 1.2 }}>
                   for PostgreSQL®
                 </Typography>
               </Box>
