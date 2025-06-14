@@ -131,8 +131,8 @@ export const createAppTheme = (mode: PaletteMode) => {
               borderColor: isLight ? '#e1e5e9' : '#2a2a2a',
               // Enhanced shadows for dark mode
               boxShadow: isLight 
-                ? '0px 2px 8px rgba(0, 0, 0, 0.1)' 
-                : '0px 4px 20px rgba(0, 0, 0, 0.3), 0px 0px 0px 1px rgba(255, 255, 255, 0.05)',
+                ? '0px 2px 6px rgba(0, 0, 0, 0.1)'
+                : '0px 4px 16px rgba(0, 0, 0, 0.2), 0px 0px 0px 1px rgba(255, 255, 255, 0.05)',
             },
           },
         },
