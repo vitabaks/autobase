@@ -12,11 +12,7 @@ const SelectableBox: FC<ClusterFormSelectableBoxProps> = ({ isActive, children, 
         borderRadius: '8px',
         cursor: 'pointer',
         transition: 'all 0.2s ease-in-out',
-        backgroundColor: isActive 
-          ? theme.palette.mode === 'light' 
-            ? 'rgba(51, 103, 214, 0.04)' 
-            : 'rgba(90, 141, 238, 0.08)'
-          : 'transparent',
+        backgroundColor: 'transparent',
         '&:hover': {
           borderColor: isActive 
             ? theme.palette.primary.main 
@@ -28,8 +24,8 @@ const SelectableBox: FC<ClusterFormSelectableBoxProps> = ({ isActive, children, 
             : 'rgba(90, 141, 238, 0.04)',
           transform: 'translateY(-1px)',
           boxShadow: theme.palette.mode === 'light'
-            ? '0 4px 12px rgba(0, 0, 0, 0.1)'
-            : '0 4px 16px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(255, 255, 255, 0.05)',
+            ? '0 4px 8px rgba(0, 0, 0, 0.1)'
+            : '0 4px 12px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(255, 255, 255, 0.05)',
         },
         '&:focus-visible': {
           outline: `2px solid ${theme.palette.primary.main}`,
