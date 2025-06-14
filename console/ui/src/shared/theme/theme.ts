@@ -234,7 +234,7 @@ export const createAppTheme = (mode: PaletteMode) => {
          MuiToolbar: {
            styleOverrides: {
              root: {
-               backgroundColor: isLight ? '#ffffff' : '#1a1a1a',
+               backgroundColor: isLight ? '#F6F8FA' : '#242526',
                color: isLight ? '#384555' : '#dddddd',
              },
            },
