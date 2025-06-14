@@ -71,7 +71,7 @@ const useGetCloudProviderConfig = () => {
               </Stack>
               <Stack direction={'row'} spacing={0.5} alignItems="center">
                 <RamIcon height="24px" width="24px" style={{ fill: theme.palette.text.primary }} />
-                <Typography>{data[CLUSTER_FORM_FIELD_NAMES.INSTANCE_CONFIG]?.ram} RAM</Typography>
+                <Typography>{data[CLUSTER_FORM_FIELD_NAMES.INSTANCE_CONFIG]?.ram} GB RAM</Typography>
               </Stack>
             </Stack>
           </Stack>
