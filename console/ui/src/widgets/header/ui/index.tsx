@@ -34,7 +34,7 @@ const Header: FC = () => {
       })}
       elevation={0}
     >
-      <Toolbar sx={{ paddingLeft: '12px !important' }}>
+      <Toolbar sx={{ paddingLeft: '16px !important' }}>
         <Stack direction="row" justifyContent="space-between" alignItems="center" width="100%">
           <Stack direction="row" alignItems="center" gap="26px">
             <Stack direction="row" alignItems="center" gap="16px" marginLeft="4px">
