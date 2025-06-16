@@ -1,4 +1,4 @@
-import { Icon, Link, Stack, Typography } from '@mui/material';
+import { Icon, Link, Stack, Typography, useTheme } from '@mui/material';
 import { CLUSTER_FORM_FIELD_NAMES } from '@widgets/cluster-form/model/constants.ts';
 import { Trans, useTranslation } from 'react-i18next';
 import { providerNamePricingListMap } from '@widgets/cluster-summary/model/constants.ts';
@@ -18,6 +18,7 @@ import {
 
 const useGetCloudProviderConfig = () => {
   const { t } = useTranslation(['clusters', 'shared']);
+  const theme = useTheme();
 
   return (data: CloudProviderClustersSummary) => {
     const defaultVolume = data[CLUSTER_FORM_FIELD_NAMES.PROVIDER]?.volumes?.find((volume) => volume?.is_default) ?? {};
@@ -39,7 +40,7 @@ const useGetCloudProviderConfig = () => {
               <img
                 src={data[CLUSTER_FORM_FIELD_NAMES.PROVIDER]?.icon}
                 alt={data[CLUSTER_FORM_FIELD_NAMES.PROVIDER]?.description?.[0]}
-                style={{ width: '30px' }}
+                style={{ width: '30px', height: '30px', objectFit: 'contain' }}
               />
             </Icon>
             <Typography>{data[CLUSTER_FORM_FIELD_NAMES.PROVIDER]?.description}</Typography>
@@ -52,7 +53,7 @@ const useGetCloudProviderConfig = () => {
           <Stack direction={'column'}>
             <Typography>{data[CLUSTER_FORM_FIELD_NAMES.REGION_CONFIG]?.code}</Typography>
             <Stack direction={'row'} spacing={1} alignItems="center">
-              <FlagIcon height="24px" width="24px" />
+              <FlagIcon height="24px" width="24px" style={{ fill: theme.palette.text.primary }} />
               <Typography>{data[CLUSTER_FORM_FIELD_NAMES.REGION_CONFIG]?.location}</Typography>
             </Stack>
           </Stack>
@@ -65,12 +66,12 @@ const useGetCloudProviderConfig = () => {
             <Typography>{data[CLUSTER_FORM_FIELD_NAMES.INSTANCE_CONFIG]?.code}</Typography>
             <Stack direction={'row'} spacing={1} alignItems="center">
               <Stack direction={'row'} spacing={0.5} alignItems="center">
-                <CpuIcon height="24px" width="24px" />
+                <CpuIcon height="24px" width="24px" style={{ fill: theme.palette.text.primary }} />
                 <Typography>{data[CLUSTER_FORM_FIELD_NAMES.INSTANCE_CONFIG]?.cpu} CPU</Typography>
               </Stack>
               <Stack direction={'row'} spacing={0.5} alignItems="center">
-                <RamIcon height="24px" width="24px" />
-                <Typography>{data[CLUSTER_FORM_FIELD_NAMES.INSTANCE_CONFIG]?.ram} RAM</Typography>
+                <RamIcon height="24px" width="24px" style={{ fill: theme.palette.text.primary }} />
+                <Typography>{data[CLUSTER_FORM_FIELD_NAMES.INSTANCE_CONFIG]?.ram} GB RAM</Typography>
               </Stack>
             </Stack>
           </Stack>
@@ -80,7 +81,7 @@ const useGetCloudProviderConfig = () => {
         title: t('numberOfInstances'),
         children: (
           <Stack direction={'row'} spacing={0.5} alignItems="center">
-            <InstanceIcon height="24px" width="24px" />
+            <InstanceIcon height="24px" width="24px" style={{ fill: theme.palette.text.primary }} />
             <Typography>{data[CLUSTER_FORM_FIELD_NAMES.INSTANCES_AMOUNT]}</Typography>
           </Stack>
         ),
@@ -89,7 +90,7 @@ const useGetCloudProviderConfig = () => {
         title: t('dataDiskStorage'),
         children: (
           <Stack direction={'row'} spacing={0.5} alignItems="center" minHeight="20px">
-            <StorageIcon height="24px" width="24px" />
+            <StorageIcon height="24px" width="24px" style={{ fill: theme.palette.text.primary }} />
             <Typography>{data[CLUSTER_FORM_FIELD_NAMES.STORAGE_AMOUNT]} GB</Typography>
           </Stack>
         ),
@@ -120,12 +121,12 @@ const useGetCloudProviderConfig = () => {
                 )?.toFixed(2)}/${t('perDisk', { ns: 'clusters' })}`}
               </Typography>
             </Stack>
-            <Typography color="#575757" variant="caption" whiteSpace="pre-line">
+            <Typography color="text.secondary" variant="caption" whiteSpace="pre-line">
               <Trans i18nKey="estimatedCostAdditionalInfo" t={t}>
                 <Link
                   target="_blank"
                   href={providerNamePricingListMap[data[CLUSTER_FORM_FIELD_NAMES.PROVIDER]?.code]}
-                  color="#575757"
+                  color="text.secondary"
                 />
               </Trans>
             </Typography>
@@ -138,6 +139,7 @@ const useGetCloudProviderConfig = () => {
 
 const useGetLocalMachineConfig = () => {
   const { t } = useTranslation(['clusters', 'shared']);
+  const theme = useTheme();
 
   return (data: LocalClustersSummary) => [
     {
@@ -152,7 +154,7 @@ const useGetLocalMachineConfig = () => {
       title: t('numberOfServers'),
       children: (
         <Stack direction={'row'} spacing={0.5} alignItems="center">
-          <InstanceIcon height="24px" width="24px" />
+          <InstanceIcon height="24px" width="24px" style={{ fill: theme.palette.text.primary }} />
           <Typography>{data[CLUSTER_FORM_FIELD_NAMES.DATABASE_SERVERS]?.length}</Typography>
         </Stack>
       ),
@@ -161,7 +163,7 @@ const useGetLocalMachineConfig = () => {
       title: t('loadBalancing'),
       children: (
         <Stack direction={'row'} spacing={0.5} alignItems="center">
-          <LanIcon width="24px" height="24px" />
+          <LanIcon height="24px" width="24px" style={{ fill: theme.palette.text.primary }} />
           <Typography>
             {data[CLUSTER_FORM_FIELD_NAMES.IS_HAPROXY_LOAD_BALANCER]
               ? t('on', { ns: 'shared' })
@@ -176,7 +178,7 @@ const useGetLocalMachineConfig = () => {
         <Stack direction="column" spacing={0.5}>
           <Stack direction="row" spacing={0.5} alignItems="center">
             {data[CLUSTER_FORM_FIELD_NAMES.DATABASE_SERVERS]?.length >= 3 ? (
-              <CheckIcon width="24px" height="24px" />
+              <CheckIcon width="24px" height="24px" style={{ fill: theme.palette.text.primary }} />
             ) : (
               <WarningAmberOutlinedIcon />
             )}
@@ -186,7 +188,7 @@ const useGetLocalMachineConfig = () => {
                 : t('off', { ns: 'shared' })}
             </Typography>
           </Stack>
-          <Typography variant="caption" color="#575757">
+          <Typography variant="caption" color="text.secondary">
             {t('highAvailabilityInfo')}
           </Typography>
         </Stack>

@@ -37,11 +37,11 @@ pyflakes==3.2.0
 pygments==2.19.1
 pyyaml==6.0.2
 referencing==0.36.2
-requests==2.32.3
+requests==2.32.4
 resolvelib==1.0.1
 rich==13.9.4
 rpds-py==0.23.1
-ruamel-yaml==0.18.12
+ruamel-yaml==0.18.13
 ruamel-yaml-clib==0.2.12
 subprocess-tee==0.4.2
 tomli==2.2.1
