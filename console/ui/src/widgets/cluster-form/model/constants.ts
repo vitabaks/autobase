@@ -13,6 +13,7 @@ const CLUSTER_CLOUD_PROVIDER_FIELD_NAMES = Object.freeze({
 
 const CLUSTER_LOCAL_MACHINE_FIELD_NAMES = Object.freeze({
   DATABASE_SERVERS: 'databaseServers',
+  EXISTING_CLUSTER: 'existingCluster',
   HOSTNAME: 'hostname',
   IP_ADDRESS: 'ipAddress',
   LOCATION: 'location',
@@ -26,11 +27,16 @@ const CLUSTER_LOCAL_MACHINE_FIELD_NAMES = Object.freeze({
 
 export const CLUSTER_FORM_FIELD_NAMES = Object.freeze({
   PROVIDER: 'provider',
-  ENVIRONMENT_ID: 'environment',
+  ENVIRONMENT_ID: 'environmentId',
   CLUSTER_NAME: 'clusterName',
   DESCRIPTION: 'description',
   POSTGRES_VERSION: 'postgresVersion',
   SECRET_ID: 'secretId',
   ...CLUSTER_CLOUD_PROVIDER_FIELD_NAMES,
   ...CLUSTER_LOCAL_MACHINE_FIELD_NAMES,
+  EXISTING_CLUSTER: 'existingCluster',
+  DATABASE_SERVERS: 'databaseServers',
+  HOSTNAME: 'hostname',
+  IP_ADDRESS: 'ipAddress',
+  LOCATION: 'location',
 });

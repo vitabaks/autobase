@@ -33,6 +33,8 @@ import { useGetSecretsQuery, usePostSecretsMutation } from '@shared/api/api/secr
 import { getSecretBodyFromValues } from '@entities/secret-form-block/lib/functions.ts';
 import { SECRET_MODAL_CONTENT_FORM_FIELD_NAMES } from '@entities/secret-form-block/model/constants.ts';
 import Spinner from '@shared/ui/spinner';
+import { Checkbox, FormControlLabel, FormHelperText } from '@mui/material';
+import { Controller } from 'react-hook-form';
 
 const ClusterForm: React.FC = () => {
   const { t } = useTranslation(['clusters', 'validation', 'toasts']);
@@ -70,6 +72,7 @@ const ClusterForm: React.FC = () => {
   });
 
   const watchProvider = methods.watch(CLUSTER_FORM_FIELD_NAMES.PROVIDER);
+  const watchExistingCluster = methods.watch(CLUSTER_FORM_FIELD_NAMES.EXISTING_CLUSTER);
 
   const secrets = useGetSecretsQuery({ type: watchProvider?.code, projectId: currentProject });
 
@@ -180,7 +183,26 @@ const ClusterForm: React.FC = () => {
             <Stack direction="column" gap={2}>
               <ProvidersBlock providers={deployments.data?.data ?? []} />
               {watchProvider?.code === PROVIDERS.LOCAL ? (
-                <ClusterFormLocalMachineFormPart />
+                <>
+                  <FormControlLabel
+                    control={
+                      <Controller
+                        name={CLUSTER_FORM_FIELD_NAMES.EXISTING_CLUSTER}
+                        control={methods.control}
+                        render={({ field }) => (
+                          <Checkbox
+                            {...field}
+                            checked={field.value}
+                            onChange={(e) => field.onChange(e.target.checked)}
+                          />
+                        )}
+                      />
+                    }
+                    label={t('clusterExistsLabel')}
+                  />
+                  <FormHelperText>{t('clusterExistsHelp')}</FormHelperText>
+                  <ClusterFormLocalMachineFormPart />
+                </>
               ) : (
                 <ClusterFormCloudProviderFormPart />
               )}

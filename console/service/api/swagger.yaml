@@ -1148,6 +1148,10 @@ definitions:
         type: array
         items:
           type: string
+      existing_cluster:
+        type: boolean
+        default: false
+        description: "Set to true when importing an existing cluster"
 
   Response.ClusterDefaultName:
     type: object

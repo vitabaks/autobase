@@ -54,6 +54,7 @@ func (h *postClusterHandler) Handle(param cluster.PostClustersParams) middleware
 	var (
 		secretEnvs    []string
 		secretID      *int64
+		existing      bool = param.Body.ExistingCluster != nil && *param.Body.ExistingCluster
 		paramLocation ParamLocation
 	)
 	if param.Body.AuthInfo != nil {
@@ -121,6 +122,11 @@ func (h *postClusterHandler) Handle(param cluster.PostClustersParams) middleware
 		serverCount = getIntValFromVars(param.Body.ExtraVars, ServersExtraVar)
 	}
 
+	status := "deploying"
+	if existing {
+		status = "ready"
+	}
+
 	createdCluster, err := h.db.CreateCluster(param.HTTPRequest.Context(), &storage.CreateClusterReq{
 		ProjectID:         param.Body.ProjectID,
 		EnvironmentID:     param.Body.EnvironmentID,
@@ -131,13 +137,21 @@ func (h *postClusterHandler) Handle(param cluster.PostClustersParams) middleware
 		Location:          getValFromVars(param.Body.ExtraVars, LocationExtraVar),
 		ServerCount:       serverCount,
 		PostgreSqlVersion: getIntValFromVars(param.Body.ExtraVars, PostgreSqlVersionExtraVar),
-		Status:            "deploying",
+		Status:            status,
 		Inventory:         inventoryJsonVal,
 	})
 	if err != nil {
 		return cluster.NewPostClustersBadRequest().WithPayload(controllers.MakeErrorPayload(err, controllers.BaseError))
 	}
 	localLog.Info().Any("cluster", createdCluster).Msg("cluster was created")
+
+	if existing {
+		localLog.Info().Msg("existing_cluster=true; skipping Ansible/Docker deployment")
+		return cluster.NewPostClustersOK().
+			WithPayload(&models.ResponseClusterCreate{
+				ClusterID: createdCluster.ID,
+			})
+	}
 
 	defer func() {
 		if err != nil {

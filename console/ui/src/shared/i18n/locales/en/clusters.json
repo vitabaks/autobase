@@ -10,7 +10,7 @@
   "postgresVersion": "Postgres version",
   "location": "Location",
   "noPostgresClustersTitle": "No Postgres Clusters",
-  "noPostgresClustersLine1": "Deploy Postgres to supported cloud providers: AWS, GCP, Azure, DigitalOcean and Hetzner Cloud. All components are installed within your cloud account.\nOr Install on your existing resources, whether it's any other cloud or your own data center.\n\nTo get started, just click “{{createCluster}}” button.",
+  "noPostgresClustersLine1": "Deploy Postgres to supported cloud providers: AWS, GCP, Azure, DigitalOcean and Hetzner Cloud. All components are installed within your cloud account.\nOr Install on your existing resources, whether it's any other cloud or your own data center.\n\nTo get started, just click "{{createCluster}}" button.",
   "selectDeploymentDestination": "Select deployment destination",
   "clustersSearchPlaceholder": "Enter property name or value",
   "selectCloudRegion": "Select cloud region",
@@ -67,5 +67,13 @@
   "useDefinedSecret": "Use defined secret?",
   "deleteClusterModalHeader": "Delete {{clusterName}}?",
   "deleteClusterModalBody": "Are you sure you want to delete cluster \"{{clusterName}}\"?",
-  "sharedVcpu": "Shared vCPU"
+  "sharedVcpu": "Shared vCPU",
+  "clusterExistsLabel": "Cluster exists",
+  "clusterExistsHelp": "Use this option if you want to import an existing cluster",
+  "hostnameRequired": "Hostname is required",
+  "ipAddressRequired": "IP address is required",
+  "invalidIpAddress": "Invalid IP address format",
+  "locationRequired": "Location is required",
+  "atLeastOneServerRequired": "At least one server is required for existing clusters",
+  "addServer": "Add Server"
 }
