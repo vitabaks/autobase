@@ -150,6 +150,60 @@ func (h *postClusterHandler) Handle(param cluster.PostClustersParams) middleware
 
 	if existing {
 		localLog.Info().Msg("existing_cluster=true; skipping Ansible/Docker deployment")
+
+		var inventoryJson InventoryJson
+		err := json.Unmarshal(inventoryJsonVal, &inventoryJson)
+		if err != nil {
+			localLog.Error().Err(err).Msg("failed to parse inventory JSON for server insertion")
+			return cluster.NewPostClustersBadRequest().WithPayload(controllers.MakeErrorPayload(err, controllers.BaseError))
+		}
+
+		// Insert master nodes
+		for ip, hostData := range inventoryJson.All.Children.Master.Hosts {
+			hostMap, ok := hostData.(map[string]interface{})
+			if !ok {
+				localLog.Warn().Str("ip", ip).Msg("invalid master host format")
+				continue
+			}
+
+			hostname, _ := hostMap["hostname"].(string)
+			location, _ := hostMap["server_location"].(string)
+
+			_, err = h.db.CreateServer(param.HTTPRequest.Context(), &storage.CreateServerReq{
+				ClusterID:      createdCluster.ID,
+				ServerName:     hostname,
+				ServerLocation: &location,
+				IpAddress:      ip,
+			})
+			if err != nil {
+				localLog.Error().Err(err).Str("ip", ip).Msg("failed to insert master server")
+				return cluster.NewPostClustersBadRequest().WithPayload(controllers.MakeErrorPayload(err, controllers.BaseError))
+			}
+		}
+
+		// Insert replica nodes
+		for ip, hostData := range inventoryJson.All.Children.Replica.Hosts {
+			hostMap, ok := hostData.(map[string]interface{})
+			if !ok {
+				localLog.Warn().Str("ip", ip).Msg("invalid replica host format")
+				continue
+			}
+
+			hostname, _ := hostMap["hostname"].(string)
+			location, _ := hostMap["server_location"].(string)
+
+			_, err = h.db.CreateServer(param.HTTPRequest.Context(), &storage.CreateServerReq{
+				ClusterID:      createdCluster.ID,
+				ServerName:     hostname,
+				ServerLocation: &location,
+				IpAddress:      ip,
+			})
+			if err != nil {
+				localLog.Error().Err(err).Str("ip", ip).Msg("failed to insert replica server")
+				return cluster.NewPostClustersBadRequest().WithPayload(controllers.MakeErrorPayload(err, controllers.BaseError))
+			}
+		}
+
 		return cluster.NewPostClustersOK().
 			WithPayload(&models.ResponseClusterCreate{
 				ClusterID: createdCluster.ID,
