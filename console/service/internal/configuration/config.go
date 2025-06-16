@@ -41,9 +41,10 @@ type Config struct {
 	}
 	EncryptionKey string `default:"super_secret" desc:"Encryption key for secret storage"`
 	Docker        struct {
-		Host   string `default:"unix:///var/run/docker.sock" desc:"Docker host"`
-		LogDir string `default:"/tmp/ansible" desc:"Directory inside docker container for ansible json log"`
-		Image  string `default:"autobase/automation:2.2.0" desc:"Docker image for autobase automation"`
+		Host          string `default:"unix:///var/run/docker.sock" desc:"Docker host"`
+		LogDir        string `default:"/tmp/ansible" desc:"Directory inside docker container for ansible json log"`
+		Image         string `default:"autobase/automation:2.2.0" desc:"Docker image for autobase automation"`
+		PostgresVolume string `default:"console_postgres" env:"PG_CONSOLE_POSTGRES_VOLUME" desc:"Docker volume name for Postgres data"`
 	}
 	LogWatcher struct {
 		RunEvery    time.Duration `default:"1m" desc:"LogWatcher run interval"`
