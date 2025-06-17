@@ -193,9 +193,8 @@ export const ClusterFormSchema = (t: TFunction) =>
     [CLUSTER_FORM_FIELD_NAMES.CLUSTER_NAME]: yup
       .string()
       .required(t('clusterNameRequired'))
-      .test('clusters should have proper naming', 
-        t('clusterShouldHaveProperNaming', { ns: 'validation' }), 
-        (value) => Boolean(value?.match(/^[a-z0-9][a-z0-9-]{0,23}$/g))
+      .test('clusters should have proper naming', t('clusterShouldHaveProperNaming', { ns: 'validation' }), (value) =>
+        Boolean(value?.match(/^[a-z0-9][a-z0-9-]{0,23}$/g)),
       ),
     [CLUSTER_FORM_FIELD_NAMES.DESCRIPTION]: yup.string(),
     [CLUSTER_FORM_FIELD_NAMES.POSTGRES_VERSION]: yup.number().required(t('postgresVersionRequired')),
