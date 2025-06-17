@@ -1,8 +1,0 @@
-{
-  "shared": {
-    "exportToInventory": "Export to inventory"
-  },
-  "toasts": {
-    "inventoryExported": "Inventory for cluster {{clusterName}} has been exported successfully"
-  }
-} 

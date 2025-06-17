@@ -80,7 +80,7 @@ const ClustersTableExportButton: FC<ClustersTableRemoveButtonProps> = ({ cluster
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
 
-      toast.success(t('inventoryExported', { ns: 'toasts', clusterName }));
+      toast.success(t('clusterSuccessfullyExported', { ns: 'toasts', clusterName }));
     } catch (e) {
       handleRequestErrorCatch(e);
     } finally {
