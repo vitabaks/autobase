@@ -202,7 +202,7 @@ const ClusterForm: React.FC = () => {
                     label={t('clusterExistsLabel')}
                   />
                   <FormHelperText>{t('clusterExistsHelp')}</FormHelperText>
-                  <ClusterFormLocalMachineFormPart />
+                  <ClusterFormLocalMachineFormPart disabled={false} />
                 </>
               ) : (
                 <ClusterFormCloudProviderFormPart />

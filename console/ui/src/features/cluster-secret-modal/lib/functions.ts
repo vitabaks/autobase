@@ -151,6 +151,7 @@ export const mapFormValuesToRequestFields = ({
   name: values[CLUSTER_FORM_FIELD_NAMES.CLUSTER_NAME],
   environment_id: values[CLUSTER_FORM_FIELD_NAMES.ENVIRONMENT_ID],
   description: values[CLUSTER_FORM_FIELD_NAMES.DESCRIPTION],
+  existing_cluster: values[CLUSTER_FORM_FIELD_NAMES.EXISTING_CLUSTER],
   ...(secretId ? { auth_info: { secret_id: secretId } } : {}),
   ...(values[CLUSTER_FORM_FIELD_NAMES.PROVIDER].code === PROVIDERS.LOCAL
     ? { envs: convertObjectToRequiredFormat(getLocalMachineEnvs(values, secretId)) }
