@@ -146,7 +146,7 @@ func (h *postClusterHandler) Handle(param cluster.PostClustersParams) middleware
 	localLog.Info().Any("cluster", createdCluster).Msg("cluster was created")
 
 	if existing {
-		localLog.Info().Msg("existing_cluster=true; skipping Ansible/Docker deployment")
+		localLog.Info().Msg("existing_cluster=true; skipping the deployment process")
 		return cluster.NewPostClustersOK().
 			WithPayload(&models.ResponseClusterCreate{
 				ClusterID: createdCluster.ID,
