@@ -1,8 +1,8 @@
 import { FC } from 'react';
-import { Controller, useFormContext, useFieldArray } from 'react-hook-form';
+import { useFormContext, useFieldArray } from 'react-hook-form';
 import { CLUSTER_FORM_FIELD_NAMES } from '@widgets/cluster-form/model/constants.ts';
 import DatabaseServerBox from '@entities/database-servers-block/ui/DatabaseServerBox.tsx';
-import { Checkbox, FormControlLabel, FormHelperText, Box, Button, Stack, Typography } from '@mui/material';
+import { Box, Button, Stack, Typography } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import { useTranslation } from 'react-i18next';
 
@@ -22,24 +22,6 @@ const DatabaseServersBlock: FC = () => {
       <Typography fontWeight="bold" marginBottom="8px">
         {t('databaseServers')}
       </Typography>
-
-      <Controller
-        name={CLUSTER_FORM_FIELD_NAMES.EXISTING_CLUSTER}
-        control={control}
-        defaultValue={false}
-        render={({ field: { value, onChange } }) => (
-          <FormControlLabel
-            control={
-              <Checkbox 
-                checked={value}
-                onChange={e => onChange(e.target.checked)}
-              />
-            }
-            label={t('clusterExistsLabel')}
-          />
-        )}
-      />
-      <FormHelperText>{t('clusterExistsHelp')}</FormHelperText>
 
       <Stack direction="column" gap="16px" justifyContent="center" alignItems="flex-start">
         <Box display="flex" gap="16px" flexWrap="wrap" justifyContent="flex-start" alignItems="center">

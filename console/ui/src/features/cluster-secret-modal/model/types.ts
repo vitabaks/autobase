@@ -50,4 +50,5 @@ export interface ClusterFormValues extends ClusterCloudProviderFormValues, Clust
   [CLUSTER_FORM_FIELD_NAMES.CLUSTER_NAME]: string;
   [CLUSTER_FORM_FIELD_NAMES.DESCRIPTION]: string;
   [CLUSTER_FORM_FIELD_NAMES.POSTGRES_VERSION]: number;
+  [CLUSTER_FORM_FIELD_NAMES.EXISTING_CLUSTER]: boolean;
 }

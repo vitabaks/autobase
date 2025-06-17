@@ -190,30 +190,42 @@ export const ClusterFormSchema = (t: TFunction) =>
   yup.object().shape({
     [CLUSTER_FORM_FIELD_NAMES.PROVIDER]: yup.object().required(t('providerRequired')),
     [CLUSTER_FORM_FIELD_NAMES.ENVIRONMENT_ID]: yup.number().required(t('environmentRequired')),
-    [CLUSTER_FORM_FIELD_NAMES.CLUSTER_NAME]: yup.string().required(t('clusterNameRequired')),
+    [CLUSTER_FORM_FIELD_NAMES.CLUSTER_NAME]: yup
+      .string()
+      .required(t('clusterNameRequired'))
+      .test('clusters should have proper naming', 
+        t('clusterShouldHaveProperNaming', { ns: 'validation' }), 
+        (value) => Boolean(value?.match(/^[a-z0-9][a-z0-9-]{0,23}$/g))
+      ),
     [CLUSTER_FORM_FIELD_NAMES.DESCRIPTION]: yup.string(),
     [CLUSTER_FORM_FIELD_NAMES.POSTGRES_VERSION]: yup.number().required(t('postgresVersionRequired')),
     [CLUSTER_FORM_FIELD_NAMES.EXISTING_CLUSTER]: yup.boolean().default(false),
-    [CLUSTER_FORM_FIELD_NAMES.DATABASE_SERVERS]: yup.array().when(CLUSTER_FORM_FIELD_NAMES.EXISTING_CLUSTER, {
-      is: true,
-      then: (schema) =>
-        schema
-          .of(
-            yup.object().shape({
-              [CLUSTER_FORM_FIELD_NAMES.HOSTNAME]: yup.string().required(t('hostnameRequired')),
-              [CLUSTER_FORM_FIELD_NAMES.IP_ADDRESS]: yup
-                .string()
-                .required(t('ipAddressRequired'))
-                .matches(
-                  /^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$/,
-                  t('invalidIpAddress')
-                ),
-              [CLUSTER_FORM_FIELD_NAMES.LOCATION]: yup.string().required(t('locationRequired')),
-            })
-          )
-          .min(1, t('atLeastOneServerRequired')),
-      otherwise: (schema) => schema,
-    }),
+    [CLUSTER_FORM_FIELD_NAMES.DATABASE_SERVERS]: yup.array().when(
+      [CLUSTER_FORM_FIELD_NAMES.PROVIDER, CLUSTER_FORM_FIELD_NAMES.EXISTING_CLUSTER],
+      ([provider, existingCluster], schema) => {
+        if (provider?.code === PROVIDERS.LOCAL) {
+          if (existingCluster) {
+            return schema
+              .of(
+                yup.object().shape({
+                  [CLUSTER_FORM_FIELD_NAMES.HOSTNAME]: yup.string().required(t('hostnameRequired')),
+                  [CLUSTER_FORM_FIELD_NAMES.IP_ADDRESS]: yup
+                    .string()
+                    .required(t('ipAddressRequired'))
+                    .matches(
+                      /^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$/,
+                      t('invalidIpAddress')
+                    ),
+                  [CLUSTER_FORM_FIELD_NAMES.LOCATION]: yup.string(),
+                })
+              )
+              .min(1, t('atLeastOneServerRequired'));
+          }
+          return schema;
+        }
+        return schema;
+      }
+    ),
   })
     .concat(cloudFormSchema(t))
     .concat(localFormSchema(t));

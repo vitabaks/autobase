@@ -5,18 +5,27 @@ import { CLUSTER_FORM_FIELD_NAMES } from '@widgets/cluster-form/model/constants.
 import { Card, IconButton, Stack, TextField, Typography } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import CloseIcon from '@mui/icons-material/Close';
+import { FieldError } from 'react-hook-form';
 
-const DatabaseServerBox: FC<DatabaseServerBlockProps> = ({ index, remove }) => {
+interface ServerErrors {
+  [CLUSTER_FORM_FIELD_NAMES.HOSTNAME]?: FieldError;
+  [CLUSTER_FORM_FIELD_NAMES.IP_ADDRESS]?: FieldError;
+  [CLUSTER_FORM_FIELD_NAMES.LOCATION]?: FieldError;
+}
+
+const DatabaseServerBox: FC<DatabaseServerBlockProps> = ({ index, onRemove, disabled }) => {
   const { t } = useTranslation(['clusters', 'shared']);
   const {
     control,
     formState: { errors },
   } = useFormContext();
 
+  const serverErrors = (errors[CLUSTER_FORM_FIELD_NAMES.DATABASE_SERVERS] as unknown as ServerErrors[])?.[index];
+
   return (
     <Card sx={{ position: 'relative', padding: '16px', minWidth: '200px' }}>
-      {remove ? (
-        <IconButton sx={{ position: 'absolute', right: '4px', top: '4px', cursor: 'pointer' }} onClick={remove}>
+      {onRemove && !disabled ? (
+        <IconButton sx={{ position: 'absolute', right: '4px', top: '4px', cursor: 'pointer' }} onClick={onRemove}>
           <CloseIcon />
         </IconButton>
       ) : null}
@@ -32,11 +41,9 @@ const DatabaseServerBox: FC<DatabaseServerBlockProps> = ({ index, remove }) => {
               onChange={onChange}
               size="small"
               label={t('hostname', { ns: 'clusters' })}
-              error={!!errors[CLUSTER_FORM_FIELD_NAMES.DATABASE_SERVERS]?.[index]?.[CLUSTER_FORM_FIELD_NAMES.HOSTNAME]}
-              helperText={
-                errors?.[CLUSTER_FORM_FIELD_NAMES.DATABASE_SERVERS]?.[index]?.[CLUSTER_FORM_FIELD_NAMES.HOSTNAME]
-                  ?.message ?? ' '
-              }
+              error={!!serverErrors?.[CLUSTER_FORM_FIELD_NAMES.HOSTNAME]}
+              helperText={serverErrors?.[CLUSTER_FORM_FIELD_NAMES.HOSTNAME]?.message ?? ' '}
+              disabled={disabled}
             />
           )}
         />
@@ -50,13 +57,9 @@ const DatabaseServerBox: FC<DatabaseServerBlockProps> = ({ index, remove }) => {
               onChange={onChange}
               size="small"
               label={t('ipAddress', { ns: 'clusters' })}
-              error={
-                !!errors[CLUSTER_FORM_FIELD_NAMES.DATABASE_SERVERS]?.[index]?.[CLUSTER_FORM_FIELD_NAMES.IP_ADDRESS]
-              }
-              helperText={
-                errors?.[CLUSTER_FORM_FIELD_NAMES.DATABASE_SERVERS]?.[index]?.[CLUSTER_FORM_FIELD_NAMES.IP_ADDRESS]
-                  ?.message ?? ' '
-              }
+              error={!!serverErrors?.[CLUSTER_FORM_FIELD_NAMES.IP_ADDRESS]}
+              helperText={serverErrors?.[CLUSTER_FORM_FIELD_NAMES.IP_ADDRESS]?.message ?? ' '}
+              disabled={disabled}
             />
           )}
         />
@@ -70,6 +73,7 @@ const DatabaseServerBox: FC<DatabaseServerBlockProps> = ({ index, remove }) => {
               size="small"
               label={t('location', { ns: 'clusters' })}
               placeholder={t('locationPlaceholder', { ns: 'clusters' })}
+              disabled={disabled}
             />
           )}
         />
