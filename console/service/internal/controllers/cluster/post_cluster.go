@@ -146,49 +146,66 @@ func (h *postClusterHandler) Handle(param cluster.PostClustersParams) middleware
 	localLog.Info().Any("cluster", createdCluster).Msg("cluster was created")
 
 	if existing {
-		if inventoryJsonVal != nil {
-			var inventoryJson InventoryJson
+		var inventoryJson map[string]interface{}
+		if len(inventoryJsonVal) != 0 {
 			err = json.Unmarshal(inventoryJsonVal, &inventoryJson)
 			if err != nil {
-				localLog.Error().Err(err).Msg("failed to parse inventory json for server creation")
-			} else {
-				for hostname, hostInfo := range inventoryJson.All.Children.Master.Hosts {
-					hostMap, ok := hostInfo.(map[string]interface{})
+				// Try base64 decoding if JSON parsing fails
+				decodedInventory, err := base64.StdEncoding.DecodeString(string(inventoryJsonVal))
+				if err != nil {
+					return cluster.NewPostClustersBadRequest().WithPayload(controllers.MakeErrorPayload(err, controllers.BaseError))
+				}
+				err = json.Unmarshal(decodedInventory, &inventoryJson)
+				if err != nil {
+					return cluster.NewPostClustersBadRequest().WithPayload(controllers.MakeErrorPayload(err, controllers.BaseError))
+				}
+				inventoryJsonVal = decodedInventory
+			}
+		}
+
+		// Create master server
+		if masterHost, ok := inventoryJson["master"].(map[string]interface{}); ok {
+			if hosts, ok := masterHost["hosts"].(map[string]interface{}); ok {
+				for ip, hostInfo := range hosts {
+					hostInfoMap, ok := hostInfo.(map[string]interface{})
 					if !ok {
 						continue
 					}
-					ipAddr, ok := hostMap["ansible_host"].(string)
-					if !ok {
-						ipAddr = hostname
-					}
-					_, err = h.db.CreateServer(param.HTTPRequest.Context(), &storage.CreateServerReq{
+					hostname, _ := hostInfoMap["hostname"].(string)
+					location, _ := hostInfoMap["server_location"].(string)
+					
+					_, err := h.db.CreateServer(param.HTTPRequest.Context(), &storage.CreateServerReq{
 						ClusterID:      createdCluster.ID,
 						ServerName:     hostname,
-						ServerLocation: pointy.String(getValFromVars(param.Body.ExtraVars, LocationExtraVar)),
-						IpAddress:      ipAddr,
+						ServerLocation: &location,
+						IpAddress:      ip,
 					})
 					if err != nil {
-						localLog.Error().Err(err).Str("hostname", hostname).Msg("failed to create master server")
+						localLog.Error().Err(err).Msg("failed to create master server")
 					}
 				}
+			}
+		}
 
-				for hostname, hostInfo := range inventoryJson.All.Children.Replica.Hosts {
-					hostMap, ok := hostInfo.(map[string]interface{})
+		// Create replica servers
+		if replicaHost, ok := inventoryJson["replica"].(map[string]interface{}); ok {
+			if hosts, ok := replicaHost["hosts"].(map[string]interface{}); ok {
+				for ip, hostInfo := range hosts {
+					hostInfoMap, ok := hostInfo.(map[string]interface{})
 					if !ok {
 						continue
 					}
-					ipAddr, ok := hostMap["ansible_host"].(string)
-					if !ok {
-						ipAddr = hostname
-					}
-					_, err = h.db.CreateServer(param.HTTPRequest.Context(), &storage.CreateServerReq{
+					hostname, _ := hostInfoMap["hostname"].(string)
+					location, _ := hostInfoMap["server_location"].(string)
+					
+					_, err := h.db.CreateServer(param.HTTPRequest.Context(), &storage.CreateServerReq{
 						ClusterID:      createdCluster.ID,
 						ServerName:     hostname,
-						ServerLocation: pointy.String(getValFromVars(param.Body.ExtraVars, LocationExtraVar)),
-						IpAddress:      ipAddr,
+						ServerLocation: &location,
+						IpAddress:      ip,
 					})
 					if err != nil {
-						localLog.Error().Err(err).Str("hostname", hostname).Msg("failed to create replica server")
+						localLog.Error().Err(err).Msg("failed to create replica server")
 					}
 				}
 			}
