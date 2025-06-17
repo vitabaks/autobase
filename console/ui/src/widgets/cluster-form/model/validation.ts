@@ -200,27 +200,24 @@ export const ClusterFormSchema = (t: TFunction) =>
     [CLUSTER_FORM_FIELD_NAMES.POSTGRES_VERSION]: yup.number().required(t('postgresVersionRequired')),
     [CLUSTER_FORM_FIELD_NAMES.EXISTING_CLUSTER]: yup.boolean().default(false),
     [CLUSTER_FORM_FIELD_NAMES.DATABASE_SERVERS]: yup.array().when(
-      [CLUSTER_FORM_FIELD_NAMES.PROVIDER, CLUSTER_FORM_FIELD_NAMES.EXISTING_CLUSTER],
-      ([provider, existingCluster], schema) => {
+      [CLUSTER_FORM_FIELD_NAMES.PROVIDER],
+      ([provider], schema) => {
         if (provider?.code === PROVIDERS.LOCAL) {
-          if (existingCluster) {
-            return schema
-              .of(
-                yup.object().shape({
-                  [CLUSTER_FORM_FIELD_NAMES.HOSTNAME]: yup.string().required(t('hostnameRequired')),
-                  [CLUSTER_FORM_FIELD_NAMES.IP_ADDRESS]: yup
-                    .string()
-                    .required(t('ipAddressRequired'))
-                    .matches(
-                      /^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$/,
-                      t('invalidIpAddress')
-                    ),
-                  [CLUSTER_FORM_FIELD_NAMES.LOCATION]: yup.string(),
-                })
-              )
-              .min(1, t('atLeastOneServerRequired'));
-          }
-          return schema;
+          return schema
+            .of(
+              yup.object().shape({
+                [CLUSTER_FORM_FIELD_NAMES.HOSTNAME]: yup.string().required(t('hostnameRequired')),
+                [CLUSTER_FORM_FIELD_NAMES.IP_ADDRESS]: yup
+                  .string()
+                  .required(t('ipAddressRequired'))
+                  .matches(
+                    /^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$/,
+                    t('invalidIpAddress')
+                  ),
+                [CLUSTER_FORM_FIELD_NAMES.LOCATION]: yup.string(),
+              })
+            )
+            .min(1, t('atLeastOneServerRequired'));
         }
         return schema;
       }

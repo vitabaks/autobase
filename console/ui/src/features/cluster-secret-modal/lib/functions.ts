@@ -146,25 +146,33 @@ export const mapFormValuesToRequestFields = ({
   secretId?: number;
   projectId: number;
   envs?: object;
-}): RequestClusterCreate => ({
-  project_id: projectId,
-  name: values[CLUSTER_FORM_FIELD_NAMES.CLUSTER_NAME],
-  environment_id: values[CLUSTER_FORM_FIELD_NAMES.ENVIRONMENT_ID],
-  description: values[CLUSTER_FORM_FIELD_NAMES.DESCRIPTION],
-  existing_cluster: values[CLUSTER_FORM_FIELD_NAMES.EXISTING_CLUSTER],
-  ...(secretId ? { auth_info: { secret_id: secretId } } : {}),
-  ...(values[CLUSTER_FORM_FIELD_NAMES.PROVIDER].code === PROVIDERS.LOCAL
-    ? { envs: convertObjectToRequiredFormat(getLocalMachineEnvs(values, secretId)) }
-    : envs && values[CLUSTER_FORM_FIELD_NAMES.PROVIDER].code !== PROVIDERS.LOCAL
-      ? {
-          envs: convertObjectToRequiredFormat(
-            Object.fromEntries(Object.entries(envs).filter(([key]) => SECRET_MODAL_CONTENT_BODY_FORM_FIELDS?.[key])),
-          ),
-        }
-      : {}),
-  extra_vars: convertObjectToRequiredFormat(
+}): RequestClusterCreate => {
+  const request: RequestClusterCreate = {
+    project_id: projectId,
+    name: values[CLUSTER_FORM_FIELD_NAMES.CLUSTER_NAME],
+    environment_id: values[CLUSTER_FORM_FIELD_NAMES.ENVIRONMENT_ID],
+    description: values[CLUSTER_FORM_FIELD_NAMES.DESCRIPTION],
+    existing_cluster: values[CLUSTER_FORM_FIELD_NAMES.EXISTING_CLUSTER] === true,
+  };
+
+  if (secretId) {
+    request.auth_info = { secret_id: secretId };
+  }
+
+  if (values[CLUSTER_FORM_FIELD_NAMES.PROVIDER].code === PROVIDERS.LOCAL) {
+    request.envs = convertObjectToRequiredFormat(getLocalMachineEnvs(values, secretId));
+  } else if (envs && values[CLUSTER_FORM_FIELD_NAMES.PROVIDER].code !== PROVIDERS.LOCAL) {
+    const filteredEnvs = Object.fromEntries(
+      Object.entries(envs).filter(([key]) => key in SECRET_MODAL_CONTENT_BODY_FORM_FIELDS)
+    );
+    request.envs = convertObjectToRequiredFormat(filteredEnvs);
+  }
+
+  request.extra_vars = convertObjectToRequiredFormat(
     values[CLUSTER_FORM_FIELD_NAMES.PROVIDER].code === PROVIDERS.LOCAL
       ? getLocalMachineExtraVars(values, secretId)
-      : getCloudProviderExtraVars(values),
-  ),
-});
+      : getCloudProviderExtraVars(values)
+  );
+
+  return request;
+};

@@ -29,8 +29,8 @@ const DatabaseServersBlock: FC = () => {
             <DatabaseServerBox
               key={field.id}
               index={index}
-              onRemove={() => remove(index)}
-              disabled={clusterExists}
+              onRemove={clusterExists ? undefined : () => remove(index)}
+              disabled={false}
             />
           ))}
         </Box>
