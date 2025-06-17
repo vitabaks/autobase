@@ -151,56 +151,79 @@ func (h *postClusterHandler) Handle(param cluster.PostClustersParams) middleware
 	if existing {
 		localLog.Info().Msg("existing_cluster=true; skipping Ansible/Docker deployment")
 
-		var inventoryJson InventoryJson
-		err := json.Unmarshal(inventoryJsonVal, &inventoryJson)
-		if err != nil {
-			localLog.Error().Err(err).Msg("failed to parse inventory JSON for server insertion")
-			return cluster.NewPostClustersBadRequest().WithPayload(controllers.MakeErrorPayload(err, controllers.BaseError))
-		}
-
-		// Insert master nodes
-		for ip, hostData := range inventoryJson.All.Children.Master.Hosts {
-			hostMap, ok := hostData.(map[string]interface{})
-			if !ok {
-				localLog.Warn().Str("ip", ip).Msg("invalid master host format")
-				continue
-			}
-
-			hostname, _ := hostMap["hostname"].(string)
-			location, _ := hostMap["server_location"].(string)
-
-			_, err = h.db.CreateServer(param.HTTPRequest.Context(), &storage.CreateServerReq{
-				ClusterID:      createdCluster.ID,
-				ServerName:     hostname,
-				ServerLocation: &location,
-				IpAddress:      ip,
-			})
+		if len(inventoryJsonVal) > 0 {
+			var inventoryJson InventoryJson
+			err := json.Unmarshal(inventoryJsonVal, &inventoryJson)
 			if err != nil {
-				localLog.Error().Err(err).Str("ip", ip).Msg("failed to insert master server")
-				return cluster.NewPostClustersBadRequest().WithPayload(controllers.MakeErrorPayload(err, controllers.BaseError))
+				localLog.Debug().Err(err).Str("inventory_json_val", string(inventoryJsonVal)).
+					Msg("Failed to parse inventory JSON as plain JSON, trying base64 decode")
+
+				if decoded, b64Err := base64.StdEncoding.DecodeString(string(inventoryJsonVal)); b64Err == nil {
+					if err := json.Unmarshal(decoded, &inventoryJson); err != nil {
+						localLog.Debug().Err(err).Str("decoded_inventory_json_val", string(decoded)).
+							Msg("Still failed to parse inventory JSON after base64 decode. Using empty inventory.")
+					} else {
+						localLog.Debug().Msg("Successfully parsed inventory JSON after base64 decode")
+					}
+				} else {
+					localLog.Debug().Err(b64Err).
+						Msg("Base64 decode also failed; proceeding with empty inventory")
+				}
 			}
-		}
 
-		// Insert replica nodes
-		for ip, hostData := range inventoryJson.All.Children.Replica.Hosts {
-			hostMap, ok := hostData.(map[string]interface{})
-			if !ok {
-				localLog.Warn().Str("ip", ip).Msg("invalid replica host format")
-				continue
+			if inventoryJson.All.Children.Master.Hosts == nil {
+				inventoryJson.All.Children.Master.Hosts = make(map[string]interface{})
+				localLog.Debug().Msg("Master hosts map was nil!")
+			}
+			if inventoryJson.All.Children.Replica.Hosts == nil {
+				inventoryJson.All.Children.Replica.Hosts = make(map[string]interface{})
+				localLog.Debug().Msg("Replica hosts map was nil!")
 			}
 
-			hostname, _ := hostMap["hostname"].(string)
-			location, _ := hostMap["server_location"].(string)
+			// Insert master nodes
+			for ip, hostData := range inventoryJson.All.Children.Master.Hosts {
+				hostMap, ok := hostData.(map[string]interface{})
+				if !ok {
+					localLog.Warn().Str("ip", ip).Msg("invalid master host format")
+					continue
+				}
 
-			_, err = h.db.CreateServer(param.HTTPRequest.Context(), &storage.CreateServerReq{
-				ClusterID:      createdCluster.ID,
-				ServerName:     hostname,
-				ServerLocation: &location,
-				IpAddress:      ip,
-			})
-			if err != nil {
-				localLog.Error().Err(err).Str("ip", ip).Msg("failed to insert replica server")
-				return cluster.NewPostClustersBadRequest().WithPayload(controllers.MakeErrorPayload(err, controllers.BaseError))
+				hostname, _ := hostMap["hostname"].(string)
+				location, _ := hostMap["server_location"].(string)
+
+				_, err = h.db.CreateServer(param.HTTPRequest.Context(), &storage.CreateServerReq{
+					ClusterID:      createdCluster.ID,
+					ServerName:     hostname,
+					ServerLocation: &location,
+					IpAddress:      ip,
+				})
+				if err != nil {
+					localLog.Error().Err(err).Str("ip", ip).Msg("failed to insert master server")
+					return cluster.NewPostClustersBadRequest().WithPayload(controllers.MakeErrorPayload(err, controllers.BaseError))
+				}
+			}
+
+			// Insert replica nodes
+			for ip, hostData := range inventoryJson.All.Children.Replica.Hosts {
+				hostMap, ok := hostData.(map[string]interface{})
+				if !ok {
+					localLog.Warn().Str("ip", ip).Msg("invalid replica host format")
+					continue
+				}
+
+				hostname, _ := hostMap["hostname"].(string)
+				location, _ := hostMap["server_location"].(string)
+
+				_, err = h.db.CreateServer(param.HTTPRequest.Context(), &storage.CreateServerReq{
+					ClusterID:      createdCluster.ID,
+					ServerName:     hostname,
+					ServerLocation: &location,
+					IpAddress:      ip,
+				})
+				if err != nil {
+					localLog.Error().Err(err).Str("ip", ip).Msg("failed to insert replica server")
+					return cluster.NewPostClustersBadRequest().WithPayload(controllers.MakeErrorPayload(err, controllers.BaseError))
+				}
 			}
 		}
 
