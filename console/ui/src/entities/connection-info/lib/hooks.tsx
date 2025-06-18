@@ -52,8 +52,8 @@ export const useGetConnectionInfoConfig = (
       title: t('user', { ns: 'shared' }),
       children: (
         <ConnectionInfoRowContainer>
-          <Typography>{connectionInfo?.superuser}</Typography>
-          <CopyIcon valueToCopy={connectionInfo?.superuser} sx={{ fontSize: iconFontSize }} />
+          <Typography>{connectionInfo?.superuser || 'postgres'}</Typography>
+          <CopyIcon valueToCopy={connectionInfo?.superuser || 'postgres'} sx={{ fontSize: iconFontSize }} />
         </ConnectionInfoRowContainer>
       ),
     },
@@ -63,15 +63,15 @@ export const useGetConnectionInfoConfig = (
         <ConnectionInfoRowContainer>
           <Typography>
             {isPasswordHidden
-              ? connectionInfo?.password?.replace(/./g, '*')
-              : connectionInfo?.password}
+              ? (connectionInfo?.password || 'N/A').replace(/./g, '*')
+              : (connectionInfo?.password || 'N/A')}
           </Typography>
           <Stack direction="row" alignItems="center" gap={1}>
             <EyeIcon
               onClick={togglePasswordVisibility}
               sx={{ cursor: 'pointer', fontSize: iconFontSize }}
             />
-            <CopyIcon valueToCopy={connectionInfo?.password} sx={{ fontSize: iconFontSize }} />
+            <CopyIcon valueToCopy={connectionInfo?.password || 'N/A'} sx={{ fontSize: iconFontSize }} />
           </Stack>
         </ConnectionInfoRowContainer>
       ),
