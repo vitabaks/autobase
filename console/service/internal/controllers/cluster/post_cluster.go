@@ -295,17 +295,18 @@ func (h *postClusterHandler) getAnsibleLogEnv(clusterName string) []string {
 }
 
 func getValFromVars(vars []string, key string) string {
-	for _, extraVar := range vars {
-		if strings.HasPrefix(strings.ToLower(extraVar), strings.ToLower(key)) {
-			keyVal := strings.Split(extraVar, "=")
-			if len(keyVal) != 2 {
-				return ""
-			}
+	normalizedKey := strings.ToLower(key) + "="
 
-			return keyVal[1]
+	for _, kv := range vars {
+		if strings.HasPrefix(strings.ToLower(kv), normalizedKey) {
+			// Split once on '=' and return the value
+			parts := strings.SplitN(kv, "=", 2)
+			if len(parts) == 2 {
+				return parts[1]
+			}
 		}
 	}
-
+	// Return empty string if not found
 	return ""
 }
 
