@@ -155,39 +155,22 @@ func (h *postClusterHandler) Handle(param cluster.PostClustersParams) middleware
 	}
 	localLog.Info().Any("cluster", createdCluster).Msg("cluster was created")
 
+	// Handle imported cluster: skip deployment and insert servers from inventory
 	if existing {
 		localLog.Info().Msg("existing_cluster=true; skipping the deployment process")
 
+		// Insert servers if inventory is present
 		if len(inventoryJsonVal) > 0 {
-			var inventoryJson InventoryJson
-			err := json.Unmarshal(inventoryJsonVal, &inventoryJson)
-			if err != nil {
-				localLog.Debug().Err(err).Str("inventory_json_val", string(inventoryJsonVal)).
-					Msg("Failed to parse inventory JSON as plain JSON, trying base64 decode")
-
-				if decoded, b64Err := base64.StdEncoding.DecodeString(string(inventoryJsonVal)); b64Err == nil {
-					if err := json.Unmarshal(decoded, &inventoryJson); err != nil {
-						localLog.Debug().Err(err).Str("decoded_inventory_json_val", string(decoded)).
-							Msg("Still failed to parse inventory JSON after base64 decode. Using empty inventory.")
-					} else {
-						localLog.Debug().Msg("Successfully parsed inventory JSON after base64 decode")
-					}
-				} else {
-					localLog.Debug().Err(b64Err).
-						Msg("Base64 decode also failed; proceeding with empty inventory")
-				}
-			}
-
 			if inventoryJson.All.Children.Master.Hosts == nil {
 				inventoryJson.All.Children.Master.Hosts = make(map[string]interface{})
-				localLog.Debug().Msg("Master hosts map was nil!")
+				localLog.Debug().Msg("Master hosts map was nil")
 			}
 			if inventoryJson.All.Children.Replica.Hosts == nil {
 				inventoryJson.All.Children.Replica.Hosts = make(map[string]interface{})
-				localLog.Debug().Msg("Replica hosts map was nil!")
+				localLog.Debug().Msg("Replica hosts map was nil")
 			}
 
-			// Insert master nodes
+			// Insert master
 			for ip, hostData := range inventoryJson.All.Children.Master.Hosts {
 				hostMap, ok := hostData.(map[string]interface{})
 				if !ok {
@@ -210,7 +193,7 @@ func (h *postClusterHandler) Handle(param cluster.PostClustersParams) middleware
 				}
 			}
 
-			// Insert replica nodes
+			// Insert replicas
 			for ip, hostData := range inventoryJson.All.Children.Replica.Hosts {
 				hostMap, ok := hostData.(map[string]interface{})
 				if !ok {
@@ -234,10 +217,10 @@ func (h *postClusterHandler) Handle(param cluster.PostClustersParams) middleware
 			}
 		}
 
-		return cluster.NewPostClustersOK().
-			WithPayload(&models.ResponseClusterCreate{
-				ClusterID: createdCluster.ID,
-			})
+		// Skip deployment
+		return cluster.NewPostClustersOK().WithPayload(&models.ResponseClusterCreate{
+			ClusterID: createdCluster.ID,
+		})
 	}
 
 	defer func() {
