@@ -13,6 +13,7 @@ const CLUSTER_CLOUD_PROVIDER_FIELD_NAMES = Object.freeze({
 
 const CLUSTER_LOCAL_MACHINE_FIELD_NAMES = Object.freeze({
   DATABASE_SERVERS: 'databaseServers',
+  EXISTING_CLUSTER: 'existingCluster',
   HOSTNAME: 'hostname',
   IP_ADDRESS: 'ipAddress',
   LOCATION: 'location',

@@ -1,5 +1,6 @@
 {
   "clusterSuccessfullyCreated": "Cluster {{clusterName}} creation initiated. Please wait until deployment is complete",
+  "clusterSuccessfullyImported": "Cluster {{clusterName}} successfully imported",
   "clusterSuccessfullyRemoved": "Cluster {{clusterName}} successfully removed",
   "secretSuccessfullyCreated": "Secret {{secretName}} successfully created",
   "secretSuccessfullyRemoved": "Secret {{secretName}} successfully removed",

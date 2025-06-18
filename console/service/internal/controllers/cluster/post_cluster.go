@@ -54,6 +54,7 @@ func (h *postClusterHandler) Handle(param cluster.PostClustersParams) middleware
 	var (
 		secretEnvs    []string
 		secretID      *int64
+		existing      bool = false
 		paramLocation ParamLocation
 	)
 	if param.Body.AuthInfo != nil {
@@ -67,6 +68,10 @@ func (h *postClusterHandler) Handle(param cluster.PostClustersParams) middleware
 		localLog.Trace().Strs("secretEnvs", secretEnvs).Msg("got secret")
 	} else {
 		localLog.Debug().Msg("AuthInfo is nil, secret is expected in envs from web")
+	}
+
+	if param.Body.ExistingCluster != nil && *param.Body.ExistingCluster {
+		existing = true
 	}
 
 	ansibleLogEnv := h.getAnsibleLogEnv(param.Body.Name)
@@ -93,34 +98,45 @@ func (h *postClusterHandler) Handle(param cluster.PostClustersParams) middleware
 	var (
 		serverCount      int
 		inventoryJsonVal []byte
+		inventoryJson    InventoryJson
 	)
 
+	// If no cloud_provider is specified, we expect inventory to be passed
 	if getValFromVars(param.Body.ExtraVars, CloudProviderExtraVar) == "" {
-		inventoryJsonVal = []byte(getValFromVars(param.Body.Envs, InventoryJsonEnv))
-		var inventoryJson InventoryJson
-		err = json.Unmarshal(inventoryJsonVal, &inventoryJson)
-		if err != nil {
-			localLog.Debug().Err(err).Str("inventory_json_val", string(inventoryJsonVal)).Msg("failed to parse inventory json, try to base64 decode")
-			inventoryJsonVal, err = base64.StdEncoding.DecodeString(string(inventoryJsonVal))
-			if err != nil {
-				localLog.Debug().Err(err).Msg("failed to base64 decode inventory json")
+		rawInventory := getValFromVars(param.Body.Envs, InventoryJsonEnv)
+
+		if rawInventory != "" {
+			// Try to decode the inventory as base64
+			decodedInventory, decodeErr := base64.StdEncoding.DecodeString(rawInventory)
+			if decodeErr != nil {
+				// If base64 decoding fails, treat it as plain JSON
+				localLog.Warn().Str("inventory_json", rawInventory).Err(decodeErr).Msg("base64 decode failed, trying as plain JSON")
+				decodedInventory = []byte(rawInventory)
+			}
+
+			// Try to parse the decoded inventory as JSON
+			if err := json.Unmarshal(decodedInventory, &inventoryJson); err != nil {
+				localLog.Error().Str("inventory_json", string(decodedInventory)).Err(err).Msg("failed to parse inventory json")
 				inventoryJsonVal = nil // to correct insert in db
 			} else {
-				err = json.Unmarshal(inventoryJsonVal, &inventoryJson)
-				if err != nil {
-					localLog.Debug().Err(err).Str("inventory_json_val", string(inventoryJsonVal)).Msg("failed to parse inventory json")
-					inventoryJsonVal = nil // to correct insert to db
-				} else {
-					serverCount = len(inventoryJson.All.Children.Master.Hosts) + len(inventoryJson.All.Children.Replica.Hosts)
-				}
+				// If successfully parsed, save it and calculate server count
+				inventoryJsonVal = decodedInventory
+				serverCount = len(inventoryJson.All.Children.Master.Hosts) + len(inventoryJson.All.Children.Replica.Hosts)
 			}
 		} else {
-			serverCount = len(inventoryJson.All.Children.Master.Hosts) + len(inventoryJson.All.Children.Replica.Hosts)
+			// No inventory found in envs; fallback to 0
+			localLog.Warn().Str("inventory_json", "").Msg("ANSIBLE_INVENTORY_JSON not found in Envs")
+			serverCount = 0
 		}
 	} else {
+		// For cloud providers, expect server count to be explicitly passed in extra vars
 		serverCount = getIntValFromVars(param.Body.ExtraVars, ServersExtraVar)
 	}
 
+	status := "deploying"
+	if existing {
+		status = "ready"
+	}
 	createdCluster, err := h.db.CreateCluster(param.HTTPRequest.Context(), &storage.CreateClusterReq{
 		ProjectID:         param.Body.ProjectID,
 		EnvironmentID:     param.Body.EnvironmentID,
@@ -131,13 +147,81 @@ func (h *postClusterHandler) Handle(param cluster.PostClustersParams) middleware
 		Location:          getValFromVars(param.Body.ExtraVars, LocationExtraVar),
 		ServerCount:       serverCount,
 		PostgreSqlVersion: getIntValFromVars(param.Body.ExtraVars, PostgreSqlVersionExtraVar),
-		Status:            "deploying",
+		Status:            status,
 		Inventory:         inventoryJsonVal,
 	})
 	if err != nil {
 		return cluster.NewPostClustersBadRequest().WithPayload(controllers.MakeErrorPayload(err, controllers.BaseError))
 	}
 	localLog.Info().Any("cluster", createdCluster).Msg("cluster was created")
+
+	// Handle imported cluster: skip deployment and insert servers from inventory
+	if existing {
+		localLog.Info().Msg("existing_cluster=true; skipping the deployment process")
+
+		// Insert servers if inventory is present
+		if len(inventoryJsonVal) > 0 {
+			if inventoryJson.All.Children.Master.Hosts == nil {
+				inventoryJson.All.Children.Master.Hosts = make(map[string]interface{})
+				localLog.Debug().Msg("Master hosts map was nil")
+			}
+			if inventoryJson.All.Children.Replica.Hosts == nil {
+				inventoryJson.All.Children.Replica.Hosts = make(map[string]interface{})
+				localLog.Debug().Msg("Replica hosts map was nil")
+			}
+
+			// Insert master
+			for ip, hostData := range inventoryJson.All.Children.Master.Hosts {
+				hostMap, ok := hostData.(map[string]interface{})
+				if !ok {
+					localLog.Warn().Str("ip", ip).Msg("invalid master host format")
+					continue
+				}
+
+				hostname, _ := hostMap["hostname"].(string)
+				location, _ := hostMap["server_location"].(string)
+
+				_, err = h.db.CreateServer(param.HTTPRequest.Context(), &storage.CreateServerReq{
+					ClusterID:      createdCluster.ID,
+					ServerName:     hostname,
+					ServerLocation: &location,
+					IpAddress:      ip,
+				})
+				if err != nil {
+					localLog.Error().Err(err).Str("ip", ip).Msg("failed to insert master server")
+					return cluster.NewPostClustersBadRequest().WithPayload(controllers.MakeErrorPayload(err, controllers.BaseError))
+				}
+			}
+
+			// Insert replicas
+			for ip, hostData := range inventoryJson.All.Children.Replica.Hosts {
+				hostMap, ok := hostData.(map[string]interface{})
+				if !ok {
+					localLog.Warn().Str("ip", ip).Msg("invalid replica host format")
+					continue
+				}
+
+				hostname, _ := hostMap["hostname"].(string)
+				location, _ := hostMap["server_location"].(string)
+
+				_, err = h.db.CreateServer(param.HTTPRequest.Context(), &storage.CreateServerReq{
+					ClusterID:      createdCluster.ID,
+					ServerName:     hostname,
+					ServerLocation: &location,
+					IpAddress:      ip,
+				})
+				if err != nil {
+					localLog.Error().Err(err).Str("ip", ip).Msg("failed to insert replica server")
+					return cluster.NewPostClustersBadRequest().WithPayload(controllers.MakeErrorPayload(err, controllers.BaseError))
+				}
+			}
+		}
+
+		// Skip deployment
+		return cluster.NewPostClustersOK().WithPayload(&models.ResponseClusterCreate{
+			ClusterID: createdCluster.ID,
+		})
+	}
 
 	defer func() {
 		if err != nil {
@@ -211,17 +295,18 @@ func (h *postClusterHandler) getAnsibleLogEnv(clusterName string) []string {
 }
 
 func getValFromVars(vars []string, key string) string {
-	for _, extraVar := range vars {
-		if strings.HasPrefix(strings.ToLower(extraVar), strings.ToLower(key)) {
-			keyVal := strings.Split(extraVar, "=")
-			if len(keyVal) != 2 {
-				return ""
-			}
+	normalizedKey := strings.ToLower(key) + "="
 
-			return keyVal[1]
+	for _, kv := range vars {
+		if strings.HasPrefix(strings.ToLower(kv), normalizedKey) {
+			// Split once on '=' and return the value
+			parts := strings.SplitN(kv, "=", 2)
+			if len(parts) == 2 {
+				return parts[1]
+			}
 		}
 	}
-
+	// Return empty string if not found
 	return ""
 }
 
