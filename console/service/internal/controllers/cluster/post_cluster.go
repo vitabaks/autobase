@@ -98,31 +98,38 @@ func (h *postClusterHandler) Handle(param cluster.PostClustersParams) middleware
 	var (
 		serverCount      int
 		inventoryJsonVal []byte
+		inventoryJson    InventoryJson
 	)
 
+	// If no cloud_provider is specified, we expect inventory to be passed
 	if getValFromVars(param.Body.ExtraVars, CloudProviderExtraVar) == "" {
-		inventoryJsonVal = []byte(getValFromVars(param.Body.Envs, InventoryJsonEnv))
-		var inventoryJson InventoryJson
-		err = json.Unmarshal(inventoryJsonVal, &inventoryJson)
-		if err != nil {
-			localLog.Debug().Err(err).Str("inventory_json_val", string(inventoryJsonVal)).Msg("failed to parse inventory json, try to base64 decode")
-			inventoryJsonVal, err = base64.StdEncoding.DecodeString(string(inventoryJsonVal))
-			if err != nil {
-				localLog.Debug().Err(err).Msg("failed to base64 decode inventory json")
+		rawInventory := getValFromVars(param.Body.Envs, InventoryJsonEnv)
+
+		if rawInventory != "" {
+			// Try to decode the inventory as base64
+			decodedInventory, decodeErr := base64.StdEncoding.DecodeString(rawInventory)
+			if decodeErr != nil {
+				// If base64 decoding fails, treat it as plain JSON
+				localLog.Warn().Str("inventory_json", rawInventory).Err(decodeErr).Msg("base64 decode failed, trying as plain JSON")
+				decodedInventory = []byte(rawInventory)
+			}
+
+			// Try to parse the decoded inventory as JSON
+			if err := json.Unmarshal(decodedInventory, &inventoryJson); err != nil {
+				localLog.Error().Str("inventory_json", string(decodedInventory)).Err(err).Msg("failed to parse inventory json")
 				inventoryJsonVal = nil // to correct insert in db
 			} else {
-				err = json.Unmarshal(inventoryJsonVal, &inventoryJson)
-				if err != nil {
-					localLog.Debug().Err(err).Str("inventory_json_val", string(inventoryJsonVal)).Msg("failed to parse inventory json")
-					inventoryJsonVal = nil // to correct insert to db
-				} else {
-					serverCount = len(inventoryJson.All.Children.Master.Hosts) + len(inventoryJson.All.Children.Replica.Hosts)
-				}
+				// If successfully parsed, save it and calculate server count
+				inventoryJsonVal = decodedInventory
+				serverCount = len(inventoryJson.All.Children.Master.Hosts) + len(inventoryJson.All.Children.Replica.Hosts)
 			}
 		} else {
-			serverCount = len(inventoryJson.All.Children.Master.Hosts) + len(inventoryJson.All.Children.Replica.Hosts)
+			// No inventory found in envs; fallback to 0
+			localLog.Warn().Str("inventory_json", "").Msg("ANSIBLE_INVENTORY_JSON not found in Envs")
+			serverCount = 0
 		}
 	} else {
+		// For cloud providers, expect server count to be explicitly passed in extra vars
 		serverCount = getIntValFromVars(param.Body.ExtraVars, ServersExtraVar)
 	}
 
