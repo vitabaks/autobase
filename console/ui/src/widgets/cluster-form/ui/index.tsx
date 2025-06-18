@@ -126,10 +126,15 @@ const ClusterForm: React.FC = () => {
       }),
     }).unwrap();
     toast.info(
-      t('clusterSuccessfullyCreated', {
-        ns: 'toasts',
-        clusterName: values[CLUSTER_FORM_FIELD_NAMES.CLUSTER_NAME],
-      }),
+      t(
+        values[CLUSTER_FORM_FIELD_NAMES.EXISTING_CLUSTER]
+          ? 'clusterSuccessfullyImported'
+          : 'clusterSuccessfullyCreated',
+        {
+          ns: 'toasts',
+          clusterName: values[CLUSTER_FORM_FIELD_NAMES.CLUSTER_NAME],
+        }
+      )
     );
   };
 
@@ -142,10 +147,15 @@ const ClusterForm: React.FC = () => {
       }),
     }).unwrap();
     toast.info(
-      t('clusterSuccessfullyCreated', {
-        ns: 'toasts',
-        clusterName: values[CLUSTER_FORM_FIELD_NAMES.CLUSTER_NAME],
-      }),
+      t(
+        values[CLUSTER_FORM_FIELD_NAMES.EXISTING_CLUSTER]
+          ? 'clusterSuccessfullyImported'
+          : 'clusterSuccessfullyCreated',
+        {
+          ns: 'toasts',
+          clusterName: values[CLUSTER_FORM_FIELD_NAMES.CLUSTER_NAME],
+        }
+      )
     );
   };
 

@@ -833,7 +833,7 @@ paths:
           required: false
           type: string
           description: "Sort by fields. Example: sort_by=cluster_name,-type,status,id,created_at,updated_at\n
-          Supported valuese:\n
+          Supported values:\n
            - id\n
            - cluster_name\n
            - type\n
@@ -1148,6 +1148,11 @@ definitions:
         type: array
         items:
           type: string
+      existing_cluster:
+        type: boolean
+        default: false
+        description: "Import an already-running cluster; skip Ansible-based deployment"
+
 
   Response.ClusterDefaultName:
     type: object

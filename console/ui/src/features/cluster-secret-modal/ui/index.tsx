@@ -97,10 +97,15 @@ const ClusterSecretModal: FC<ClusterSecretModalProps> = ({ isClusterFormDisabled
         }).unwrap();
       }
       toast.success(
-        t('clusterSuccessfullyCreated', {
-          ns: 'toasts',
-          clusterName: clusterFormValues[CLUSTER_FORM_FIELD_NAMES.CLUSTER_NAME],
-        }),
+        t(
+          clusterFormValues[CLUSTER_FORM_FIELD_NAMES.EXISTING_CLUSTER]
+            ? 'clusterSuccessfullyImported'
+            : 'clusterSuccessfullyCreated',
+          {
+            ns: 'toasts',
+            clusterName: clusterFormValues[CLUSTER_FORM_FIELD_NAMES.CLUSTER_NAME],
+          }
+        )
       );
       navigate(generateAbsoluteRouterPath(RouterPaths.clusters.absolutePath));
     } catch (e) {
