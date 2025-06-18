@@ -53,7 +53,7 @@ const ClustersTableExportButton: FC<ClustersTableRemoveButtonProps> = ({ cluster
         inventory.all.children.etcd_cluster.hosts[server.ip_address] = {};
 
         // Add to master or replica based on role
-        if (server.server_role === 'primary') {
+        if (server.server_role === 'leader') {
           inventory.all.children.master.hosts[server.ip_address] = serverConfig;
         } else {
           inventory.all.children.replica.hosts[server.ip_address] = serverConfig;
