@@ -1233,7 +1233,7 @@ definitions:
         type: array
         items:
           type: string
-        description: "Extra variables for Ansible inventory export"
+        description: "Ansible variables"
       inventory:
         type: string
         description: "Ansible inventory"
