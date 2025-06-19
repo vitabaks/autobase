@@ -115,7 +115,7 @@ func (lw *logWatcher) doWork() {
 }
 
 func (lw *logWatcher) collectContainerLog(ctx context.Context, op *storage.Operation, log zerolog.Logger) {
-	clusterInfo, err := lw.db.GetCluster(ctx, op.ID)
+	clusterInfo, err := lw.db.GetCluster(ctx, op.ClusterID)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to get cluster from db")
 
