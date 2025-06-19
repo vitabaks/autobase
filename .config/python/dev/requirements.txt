@@ -46,7 +46,7 @@ ruamel-yaml-clib==0.2.12
 subprocess-tee==0.4.2
 tomli==2.2.1
 typing-extensions==4.12.2
-urllib3==2.3.0
+urllib3==2.5.0
 wcmatch==10.0
 wheel==0.45.1
 yamllint==1.37.1
