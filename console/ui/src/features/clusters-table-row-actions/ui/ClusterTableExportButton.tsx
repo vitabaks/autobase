@@ -6,6 +6,7 @@ import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import { useLazyGetClustersByIdQuery } from '@shared/api/api/clusters.ts';
 import { toast } from 'react-toastify';
 import { handleRequestErrorCatch } from '@shared/lib/functions.ts';
+import yaml from 'js-yaml';
 
 const ClustersTableExportButton: FC<ClustersTableRemoveButtonProps> = ({ clusterId, clusterName, closeMenu }) => {
   const { t } = useTranslation(['clusters', 'shared']);
@@ -14,63 +15,71 @@ const ClustersTableExportButton: FC<ClustersTableRemoveButtonProps> = ({ cluster
   const handleButtonClick = async () => {
     try {
       const response = await getClusterTrigger({ id: clusterId }).unwrap();
-      
-      // Create inventory YAML content
+
+      // Convert extra_vars array of 'key=value' to object for vars
+      const vars: Record<string, any> = {};
+      (response.extra_vars || []).forEach(pair => {
+        const [key, ...rest] = pair.split('=');
+        let value: any = rest.join('=');
+        if (value === 'true') value = true;
+        else if (value === 'false') value = false;
+        else if (!isNaN(Number(value))) value = Number(value);
+        vars[key] = value;
+      });
+
+      // Only include valid servers (with ip and name)
+      const validServers = (response.servers || []).filter(
+        server => server.ip && server.name && server.ip !== 'undefined' && server.name !== 'undefined' && server.ip !== null && server.name !== null && server.ip !== '' && server.name !== ''
+      );
+
+      // Prepare host groups
+      const masterHosts: Record<string, any> = {};
+      const replicaHosts: Record<string, any> = {};
+      const etcdHosts: Record<string, any> = {};
+      const balancerHosts: Record<string, any> = {};
+
+      validServers.forEach(server => {
+        // Host details for master/replica
+        const hostData: Record<string, any> = {
+          hostname: server.name,
+          ansible_host: server.ip,
+          postgresql_exists: true,
+        };
+        if (server.location) hostData.server_location = server.location;
+        if (server.role === 'leader' || server.role === 'master') {
+          masterHosts[server.ip] = hostData;
+        } else if (server.role === 'replica' || server.role === 'follower') {
+          replicaHosts[server.ip] = hostData;
+        }
+        // etcd_cluster: only ansible_host
+        etcdHosts[server.ip] = { ansible_host: server.ip };
+        // balancers: only ansible_host, only if enabled
+        if (vars.with_haproxy_load_balancing) {
+          balancerHosts[server.ip] = { ansible_host: server.ip };
+        }
+      });
+
       const inventory = {
         all: {
-          vars: response.extra_vars,
+          vars,
           children: {
-            balancers: {
-              hosts: {}
-            },
-            etcd_cluster: {
-              hosts: {}
-            },
-            master: {
-              hosts: {}
-            },
-            replica: {
-              hosts: {}
-            },
+            master: { hosts: Object.keys(masterHosts).length ? masterHosts : {} },
+            replica: { hosts: Object.keys(replicaHosts).length ? replicaHosts : {} },
             postgres_cluster: {
               children: {
                 master: {},
-                replica: {}
+                replica: {},
               }
-            }
+            },
+            etcd_cluster: { hosts: Object.keys(etcdHosts).length ? etcdHosts : {} },
+            balancers: { hosts: (vars.with_haproxy_load_balancing && Object.keys(balancerHosts).length) ? balancerHosts : {} },
           }
         }
       };
 
-      // Add servers to appropriate groups
-      response.servers?.forEach(server => {
-        const serverConfig = {
-          hostname: server.server_name,
-          postgresql_exists: true
-        };
-
-        // Add to etcd_cluster
-        inventory.all.children.etcd_cluster.hosts[server.ip_address] = {};
-
-        // Add to master or replica based on role
-        if (server.server_role === 'leader') {
-          inventory.all.children.master.hosts[server.ip_address] = serverConfig;
-        } else {
-          inventory.all.children.replica.hosts[server.ip_address] = serverConfig;
-        }
-      });
-
-      // Add balancers if HAProxy is enabled
-      if (response.extra_vars?.with_haproxy_load_balancing) {
-        Object.assign(inventory.all.children.balancers.hosts, 
-          inventory.all.children.master.hosts,
-          inventory.all.children.replica.hosts
-        );
-      }
-
       // Convert to YAML and download
-      const yamlContent = JSON.stringify(inventory, null, 2);
-      const blob = new Blob([yamlContent], { type: 'text/yaml' });
+      const inventoryYAML = yaml.dump(inventory, { noRefs: true });
+      const blob = new Blob([inventoryYAML], { type: 'text/yaml' });
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
