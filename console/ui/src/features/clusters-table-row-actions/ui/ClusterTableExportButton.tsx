@@ -19,8 +19,8 @@ const ClustersTableExportButton: FC<ClustersTableRemoveButtonProps> = ({ cluster
       // Convert extra_vars array of 'key=value' to object for vars
       const vars: Record<string, any> = {};
       (response.extra_vars || []).forEach(pair => {
-        const [key, ...rest] = pair.split('=');
-        let value: any = rest.join('=');
+        const [key, valueRaw] = pair.split('=', 2);
+        let value: any = valueRaw;
         if (value === 'true') value = true;
         else if (value === 'false') value = false;
         else if (!isNaN(Number(value))) value = Number(value);
