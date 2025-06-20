@@ -125,8 +125,18 @@ func (lw *logWatcher) collectContainerLog(ctx context.Context, op *storage.Opera
 	fileLog := lw.cfg.Docker.LogDir + "/" + clusterInfo.Name + ".json"
 	fLog, err := os.Open(fileLog)
 	if err != nil {
-		log.Error().Err(err).Str("file_name", fileLog).Msg("can't open file with log")
-
+		log.Error().Err(err).Str("file_name", fileLog).Msg("can't open file with log. Check if the Ansible log directory and volume name are correct. If you changed the Postgres volume name, set PG_CONSOLE_POSTGRES_VOLUME accordingly.")
+		// Mark operation and cluster as failed due to missing log/volume
+		status := storage.OperationStatusFailed
+		_, _ = lw.db.UpdateOperation(ctx, &storage.UpdateOperationReq{
+			ID:     op.ID,
+			Status: &status,
+		})
+		status = storage.ClusterStatusFailed
+		_, _ = lw.db.UpdateCluster(ctx, &storage.UpdateClusterReq{
+			ID:     op.ClusterID,
+			Status: &status,
+		})
 		return
 	}
 
