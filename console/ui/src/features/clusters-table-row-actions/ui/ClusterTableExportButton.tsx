@@ -29,7 +29,10 @@ const ClustersTableExportButton: FC<ClustersTableRemoveButtonProps> = ({ cluster
 
       // Only include valid servers (with ip and name)
       const validServers = (response.servers || []).filter(
-        server => server.ip && server.name && server.ip !== 'undefined' && server.name !== 'undefined' && server.ip !== null && server.name !== null && server.ip !== '' && server.name !== ''
+        server => server.ip && server.name &&
+          server.ip !== 'undefined' && server.name !== 'undefined' &&
+          server.ip !== null && server.name !== null &&
+          server.ip !== '' && server.name !== ''
       );
 
       // Prepare host groups
