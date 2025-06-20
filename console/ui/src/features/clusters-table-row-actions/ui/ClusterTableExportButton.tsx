@@ -49,9 +49,9 @@ const ClustersTableExportButton: FC<ClustersTableRemoveButtonProps> = ({ cluster
           postgresql_exists: true,
         };
         if (server.location) hostData.server_location = server.location;
-        if (server.role === 'leader' || server.role === 'master') {
+        if (server.role === 'leader' || server.role === 'master' || server.role === 'primary') {
           masterHosts[server.ip] = hostData;
-        } else if (server.role === 'replica' || server.role === 'follower') {
+        } else {
           replicaHosts[server.ip] = hostData;
         }
         // etcd_cluster: only ansible_host
