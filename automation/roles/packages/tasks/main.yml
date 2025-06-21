@@ -95,18 +95,18 @@
 
 # RedHat
 - block:
-    - name: PostgreSQL | check if appstream module is enabled
+    - name: Check if postgresql appstream module is enabled
       ansible.builtin.command: "dnf -y -C module list postgresql"
       register: postgresql_module_result
       changed_when: false
 
-    - name: PostgreSQL | disable appstream module
+    - name: Disable postgresql appstream module
       ansible.builtin.command: "dnf -y -C module disable postgresql"
       when:
         - install_postgresql_repo | bool
         - "'[x] ' not in postgresql_module_result.stdout"
 
-    - name: PostgreSQL | enable appstream module
+    - name: Enable postgresql appstream module
       ansible.builtin.command: "dnf -y -C module enable postgresql"
       when:
         - not install_postgresql_repo | bool
@@ -130,7 +130,7 @@
 
 # Debian
 - block:
-    - name: PostgreSQL | ensure postgresql database-cluster manager package
+    - name: Ensure postgresql database-cluster manager package
       ansible.builtin.apt:
         name: postgresql-common
         state: present
@@ -139,13 +139,13 @@
       delay: 5
       retries: 3
 
-    - name: PostgreSQL | disable initializing of a default postgresql cluster
+    - name: Disable initializing of a default postgresql cluster
       ansible.builtin.replace:
         path: /etc/postgresql-common/createcluster.conf
         replace: create_main_cluster = false
         regexp: ^#?create_main_cluster.*$
 
-    - name: PostgreSQL | disable log rotation with logrotate for postgresql
+    - name: Disable log rotation with logrotate for postgresql
       ansible.builtin.file:
         dest: /etc/logrotate.d/postgresql-common
         state: absent
