@@ -116,7 +116,7 @@
       ansible.builtin.dnf:
         name: "{{ item }}"
         state: present
-      loop: "{{ postgresql_packages | flatten }}"
+      loop: "{{ postgresql_packages | default([]) | flatten }}"
       register: package_status
       until: package_status is success
       delay: 5
@@ -125,7 +125,7 @@
   when:
     - installation_method == "packages"
     - ansible_os_family == "RedHat"
-    - postgresql_packages | default('') | length > 0
+    - postgresql_packages | default([]) | length > 0
   tags: install_packages, install_postgres
 
 # Debian
@@ -154,7 +154,7 @@
       ansible.builtin.apt:
         name: "{{ item }}"
         state: present
-      loop: "{{ postgresql_packages | flatten }}"
+      loop: "{{ postgresql_packages | default([]) | flatten }}"
       register: apt_status
       until: apt_status is success
       delay: 5
@@ -163,7 +163,7 @@
   when:
     - installation_method == "packages"
     - ansible_os_family == "Debian"
-    - postgresql_packages | default('') | length > 0
+    - postgresql_packages | default([]) | length > 0
   tags: install_packages, install_postgres
 
 # Extensions
