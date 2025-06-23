@@ -93,8 +93,8 @@
         owner: postgres
         group: postgres
         mode: "0755"
-      loop: "{{ pgbackrest_conf.global }}"
-      when: item.option == 'log-path'
+      loop: "{{ pgbackrest_conf.global | default([], true) }}"
+      when: item.option | default('') == 'log-path'
       loop_control:
         label: "{{ item.value }}"
 
@@ -105,9 +105,9 @@
         owner: postgres
         group: postgres
         mode: "0750"
-      loop: "{{ pgbackrest_conf.global }}"
+      loop: "{{ pgbackrest_conf.global | default([], true) }}"
       when:
-        - item.option == 'repo1-path'
+        - item.option | default('') == 'repo1-path'
         - pgbackrest_repo_type | lower == 'posix'
         - pgbackrest_repo_host | length < 1
       loop_control:
@@ -120,8 +120,8 @@
         owner: postgres
         group: postgres
         mode: "0750"
-      loop: "{{ pgbackrest_conf.global }}"
-      when: item.option == 'spool-path'
+      loop: "{{ pgbackrest_conf.global | default([], true) }}"
+      when: item.option | default('') == 'spool-path'
       loop_control:
         label: "{{ item.value }}"
 
@@ -140,7 +140,9 @@
         owner: postgres
         group: postgres
         mode: "0644"
-  when: "'postgres_cluster' in group_names"
+  when:
+    - "'postgres_cluster' in group_names"
+    - pgbackrest_conf is defined
   tags: pgbackrest, pgbackrest_conf
 
 # Dedicated pgbackrest server (if "repo_host" is set)
@@ -152,8 +154,8 @@
         owner: "{{ pgbackrest_repo_user }}"
         group: "{{ pgbackrest_repo_user }}"
         mode: "0755"
-      loop: "{{ pgbackrest_server_conf.global }}"
-      when: item.option == 'log-path'
+      loop: "{{ pgbackrest_server_conf.global | default([]) }}"
+      when: item.option | default('') == 'log-path'
       loop_control:
         label: "{{ item.value }}"
 
@@ -164,8 +166,8 @@
         owner: "{{ pgbackrest_repo_user }}"
         group: "{{ pgbackrest_repo_user }}"
         mode: "0750"
-      loop: "{{ pgbackrest_server_conf.global }}"
-      when: item.option == 'repo1-path'
+      loop: "{{ pgbackrest_server_conf.global | default([]) }}"
+      when: item.option | default('') == 'repo1-path'
       loop_control:
         label: "{{ item.value }}"
 
@@ -202,6 +204,7 @@
         mode: "0644"
   when:
     - "'pgbackrest' in group_names"
+    - pgbackrest_server_conf is defined
     - pgbackrest_repo_host is defined
     - pgbackrest_repo_host | length > 0
   tags: pgbackrest, pgbackrest_conf
@@ -219,6 +222,7 @@
     - pgbackrest_cron_jobs is defined
     - pgbackrest_cron_jobs | length > 0
   tags: pgbackrest, pgbackrest_cron
+
 # - import_tasks: bootstrap_script.yml
 #  when:
 #    - patroni_cluster_bootstrap_method is defined
