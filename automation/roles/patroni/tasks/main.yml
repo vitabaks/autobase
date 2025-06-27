@@ -290,13 +290,13 @@
         - regexp: "^name:"
           line: "name: {{ ansible_hostname }}"
         - regexp: "^  listen: .*:{{ patroni_restapi_port }}$"
-          line: "  listen: {{ patroni_bind_address | default(bind_address) }}:{{ patroni_restapi_port }}"
+          line: "  listen: {{ patroni_bind_address | default(bind_address, true) }}:{{ patroni_restapi_port }}"
         - regexp: "^  connect_address: .*:{{ patroni_restapi_port }}$"
-          line: "  connect_address: {{ patroni_bind_address | default(bind_address) }}:{{ patroni_restapi_port }}"
+          line: "  connect_address: {{ patroni_bind_address | default(bind_address, true) }}:{{ patroni_restapi_port }}"
         - regexp: "^  listen: ((?!{{ patroni_restapi_port }}).)*$"
-          line: "  listen: {{ patroni_bind_address | default(bind_address) }},127.0.0.1:{{ postgresql_port }}"
+          line: "  listen: {{ patroni_bind_address | default(bind_address, true) }},127.0.0.1:{{ postgresql_port }}"
         - regexp: "^  connect_address: ((?!{{ patroni_restapi_port }}).)*$"
-          line: "  connect_address: {{ patroni_bind_address | default(bind_address) }}:{{ postgresql_port }}"
+          line: "  connect_address: {{ patroni_bind_address | default(bind_address, true) }}:{{ postgresql_port }}"
       loop_control:
         loop_var: patroni_config_without_cluster_vip_item
         label: "{{ patroni_config_without_cluster_vip_item.line }}"
@@ -312,13 +312,13 @@
         - regexp: "^name:"
           line: "name: {{ ansible_hostname }}"
         - regexp: "^  listen: .*:{{ patroni_restapi_port }}$"
-          line: "  listen: {{ patroni_bind_address | default(bind_address) }}:{{ patroni_restapi_port }}"
+          line: "  listen: {{ patroni_bind_address | default(bind_address, true) }}:{{ patroni_restapi_port }}"
         - regexp: "^  connect_address: .*:{{ patroni_restapi_port }}$"
-          line: "  connect_address: {{ patroni_bind_address | default(bind_address) }}:{{ patroni_restapi_port }}"
+          line: "  connect_address: {{ patroni_bind_address | default(bind_address, true) }}:{{ patroni_restapi_port }}"
         - regexp: "^  listen: ((?!{{ patroni_restapi_port }}).)*$"
-          line: "  listen: {{ patroni_bind_address | default(bind_address) }},{{ cluster_vip }},127.0.0.1:{{ postgresql_port }}"
+          line: "  listen: {{ patroni_bind_address | default(bind_address, true) }},{{ cluster_vip }},127.0.0.1:{{ postgresql_port }}"
         - regexp: "^  connect_address: ((?!{{ patroni_restapi_port }}).)*$"
-          line: "  connect_address: {{ patroni_bind_address | default(bind_address) }}:{{ postgresql_port }}"
+          line: "  connect_address: {{ patroni_bind_address | default(bind_address, true) }}:{{ postgresql_port }}"
       loop_control:
         loop_var: patroni_config_with_cluster_vip_item
         label: "{{ patroni_config_with_cluster_vip_item.line }}"
@@ -800,7 +800,7 @@
     - name: "Wait for port {{ patroni_restapi_port }} to become open on the host"
       ansible.builtin.wait_for:
         port: "{{ patroni_restapi_port }}"
-        host: "{{ patroni_bind_address | default(bind_address) }}"
+        host: "{{ patroni_bind_address | default(bind_address, true) }}"
         state: started
         timeout: 120
         delay: 10
@@ -823,14 +823,14 @@
 
     - name: Wait for the Standby cluster initialization to complete
       ansible.builtin.uri:
-        url: "http://{{ patroni_bind_address | default(bind_address) }}:{{ patroni_restapi_port }}/standby-leader"
+        url: "http://{{ patroni_bind_address | default(bind_address, true) }}:{{ patroni_restapi_port }}/standby-leader"
         status_code: 200
       register: standby_leader_result
       until: standby_leader_result.status == 200
       retries: "{{ (cluster_restore_timeout | default(86400)) | int // 30 }}" # timeout 24 hours
       delay: 30
       environment:
-        no_proxy: "{{ patroni_bind_address | default(bind_address) }}"
+        no_proxy: "{{ patroni_bind_address | default(bind_address, true) }}"
       when:
         - (patroni_standby_cluster.host is defined and patroni_standby_cluster.host | length > 0)
         - not ansible_check_mode
@@ -847,14 +847,14 @@
 
     - name: Wait for the cluster to initialize (master is the leader with the lock)
       ansible.builtin.uri:
-        url: "http://{{ patroni_bind_address | default(bind_address) }}:{{ patroni_restapi_port }}/leader"
+        url: "http://{{ patroni_bind_address | default(bind_address, true) }}:{{ patroni_restapi_port }}/leader"
         status_code: 200
       register: result
       until: result.status == 200
       retries: 10
       delay: 2
       environment:
-        no_proxy: "{{ patroni_bind_address | default(bind_address) }}"
+        no_proxy: "{{ patroni_bind_address | default(bind_address, true) }}"
       when:
         - (patroni_standby_cluster.host is not defined or patroni_standby_cluster.host | length < 1)
         - not ansible_check_mode
@@ -989,7 +989,7 @@
     - name: "Wait for port {{ patroni_restapi_port }} to become open on the host"
       ansible.builtin.wait_for:
         port: "{{ patroni_restapi_port }}"
-        host: "{{ patroni_bind_address | default(bind_address) }}"
+        host: "{{ patroni_bind_address | default(bind_address, true) }}"
         state: started
         timeout: 120
         delay: 10
@@ -997,14 +997,14 @@
 
     - name: Check that the patroni is healthy on the replica server
       ansible.builtin.uri:
-        url: "http://{{ patroni_bind_address | default(bind_address) }}:{{ patroni_restapi_port }}/health"
+        url: "http://{{ patroni_bind_address | default(bind_address, true) }}:{{ patroni_restapi_port }}/health"
         status_code: 200
       register: replica_result
       until: replica_result.status == 200
       retries: "{{ (cluster_restore_timeout | default(86400)) | int // 30 }}" # timeout 24 hours
       delay: 30
       environment:
-        no_proxy: "{{ patroni_bind_address | default(bind_address) }}"
+        no_proxy: "{{ patroni_bind_address | default(bind_address, true) }}"
       when: not ansible_check_mode
   when: "'replica' in groups and groups['replica'] | length > 0 and inventory_hostname in groups['replica']"
   tags: patroni, patroni_start_replica, point_in_time_recovery
