@@ -34,7 +34,7 @@ pluggy==1.5.0
 pycodestyle==2.12.1
 pycparser==2.22
 pyflakes==3.2.0
-pygments==2.19.1
+pygments==2.19.2
 pyyaml==6.0.2
 referencing==0.36.2
 requests==2.32.4
