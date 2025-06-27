@@ -8,6 +8,12 @@
   environment: "{{ proxy_env | default({}) }}"
 
   pre_tasks:
+    - name: Gather network facts
+      ansible.builtin.setup:
+        gather_subset:
+          - network
+      when: ansible_all_ipv4_addresses is not defined
+
     - name: Check if the consul role requirements (ansible.utils) are installed
       ansible.builtin.command: ansible-galaxy collection list ansible.utils
       changed_when: false

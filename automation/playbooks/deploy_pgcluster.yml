@@ -57,6 +57,10 @@
           - network
       when: ansible_all_ipv4_addresses is not defined
 
+    - name: Expose bind_address as facts
+      ansible.builtin.set_fact:
+        bind_address: "{{ bind_address }}"
+
     # Print system information
     - name: System info
       ansible.builtin.debug:

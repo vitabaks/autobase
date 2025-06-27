@@ -7,6 +7,16 @@
   gather_facts: true
 
   pre_tasks:
+    - name: Gather network facts
+      ansible.builtin.setup:
+        gather_subset:
+          - network
+      when: ansible_all_ipv4_addresses is not defined
+
+    - name: Expose bind_address as facts
+      ansible.builtin.set_fact:
+        bind_address: "{{ bind_address }}"
+
     - name: Set maintenance variable
       ansible.builtin.set_fact:
         postgresql_cluster_maintenance: true
