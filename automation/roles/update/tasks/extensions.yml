@@ -1,13 +1,13 @@
 ---
 - name: "Get the current Patroni Cluster Leader Node"
   ansible.builtin.uri:
-    url: http://{{ inventory_hostname }}:{{ patroni_restapi_port }}/leader
+    url: http://{{ patroni_bind_address | default(bind_address) }}:{{ patroni_restapi_port }}/leader
     status_code: 200
   register: patroni_leader_result
   changed_when: false
   failed_when: false
   environment:
-    no_proxy: "{{ inventory_hostname }}"
+    no_proxy: "{{ patroni_bind_address | default(bind_address) }}"
 
 - name: Get a list of databases
   ansible.builtin.command: >-
