@@ -41,7 +41,7 @@
 - block:
     - name: Update postgresql parameters in DCS
       ansible.builtin.uri:
-        url: http://{{ inventory_hostname }}:{{ patroni_restapi_port }}/config
+        url: http://{{ patroni_bind_address | default(bind_address) }}:{{ patroni_restapi_port }}/config
         method: PATCH
         user: "{{ patroni_restapi_username | default(omit) }}"
         password: "{{ patroni_restapi_password | default(omit) }}"
@@ -52,7 +52,7 @@
 
     - name: Delete postgresql parameters from DCS
       ansible.builtin.uri:
-        url: http://{{ inventory_hostname }}:{{ patroni_restapi_port }}/config
+        url: http://{{ patroni_bind_address | default(bind_address) }}:{{ patroni_restapi_port }}/config
         method: PATCH
         user: "{{ patroni_restapi_username | default(omit) }}"
         password: "{{ patroni_restapi_password | default(omit) }}"
@@ -63,7 +63,7 @@
 
     - name: Update postgresql slots in DCS
       ansible.builtin.uri:
-        url: http://{{ inventory_hostname }}:{{ patroni_restapi_port }}/config
+        url: http://{{ patroni_bind_address | default(bind_address) }}:{{ patroni_restapi_port }}/config
         method: PATCH
         user: "{{ patroni_restapi_username | default(omit) }}"
         password: "{{ patroni_restapi_password | default(omit) }}"
@@ -86,7 +86,7 @@
 
     - name: Delete postgresql slots from DCS
       ansible.builtin.uri:
-        url: http://{{ inventory_hostname }}:{{ patroni_restapi_port }}/config
+        url: http://{{ patroni_bind_address | default(bind_address) }}:{{ patroni_restapi_port }}/config
         method: PATCH
         user: "{{ patroni_restapi_username | default(omit) }}"
         password: "{{ patroni_restapi_password | default(omit) }}"
@@ -94,7 +94,7 @@
         body_format: json
       when: patroni_slots is not defined or patroni_slots | length < 1
   environment:
-    no_proxy: "{{ inventory_hostname }}"
+    no_proxy: "{{ patroni_bind_address | default(bind_address) }}"
   when: inventory_hostname in groups['primary']
   tags: patroni, patroni_conf
 
