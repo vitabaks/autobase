@@ -157,7 +157,6 @@ consul_enable_script_checks: true # This controls whether health checks that exe
 consul_enable_local_script_checks: true # Enable them when they are defined in the local configuration files
 consul_ui: false # Enable the consul UI?
 consul_syslog_enable: true # Enable logging to syslog
-consul_iface: "{{ ansible_default_ipv4.interface }}" # specify the interface name with a Private IP (ex. "enp7s0")
 consul_client_address: "127.0.0.1" # Client address. Affects DNS, HTTP, HTTPS, and gRPC client interfaces.
 consul_on_dedicated_nodes: "{{ groups['consul_instances'] | difference(groups['postgres_cluster']) | length > 0 }}" # 'true' or 'false'
 # TLS

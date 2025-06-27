@@ -80,12 +80,12 @@ consul_configure_syslogd: "{{ lookup('env', 'CONSUL_CONFIGURE_SYSLOGD') | defaul
 # consul_domain: "{{ lookup('env', 'CONSUL_DOMAIN') | default('consul', true) }}"
 consul_alt_domain: "{{ lookup('env', 'CONSUL_ALT_DOMAIN') | default('', true) }}"
 consul_node_meta: {}
-# consul_iface: "\
-#  {% if ansible_os_family == 'Windows' %}\
-#  {{ lookup('env', 'CONSUL_IFACE') | default(ansible_interfaces[0].interface_name, true) }}\
-#  {% else %}\
-#  {{ lookup('env', 'CONSUL_IFACE') | default(ansible_default_ipv4.interface, true) }}\
-#  {% endif %}"
+consul_iface: "\
+  {% if ansible_os_family == 'Windows' %}\
+  {{ lookup('env', 'CONSUL_IFACE') | default(ansible_interfaces[0].interface_name, true) }}\
+  {% else %}\
+  {{ lookup('env', 'CONSUL_IFACE') | default(ansible_default_ipv4.interface, true) }}\
+  {% endif %}"
 consul_node_role: "{{ lookup('env', 'CONSUL_NODE_ROLE') | default('client', true) }}"
 # consul_recursors: "{{ lookup('env', 'CONSUL_RECURSORS') | default('[]', true) }}"
 consul_bootstrap_expect: "{{ lookup('env', 'CONSUL_BOOTSTRAP_EXPECT') | default(false, true) }}"
