@@ -41,7 +41,7 @@ restapi:
 {% if dcs_type == 'etcd' %}
 etcd3:
   {% if not dcs_exists|bool %}
-  hosts: {% for host in groups['etcd_cluster'] %}{{ hostvars[host]['inventory_hostname'] }}:2379{% if not loop.last %},{% endif %}{% endfor %}
+  hosts: {% for host in groups['etcd_cluster'] %}{{ hostvars[host]['etcd_bind_address'] | default(hostvars[host]['bind_address'], true) }}:2379{% if not loop.last %},{% endif %}{% endfor %}
   {% endif %}
   {% if dcs_exists|bool %}
   hosts: {% for etcd_hosts in patroni_etcd_hosts %}{{etcd_hosts.host}}:{{etcd_hosts.port}}{% if not loop.last %},{% endif %}{% endfor %}
