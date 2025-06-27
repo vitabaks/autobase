@@ -41,12 +41,12 @@ listen master
     default-server inter 3s fastinter 1s fall 3 rise 4 on-marked-down shutdown-sessions
 {% if pgbouncer_install|bool %}
   {% for host in groups['postgres_cluster'] %}
-server {{ hostvars[host]['ansible_hostname'] }} {{ hostvars[host]['bind_address'] }}:{{ pgbouncer_listen_port }} check port {{ patroni_restapi_port }}
+server {{ hostvars[host]['ansible_hostname'] }} {{ hostvars[host]['patroni_bind_address'] | default(hostvars[host]['bind_address'], true) }}:{{ pgbouncer_listen_port }} check port {{ patroni_restapi_port }}
   {% endfor %}
 {% endif %}
 {% if ( pgbouncer_install is not defined ) or ( not pgbouncer_install|bool ) %}
   {% for host in groups['postgres_cluster'] %}
-server {{ hostvars[host]['ansible_hostname'] }} {{ hostvars[host]['bind_address'] }}:{{ postgresql_port }} check port {{ patroni_restapi_port }}
+server {{ hostvars[host]['ansible_hostname'] }} {{ hostvars[host]['patroni_bind_address'] | default(hostvars[host]['bind_address'], true) }}:{{ postgresql_port }} check port {{ patroni_restapi_port }}
   {% endfor %}
 {% endif %}
 
@@ -62,7 +62,7 @@ listen master_direct
     http-check expect status 200
     default-server inter 3s fastinter 1s fall 3 rise 4 on-marked-down shutdown-sessions
   {% for host in groups['postgres_cluster'] %}
-server {{ hostvars[host]['ansible_hostname'] }} {{ hostvars[host]['bind_address'] }}:{{ postgresql_port }} check port {{ patroni_restapi_port }}
+server {{ hostvars[host]['ansible_hostname'] }} {{ hostvars[host]['patroni_bind_address'] | default(hostvars[host]['bind_address'], true) }}:{{ postgresql_port }} check port {{ patroni_restapi_port }}
   {% endfor %}
 {% endif %}
 
@@ -83,12 +83,12 @@ listen replicas
     default-server inter 3s fastinter 1s fall 3 rise 2 on-marked-down shutdown-sessions
 {% if pgbouncer_install|bool %}
   {% for host in groups['postgres_cluster'] %}
-server {{ hostvars[host]['ansible_hostname'] }} {{ hostvars[host]['bind_address'] }}:{{ pgbouncer_listen_port }} check port {{ patroni_restapi_port }}
+server {{ hostvars[host]['ansible_hostname'] }} {{ hostvars[host]['patroni_bind_address'] | default(hostvars[host]['bind_address'], true) }}:{{ pgbouncer_listen_port }} check port {{ patroni_restapi_port }}
   {% endfor %}
 {% endif %}
 {% if ( pgbouncer_install is not defined ) or ( not pgbouncer_install|bool ) %}
   {% for host in groups['postgres_cluster'] %}
-server {{ hostvars[host]['ansible_hostname'] }} {{ hostvars[host]['bind_address'] }}:{{ postgresql_port }} check port {{ patroni_restapi_port }}
+server {{ hostvars[host]['ansible_hostname'] }} {{ hostvars[host]['patroni_bind_address'] | default(hostvars[host]['bind_address'], true) }}:{{ postgresql_port }} check port {{ patroni_restapi_port }}
   {% endfor %}
 {% endif %}
 
@@ -109,7 +109,7 @@ listen replicas_direct
     http-check expect status 200
     default-server inter 3s fastinter 1s fall 3 rise 2 on-marked-down shutdown-sessions
   {% for host in groups['postgres_cluster'] %}
-server {{ hostvars[host]['ansible_hostname'] }} {{ hostvars[host]['bind_address'] }}:{{ postgresql_port }} check port {{ patroni_restapi_port }}
+server {{ hostvars[host]['ansible_hostname'] }} {{ hostvars[host]['patroni_bind_address'] | default(hostvars[host]['bind_address'], true) }}:{{ postgresql_port }} check port {{ patroni_restapi_port }}
   {% endfor %}
 {% endif %}
 
@@ -130,12 +130,12 @@ listen replicas_sync
     default-server inter 3s fastinter 1s fall 3 rise 2 on-marked-down shutdown-sessions
 {% if pgbouncer_install|bool %}
   {% for host in groups['postgres_cluster'] %}
-server {{ hostvars[host]['ansible_hostname'] }} {{ hostvars[host]['bind_address'] }}:{{ pgbouncer_listen_port }} check port {{ patroni_restapi_port }}
+server {{ hostvars[host]['ansible_hostname'] }} {{ hostvars[host]['patroni_bind_address'] | default(hostvars[host]['bind_address'], true) }}:{{ pgbouncer_listen_port }} check port {{ patroni_restapi_port }}
   {% endfor %}
 {% endif %}
 {% if ( pgbouncer_install is not defined ) or ( not pgbouncer_install|bool ) %}
   {% for host in groups['postgres_cluster'] %}
-server {{ hostvars[host]['ansible_hostname'] }} {{ hostvars[host]['bind_address'] }}:{{ postgresql_port }} check port {{ patroni_restapi_port }}
+server {{ hostvars[host]['ansible_hostname'] }} {{ hostvars[host]['patroni_bind_address'] | default(hostvars[host]['bind_address'], true) }}:{{ postgresql_port }} check port {{ patroni_restapi_port }}
   {% endfor %}
 {% endif %}
 
@@ -156,7 +156,7 @@ listen replicas_sync_direct
     http-check expect status 200
     default-server inter 3s fastinter 1s fall 3 rise 2 on-marked-down shutdown-sessions
   {% for host in groups['postgres_cluster'] %}
-server {{ hostvars[host]['ansible_hostname'] }} {{ hostvars[host]['bind_address'] }}:{{ postgresql_port }} check port {{ patroni_restapi_port }}
+server {{ hostvars[host]['ansible_hostname'] }} {{ hostvars[host]['patroni_bind_address'] | default(hostvars[host]['bind_address'], true) }}:{{ postgresql_port }} check port {{ patroni_restapi_port }}
   {% endfor %}
 {% endif %}
 
@@ -177,12 +177,12 @@ listen replicas_async
     default-server inter 3s fastinter 1s fall 3 rise 2 on-marked-down shutdown-sessions
 {% if pgbouncer_install|bool %}
   {% for host in groups['postgres_cluster'] %}
-server {{ hostvars[host]['ansible_hostname'] }} {{ hostvars[host]['bind_address'] }}:{{ pgbouncer_listen_port }} check port {{ patroni_restapi_port }}
+server {{ hostvars[host]['ansible_hostname'] }} {{ hostvars[host]['patroni_bind_address'] | default(hostvars[host]['bind_address'], true) }}:{{ pgbouncer_listen_port }} check port {{ patroni_restapi_port }}
   {% endfor %}
 {% endif %}
 {% if ( pgbouncer_install is not defined ) or ( not pgbouncer_install|bool ) %}
   {% for host in groups['postgres_cluster'] %}
-server {{ hostvars[host]['ansible_hostname'] }} {{ hostvars[host]['bind_address'] }}:{{ postgresql_port }} check port {{ patroni_restapi_port }}
+server {{ hostvars[host]['ansible_hostname'] }} {{ hostvars[host]['patroni_bind_address'] | default(hostvars[host]['bind_address'], true) }}:{{ postgresql_port }} check port {{ patroni_restapi_port }}
   {% endfor %}
 {% endif %}
 
@@ -203,7 +203,7 @@ listen replicas_async_direct
     http-check expect status 200
     default-server inter 3s fastinter 1s fall 3 rise 2 on-marked-down shutdown-sessions
   {% for host in groups['postgres_cluster'] %}
-server {{ hostvars[host]['ansible_hostname'] }} {{ hostvars[host]['bind_address'] }}:{{ postgresql_port }} check port {{ patroni_restapi_port }}
+server {{ hostvars[host]['ansible_hostname'] }} {{ hostvars[host]['patroni_bind_address'] | default(hostvars[host]['bind_address'], true) }}:{{ postgresql_port }} check port {{ patroni_restapi_port }}
   {% endfor %}
 {% endif %}
 
