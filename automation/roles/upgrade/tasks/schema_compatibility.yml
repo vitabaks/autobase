@@ -28,7 +28,7 @@
 
 - name: "Start new PostgreSQL on port {{ schema_compatibility_check_port }} to check the schema compatibility"
   ansible.builtin.command: >
-    {{ pg_new_bindir }}/pg_ctl -D {{ pg_new_datadir }}
+    {{ pg_new_bindir }}/pg_ctlcluster -D {{ pg_new_datadir }}
     -o "-p {{ schema_compatibility_check_port }}
     -c unix_socket_directories='/tmp'
     -c shared_preload_libraries='{{ pg_shared_preload_libraries.stdout }}'
@@ -119,7 +119,7 @@
 
 - name: Stop new PostgreSQL to re-initdb
   ansible.builtin.command: >
-    {{ pg_new_bindir }}/pg_ctl -D {{ pg_new_datadir }} stop -w -t {{ pg_start_stop_timeout }}
+    {{ pg_new_bindir }}/pg_ctlcluster -D {{ pg_new_datadir }} stop -w -t {{ pg_start_stop_timeout }}
   when:
     - inventory_hostname in groups['primary']
     - pg_new_confdir == pg_new_datadir
