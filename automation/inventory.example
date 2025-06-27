@@ -1,6 +1,4 @@
 # Please specify the ip addresses and connection settings for your environment
-# The specified ip addresses will be used to listen by the cluster components.
-# Attention! Specify private IP addresses so that the cluster does not listen a public IP addresses.
 # For deploying via public IPs, add 'ansible_host=public_ip_address' variable for each node.
 #
 # "postgresql_exists=true" if PostgreSQL is already exists and running

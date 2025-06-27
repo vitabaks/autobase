@@ -10,6 +10,10 @@ proxy_env: {} # yamllint disable rule:braces
 # Main cluster variables
 ############################################################
 
+# IP address to bind the cluster services to.
+bind_address: "{{ ansible_all_ipv4_addresses | ipaddr('private') | first }}" # first private IP address of the host.
+# Note: If necessary, you can define a specific address for each host in the inventory.
+
 patroni_cluster_name: "postgres-cluster" # the cluster name (must be unique for each cluster)
 
 patroni_superuser_username: "postgres"
