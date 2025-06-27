@@ -187,28 +187,28 @@ consul_services:
     tags: ["master", "primary"]
     port: "{{ pgbouncer_listen_port }}" # or "{{ postgresql_port }}" if pgbouncer_install: false
     checks:
-      - { http: "http://{{ inventory_hostname }}:{{ patroni_restapi_port }}/primary", interval: "2s" }
+      - { http: "http://{{ bind_address }}:{{ patroni_restapi_port }}/primary", interval: "2s" }
       - { args: ["systemctl", "status", "pgbouncer"], interval: "5s" } # comment out this check if pgbouncer_install: false
   - name: "{{ patroni_cluster_name }}"
     id: "{{ patroni_cluster_name }}-replica"
     tags: ["replica"]
     port: "{{ pgbouncer_listen_port }}"
     checks:
-      - { http: "http://{{ inventory_hostname }}:{{ patroni_restapi_port }}/replica?lag={{ patroni_maximum_lag_on_replica }}", interval: "2s" }
+      - { http: "http://{{ bind_address }}:{{ patroni_restapi_port }}/replica?lag={{ patroni_maximum_lag_on_replica }}", interval: "2s" }
       - { args: ["systemctl", "status", "pgbouncer"], interval: "5s" }
 #  - name: "{{ patroni_cluster_name }}"
 #    id: "{{ patroni_cluster_name }}-sync-replica"
 #    tags: ['sync-replica']
 #    port: "{{ pgbouncer_listen_port }}"
 #    checks:
-#      - { http: "http://{{ inventory_hostname }}:{{ patroni_restapi_port }}/sync", interval: "2s" }
+#      - { http: "http://{{ bind_address }}:{{ patroni_restapi_port }}/sync", interval: "2s" }
 #      - { args: ["systemctl", "status", "pgbouncer"], interval: "5s" }
 #  - name: "{{ patroni_cluster_name }}"
 #    id: "{{ patroni_cluster_name }}-async-replica"
 #    tags: ['async-replica']
 #    port: "{{ pgbouncer_listen_port }}"
 #    checks:
-#      - { http: "http://{{ inventory_hostname }}:{{ patroni_restapi_port }}/async?lag={{ patroni_maximum_lag_on_replica }}", interval: "2s" }
+#      - { http: "http://{{ bind_address }}:{{ patroni_restapi_port }}/async?lag={{ patroni_maximum_lag_on_replica }}", interval: "2s" }
 #      - { args: ["systemctl", "status", "pgbouncer"], interval: "5s" }
 
 ############################################################
@@ -216,7 +216,7 @@ consul_services:
 ############################################################
 
 postgresql_version: 17
-postgresql_listen_addr: "0.0.0.0" # Listen on all interfaces. Or use "{{ inventory_hostname }},127.0.0.1" to listen on a specific IP address.
+postgresql_listen_addr: "0.0.0.0" # Listen on all interfaces. Or use "{{ bind_address }},127.0.0.1" to listen on a specific IP address.
 postgresql_port: 5432
 postgresql_encoding: "UTF8" # for bootstrap only (initdb)
 postgresql_locale: "en_US.UTF-8" # for bootstrap only (initdb)
@@ -420,7 +420,7 @@ postgresql_pg_ident: []
 # the password file (~/.pgpass)
 postgresql_pgpass:
   - "localhost:{{ postgresql_port }}:*:{{ patroni_superuser_username }}:{{ patroni_superuser_password }}"
-  - "{{ inventory_hostname }}:{{ postgresql_port }}:*:{{ patroni_superuser_username }}:{{ patroni_superuser_password }}"
+  - "{{ bind_address }}:{{ postgresql_port }}:*:{{ patroni_superuser_username }}:{{ patroni_superuser_password }}"
   - "*:{{ pgbouncer_listen_port }}:*:{{ patroni_superuser_username }}:{{ patroni_superuser_password }}"
 #  - hostname:port:database:username:password
 
@@ -432,7 +432,7 @@ pgbouncer_install: true # or 'false' if you do not want to install and configure
 pgbouncer_processes: 1 # Number of pgbouncer processes to be used. Multiple processes use the so_reuseport option for better performance.
 pgbouncer_conf_dir: "/etc/pgbouncer"
 pgbouncer_log_dir: "/var/log/pgbouncer"
-pgbouncer_listen_addr: "0.0.0.0" # Listen on all interfaces. Or use "{{ inventory_hostname }}" to listen on a specific IP address.
+pgbouncer_listen_addr: "0.0.0.0" # Listen on all interfaces. Or use "{{ bind_address }}" to listen on a specific IP address.
 pgbouncer_listen_port: 6432
 pgbouncer_max_client_conn: 100000
 pgbouncer_max_db_connections: 10000
@@ -472,7 +472,7 @@ pgbouncer_pools:
 # Patroni parameters
 ############################################################
 
-patroni_restapi_listen_addr: "0.0.0.0" # Listen on all interfaces. Or use "{{ inventory_hostname }}" to listen on a specific IP address.
+patroni_restapi_listen_addr: "0.0.0.0" # Listen on all interfaces. Or use "{{ bind_address }}" to listen on a specific IP address.
 patroni_restapi_port: 8008
 patroni_restapi_username: "patroni"
 patroni_restapi_password: "" # If not defined, a password will be generated automatically during deployment.
@@ -632,10 +632,10 @@ wal_g_prefetch_dir_path: "{{ postgresql_home_dir }}/wal-g-prefetch"
 # Define job_parts outside of wal_g_cron_jobs
 # ⚠️ Ensure there is a space at the beginning of each part to prevent commands from concatenating.
 wal_g_backup_command:
-  - "curl -I -s http://{{ inventory_hostname }}:{{ patroni_restapi_port }} | grep 200"
+  - "curl -I -s http://{{ bind_address }}:{{ patroni_restapi_port }} | grep 200"
   - " && {{ wal_g_path }} backup-push {{ postgresql_data_dir }} > {{ postgresql_log_dir }}/walg_backup.log 2>&1"
 wal_g_delete_command:
-  - "curl -I -s http://{{ inventory_hostname }}:{{ patroni_restapi_port }} | grep 200"
+  - "curl -I -s http://{{ bind_address }}:{{ patroni_restapi_port }} | grep 200"
   - " && {{ wal_g_path }} delete retain FULL 4 --confirm > {{ postgresql_log_dir }}/walg_delete.log 2>&1"
 
 wal_g_cron_jobs:
