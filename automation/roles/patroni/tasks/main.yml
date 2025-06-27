@@ -521,7 +521,9 @@
             state: present
           become: true
           become_user: postgres
-      when: inventory_hostname == groups['master'][0]
+      when:
+        - inventory_hostname == groups['master'][0]
+        - patroni_standby_cluster.host | default('') | length < 1 # do not perform on the Standby Cluster
 
     - name: Prepare PostgreSQL | check PostgreSQL is started
       become: true
@@ -946,9 +948,11 @@
             value: "{{ patroni_superuser_password }}"
         state: present
       when: hostvars[groups['master'][0]]['postgresql_user_result'] is changed
-  when: patroni_cluster_bootstrap_method != "initdb" and
-    (pgbackrest_install|bool or wal_g_install|bool) and
-    (existing_pgcluster is not defined or not existing_pgcluster|bool)
+  when:
+    - patroni_cluster_bootstrap_method != "initdb"
+    - (pgbackrest_install | bool or wal_g_install | bool)
+    - (existing_pgcluster is not defined or not existing_pgcluster | bool)
+    - patroni_standby_cluster.host | default('') | length < 1 # do not perform on the Standby Cluster
   become: true
   become_user: postgres
   tags: patroni, point_in_time_recovery

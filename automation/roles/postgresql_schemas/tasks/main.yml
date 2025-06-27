@@ -11,5 +11,7 @@
     state: present
   ignore_errors: true
   loop: "{{ postgresql_schemas | flatten(1) }}"
-  when: postgresql_schemas is defined and postgresql_schemas | length > 0
+  when:
+    - postgresql_schemas | default('') | length > 0
+    - patroni_standby_cluster.host | default('') | length < 1 # do not perform on the Standby Cluster
   tags: postgresql_schemas
