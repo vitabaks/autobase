@@ -1,7 +1,7 @@
 ---
 - name: Check etcd health
   ansible.builtin.uri:
-    url: "{{ patroni_etcd_protocol | default('http', true) }}://{{ inventory_hostname }}:2379/health"
+    url: "{{ patroni_etcd_protocol | default('http', true) }}://{{ bind_address }}:2379/health"
     method: GET
     return_content: true
     validate_certs: "{{ tls_cert_generate | default(false) | bool }}"
