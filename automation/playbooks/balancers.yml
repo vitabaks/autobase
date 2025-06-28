@@ -17,7 +17,8 @@
 
     - name: Expose bind_address as facts
       ansible.builtin.set_fact:
-        bind_address: "{{ bind_address }}"
+        bind_address: "{{ ansible_all_ipv4_addresses | ipaddr('private') | first }}"
+      when: bind_address is not defined
 
     - name: Update apt cache
       ansible.builtin.apt:

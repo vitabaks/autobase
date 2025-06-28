@@ -13,6 +13,11 @@
           - network
       when: ansible_all_ipv4_addresses is not defined
 
+    - name: Expose bind_address as facts
+      ansible.builtin.set_fact:
+        bind_address: "{{ ansible_all_ipv4_addresses | ipaddr('private') | first }}"
+      when: bind_address is not defined
+
     - name: Update apt cache
       ansible.builtin.apt:
         update_cache: true
