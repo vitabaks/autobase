@@ -41,7 +41,7 @@
       retries: 3
       when: ansible_os_family == "RedHat"
 
-    - name: Make sure that the iproute is installed
+    - name: Make sure that the iproute2 is installed
       ansible.builtin.apt:
         name: iproute2
         state: present
