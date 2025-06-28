@@ -498,26 +498,26 @@
 
         - name: Prepare PostgreSQL | make sure the user "{{ patroni_superuser_username }}" are present, and password does not differ from the specified
           community.postgresql.postgresql_user:
-            login_db: postgres
             name: "{{ patroni_superuser_username }}"
             password: "{{ patroni_superuser_password }}"
             encrypted: true
             role_attr_flags: "SUPERUSER"
+            login_db: postgres
             login_unix_socket: "{{ postgresql_unix_socket_dir }}"
-            port: "{{ postgresql_port }}"
+            login_port: "{{ postgresql_port }}"
             state: present
           become: true
           become_user: postgres
 
         - name: Prepare PostgreSQL | make sure the user "{{ patroni_replication_username }}" are present, and password does not differ from the specified
           community.postgresql.postgresql_user:
-            login_db: postgres
             name: "{{ patroni_replication_username }}"
             password: "{{ patroni_replication_password }}"
             encrypted: true
             role_attr_flags: "LOGIN,REPLICATION"
+            login_db: postgres
             login_unix_socket: "{{ postgresql_unix_socket_dir }}"
-            port: "{{ postgresql_port }}"
+            login_port: "{{ postgresql_port }}"
             state: present
           become: true
           become_user: postgres
@@ -899,12 +899,12 @@
 
     - name: Make sure the superuser and replication users are present, and password does not differ from the specified
       community.postgresql.postgresql_user:
-        login_db: postgres
         name: "{{ item.name }}"
         password: "{{ item.password }}"
         role_attr_flags: "{{ item.flags }}"
+        login_db: postgres
         login_unix_socket: "{{ postgresql_unix_socket_dir }}"
-        port: "{{ postgresql_port }}"
+        login_port: "{{ postgresql_port }}"
       register: postgresql_user_result
       loop:
         - { name: "{{ patroni_superuser_username }}", password: "{{ patroni_superuser_password }}", flags: "SUPERUSER" }
@@ -920,12 +920,12 @@
 
     - name: Make sure the postgresql users are present, and password does not differ from the specified
       community.postgresql.postgresql_user:
-        login_db: postgres
         name: "{{ item.name }}"
         password: "{{ item.password }}"
         role_attr_flags: "{{ item.flags }}"
+        login_db: postgres
         login_unix_socket: "{{ postgresql_unix_socket_dir }}"
-        port: "{{ postgresql_port }}"
+        login_port: "{{ postgresql_port }}"
       loop: "{{ postgresql_users }}"
       loop_control:
         label: "{{ item.name }}"
