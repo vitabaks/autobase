@@ -16,7 +16,7 @@
 
     - name: Expose bind_address as facts
       ansible.builtin.set_fact:
-        bind_address: "{{ ansible_all_ipv4_addresses | ipaddr('private') | first }}"
+        bind_address: "{{ ansible_all_ipv4_addresses | ansible.utils.ipaddr('private') | first }}"
       when: bind_address is not defined
 
     - name: "[Prepare] Get Patroni Cluster Leader Node"
