@@ -27,7 +27,7 @@ dcs-type: {{ vip_manager_dcs_type | default(dcs_type) }} # etcd, consul or patro
 {% if not dcs_exists | bool %}
 dcs-endpoints:
 {% for host in groups['etcd_cluster'] %}
-  - {{ patroni_etcd_protocol | default('http', true) }}://{{ hostvars[host]['inventory_hostname'] }}:2379
+  - {{ patroni_etcd_protocol | default('http', true) }}://{{ hostvars[host]['etcd_bind_address'] | default(hostvars[host]['bind_address'], true) }}:2379
 {% endfor %}
 {% else %}
 dcs-endpoints:
@@ -44,7 +44,7 @@ dcs-endpoints:
   - http://127.0.0.1:8500
   {% else %}
   {% for host in groups['consul_instances'] %}
-  - http://{{ hostvars[host]['inventory_hostname'] }}:8500
+  - http://{{ hostvars[host]['consul_bind_address'] | default(hostvars[host]['bind_address'], true) }}:8500
   {% endfor %}
   {% endif %}
 {% else %}

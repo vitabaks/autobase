@@ -26,7 +26,7 @@
 - name: Fetch public SSH keys from database servers
   ansible.builtin.fetch:
     src: "~{{ ssh_key_user }}/.ssh/id_rsa.pub"
-    dest: "{{ files_dir | default(playbook_dir ~ '/files') }}/{{ inventory_hostname }}-id_rsa.pub"
+    dest: "{{ files_dir | default(playbook_dir ~ '/files') }}/{{ ansible_hostname }}-id_rsa.pub"
     flat: true
   changed_when: false
 

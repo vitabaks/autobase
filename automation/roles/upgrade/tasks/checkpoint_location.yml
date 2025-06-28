@@ -36,7 +36,7 @@
 
 - name: Print 'Latest checkpoint location' for the Replica
   ansible.builtin.debug:
-    msg: "Replica: {{ inventory_hostname }}, latest checkpoint location: {{ pg_checkpoint_location_replica.stdout }}"
+    msg: "Replica: {{ ansible_hostname }}, latest checkpoint location: {{ pg_checkpoint_location_replica.stdout }}"
   when:
     - inventory_hostname in groups['secondary']
 

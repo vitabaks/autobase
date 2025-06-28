@@ -17,7 +17,7 @@
 - name: Wait for port "{{ pgbouncer_listen_port }}" to become open on the host
   ansible.builtin.wait_for:
     port: "{{ pgbouncer_listen_port }}"
-    host: "{{ inventory_hostname }}"
+    host: "{{ patroni_bind_address | default(bind_address, true) }}"
     state: started
     timeout: 120
     delay: 5

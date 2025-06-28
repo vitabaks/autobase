@@ -5,6 +5,18 @@
 - name: Molecule.default.verify
   hosts: all
   gather_facts: true
+  pre_tasks:
+    - name: Gather network facts
+      ansible.builtin.setup:
+        gather_subset:
+          - network
+      when: ansible_all_ipv4_addresses is not defined
+
+    # Define bind_address for each host (first private IPv4), unless set in inventory.
+    - name: Expose bind_address as facts
+      ansible.builtin.set_fact:
+        bind_address: "{{ ansible_all_ipv4_addresses | ansible.utils.ipaddr('private') | first }}"
+      when: bind_address is not defined
 
   tasks:
     # 📝 Including the common variables for the Molecule default configuration
