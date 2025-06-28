@@ -120,7 +120,7 @@ consul_cloud_autodiscovery_params: ""
 consul_cloud_autodiscovery_string: "provider={{ consul_cloud_autodiscovery_provider }} {{ consul_cloud_autodiscovery_params }}"
 
 ### Addresses
-consul_bind_address: "{{ lookup('env', 'CONSUL_BIND_ADDRESS') | default(consul_bind_address, true) | default(bind_address, true) }}"
+consul_bind_address: "{{ lookup('env', 'CONSUL_BIND_ADDRESS') | default(bind_address, true) }}"
 consul_advertise_address: "{{ consul_bind_address }}"
 consul_advertise_address_wan: "{{ consul_bind_address }}"
 consul_translate_wan_address: false
