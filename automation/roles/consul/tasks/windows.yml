@@ -14,7 +14,7 @@
 
 - name: (Windows) Expose bind_address, datacenter and node_role as facts
   ansible.builtin.set_fact:
-    consul_bind_address: "{{ bind_address | default(consul_bind_address, true) }}"
+    consul_bind_address: "{{ consul_bind_address }}"
     consul_datacenter: "{{ consul_datacenter }}"
     consul_node_role: "{{ consul_node_role }}"
 
