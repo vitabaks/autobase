@@ -7,6 +7,7 @@
   "404Title": "Nothing to see here",
   "404Text": "Page you are trying to open does not exist. You may have mistyped the address, or the page has been moved to another URL.\nIf you think this is an error contact support.",
   "404ButtonText": "Take me back to home page",
+  "exportToInventory": "Export to inventory",
   "removeFromList": "Remove from list",
   "refresh": "Refresh",
   "overview": "Overview",
