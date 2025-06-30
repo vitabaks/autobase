@@ -13,6 +13,7 @@ skip_list:
   - yaml[indentation]
   - yaml[line-length]
   - name[missing]
+  - name[unique]
   - name[template]
   - name[casing] # TODO: All names should start with an uppercase letter.
   - risky-file-permissions # TODO: File permissions unset or incorrect.

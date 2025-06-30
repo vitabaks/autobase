@@ -4,7 +4,7 @@
 # A future version of pip will drop support for Python 2.7.
 # Installing latest version pip3 for python3
 
-# install pip package from repo (installation_method: "repo")
+# install pip package from repo (installation_method: "packages")
 - block: # with get-pip.py
     - name: pip | get-pip.py
       ansible.builtin.get_url:
@@ -36,7 +36,7 @@
         chdir: /tmp/
       when: get_pip_result.changed
   environment: "{{ proxy_env | default({}) }}"
-  when: installation_method == "repo" and
+  when: installation_method == "packages" and
     patroni_installation_method == "pip" and
     pip_package_repo is search("get-pip.py")
   tags: pip_install, pip
@@ -65,25 +65,5 @@
       args:
         chdir: "/tmp/{{ pip_package_repo.split('.tar.gz')[0] | basename }}"
       when: pip_package_result.changed
-  when: installation_method == "repo" and
-    pip_package_repo is search("tar.gz")
-  tags: pip_install, pip
-
-# install pip package from file (installation_method: "file")
-- block:
-    - name: pip | extract pip package into /tmp
-      ansible.builtin.unarchive:
-        src: "{{ pip_package_file }}"
-        dest: /tmp/
-        extra_opts:
-          - --no-same-owner
-      register: pip_package_result
-
-    - name: pip | install pip
-      ansible.builtin.command: python3 setup.py install
-      args:
-        chdir: "/tmp/{{ pip_package_file.split('.tar.gz')[0] | basename }}"
-      when: pip_package_result.changed
-  when: installation_method == "file" and
-    pip_package_file | length > 0
+  when: installation_method == "packages" and pip_package_repo is search("tar.gz")
   tags: pip_install, pip

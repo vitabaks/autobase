@@ -64,7 +64,7 @@
         mode: u+x,g+x,o+x
         remote_src: true
   when:
-    - installation_method == "repo"
+    - installation_method == "packages"
     - wal_g_installation_method == "binary"
     - wal_g_version is version('1.0', '>=')
     - (wal_g_installed_version.stderr is search("command not found") or wal_g_installed_version.stdout != wal_g_version)
@@ -188,7 +188,7 @@
         PATH: "{{ ansible_env.PATH }}:/usr/local/go/bin"
   environment: "{{ proxy_env | default({}) }}"
   when:
-    - installation_method == "repo"
+    - installation_method == "packages"
     - (wal_g_installation_method == "src" or (ansible_os_family == "RedHat" and ansible_distribution_major_version == '8'))
     - wal_g_version is version('1.0', '>=')
     - (wal_g_installed_version.stderr is search("command not found") or wal_g_installed_version.stdout != wal_g_version)
@@ -222,60 +222,10 @@
         mode: u+x,g+x,o+x
         remote_src: true
   when:
-    - installation_method == "repo"
+    - installation_method == "packages"
     - wal_g_installation_method == "binary"
     - wal_g_version is version('0.2.19', '<=')
     - (wal_g_installed_version.stderr is search("command not found") or wal_g_installed_version.stdout != wal_g_version)
-  tags: wal-g, wal_g, wal_g_install
-
-# installation_method == "file"
-
-# A precompiled binary (package in tar.gz)
-- block:
-    - name: "Extract WAL-G archive {{ wal_g_package_file }} into /tmp"
-      ansible.builtin.unarchive:
-        src: "{{ wal_g_package_file }}"
-        dest: /tmp/
-        extra_opts:
-          - --no-same-owner
-
-    - name: Copy WAL-G binary file to "{{ wal_g_path.split(' ')[0] }}"
-      ansible.builtin.copy:
-        src: "/tmp/{{ wal_g_package_file.split('.tar.gz')[0] | basename }}"
-        dest: "{{ wal_g_path.split(' ')[0] }}"
-        mode: u+x,g+x,o+x
-        remote_src: true
-  check_mode: false
-  when:
-    - installation_method == "file"
-    - wal_g_version is version('1.0', '>=')
-    - (wal_g_installed_version.stderr is search("command not found") or
-      wal_g_installed_version.stdout != wal_g_version)
-    - (wal_g_package_file is defined and wal_g_package_file | length > 0)
-  tags: wal-g, wal_g, wal_g_install
-
-# older versions of WAL-G (for compatibility)
-- block:
-    - name: "Extract WAL-G archive {{ wal_g_package_file }} into /tmp"
-      ansible.builtin.unarchive:
-        src: "{{ wal_g_package_file }}"
-        dest: /tmp/
-        extra_opts:
-          - --no-same-owner
-
-    - name: Copy WAL-G binary file to "{{ wal_g_path.split(' ')[0] }}"
-      ansible.builtin.copy:
-        src: "/tmp/wal-g"
-        dest: "{{ wal_g_path.split(' ')[0] }}"
-        mode: u+x,g+x,o+x
-        remote_src: true
-  check_mode: false
-  when:
-    - installation_method == "file"
-    - wal_g_version is version('0.2.19', '<=')
-    - (wal_g_installed_version.stderr is search("command not found") or
-      wal_g_installed_version.stdout != wal_g_version)
-    - wal_g_package_file == "wal-g.linux-amd64.tar.gz"
   tags: wal-g, wal_g, wal_g_install
 
 # Ensure the WAL_G_PREFETCH directory is created if configured

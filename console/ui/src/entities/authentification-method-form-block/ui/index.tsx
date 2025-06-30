@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Box, Checkbox, FormControlLabel, MenuItem, Radio, Stack, TextField, Typography } from '@mui/material';
+import { Box, Checkbox, FormControlLabel, MenuItem, Radio, Stack, TextField, Typography, useTheme } from '@mui/material';
 import { authenticationMethods } from '@entities/authentification-method-form-block/model/constants.ts';
 import { useTranslation } from 'react-i18next';
 import { Controller, useFormContext } from 'react-hook-form';
@@ -13,6 +13,7 @@ import { AUTHENTICATION_METHODS } from '@shared/model/constants.ts';
 
 const AuthenticationMethodFormBlock: React.FC = () => {
   const { t } = useTranslation(['clusters', 'shared', 'settings']);
+  const theme = useTheme();
 
   const {
     control,
@@ -50,15 +51,26 @@ const AuthenticationMethodFormBlock: React.FC = () => {
             name={CLUSTER_FORM_FIELD_NAMES.AUTHENTICATION_METHOD}
             render={({ field: { value, onChange } }) => (
               <>
-                {authenticationMethods(t).map((method) => (
+                {authenticationMethods(t).map((method: any) => (
                   <Stack
                     key={method.id}
                     sx={{
                       padding: '8px',
-                      border: '1px solid #E0E0E0',
+                      border: `1px solid ${theme.palette.divider}`,
+                      borderRadius: '8px',
                       cursor: 'pointer',
                       minWidth: 'max-content',
                       width: '100%',
+                      backgroundColor: value === method.id
+                        ? theme.palette.mode === 'light'
+                          ? 'rgba(51, 103, 214, 0.04)'
+                          : 'rgba(90, 141, 238, 0.08)'
+                        : 'transparent',
+                      '&:hover': {
+                        borderColor: theme.palette.primary.main,
+                        backgroundColor: theme.palette.action.hover,
+                      },
+                      transition: 'all 0.2s ease-in-out',
                     }}
                     direction="row"
                     onClick={() => onChange(method.id)}>
@@ -88,7 +100,9 @@ const AuthenticationMethodFormBlock: React.FC = () => {
                   size="small"
                   error={!!errors[CLUSTER_FORM_FIELD_NAMES.IS_USE_DEFINED_SECRET]}
                   helperText={errors[CLUSTER_FORM_FIELD_NAMES.IS_USE_DEFINED_SECRET]?.message as string}>
+                  {/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
                   {[t('yes', { ns: 'shared' }), t('no', { ns: 'shared' })].map((option) => (
+                    // @ts-ignore
                     <MenuItem key={option} value={option === t('yes', { ns: 'shared' })}>
                       {option}
                     </MenuItem>
@@ -129,7 +143,7 @@ const AuthenticationMethodFormBlock: React.FC = () => {
                       size="small"
                       error={!!errors[CLUSTER_FORM_FIELD_NAMES.SECRET_ID]}
                       helperText={errors[CLUSTER_FORM_FIELD_NAMES.SECRET_ID]?.message as string}>
-                      {secrets.data.data.map((secret) => (
+                      {secrets.data?.data?.map((secret: any) => (
                         <MenuItem key={secret?.id} value={secret?.id}>
                           {secret?.name}
                         </MenuItem>

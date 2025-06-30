@@ -3,6 +3,7 @@ package watcher
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"os"
 	"postgresql-cluster-console/internal/configuration"
 	"postgresql-cluster-console/internal/storage"
@@ -115,7 +116,7 @@ func (lw *logWatcher) doWork() {
 }
 
 func (lw *logWatcher) collectContainerLog(ctx context.Context, op *storage.Operation, log zerolog.Logger) {
-	clusterInfo, err := lw.db.GetCluster(ctx, op.ID)
+	clusterInfo, err := lw.db.GetCluster(ctx, op.ClusterID)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to get cluster from db")
 
@@ -125,7 +126,8 @@ func (lw *logWatcher) collectContainerLog(ctx context.Context, op *storage.Opera
 	fileLog := lw.cfg.Docker.LogDir + "/" + clusterInfo.Name + ".json"
 	fLog, err := os.Open(fileLog)
 	if err != nil {
-		log.Error().Err(err).Str("file_name", fileLog).Msg("can't open file with log")
+		reason := fmt.Sprintf("can't open log file %q", fileLog)
+		lw.markClusterStatusFailed(ctx, op.ID, op.ClusterID, log, err, reason)
 
 		return
 	}
@@ -134,7 +136,7 @@ func (lw *logWatcher) collectContainerLog(ctx context.Context, op *storage.Opera
 	jsonDec := json.NewDecoder(fLog)
 	err = jsonDec.Decode(&logs)
 	if err != nil {
-		log.Error().Err(err).Msg("failed to decode file log")
+		lw.markClusterStatusFailed(ctx, op.ID, op.ClusterID, log, err, "failed to decode log file's JSON")
 
 		return
 	}
@@ -206,5 +208,25 @@ func (lw *logWatcher) collectContainerLog(ctx context.Context, op *storage.Opera
 		log.Error().Err(err).Msg("failed to update cluster status in db")
 	} else {
 		log.Trace().Any("cluster", updatedCluster).Msg("cluster was updated in db")
+	}
+}
+
+func (lw *logWatcher) markClusterStatusFailed(ctx context.Context, opID, clusterID int64, log zerolog.Logger, err error, reason string) {
+	log.Error().Err(err).Msg(reason)
+
+	status := storage.OperationStatusFailed
+	if _, err = lw.db.UpdateOperation(ctx, &storage.UpdateOperationReq{
+		ID:     opID,
+		Status: &status,
+	}); err != nil {
+		log.Error().Err(err).Msg("failed to update operation status in db")
+	}
+
+	status = storage.ClusterStatusFailed
+	if _, err = lw.db.UpdateCluster(ctx, &storage.UpdateClusterReq{
+		ID:     clusterID,
+		Status: &status,
+	}); err != nil {
+		log.Error().Err(err).Msg("failed to update cluster status in db")
 	}
 }

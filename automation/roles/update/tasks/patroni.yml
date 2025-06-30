@@ -14,7 +14,7 @@
       register: update_patroni_package_pip
   ignore_errors: true
   environment: "{{ proxy_env | default({}) }}"
-  when: installation_method == "repo" and patroni_installation_method == "pip"
+  when: installation_method == "packages" and patroni_installation_method == "pip"
 
 # patroni_installation_method: "rpm/deb"
 - block:
@@ -86,7 +86,7 @@
   ignore_errors: true
   environment: "{{ proxy_env | default({}) }}"
   when:
-    - installation_method == "repo"
+    - installation_method == "packages"
     - (patroni_installation_method == "rpm" or patroni_installation_method == "deb")
 
 # Set flag if any update failed

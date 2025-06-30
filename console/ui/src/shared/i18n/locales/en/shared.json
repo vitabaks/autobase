@@ -41,5 +41,14 @@
   "no": "No",
   "add": "Add",
   "defaultTableSearchPlaceholder": "Enter property name or value",
-  "address": "Address"
+  "address": "Address",
+  "theme": {
+    "changeTheme": "Change theme",
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System"
+  },
+  "switchToLightMode": "Switch to Light Mode",
+  "switchToDarkMode": "Switch to Dark Mode",
+  "switchToSystemMode": "Switch to System Mode"
 }

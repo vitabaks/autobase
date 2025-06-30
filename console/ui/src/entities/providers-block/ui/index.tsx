@@ -1,12 +1,11 @@
 import { FC } from 'react';
-import { Box, Stack, Tooltip, Typography } from '@mui/material';
+import { Box, Stack, Tooltip, Typography, useTheme } from '@mui/material';
 import { Controller, useFormContext } from 'react-hook-form';
 import { CLUSTER_FORM_FIELD_NAMES } from '@widgets/cluster-form/model/constants.ts';
 import { useTranslation } from 'react-i18next';
 import { useNameIconProvidersMap } from '@entities/cluster-form-cloud-region-block/lib/hooks.tsx';
 import ErrorOutlineOutlinedIcon from '@mui/icons-material/ErrorOutlineOutlined';
 import ServersIcon from '@shared/assets/serversIcon.svg?react';
-import theme from '@shared/theme/theme.ts';
 import { ProvidersBlockProps } from '@entities/providers-block/model/types.ts';
 import { PROVIDERS } from '@shared/config/constants.ts';
 import ClusterFormCloudProviderBox from '@entities/providers-block/ui/ClusterFormCloudProviderBox.tsx';
@@ -14,10 +13,11 @@ import ClusterFormCloudProviderBox from '@entities/providers-block/ui/ClusterFor
 const ClusterFormProvidersBlock: FC<ProvidersBlockProps> = ({ providers }) => {
   const { t } = useTranslation('clusters');
   const { control, reset } = useFormContext();
+  const theme = useTheme();
 
   const nameIconProvidersMap = useNameIconProvidersMap();
 
-  const handleProviderChange = (value) => () => {
+  const handleProviderChange = (value: any) => () => {
     reset((values) => ({
       ...values,
       [CLUSTER_FORM_FIELD_NAMES.PROVIDER]: value,
@@ -26,9 +26,9 @@ const ClusterFormProvidersBlock: FC<ProvidersBlockProps> = ({ providers }) => {
       [CLUSTER_FORM_FIELD_NAMES.INSTANCE_TYPE]: 'small',
       [CLUSTER_FORM_FIELD_NAMES.INSTANCE_CONFIG]: value?.instance_types?.small?.[0],
       [CLUSTER_FORM_FIELD_NAMES.STORAGE_AMOUNT]:
-        value?.volumes?.find((volume) => volume?.is_default)?.min_size < 100
+        (value as any)?.volumes?.find((volume: any) => volume?.is_default)?.min_size < 100
           ? 100
-          : value?.volumes?.find((volume) => volume?.is_default)?.min_size,
+          : (value as any)?.volumes?.find((volume: any) => volume?.is_default)?.min_size,
     }));
   };
 
@@ -42,13 +42,13 @@ const ClusterFormProvidersBlock: FC<ProvidersBlockProps> = ({ providers }) => {
         name={CLUSTER_FORM_FIELD_NAMES.PROVIDER}
         render={({ field: { value } }) => (
           <Stack direction="row" spacing={2}>
-            {providers.map((provider) => (
+            {providers.map((provider: any) => (
               <ClusterFormCloudProviderBox
                 key={provider.code}
                 isActive={value?.code === provider.code}
                 onClick={handleProviderChange(provider)}
                 name={provider.description}>
-                <img src={nameIconProvidersMap[provider.code]} width="100%" alt={provider.description} />
+                <img src={(nameIconProvidersMap as any)[provider.code]} width="100%" alt={provider.description} />
               </ClusterFormCloudProviderBox>
             ))}
             <ClusterFormCloudProviderBox
@@ -59,7 +59,11 @@ const ClusterFormProvidersBlock: FC<ProvidersBlockProps> = ({ providers }) => {
                   <ErrorOutlineOutlinedIcon fontSize="small" />
                 </Tooltip>
                 <Stack direction="row" alignItems="center" gap={0.5}>
-                  <ServersIcon width="24px" height="24px" />
+                  <ServersIcon
+                    width="24px"
+                    height="24px"
+                    style={{ fill: theme.palette.text.primary }}
+                  />
                   <Stack direction="column" gap={0}>
                     <Typography fontWeight="bold" lineHeight={1}>
                       {t('yourOwn')}

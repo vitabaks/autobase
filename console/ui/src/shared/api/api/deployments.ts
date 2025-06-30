@@ -40,6 +40,7 @@ export type DeploymentInstanceType = {
   code?: string;
   cpu?: number;
   ram?: number;
+  shared_cpu?: boolean;
   /** Price for 1 instance by hour */
   price_hourly?: number;
   /** Price for 1 instance by month */

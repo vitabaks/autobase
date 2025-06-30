@@ -14,6 +14,6 @@
   ignore_errors: true
   loop: "{{ postgresql_extensions | flatten(1) }}"
   when:
-    - postgresql_extensions is defined
-    - postgresql_extensions | length > 0
+    - postgresql_extensions | default('') | length > 0
+    - patroni_standby_cluster.host | default('') | length < 1 # do not perform on the Standby Cluster
   tags: postgresql_extensions

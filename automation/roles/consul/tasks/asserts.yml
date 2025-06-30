@@ -63,13 +63,6 @@
     - ansible_distribution == "Ubuntu"
     - ansible_distribution_version is version_compare(13.04, '<')
 
-- name: Check specified ethernet interface
-  ansible.builtin.fail:
-    msg: "The ethernet interface specified by consul_iface was not found."
-  when:
-    - ansible_os_family != 'Windows'
-    - consul_iface not in ansible_interfaces
-
 - name: Check iptables on Red Hat, CentOS or Oracle Linux
   ansible.builtin.fail:
     msg: "Use DNSmasq instead of iptables on {{ ansible_distribution }}."

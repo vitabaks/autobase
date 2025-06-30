@@ -19,7 +19,7 @@
       replicas_sync: 5002
       replicas_async: 5003
       stats: 7000
-    inventory_hostname: una.name
+    haproxy_bind_address: una.name
     cluster_vip: fake.vip.url.com
 
 # ===============================
@@ -42,7 +42,7 @@
 # 🚀 Execute the main task here
 # This task updates the 'haproxy.tmpl' file
 # replacing lines that start with 'bind' and include specific ports
-# The new lines will either bind to the inventory_hostname or the cluster_vip, depending on the specific port.
+# The new lines will either bind to the haproxy_bind_address or the cluster_vip, depending on the specific port.
 - name: Molecule.tests.roles.confd.variables.haproxy.tmpl | Update haproxy.tmpl (replace "bind")
   run_once: true
   delegate_to: localhost
@@ -53,7 +53,7 @@
     backrefs: true
   loop:
     - regexp: "^.*bind.*:{{ haproxy_listen_port.stats }}$"
-      line: "    bind {{ inventory_hostname }}:{{ haproxy_listen_port.stats }}"
+      line: "    bind {{ haproxy_bind_address }}:{{ haproxy_listen_port.stats }}"
     - regexp: "^.*bind.*:{{ haproxy_listen_port.master }}$"
       line: "    bind {{ cluster_vip }}:{{ haproxy_listen_port.master }}"
     - regexp: "^.*bind.*:{{ haproxy_listen_port.replicas }}$"
@@ -111,7 +111,7 @@
 
 # 🚀 Execute the new task here
 # This task updates the 'haproxy.tmpl' file again, this time replacing lines that start with 'bind' and include specific ports
-# The new lines will bind to the inventory_hostname.
+# The new lines will bind to the haproxy_bind_address.
 - name: Molecule.tests.roles.confd.variables.haproxy.tmpl | Prepare haproxy.tmpl template file (replace "bind" - 2nd round)
   run_once: true
   delegate_to: localhost
@@ -122,15 +122,15 @@
     backrefs: true
   loop:
     - regexp: "^.*bind.*:{{ haproxy_listen_port.stats }}$"
-      line: "    bind {{ inventory_hostname }}:{{ haproxy_listen_port.stats }}"
+      line: "    bind {{ haproxy_bind_address }}:{{ haproxy_listen_port.stats }}"
     - regexp: "^.*bind.*:{{ haproxy_listen_port.master }}$"
-      line: "    bind {{ inventory_hostname }}:{{ haproxy_listen_port.master }}"
+      line: "    bind {{ haproxy_bind_address }}:{{ haproxy_listen_port.master }}"
     - regexp: "^.*bind.*:{{ haproxy_listen_port.replicas }}$"
-      line: "    bind {{ inventory_hostname }}:{{ haproxy_listen_port.replicas }}"
+      line: "    bind {{ haproxy_bind_address }}:{{ haproxy_listen_port.replicas }}"
     - regexp: "^.*bind.*:{{ haproxy_listen_port.replicas_sync }}$"
-      line: "    bind {{ inventory_hostname }}:{{ haproxy_listen_port.replicas_sync }}"
+      line: "    bind {{ haproxy_bind_address }}:{{ haproxy_listen_port.replicas_sync }}"
     - regexp: "^.*bind.*:{{ haproxy_listen_port.replicas_async }}$"
-      line: "    bind {{ inventory_hostname }}:{{ haproxy_listen_port.replicas_async }}"
+      line: "    bind {{ haproxy_bind_address }}:{{ haproxy_listen_port.replicas_async }}"
   loop_control:
     loop_var: bind_config_without_vip_item
     label: "{{ bind_config_without_vip_item.line }}"

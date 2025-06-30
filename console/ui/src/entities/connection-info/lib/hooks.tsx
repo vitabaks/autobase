@@ -1,39 +1,48 @@
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Stack, Typography } from '@mui/material';
-import { useState } from 'react';
+import EyeIcon from '@mui/icons-material/VisibilityOutlined';
+
 import CopyIcon from '@shared/ui/copy-icon';
-import EyeIcon from '../assets/eyeIcon.svg?react';
 import ConnectionInfoRowContainer from '@entities/connection-info/ui/ConnectionInfoRowConteiner.tsx';
 import { ConnectionInfoProps } from '@entities/connection-info/model/types.ts';
 
-export const useGetConnectionInfoConfig = ({ connectionInfo }: { connectionInfo: ConnectionInfoProps }) => {
+export const useGetConnectionInfoConfig = (
+  { connectionInfo }: { connectionInfo: ConnectionInfoProps }
+): { title: string; children: React.ReactNode }[] => {
   const { t } = useTranslation(['clusters', 'shared']);
   const [isPasswordHidden, setIsPasswordHidden] = useState(true);
 
   const togglePasswordVisibility = () => setIsPasswordHidden((prev) => !prev);
 
+  const iconFontSize = '16px';
+
   const renderCollection = (collection: string | object, defaultLabel: string) => {
-    return ['string', 'number'].includes(typeof collection)
-      ? [
-          {
-            title: defaultLabel,
-            children: (
-              <ConnectionInfoRowContainer>
-                <Typography>{collection}</Typography> <CopyIcon valueToCopy={collection} />
-              </ConnectionInfoRowContainer>
-            ),
-          },
-        ]
-      : typeof collection === 'object'
-        ? Object.entries(collection)?.map(([key, value]) => ({
-            title: `${defaultLabel} ${key}`,
-            children: (
-              <ConnectionInfoRowContainer>
-                <Typography>{value}</Typography> <CopyIcon valueToCopy={value} />
-              </ConnectionInfoRowContainer>
-            ),
-          })) ?? []
-        : [];
+    if (typeof collection === 'string' || typeof collection === 'number') {
+      return [{
+        title: defaultLabel,
+        children: (
+          <ConnectionInfoRowContainer>
+            <Typography>{collection}</Typography>
+            <CopyIcon valueToCopy={collection} sx={{ fontSize: iconFontSize }} />
+          </ConnectionInfoRowContainer>
+        ),
+      }];
+    }
+
+    if (typeof collection === 'object' && collection !== null) {
+      return Object.entries(collection).map(([key, value]) => ({
+        title: `${defaultLabel} ${key}`,
+        children: (
+          <ConnectionInfoRowContainer>
+            <Typography>{value}</Typography>
+            <CopyIcon valueToCopy={value} sx={{ fontSize: iconFontSize }} />
+          </ConnectionInfoRowContainer>
+        ),
+      }));
+    }
+
+    return [];
   };
 
   return [
@@ -43,7 +52,8 @@ export const useGetConnectionInfoConfig = ({ connectionInfo }: { connectionInfo:
       title: t('user', { ns: 'shared' }),
       children: (
         <ConnectionInfoRowContainer>
-          <Typography>{connectionInfo?.superuser}</Typography> <CopyIcon valueToCopy={connectionInfo?.superuser} />
+          <Typography>{connectionInfo?.superuser || 'postgres'}</Typography>
+          <CopyIcon valueToCopy={connectionInfo?.superuser || 'postgres'} sx={{ fontSize: iconFontSize }} />
         </ConnectionInfoRowContainer>
       ),
     },
@@ -52,11 +62,16 @@ export const useGetConnectionInfoConfig = ({ connectionInfo }: { connectionInfo:
       children: (
         <ConnectionInfoRowContainer>
           <Typography>
-            {isPasswordHidden ? connectionInfo?.password?.replace(/./g, '*') : connectionInfo?.password}
+            {isPasswordHidden
+              ? (connectionInfo?.password || 'N/A').replace(/./g, '*')
+              : (connectionInfo?.password || 'N/A')}
           </Typography>
           <Stack direction="row" alignItems="center" gap={1}>
-            <EyeIcon onClick={togglePasswordVisibility} style={{ cursor: 'pointer' }} />
-            <CopyIcon valueToCopy={connectionInfo?.password} />
+            <EyeIcon
+              onClick={togglePasswordVisibility}
+              sx={{ cursor: 'pointer', fontSize: iconFontSize }}
+            />
+            <CopyIcon valueToCopy={connectionInfo?.password || 'N/A'} sx={{ fontSize: iconFontSize }} />
           </Stack>
         </ConnectionInfoRowContainer>
       ),

@@ -66,5 +66,8 @@
   "backups": "Backups",
   "useDefinedSecret": "Use defined secret?",
   "deleteClusterModalHeader": "Delete {{clusterName}}?",
-  "deleteClusterModalBody": "Are you sure you want to delete cluster \"{{clusterName}}\"?"
+  "deleteClusterModalBody": "Are you sure you want to delete cluster \"{{clusterName}}\"?",
+  "sharedVcpu": "Shared vCPU",
+  "clusterExistsLabel": "Cluster exists",
+  "clusterExistsHelp":  "Use this option if you want to import an existing cluster."
 }

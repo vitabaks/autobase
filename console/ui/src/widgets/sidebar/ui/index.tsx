@@ -74,6 +74,13 @@ const Sidebar = () => {
             transform: isCollapsed ? 'scale(-1, 1)' : 'none',
             transition: 'transform .1s ease-in-out',
             borderRadius: 0,
+            color: 'text.primary',
+            '&:hover': {
+              backgroundColor: 'action.hover',
+            },
+            '& svg': {
+              fill: 'currentColor',
+            },
           }}
           onClick={toggleSidebarCollapse}>
           <CollapseIcon width="24px" height="24px" />

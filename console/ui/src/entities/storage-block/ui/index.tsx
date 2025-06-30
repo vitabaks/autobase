@@ -1,5 +1,5 @@
 import { FC } from 'react';
-import { Box, Typography } from '@mui/material';
+import { Box, Typography, useTheme } from '@mui/material';
 import ClusterSliderBox from '@shared/ui/slider-box';
 import { useTranslation } from 'react-i18next';
 import { Controller, useFormContext } from 'react-hook-form';
@@ -8,6 +8,7 @@ import StorageIcon from '@shared/assets/storageIcon.svg?react';
 
 const StorageBlock: FC = () => {
   const { t } = useTranslation('clusters');
+  const theme = useTheme();
 
   const {
     control,
@@ -38,7 +39,7 @@ const StorageBlock: FC = () => {
             changeAmount={onChange}
             unit="GB"
             limitMax
-            icon={<StorageIcon width="24px" height="24px" />}
+            icon={<StorageIcon width="24px" height="24px" style={{ fill: theme.palette.text.primary }} />}
             error={errors[CLUSTER_FORM_FIELD_NAMES.STORAGE_AMOUNT]}
           />
         )}

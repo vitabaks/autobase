@@ -98,7 +98,7 @@ export const getLocalMachineEnvs = (values: ClusterFormValues, secretId?: number
                 ansible_host: values[CLUSTER_FORM_FIELD_NAMES.DATABASE_SERVERS][0][CLUSTER_FORM_FIELD_NAMES.IP_ADDRESS],
                 server_location:
                   values[CLUSTER_FORM_FIELD_NAMES.DATABASE_SERVERS]?.[0]?.[CLUSTER_FORM_FIELD_NAMES.LOCATION],
-                postgresql_exists: false,
+                postgresql_exists: values[CLUSTER_FORM_FIELD_NAMES.EXISTING_CLUSTER] ?? false,
               },
             },
           },
@@ -112,7 +112,7 @@ export const getLocalMachineEnvs = (values: ClusterFormValues, secretId?: number
                         hostname: server?.[CLUSTER_FORM_FIELD_NAMES.HOSTNAME],
                         ansible_host: server?.[CLUSTER_FORM_FIELD_NAMES.IP_ADDRESS],
                         server_location: server?.[CLUSTER_FORM_FIELD_NAMES.LOCATION],
-                        postgresql_exists: false,
+                        postgresql_exists: values[CLUSTER_FORM_FIELD_NAMES.EXISTING_CLUSTER] ?? false,
                       },
                     }),
                     {},
@@ -166,4 +166,5 @@ export const mapFormValuesToRequestFields = ({
       ? getLocalMachineExtraVars(values, secretId)
       : getCloudProviderExtraVars(values),
   ),
+  existing_cluster: values[CLUSTER_FORM_FIELD_NAMES.EXISTING_CLUSTER] ?? false,
 });

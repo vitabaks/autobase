@@ -1,5 +1,184 @@
 ---
-# Install packages from files
+# Install packages from repository
+
+# RedHat
+- name: Update dnf cache
+  ansible.builtin.shell: dnf clean all && dnf -y makecache
+  args:
+    executable: /bin/bash
+  register: dnf_status
+  until: dnf_status is success
+  delay: 5
+  retries: 3
+  when:
+    - installation_method == "packages"
+    - ansible_os_family == "RedHat"
+  environment: "{{ proxy_env | default({}) }}"
+  tags: install_packages, install_postgres
+
+- name: Install system packages
+  ansible.builtin.dnf:
+    name: "{{ item }}"
+    state: present
+    disablerepo: "pgdg*"
+  loop: "{{ system_packages | flatten }}"
+  register: package_status
+  until: package_status is success
+  delay: 5
+  retries: 3
+  environment: "{{ proxy_env | default({}) }}"
+  when:
+    - installation_method == "packages"
+    - ansible_os_family == "RedHat"
+    - system_packages | default('') | length > 0
+  tags: install_packages
+
+- name: Set Python alternative
+  community.general.alternatives:
+    name: python3
+    path: /usr/bin/python{{ python_version }}
+    link: /usr/bin/python3
+    priority: 1100
+    state: selected
+  when:
+    - installation_method == "packages"
+    - ansible_os_family == "RedHat"
+    - python_version | default('') | length > 1
+  tags: install_packages
+
+- name: Set Pip alternative
+  community.general.alternatives:
+    name: pip3
+    path: /usr/bin/pip{{ python_version }}
+    link: /usr/bin/pip3
+    priority: 1100
+    state: selected
+  when:
+    - installation_method == "packages"
+    - ansible_os_family == "RedHat"
+    - python_version | default('') | length > 1
+    - pip_package in system_packages
+  vars:
+    pip_package: "python{{ python_version | default('3') }}-pip"
+  tags: install_packages
+
+# Debian
+- name: Update apt cache
+  ansible.builtin.apt:
+    update_cache: true
+  register: apt_status
+  until: apt_status is success
+  delay: 5
+  retries: 3
+  environment: "{{ proxy_env | default({}) }}"
+  when:
+    - installation_method == "packages"
+    - ansible_os_family == "Debian"
+
+- name: Install system packages
+  ansible.builtin.apt:
+    name: "{{ item }}"
+    state: present
+  loop: "{{ system_packages | flatten }}"
+  register: apt_status
+  until: apt_status is success
+  delay: 5
+  retries: 3
+  environment: "{{ proxy_env | default({}) }}"
+  when:
+    - installation_method == "packages"
+    - ansible_os_family == "Debian"
+    - system_packages | default('') | length > 0
+  tags: install_packages
+
+# Install PostgreSQL from repository
+
+# RedHat
+- block:
+    - name: Check if postgresql appstream module is enabled
+      ansible.builtin.command: "dnf -y -C module list postgresql"
+      register: postgresql_module_result
+      changed_when: false
+
+    - name: Disable postgresql appstream module
+      ansible.builtin.command: "dnf -y -C module disable postgresql"
+      when:
+        - install_postgresql_repo | bool
+        - "'[x] ' not in postgresql_module_result.stdout"
+
+    - name: Enable postgresql appstream module
+      ansible.builtin.command: "dnf -y -C module enable postgresql"
+      when:
+        - not install_postgresql_repo | bool
+        - "'[x] ' in postgresql_module_result.stdout"
+
+    - name: Install PostgreSQL packages
+      ansible.builtin.dnf:
+        name: "{{ item }}"
+        state: present
+      loop: "{{ postgresql_packages | default([]) | flatten }}"
+      register: package_status
+      until: package_status is success
+      delay: 5
+      retries: 3
+  environment: "{{ proxy_env | default({}) }}"
+  when:
+    - installation_method == "packages"
+    - ansible_os_family == "RedHat"
+    - postgresql_packages | default([]) | length > 0
+  tags: install_packages, install_postgres
+
+# Debian
+- block:
+    - name: Ensure postgresql database-cluster manager package
+      ansible.builtin.apt:
+        name: postgresql-common
+        state: present
+      register: package_status
+      until: package_status is success
+      delay: 5
+      retries: 3
+
+    - name: Disable initializing of a default postgresql cluster
+      ansible.builtin.replace:
+        path: /etc/postgresql-common/createcluster.conf
+        replace: create_main_cluster = false
+        regexp: ^#?create_main_cluster.*$
+
+    - name: Disable log rotation with logrotate for postgresql
+      ansible.builtin.file:
+        dest: /etc/logrotate.d/postgresql-common
+        state: absent
+
+    - name: Install PostgreSQL packages
+      ansible.builtin.apt:
+        name: "{{ item }}"
+        state: present
+      loop: "{{ postgresql_packages | default([]) | flatten }}"
+      register: apt_status
+      until: apt_status is success
+      delay: 5
+      retries: 3
+  environment: "{{ proxy_env | default({}) }}"
+  when:
+    - installation_method == "packages"
+    - ansible_os_family == "Debian"
+    - postgresql_packages | default([]) | length > 0
+  tags: install_packages, install_postgres
+
+# Extensions
+- name: Install PostgreSQL Extensions
+  ansible.builtin.import_tasks: extensions.yml
+  when: installation_method == "packages"
+  tags: install_packages, install_postgres, install_extensions
+
+# Install perf (if 'install_perf' is 'true')
+- name: Install perf
+  ansible.builtin.import_tasks: perf.yml
+  when: install_perf | bool
+  tags: install_packages, install_perf, perf
+
+# Install packages from files (optional)
 - block:
     - name: Copy packages into /tmp
       ansible.builtin.copy:
@@ -21,7 +200,7 @@
       when: ansible_os_family == "Debian" and copy_packages_result.changed
 
     - name: Install packages
-      ansible.builtin.package:
+      ansible.builtin.dnf:
         name: "/tmp/{{ item }}"
         state: present
       loop: "{{ packages_from_file | map('basename') | list }}"
@@ -32,218 +211,3 @@
       when: ansible_os_family == "RedHat" and copy_packages_result.changed
   when: packages_from_file is defined and packages_from_file | length > 0
   tags: install_packages_from_file
-
-# Install packages from repository
-
-# RedHat
-- name: Update dnf cache
-  ansible.builtin.shell: dnf clean all && dnf -y makecache
-  args:
-    executable: /bin/bash
-  register: dnf_status
-  until: dnf_status is success
-  delay: 5
-  retries: 3
-  when:
-    - installation_method == "repo"
-    - ansible_os_family == "RedHat"
-  environment: "{{ proxy_env | default({}) }}"
-  tags: install_packages, install_postgres
-
-- name: Install system packages
-  ansible.builtin.dnf:
-    name: "{{ item }}"
-    state: present
-    disablerepo: "pgdg*"
-  loop: "{{ system_packages | flatten }}"
-  register: package_status
-  until: package_status is success
-  delay: 5
-  retries: 3
-  environment: "{{ proxy_env | default({}) }}"
-  when:
-    - installation_method == "repo"
-    - ansible_os_family == "RedHat"
-    - system_packages | default('') | length > 0
-  tags: install_packages
-
-- name: Set Python alternative
-  community.general.alternatives:
-    name: python3
-    path: /usr/bin/python{{ python_version }}
-    link: /usr/bin/python3
-    priority: 1100
-    state: selected
-  when:
-    - installation_method == "repo"
-    - ansible_os_family == "RedHat"
-    - python_version | default('') | length > 1
-  tags: install_packages
-
-- name: Set Pip alternative
-  community.general.alternatives:
-    name: pip3
-    path: /usr/bin/pip{{ python_version }}
-    link: /usr/bin/pip3
-    priority: 1100
-    state: selected
-  when:
-    - installation_method == "repo"
-    - ansible_os_family == "RedHat"
-    - python_version | default('') | length > 1
-    - pip_package in system_packages
-  vars:
-    pip_package: "python{{ python_version | default('3') }}-pip"
-  tags: install_packages
-
-# Debian
-- name: Update apt cache
-  ansible.builtin.apt:
-    update_cache: true
-  register: apt_status
-  until: apt_status is success
-  delay: 5
-  retries: 3
-  environment: "{{ proxy_env | default({}) }}"
-  when:
-    - installation_method == "repo"
-    - ansible_os_family == "Debian"
-
-- name: Install system packages
-  ansible.builtin.apt:
-    name: "{{ item }}"
-    state: present
-  loop: "{{ system_packages | flatten }}"
-  register: apt_status
-  until: apt_status is success
-  delay: 5
-  retries: 3
-  environment: "{{ proxy_env | default({}) }}"
-  when:
-    - installation_method == "repo"
-    - ansible_os_family == "Debian"
-    - system_packages | default('') | length > 0
-  tags: install_packages
-
-# Install PostgreSQL from repository
-
-# RedHat
-- block: # Preparing to install PostgreSQL
-    - name: PostgreSQL | check if appstream module is enabled
-      ansible.builtin.command: "dnf -y -C module list postgresql"
-      register: postgresql_module_result
-      changed_when: false
-
-    - name: PostgreSQL | disable appstream module
-      ansible.builtin.command: "dnf -y -C module disable postgresql"
-      when: "'[x] ' not in postgresql_module_result.stdout"
-  when:
-    - installation_method == "repo"
-    - ansible_os_family == "RedHat"
-    - ansible_distribution_major_version >= '8'
-  ignore_errors: true
-  tags: install_postgres
-
-- name: Install PostgreSQL packages
-  ansible.builtin.package:
-    name: "{{ item }}"
-    state: present
-  loop: "{{ postgresql_packages | flatten }}"
-  register: package_status
-  until: package_status is success
-  delay: 5
-  retries: 3
-  environment: "{{ proxy_env | default({}) }}"
-  when:
-    - installation_method == "repo"
-    - ansible_os_family == "RedHat"
-    - postgresql_packages | default('') | length > 0
-  tags: install_packages, install_postgres
-
-# Debian
-- block: # Preparing to install PostgreSQL
-    - name: PostgreSQL | ensure postgresql database-cluster manager package
-      ansible.builtin.package:
-        name: postgresql-common
-        state: present
-      register: package_status
-      until: package_status is success
-      delay: 5
-      retries: 3
-      environment: "{{ proxy_env | default({}) }}"
-
-    - name: PostgreSQL | disable initializing of a default postgresql cluster
-      ansible.builtin.replace:
-        path: /etc/postgresql-common/createcluster.conf
-        replace: create_main_cluster = false
-        regexp: ^#?create_main_cluster.*$
-
-    - name: PostgreSQL | disable log rotation with logrotate for postgresql
-      ansible.builtin.file:
-        dest: /etc/logrotate.d/postgresql-common
-        state: absent
-  when:
-    - installation_method == "repo"
-    - ansible_os_family == "Debian"
-  tags: install_postgres
-
-# PostgreSQL prepare for install (for RHEL)
-- block:
-    - name: PostgreSQL | check if appstream module is enabled
-      ansible.builtin.command: "dnf -y -C module list postgresql"
-      register: postgresql_module_result
-      changed_when: false
-
-    - name: PostgreSQL | disable appstream module
-      ansible.builtin.command: "dnf -y -C module disable postgresql"
-      when: "'[x] ' not in postgresql_module_result.stdout"
-  when: installation_method == "repo" and ansible_os_family == "RedHat"
-  ignore_errors: true
-  tags: install_postgres
-
-# Install PostgreSQL from repository
-# RedHat
-- name: Install PostgreSQL packages
-  ansible.builtin.package:
-    name: "{{ item }}"
-    state: present
-  loop: "{{ postgresql_packages }}"
-  register: package_status
-  until: package_status is success
-  delay: 5
-  retries: 3
-  environment: "{{ proxy_env | default({}) }}"
-  when:
-    - installation_method == "repo"
-    - ansible_os_family == "RedHat"
-    - postgresql_packages | default('') | length > 0
-  tags: install_packages, install_postgres
-
-# Debian
-- name: Install PostgreSQL packages
-  ansible.builtin.apt:
-    name: "{{ item }}"
-    state: present
-  loop: "{{ postgresql_packages | flatten }}"
-  environment: "{{ proxy_env | default({}) }}"
-  register: apt_status
-  until: apt_status is success
-  delay: 5
-  retries: 3
-  when:
-    - installation_method == "repo"
-    - ansible_os_family == "Debian"
-    - postgresql_packages | default('') | length > 0
-  tags: install_packages, install_postgres
-
-# Extensions
-- name: Install PostgreSQL Extensions
-  ansible.builtin.import_tasks: extensions.yml
-  when: installation_method == "repo"
-  tags: install_packages, install_postgres, install_extensions
-
-# Install perf (if 'install_perf' is 'true')
-- name: Install perf
-  ansible.builtin.import_tasks: perf.yml
-  when: install_perf | bool
-  tags: install_packages, install_perf, perf
