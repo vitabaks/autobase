@@ -511,7 +511,7 @@
     timeout: 300
   loop: "{{ server_result.results }}"
   loop_control:
-    label: "{{ item.instances[0][ip_address_type] | default('N/A') }}"
+    label: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}"
   when:
     - server_result.results is defined
     - item.instances is defined
@@ -529,7 +529,7 @@
       private_ip: "{{ item.instances[0].private_ip_address | default('N/A') }}"
   loop: "{{ server_result.results }}"
   loop_control:
-    label: "{{ item.instances[0][ip_address_type] | default('N/A') }}"
+    label: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}"
   when:
     - server_result.results is defined
     - item.instances is defined
