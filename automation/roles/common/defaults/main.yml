@@ -83,7 +83,7 @@ keepalived_virtual_router_id: "{{ cluster_vip.split('.')[3] | int }}" # The last
 
 # vip-manager (if 'cluster_vip' is specified and 'with_haproxy_load_balancing' is 'false')
 # renovate: datasource=github-releases depName=cybertec-postgresql/vip-manager extractVersion=^v(?<version>.*)$
-vip_manager_version: 3.0.0
+vip_manager_version: 4.0.0
 vip_manager_conf: "/etc/patroni/vip-manager.yml"
 vip_manager_interval: "1000" # time (in milliseconds) after which vip-manager wakes up and checks if it needs to register or release ip addresses.
 vip_manager_iface: "{{ vip_interface }}" # interface to which the virtual ip will be added
