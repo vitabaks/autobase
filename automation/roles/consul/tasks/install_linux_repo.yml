@@ -127,7 +127,7 @@
   register: systemd_override
   become: true
   notify:
-    - systemctl daemon-reload
+    - reload systemd daemon
     - restart consul
   when:
     - ansible_service_mgr == "systemd"

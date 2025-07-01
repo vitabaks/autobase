@@ -1,0 +1,16 @@
+---
+- name: Ensure resolved.conf.d exists
+  file:
+    path: /etc/systemd/resolved.conf.d/
+    state: directory
+
+- name: Configure systemd-resolved DNS
+  ansible.builtin.template:
+    src: consul_resolved.conf.j2
+    dest: /etc/systemd/resolved.conf.d/consul.conf
+    mode: "0644"
+
+- name: Reload service systemd-resolved
+  systemd:
+    name: systemd-resolved.service
+    state: restarted

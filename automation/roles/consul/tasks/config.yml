@@ -1,7 +1,35 @@
 ---
 # File: config.yml - Consul configuration tasks
 
-- name: Create configuration
+- name: Create configuration hcl
+  ansible.builtin.copy:
+    dest: "{{ config_item.dest }}"
+    owner: "{{ consul_user }}"
+    group: "{{ consul_group }}"
+    content: "{{ lookup('template', consul_config_template_path, convert_data=True) }}"
+    mode: "0600"
+  with_items:
+    - dest: "{{ consul_config_path }}/config.hcl"
+      config_version: "{{ consul_node_role }}"
+      when: true
+    - dest: "{{ consul_config_path }}/bootstrap.hcl"
+      config_version: bootstrap
+      when: "{{ consul_debug | bool }}"
+    - dest: "{{ consul_config_path }}/server.hcl"
+      config_version: server
+      when: "{{ consul_debug | bool }}"
+    - dest: "{{ consul_config_path }}/client.hcl"
+      config_version: client
+      when: "{{ consul_debug | bool }}"
+  loop_control:
+    loop_var: config_item
+  when:
+    - config_item.when
+    - consul_config_type == 'hcl'
+  notify:
+    - restart consul
+
+- name: Create configuration json
   ansible.builtin.copy:
     dest: "{{ config_item.dest }}"
     owner: "{{ consul_user }}"
@@ -25,6 +53,7 @@
     loop_var: config_item
   when:
     - config_item.when
+    - consul_config_type == 'json'
   notify:
     - restart consul
 
