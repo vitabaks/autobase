@@ -13,7 +13,7 @@
   "packageRules": [
     {
       "matchPackageNames": ["boto3"],
-      "updateSchedule": "weekly"
+      "schedule": ["every weekend"]
     }
   ],
   "customManagers": [
