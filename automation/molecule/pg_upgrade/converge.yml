@@ -36,19 +36,12 @@
         enable_pg_stat_kcache: true
         enable_pg_wait_sampling: true
         enable_pg_partman: true
-        enable_pg_search: true
-        pg_search_version: "0.15.18" # rpm packages of v0.15.19 are broken.
         enable_citus: "{{ 'false' if ansible_distribution_release == 'noble' else 'true' }}" # no packages for Ubuntu 24.04 (TODO)
-        enable_pg_analytics: "{{ 'false' if ansible_distribution_release == 'bullseye' else 'true' }}" # no packages for debian 11
         enable_pgvectorscale: "{{ 'true' if ansible_distribution_release in ['bookworm', 'jammy', 'noble'] else 'false' }}" # only deb packages are available
         # create extension
-        postgresql_schemas:
-          - { schema: "paradedb", db: "postgres", owner: "postgres" } # pg_search must be installed in the paradedb schema.
         postgresql_extensions:
           - { ext: "vector", db: "postgres" }
           - { ext: "vectorscale", db: "postgres" }
-          - { ext: "pg_search", db: "postgres", schema: "paradedb" }
-          - { ext: "pg_analytics", db: "postgres" }
         #  - { ext: "", db: "" }
 
     # Consul package for OracleLinux missing in HashiCorp repository
