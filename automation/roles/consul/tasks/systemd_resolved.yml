@@ -11,6 +11,6 @@
     mode: "0644"
 
 - name: Reload service systemd-resolved
-  systemd:
+  ansible.builtin.systemd:
     name: systemd-resolved.service
     state: restarted
