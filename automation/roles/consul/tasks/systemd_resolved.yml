@@ -1,6 +1,6 @@
 ---
 - name: Ensure resolved.conf.d exists
-  file:
+  ansible.builtin.file:
     path: /etc/systemd/resolved.conf.d/
     state: directory
 
