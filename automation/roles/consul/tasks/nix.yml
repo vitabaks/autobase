@@ -333,7 +333,7 @@
     - not ansible_os_family == "Darwin"
 
 - name: Configure profiles
-  template:
+  ansible.builtin.template:
     src: consul_profile.sh.j2
     dest: /etc/profile.d/consul_profile.sh
     owner: root
