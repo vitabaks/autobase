@@ -6,7 +6,7 @@
   ansible.builtin.setup:
   delegate_to: "{{ host_item }}"
   delegate_facts: true
-  with_items: "{{ consul_servers | difference(play_hosts) }}"
+  loop: "{{ consul_servers | difference(play_hosts) }}"
   loop_control:
     loop_var: host_item
   ignore_errors: true
@@ -95,6 +95,25 @@
 
       no_log: true
       when:
+        - consul_config_type == 'json'
+        - consul_raw_key is not defined
+        - bootstrap_state.stat.exists | bool
+        - inventory_hostname in consul_servers
+
+    - block:
+        - name: Check for gossip encryption key on previously boostrapped server
+          ansible.builtin.slurp:
+            src: "{{ consul_config_path }}/config.hcl"
+          register: consul_config_b64
+          ignore_errors: true
+
+        - name: Save gossip key
+          ansible.builtin.set_fact:
+            consul_raw_key: "{{ consul_config_b64.content | b64decode | regex_findall('^encrypt = \"(.+)\"$', multiline=True) | first }}"
+
+      no_log: false
+      when:
+        - consul_config_type == 'hcl'
         - consul_raw_key is not defined
         - bootstrap_state.stat.exists | bool
         - inventory_hostname in consul_servers
@@ -313,5 +332,19 @@
     - not bootstrap_state.stat.exists
     - not ansible_os_family == "Darwin"
 
+- name: Configure profiles
+  ansible.builtin.template:
+    src: consul_profile.sh.j2
+    dest: /etc/profile.d/consul_profile.sh
+    owner: root
+    group: root
+    mode: '755'
+
 - ansible.builtin.include_tasks: ../tasks/dnsmasq.yml
   when: consul_dnsmasq_enable | bool
+
+- ansible.builtin.include_tasks: ../tasks/systemd_resolved.yml
+  when:
+    - not consul_dnsmasq_enable | bool
+    - ansible_service_mgr == "systemd"
+    - consul_recursors | length > 0
