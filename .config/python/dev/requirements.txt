@@ -8,7 +8,7 @@ bracex==2.6
 certifi==2025.6.15
 cffi==1.17.1
 charset-normalizer==3.4.2
-click==8.1.8
+click==8.2.1
 click-help-colors==0.9.4
 cryptography==44.0.3
 docker==7.1.0
