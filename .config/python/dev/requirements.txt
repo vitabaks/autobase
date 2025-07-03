@@ -14,7 +14,7 @@ cryptography==44.0.3
 docker==7.1.0
 enrich==1.2.7
 filelock==3.18.0
-flake8==7.1.2
+flake8==7.3.0
 idna==3.10
 importlib-metadata==8.7.0
 jinja2==3.1.6
