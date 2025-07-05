@@ -12,6 +12,65 @@ const ClustersTableExportButton: FC<ClustersTableRemoveButtonProps> = ({ cluster
   const { t } = useTranslation(['clusters', 'shared']);
   const [getClusterTrigger] = useLazyGetClustersByIdQuery();
 
+  const parseVariableValue = (valueRaw: string): any => {
+    // Handle boolean values
+    if (valueRaw === 'true') return true;
+    if (valueRaw === 'false') return false;
+    
+    // Handle numeric values
+    if (!isNaN(Number(valueRaw)) && valueRaw !== '') {
+      return Number(valueRaw);
+    }
+    
+    // Handle JSON structures (objects and arrays)
+    if (valueRaw.startsWith('{') || valueRaw.startsWith('[')) {
+      try {
+        // First try to parse as valid JSON
+        return JSON.parse(valueRaw);
+      } catch (e) {
+        // If JSON parsing fails, try to fix common issues
+        try {
+          let fixedValue = valueRaw;
+          
+          if (valueRaw.startsWith('{')) {
+            // Fix object notation: {key:value} -> {"key":"value"}
+            // Handle unquoted keys and values
+            fixedValue = valueRaw
+              .replace(/([{,]\s*)([a-zA-Z_][a-zA-Z0-9_]*)\s*:/g, '$1"$2":')  // Quote keys
+              .replace(/:\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*([,}])/g, ':"$1"$2')   // Quote string values
+              .replace(/:\s*(\d+)\s*([,}])/g, ':$1$2');                        // Keep numeric values unquoted
+          } else if (valueRaw.startsWith('[')) {
+            // Fix array notation: ensure proper JSON format
+            // Handle arrays of strings that might not be properly quoted
+            fixedValue = valueRaw
+              .replace(/\[\s*"([^"]+)"\s*(?:,\s*"([^"]+)"\s*)*\]/g, (match) => {
+                // Already properly quoted, return as is
+                return match;
+              })
+              .replace(/\[\s*([^"\[{][^,\]]*)\s*(?:,\s*([^"\[{][^,\]]*)\s*)*\]/g, (match) => {
+                // Fix unquoted string arrays
+                return match.replace(/([^",\[\]{}]+)/g, (item) => {
+                  const trimmed = item.trim();
+                  if (trimmed && !trimmed.startsWith('"') && !trimmed.endsWith('"') && isNaN(Number(trimmed))) {
+                    return `"${trimmed}"`;
+                  }
+                  return item;
+                });
+              });
+          }
+          
+          return JSON.parse(fixedValue);
+        } catch (e2) {
+          // If all parsing attempts fail, return as string
+          return valueRaw;
+        }
+      }
+    }
+    
+    // Return as string if no special processing needed
+    return valueRaw;
+  };
+
   const handleButtonClick = async () => {
     try {
       const response = await getClusterTrigger({ id: clusterId }).unwrap();
@@ -20,11 +79,7 @@ const ClustersTableExportButton: FC<ClustersTableRemoveButtonProps> = ({ cluster
       const vars: Record<string, any> = {};
       (response.extra_vars || []).forEach(pair => {
         const [key, valueRaw] = pair.split('=', 2);
-        let value: any = valueRaw;
-        if (value === 'true') value = true;
-        else if (value === 'false') value = false;
-        else if (!isNaN(Number(value))) value = Number(value);
-        vars[key] = value;
+        vars[key] = parseVariableValue(valueRaw);
       });
 
       // Only include valid servers (with ip and name)
