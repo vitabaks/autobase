@@ -13,11 +13,11 @@
     groups:
       - postgres_cluster
       - master
-    ansible_ssh_host: "{{ item.public_ip }}"
+    ansible_ssh_host: "{{ item[server_public_ip | bool | ternary('public_ip', 'private_ip')] }}"
     ansible_ssh_private_key_file: "{{ ssh_private_key_file | default(None) }}"
   loop: "{{ [ip_addresses[0]] }}" # add the first item in the list
   loop_control:
-    label: "{{ item.public_ip }}"
+    label: "{{ item[server_public_ip | bool | ternary('public_ip', 'private_ip')] }}"
   changed_when: false
 
 - name: "Inventory | Add host to 'postgres_cluster', 'replica' groups"
@@ -26,11 +26,11 @@
     groups:
       - postgres_cluster
       - replica
-    ansible_ssh_host: "{{ item.public_ip }}"
+    ansible_ssh_host: "{{ item[server_public_ip | bool | ternary('public_ip', 'private_ip')] }}"
     ansible_ssh_private_key_file: "{{ ssh_private_key_file | default(None) }}"
   loop: "{{ ip_addresses[1:] }}" # start with the 2nd item of the list
   loop_control:
-    label: "{{ item.public_ip }}"
+    label: "{{ item[server_public_ip | bool | ternary('public_ip', 'private_ip')] }}"
   when: ip_addresses | length > 1 # only if there is more than one item
   changed_when: false
 
@@ -38,11 +38,11 @@
   ansible.builtin.add_host:
     name: "{{ item.private_ip }}"
     group: balancers
-    ansible_ssh_host: "{{ item.public_ip }}"
+    ansible_ssh_host: "{{ item[server_public_ip | bool | ternary('public_ip', 'private_ip')] }}"
     ansible_ssh_private_key_file: "{{ ssh_private_key_file | default(None) }}"
   loop: "{{ ip_addresses }}"
   loop_control:
-    label: "{{ item.public_ip }}"
+    label: "{{ item[server_public_ip | bool | ternary('public_ip', 'private_ip')] }}"
   changed_when: false
   when: with_haproxy_load_balancing | bool
 
@@ -50,11 +50,11 @@
   ansible.builtin.add_host:
     name: "{{ item.private_ip }}"
     group: etcd_cluster
-    ansible_ssh_host: "{{ item.public_ip }}"
+    ansible_ssh_host: "{{ item[server_public_ip | bool | ternary('public_ip', 'private_ip')] }}"
     ansible_ssh_private_key_file: "{{ ssh_private_key_file | default(None) }}"
   loop: "{{ ip_addresses[:7] }}" # no more than 7 servers for the etcd cluster
   loop_control:
-    label: "{{ item.public_ip }}"
+    label: "{{ item[server_public_ip | bool | ternary('public_ip', 'private_ip')] }}"
   changed_when: false
   when: not dcs_exists | bool and dcs_type == "etcd"
 
@@ -62,10 +62,10 @@
   ansible.builtin.add_host:
     name: "{{ item.private_ip }}"
     group: consul_instances
-    ansible_ssh_host: "{{ item.public_ip }}"
+    ansible_ssh_host: "{{ item[server_public_ip | bool | ternary('public_ip', 'private_ip')] }}"
     ansible_ssh_private_key_file: "{{ ssh_private_key_file | default(None) }}"
   loop: "{{ ip_addresses }}"
   loop_control:
-    label: "{{ item.public_ip }}"
+    label: "{{ item[server_public_ip | bool | ternary('public_ip', 'private_ip')] }}"
   changed_when: false
   when: dcs_type == "consul"
