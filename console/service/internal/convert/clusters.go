@@ -1,6 +1,7 @@
 package convert
 
 import (
+	"encoding/json"
 	"postgresql-cluster-console/internal/storage"
 	"postgresql-cluster-console/models"
 
@@ -26,6 +27,21 @@ func ClusterToSwagger(cl *storage.Cluster, servers []storage.Server, environment
 		PostgresVersion: cl.PostgreVersion,
 		ProjectName:     projectCode,
 		Status:          cl.Status,
+	}
+
+	// Add extra_vars
+	extraVars := []string{}
+	if cl.ExtraVars != nil && len(cl.ExtraVars) > 0 {
+		err := json.Unmarshal(cl.ExtraVars, &extraVars)
+		if err != nil {
+			extraVars = []string{}
+		}
+	}
+	clusterInfo.ExtraVars = extraVars
+
+	// Add inventory (as string)
+	if cl.Inventory != nil && len(cl.Inventory) > 0 {
+		clusterInfo.Inventory = string(cl.Inventory)
 	}
 
 	for _, server := range servers {
