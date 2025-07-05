@@ -6,7 +6,7 @@
   ansible.builtin.setup:
   delegate_to: "{{ host_item }}"
   delegate_facts: true
-  with_items: "{{ consul_servers | difference(play_hosts) }}"
+  loop: "{{ consul_servers | difference(play_hosts) }}"
   loop_control:
     loop_var: host_item
   ignore_errors: true

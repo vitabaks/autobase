@@ -11,7 +11,7 @@
         owner: "{{ consul_user }}"
         group: "{{ consul_group }}"
         mode: "0700"
-      with_items:
+      loop:
         - "{{ consul_config_path }}"
         - "{{ consul_configd_path }}"
         - "{{ consul_data_path }}"
@@ -45,7 +45,7 @@
     owner: "{{ syslog_user }}"
     group: "{{ syslog_group }}"
     mode: "0700"
-  with_items:
+  loop:
     - "{{ consul_log_path }}"
   loop_control:
     loop_var: log_item
@@ -73,7 +73,7 @@
   ansible.windows.win_file:
     dest: "{{ dir_item }}"
     state: directory
-  with_items:
+  loop:
     - "{{ consul_config_path }}"
     - "{{ consul_configd_path }}"
     - "{{ consul_data_path }}"

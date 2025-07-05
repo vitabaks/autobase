@@ -290,13 +290,13 @@
         - regexp: "^name:"
           line: "name: {{ ansible_hostname }}"
         - regexp: "^  listen: .*:{{ patroni_restapi_port }}$"
-          line: "  listen: {{ hostvars[inventory_hostname].inventory_hostname }}:{{ patroni_restapi_port }}"
+          line: "  listen: {{ patroni_bind_address | default(bind_address, true) }}:{{ patroni_restapi_port }}"
         - regexp: "^  connect_address: .*:{{ patroni_restapi_port }}$"
-          line: "  connect_address: {{ hostvars[inventory_hostname].inventory_hostname }}:{{ patroni_restapi_port }}"
+          line: "  connect_address: {{ patroni_bind_address | default(bind_address, true) }}:{{ patroni_restapi_port }}"
         - regexp: "^  listen: ((?!{{ patroni_restapi_port }}).)*$"
-          line: "  listen: {{ hostvars[inventory_hostname].inventory_hostname }},127.0.0.1:{{ postgresql_port }}"
+          line: "  listen: {{ patroni_bind_address | default(bind_address, true) }},127.0.0.1:{{ postgresql_port }}"
         - regexp: "^  connect_address: ((?!{{ patroni_restapi_port }}).)*$"
-          line: "  connect_address: {{ hostvars[inventory_hostname].inventory_hostname }}:{{ postgresql_port }}"
+          line: "  connect_address: {{ patroni_bind_address | default(bind_address, true) }}:{{ postgresql_port }}"
       loop_control:
         loop_var: patroni_config_without_cluster_vip_item
         label: "{{ patroni_config_without_cluster_vip_item.line }}"
@@ -312,13 +312,13 @@
         - regexp: "^name:"
           line: "name: {{ ansible_hostname }}"
         - regexp: "^  listen: .*:{{ patroni_restapi_port }}$"
-          line: "  listen: {{ hostvars[inventory_hostname].inventory_hostname }}:{{ patroni_restapi_port }}"
+          line: "  listen: {{ patroni_bind_address | default(bind_address, true) }}:{{ patroni_restapi_port }}"
         - regexp: "^  connect_address: .*:{{ patroni_restapi_port }}$"
-          line: "  connect_address: {{ hostvars[inventory_hostname].inventory_hostname }}:{{ patroni_restapi_port }}"
+          line: "  connect_address: {{ patroni_bind_address | default(bind_address, true) }}:{{ patroni_restapi_port }}"
         - regexp: "^  listen: ((?!{{ patroni_restapi_port }}).)*$"
-          line: "  listen: {{ hostvars[inventory_hostname].inventory_hostname }},{{ cluster_vip }},127.0.0.1:{{ postgresql_port }}"
+          line: "  listen: {{ patroni_bind_address | default(bind_address, true) }},{{ cluster_vip }},127.0.0.1:{{ postgresql_port }}"
         - regexp: "^  connect_address: ((?!{{ patroni_restapi_port }}).)*$"
-          line: "  connect_address: {{ hostvars[inventory_hostname].inventory_hostname }}:{{ postgresql_port }}"
+          line: "  connect_address: {{ patroni_bind_address | default(bind_address, true) }}:{{ postgresql_port }}"
       loop_control:
         loop_var: patroni_config_with_cluster_vip_item
         label: "{{ patroni_config_with_cluster_vip_item.line }}"
@@ -498,30 +498,32 @@
 
         - name: Prepare PostgreSQL | make sure the user "{{ patroni_superuser_username }}" are present, and password does not differ from the specified
           community.postgresql.postgresql_user:
-            login_db: postgres
             name: "{{ patroni_superuser_username }}"
             password: "{{ patroni_superuser_password }}"
             encrypted: true
             role_attr_flags: "SUPERUSER"
+            login_db: postgres
             login_unix_socket: "{{ postgresql_unix_socket_dir }}"
-            port: "{{ postgresql_port }}"
+            login_port: "{{ postgresql_port }}"
             state: present
           become: true
           become_user: postgres
 
         - name: Prepare PostgreSQL | make sure the user "{{ patroni_replication_username }}" are present, and password does not differ from the specified
           community.postgresql.postgresql_user:
-            login_db: postgres
             name: "{{ patroni_replication_username }}"
             password: "{{ patroni_replication_password }}"
             encrypted: true
             role_attr_flags: "LOGIN,REPLICATION"
+            login_db: postgres
             login_unix_socket: "{{ postgresql_unix_socket_dir }}"
-            port: "{{ postgresql_port }}"
+            login_port: "{{ postgresql_port }}"
             state: present
           become: true
           become_user: postgres
-      when: inventory_hostname == groups['master'][0]
+      when:
+        - inventory_hostname == groups['master'][0]
+        - patroni_standby_cluster.host | default('') | length < 1 # do not perform on the Standby Cluster
 
     - name: Prepare PostgreSQL | check PostgreSQL is started
       become: true
@@ -798,7 +800,7 @@
     - name: "Wait for port {{ patroni_restapi_port }} to become open on the host"
       ansible.builtin.wait_for:
         port: "{{ patroni_restapi_port }}"
-        host: "{{ inventory_hostname }}"
+        host: "{{ patroni_bind_address | default(bind_address, true) }}"
         state: started
         timeout: 120
         delay: 10
@@ -821,14 +823,14 @@
 
     - name: Wait for the Standby cluster initialization to complete
       ansible.builtin.uri:
-        url: "http://{{ inventory_hostname }}:{{ patroni_restapi_port }}/standby-leader"
+        url: "http://{{ patroni_bind_address | default(bind_address, true) }}:{{ patroni_restapi_port }}/standby-leader"
         status_code: 200
       register: standby_leader_result
       until: standby_leader_result.status == 200
       retries: "{{ (cluster_restore_timeout | default(86400)) | int // 30 }}" # timeout 24 hours
       delay: 30
       environment:
-        no_proxy: "{{ inventory_hostname }}"
+        no_proxy: "{{ patroni_bind_address | default(bind_address, true) }}"
       when:
         - (patroni_standby_cluster.host is defined and patroni_standby_cluster.host | length > 0)
         - not ansible_check_mode
@@ -845,14 +847,14 @@
 
     - name: Wait for the cluster to initialize (master is the leader with the lock)
       ansible.builtin.uri:
-        url: "http://{{ inventory_hostname }}:{{ patroni_restapi_port }}/leader"
+        url: "http://{{ patroni_bind_address | default(bind_address, true) }}:{{ patroni_restapi_port }}/leader"
         status_code: 200
       register: result
       until: result.status == 200
       retries: 10
       delay: 2
       environment:
-        no_proxy: "{{ inventory_hostname }}"
+        no_proxy: "{{ patroni_bind_address | default(bind_address, true) }}"
       when:
         - (patroni_standby_cluster.host is not defined or patroni_standby_cluster.host | length < 1)
         - not ansible_check_mode
@@ -897,12 +899,12 @@
 
     - name: Make sure the superuser and replication users are present, and password does not differ from the specified
       community.postgresql.postgresql_user:
-        login_db: postgres
         name: "{{ item.name }}"
         password: "{{ item.password }}"
         role_attr_flags: "{{ item.flags }}"
+        login_db: postgres
         login_unix_socket: "{{ postgresql_unix_socket_dir }}"
-        port: "{{ postgresql_port }}"
+        login_port: "{{ postgresql_port }}"
       register: postgresql_user_result
       loop:
         - { name: "{{ patroni_superuser_username }}", password: "{{ patroni_superuser_password }}", flags: "SUPERUSER" }
@@ -918,12 +920,12 @@
 
     - name: Make sure the postgresql users are present, and password does not differ from the specified
       community.postgresql.postgresql_user:
-        login_db: postgres
         name: "{{ item.name }}"
         password: "{{ item.password }}"
         role_attr_flags: "{{ item.flags }}"
+        login_db: postgres
         login_unix_socket: "{{ postgresql_unix_socket_dir }}"
-        port: "{{ postgresql_port }}"
+        login_port: "{{ postgresql_port }}"
       loop: "{{ postgresql_users }}"
       loop_control:
         label: "{{ item.name }}"
@@ -946,9 +948,11 @@
             value: "{{ patroni_superuser_password }}"
         state: present
       when: hostvars[groups['master'][0]]['postgresql_user_result'] is changed
-  when: patroni_cluster_bootstrap_method != "initdb" and
-    (pgbackrest_install|bool or wal_g_install|bool) and
-    (existing_pgcluster is not defined or not existing_pgcluster|bool)
+  when:
+    - patroni_cluster_bootstrap_method != "initdb"
+    - (pgbackrest_install | bool or wal_g_install | bool)
+    - (existing_pgcluster is not defined or not existing_pgcluster | bool)
+    - patroni_standby_cluster.host | default('') | length < 1 # do not perform on the Standby Cluster
   become: true
   become_user: postgres
   tags: patroni, point_in_time_recovery
@@ -985,7 +989,7 @@
     - name: "Wait for port {{ patroni_restapi_port }} to become open on the host"
       ansible.builtin.wait_for:
         port: "{{ patroni_restapi_port }}"
-        host: "{{ inventory_hostname }}"
+        host: "{{ patroni_bind_address | default(bind_address, true) }}"
         state: started
         timeout: 120
         delay: 10
@@ -993,14 +997,14 @@
 
     - name: Check that the patroni is healthy on the replica server
       ansible.builtin.uri:
-        url: "http://{{ inventory_hostname }}:{{ patroni_restapi_port }}/health"
+        url: "http://{{ patroni_bind_address | default(bind_address, true) }}:{{ patroni_restapi_port }}/health"
         status_code: 200
       register: replica_result
       until: replica_result.status == 200
       retries: "{{ (cluster_restore_timeout | default(86400)) | int // 30 }}" # timeout 24 hours
       delay: 30
       environment:
-        no_proxy: "{{ inventory_hostname }}"
+        no_proxy: "{{ patroni_bind_address | default(bind_address, true) }}"
       when: not ansible_check_mode
   when: "'replica' in groups and groups['replica'] | length > 0 and inventory_hostname in groups['replica']"
   tags: patroni, patroni_start_replica, point_in_time_recovery

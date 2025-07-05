@@ -17,5 +17,7 @@
     state: present
   ignore_errors: true
   loop: "{{ postgresql_databases | flatten(1) }}"
-  when: postgresql_databases is defined and postgresql_databases | length > 0
+  when:
+    - postgresql_databases | default('') | length > 0
+    - patroni_standby_cluster.host | default('') | length < 1 # do not perform on the Standby Cluster
   tags: postgresql_databases

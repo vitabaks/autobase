@@ -1,7 +1,7 @@
 ---
 - name: Check Patroni status
   ansible.builtin.uri:
-    url: "http://{{ inventory_hostname }}:{{ patroni_restapi_port | default(8008) }}/patroni"
+    url: "http://{{ patroni_bind_address | default(bind_address, true) }}:{{ patroni_restapi_port | default(8008) }}/patroni"
     method: GET
     return_content: true
   register: patroni_response
