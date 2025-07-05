@@ -6,8 +6,8 @@
 #
 # Incoming options:
 # - github_repo (e.q, 'paradedb/paradedb')
-# - extension_name (e.q., 'pg_search')
-# - extension_version (e.q., '0.15.18') - optional
+# - extension_name (e.q., 'pgvectorscale')
+# - extension_version (e.q., '0.7.1') - optional
 # - search_pattern (search in assets.browser_download_url)
 # - package_name_pattern - required when installing a file extracted from an archive.
 

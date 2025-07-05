@@ -25,32 +25,32 @@ You can also include it in a `requirements.yml` file and install it via `ansible
 ```yaml
 collections:
   - name: vitabaks.autobase
-    version: 2.2.0
+    version: 2.2.3
 ```
 
 #### Use Autobase playbook
 
-1. Prepare your [inventory](https://github.com/vitabaks/autobase/blob/master/automation/inventory.example)
+1. Prepare your inventory file
 
-Note: The inventory must use private IP addresses (not hostnames) to prevent cluster components from listening on public interfaces. It should follow the [example structure](https://github.com/vitabaks/autobase/blob/master/automation/inventory.example) and include required groups such as `master`, `replica` (as part of the `postgres_cluster` group), `etcd_cluster`, and others.
+Note: It should follow the example [inventory](https://github.com/vitabaks/autobase/blob/master/automation/inventory.example) structure and include required groups such as `master`, `replica` (as part of the `postgres_cluster` group), `etcd_cluster`, and others.
 
-2. Review and override default [variables](https://github.com/vitabaks/autobase/blob/master/automation/roles/common/defaults/main.yml)
+2. Prepare your variables file
 
-See [roles/common/defaults/main.yml](https://github.com/vitabaks/autobase/blob/master/automation/roles/common/defaults/main.yml) for all configurable options. You can override them via group_vars, host_vars, or directly in your inventory.
+Refer to the default [variables](https://github.com/vitabaks/autobase/blob/master/automation/roles/common/defaults/main.yml) for all configurable options. You can override them via group_vars, host_vars, or directly in your inventory.
 
 3. Run the Autobase playbook
 
-Include the playbook in your project:
+Execute it directly:
+
+```bash
+ansible-playbook -i inventory vitabaks.autobase.deploy_pgcluster
+```
+
+Or include the playbook in your project:
 
 ```yaml
 - name: Run Autobase deployment
   ansible.builtin.import_playbook: vitabaks.autobase.deploy_pgcluster
-```
-
-Or execute it directly:
-
-```bash
-ansible-playbook -i inventory vitabaks.autobase.deploy_pgcluster
 ```
 
 Tip: Start with `deploy_pgcluster` for initial provisioning, then use `config_pgcluster` for further configuration changes.

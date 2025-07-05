@@ -1,0 +1,7 @@
+{{ ansible_managed | comment }}
+
+[Resolve]
+DNS={{ consul_addresses.dns }}:{{ consul_ports.dns }}
+Domains=
+Cache=no
+DNSStubListener=yes

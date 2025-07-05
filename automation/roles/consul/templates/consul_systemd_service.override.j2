@@ -2,9 +2,9 @@
 
 [Unit]
 ConditionFileNotEmpty=
-ConditionFileNotEmpty={{ consul_config_path }}/config.json
+ConditionFileNotEmpty={{ consul_config_path }}/config.{{ consul_config_type }}
 
 [Service]
 ExecStart=
-ExecStart=/usr/bin/consul agent -config-file={{ consul_config_path }}/config.json -config-dir={{ consul_configd_path }}
+ExecStart=/usr/bin/consul agent -config-file={{ consul_config_path }}/config.{{ consul_config_type }} -config-dir={{ consul_configd_path }}
 

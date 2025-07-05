@@ -24,7 +24,7 @@ Environment=CONSUL_UI_LEGACY=true
 ExecStartPre=-/bin/mkdir -m 0750 -p {{ consul_run_path }}
 ExecStartPre=/bin/chown -R {{ consul_user }}:{{ consul_group }} {{ consul_run_path }}
 ExecStart={{ consul_bin_path }}/consul agent \
-    -config-file={{ consul_config_path }}/config.json \
+    -config-file={{ consul_config_path }}/config.{{ consul_config_type }} \
     -config-dir={{ consul_configd_path}} \
     -pid-file={{ consul_run_path }}/consul.pid
 ExecReload=/bin/kill -HUP $MAINPID

@@ -183,45 +183,46 @@ Refer to the [Deployment](https://autobase.tech/docs/category/deployment) sectio
 The command line mode is suitable for advanced users who require greater flexibility and control over the deployment and management of their PostgreSQL clusters.
 While the Console (UI) is designed for ease of use and is suitable for most users, the command line provides powerful options for those experienced in automation and configuration.
 
-0. [Install Ansible](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html) on one control node (which could easily be a laptop)
+> [!NOTE]
+> All dependencies and source code are bundled into the `autobase/automation` docker image. This means the deployment process comes down to simply launching a container with a few variable overrides.
 
-```sh
-sudo apt update && sudo apt install -y python3-pip sshpass git
-pip3 install ansible
+1. Prepare your inventory file
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/vitabaks/autobase/refs/heads/master/automation/inventory.example \
+  --output ./inventory
 ```
 
-1. Install the Autobase Collection
+Specify the hosts and appropriate connection settings for your environment, such as ansible_user, ansible_ssh_pass, or ansible_ssh_private_key_file.
 
-Install directly from Ansible Galaxy:
-
-```sh
-ansible-galaxy collection install vitabaks.autobase
+```bash
+nano ./inventory
 ```
 
-Or include it in your requirements.yml:
+2. Prepare your variables file
 
-```yaml
-collections:
-  - name: vitabaks.autobase
-    version: 2.2.0
+Refer to the default [variables](https://github.com/vitabaks/autobase/blob/master/automation/roles/common/defaults/main.yml) for all configurable options. To override defaults, copy the relevant variables into your vars file.
+
+```bash
+nano ./vars.yml
 ```
 
-2. Prepare your inventory
+3. Run the deployment command
 
-See the example [inventory](https://github.com/vitabaks/autobase/blob/master/automation/inventory.example) file. Specify internal IP addresses and connection details such as `ansible_user`, `ansible_ssh_pass`, or `ansible_ssh_private_key_file`.
-
-3. Define variables
-
-Review default [variables](https://github.com/vitabaks/autobase/blob/master/automation/roles/common/defaults/main.yml). Override them in your inventory, group_vars, or other appropriate locations.
-
-4. Use Autobase playbook
-
-```yaml
-- name: Run Autobase deployment
-  ansible.builtin.include_playbook: vitabaks.autobase.deploy_pgcluster
+```bash
+docker run --rm -it \
+  -e ANSIBLE_SSH_ARGS="-F none" \
+  -e ANSIBLE_INVENTORY=/autobase/inventory \
+  -v $PWD/inventory:/autobase/inventory \
+  -v $PWD/vars.yml:/vars.yml \
+  -v $HOME/.ssh:/root/.ssh \
+  autobase/automation:latest \
+    ansible-playbook deploy_pgcluster.yml -e "@/vars.yml"
 ```
 
-Note: Start with `deploy_pgcluster`, and use `config_pgcluster` later for reconfiguration.
+Tip: Start with `deploy_pgcluster` for initial provisioning, then use `config_pgcluster` for further configuration changes.
+
+Alternatively, you can use [Ansible Collection](./automation/README.md)
 
 ### How to start from scratch
 

@@ -10,7 +10,7 @@
 - name: Check HAProxy is started and accepting connections
   ansible.builtin.wait_for:
     port: "{{ haproxy_listen_port.stats }}"
-    host: "{{ inventory_hostname }}"
+    host: "{{ haproxy_bind_address | default(bind_address, true) }}"
     state: started
     timeout: 120
     delay: 10

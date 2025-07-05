@@ -283,6 +283,7 @@
 
 # ParadeDB - https://github.com/paradedb/paradedb
 # pg_search (if 'enable_paradedb' or 'enable_pg_search' is 'true')
+# Note: The open-source (free) version of pg_search is now limited and not suitable for production use without purchasing a commercial license.
 - name: Install pg_search from GitHub
   ansible.builtin.include_tasks: extensions_github.yml
   vars:

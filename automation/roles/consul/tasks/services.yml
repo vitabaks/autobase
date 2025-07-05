@@ -8,7 +8,7 @@
     owner: "{{ consul_user }}"
     group: "{{ consul_group }}"
     mode: "0644"
-  with_items: "{{ consul_services }}"
+  loop: "{{ consul_services }}"
   loop_control:
     loop_var: service_item
   notify:
@@ -41,14 +41,14 @@
 - name: Set fact with list of existing configuration files
   ansible.builtin.set_fact:
     list_current_service_config: "{{ list_current_service_config | default([]) + [config_file_item.path] }}"
-  with_items: "{{ services_enabled_files }}"
+  loop: "{{ services_enabled_files }}"
   loop_control:
     loop_var: config_file_item
 
 - name: Set fact with list of services we manage
   ansible.builtin.set_fact:
     managed_files: "{{ managed_files | default([]) }} + [ '{{ consul_configd_path }}/service_{{ service_item.id }}.json' ]"
-  with_items: "{{ consul_services }}"
+  loop: "{{ consul_services }}"
   loop_control:
     loop_var: service_item
   when: ansible_os_family != 'Windows'
@@ -56,7 +56,7 @@
 - name: Find all service config files that we manage [Windows]
   ansible.windows.win_stat:
     path: "{{ consul_configd_path }}/service_{{ service_config_item.id }}.json"
-  with_items: "{{ consul_services }}"
+  loop: "{{ consul_services }}"
   loop_control:
     loop_var: service_config_item
   register: managed_files_win_paths
@@ -65,7 +65,7 @@
 - name: Set fact with list of services we manage [Windows]
   ansible.builtin.set_fact:
     managed_files: "{{ managed_files | default([]) }} + [ '{{ service_item.stat.path }}' ]"
-  with_items: "{{ managed_files_win_paths.results }}"
+  loop: "{{ managed_files_win_paths.results }}"
   loop_control:
     loop_var: service_item
   when: ansible_os_family == 'Windows'
@@ -78,7 +78,7 @@
     - ansible_os_family != 'Windows'
     - non_declared_service_item not in managed_files
     - non_declared_service_item not in consul_cleanup_ignore_files
-  with_items: "{{ list_current_service_config }}"
+  loop: "{{ list_current_service_config }}"
   loop_control:
     loop_var: non_declared_service_item
   ignore_errors: "{{ ansible_check_mode }}"
@@ -93,7 +93,7 @@
     - ansible_os_family == 'Windows'
     - non_declared_service_item not in managed_files
     - non_declared_service_item not in consul_cleanup_ignore_files
-  with_items: "{{ list_current_service_config }}"
+  loop: "{{ list_current_service_config }}"
   loop_control:
     loop_var: non_declared_service_item
   ignore_errors: "{{ ansible_check_mode }}"

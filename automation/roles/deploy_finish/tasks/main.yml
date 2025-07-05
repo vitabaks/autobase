@@ -148,8 +148,8 @@
   vars:
     public_haproxy_ip_addresses: "{{ groups['balancers'] | default([]) | map('extract', hostvars, 'ansible_ssh_host') | join(',') }}"
     public_postgres_ip_addresses: "{{ groups['postgres_cluster'] | default([]) | map('extract', hostvars, 'ansible_ssh_host') | join(',') }}"
-    haproxy_ip_addresses: "{{ groups['balancers'] | default([]) | map('extract', hostvars, 'inventory_hostname') | join(',') }}"
-    postgres_ip_addresses: "{{ groups['postgres_cluster'] | default([]) | map('extract', hostvars, 'inventory_hostname') | join(',') }}"
+    haproxy_ip_addresses: "{{ groups['balancers'] | default([]) | map('extract', hostvars) | map(attribute='haproxy_bind_address', default=bind_address) | join(',') }}"
+    postgres_ip_addresses: "{{ groups['postgres_cluster'] | default([]) | map('extract', hostvars) | map(attribute='patroni_bind_address', default=bind_address) | join(',') }}"
     superuser_username: "{{ patroni_superuser_username }}"
     superuser_password: "{{ '********' if mask_password | default(false) | bool else patroni_superuser_password }}"
     libpq_postgres_host_port: "{{ postgres_ip_addresses.split(',') | map('regex_replace', '$', ':' + postgresql_port | string) | join(',') }}"

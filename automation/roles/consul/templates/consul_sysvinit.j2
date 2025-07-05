@@ -12,7 +12,7 @@
 {% endif %}
 
 CONSUL={{ consul_bin_path }}/consul
-CONFIG={{ consul_config_path }}/config.json
+CONFIG={{ consul_config_path }}/config.{{ consul_config_type }}
 CONFIGD={{ consul_configd_path }}
 PID_FILE={{ consul_run_path }}/consul.pid
 LOCK_FILE=/var/lock/subsys/consul

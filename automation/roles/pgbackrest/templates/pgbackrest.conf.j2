@@ -10,7 +10,7 @@
 {% if pgbackrest_conf.global | selectattr('option', 'equalto', 'backup-standby') | map(attribute='value') | list | last | default('') == 'y' %}
 {% set pg_standby_hosts = groups['postgres_cluster'] | reject('equalto', inventory_hostname) | list %}
 {% for host in pg_standby_hosts %}
-pg{{ loop.index + 1 }}-host={{ host }}
+pg{{ loop.index + 1 }}-host={{ hostvars[host]['patroni_bind_address'] | default(hostvars[host]['bind_address'], true) }}
 pg{{ loop.index + 1 }}-port={{ postgresql_port }}
 pg{{ loop.index + 1 }}-path={{ postgresql_data_dir }}
 {% endfor %}

@@ -20,14 +20,14 @@
 
 - name: Make sure replica endpoint is unavailable
   ansible.builtin.uri:
-    url: http://{{ inventory_hostname }}:{{ patroni_restapi_port }}/replica
+    url: http://{{ patroni_bind_address | default(bind_address, true) }}:{{ patroni_restapi_port }}/replica
     status_code: 503
   register: patroni_replica_result
   until: patroni_replica_result.status == 503
   retries: 30
   delay: 2
   environment:
-    no_proxy: "{{ inventory_hostname }}"
+    no_proxy: "{{ patroni_bind_address | default(bind_address, true) }}"
 
 - name: Wait for active transactions to complete
   become: true

@@ -14,7 +14,7 @@
 
 - name: Install OS packages
   ansible.builtin.command: "tdnf install -y {{ package_item }}"
-  with_items: "{{ consul_os_packages }}"
+  loop: "{{ consul_os_packages }}"
   loop_control:
     loop_var: package_item
   tags: installation

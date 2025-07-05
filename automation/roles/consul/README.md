@@ -353,18 +353,11 @@ consul_node_meta:
 - Default Linux value: false
 - Default Windows value: false
 
-### `consul_iface`
-
-- Consul network interface
-  - Override with `CONSUL_IFACE` environment variable
-- Default value: `{{ ansible_default_ipv4.interface }}`
-
 ### `consul_bind_address`
 
 - Bind address
   - Override with `CONSUL_BIND_ADDRESS` environment variable
-- Default value: default ipv4 address, or address of interface configured by
-  `consul_iface`
+- Default value: `bind_address`
 
 ### `consul_advertise_address`
 
