@@ -491,22 +491,6 @@
         - gcp_bucket_create | bool
   when: state == 'present'
 
-- name: Wait for host to be available via SSH
-  ansible.builtin.wait_for:
-    host: "{{ item.networkInterfaces[0].accessConfigs[0].natIP if server_public_ip | bool else item.networkInterfaces[0].networkIP }}"
-    port: 22
-    delay: 5
-    timeout: "{{ 1800 if server_type is search('metal') else 300 }}" # 30 min for bare metal, 5 min for VMs
-  loop: "{{ server_result.results }}"
-  loop_control:
-    index_var: idx
-    label: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}"
-  when:
-    - server_result.results is defined
-    - item.networkInterfaces is defined
-    - item.networkInterfaces[0].accessConfigs[0].natIP is defined or
-      item.networkInterfaces[0].networkIP is defined
-
 # Info
 - name: Server info
   ansible.builtin.debug:
@@ -525,6 +509,23 @@
   when:
     - server_result.results is defined
     - item.networkInterfaces is defined
+
+# Check SSH access
+- name: Wait for host to be available via SSH
+  ansible.builtin.wait_for:
+    host: "{{ item.networkInterfaces[0].accessConfigs[0].natIP if server_public_ip | bool else item.networkInterfaces[0].networkIP }}"
+    port: 22
+    delay: 5
+    timeout: "{{ 1800 if server_type is search('metal') else 300 }}" # 30 min for bare metal, 5 min for VMs
+  loop: "{{ server_result.results }}"
+  loop_control:
+    index_var: idx
+    label: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}"
+  when:
+    - server_result.results is defined
+    - item.networkInterfaces is defined
+    - item.networkInterfaces[0].accessConfigs[0].natIP is defined or
+      item.networkInterfaces[0].networkIP is defined
 
 # Inventory
 - block:

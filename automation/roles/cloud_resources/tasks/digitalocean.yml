@@ -617,6 +617,26 @@
         - digital_ocean_spaces_create | bool
   when: state == 'present'
 
+# Info
+- name: Server info
+  ansible.builtin.debug:
+    msg:
+      id: "{{ item.data.droplet.id | default('N/A') }}"
+      name: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}"
+      image: "{{ item.data.droplet.image.description | default('N/A') }}"
+      type: "{{ server_type }}"
+      volume_size: "{{ volume_size }} GB"
+      public_ip: "{{ (item.data.droplet.networks.v4 | selectattr('type', 'equalto', 'public')).0.ip_address | default('N/A') }}"
+      private_ip: "{{ (item.data.droplet.networks.v4 | selectattr('type', 'equalto', 'private')).0.ip_address | default('N/A') }}"
+  loop: "{{ droplet_result.results }}"
+  loop_control:
+    index_var: idx
+    label: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}"
+  when:
+    - droplet_result.results is defined
+    - item.data is defined
+
+# Check SSH access
 - name: Wait for host to be available via SSH
   ansible.builtin.wait_for:
     host: >-
@@ -629,25 +649,6 @@
     port: 22
     delay: 5
     timeout: 300
-  loop: "{{ droplet_result.results }}"
-  loop_control:
-    index_var: idx
-    label: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}"
-  when:
-    - droplet_result.results is defined
-    - item.data is defined
-
-# Info
-- name: Server info
-  ansible.builtin.debug:
-    msg:
-      id: "{{ item.data.droplet.id | default('N/A') }}"
-      name: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}"
-      image: "{{ item.data.droplet.image.description | default('N/A') }}"
-      type: "{{ server_type }}"
-      volume_size: "{{ volume_size }} GB"
-      public_ip: "{{ (item.data.droplet.networks.v4 | selectattr('type', 'equalto', 'public')).0.ip_address | default('N/A') }}"
-      private_ip: "{{ (item.data.droplet.networks.v4 | selectattr('type', 'equalto', 'private')).0.ip_address | default('N/A') }}"
   loop: "{{ droplet_result.results }}"
   loop_control:
     index_var: idx

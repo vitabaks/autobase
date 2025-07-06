@@ -658,20 +658,6 @@
       when: cloud_load_balancer | bool
   when: state == 'present'
 
-- name: Wait for host to be available via SSH
-  ansible.builtin.wait_for:
-    host: "{{ item.hcloud_server.ipv4_address if server_public_ip | bool else item.hcloud_server.private_networks_info[0].ip }}"
-    port: 22
-    delay: 5
-    timeout: 300
-  loop: "{{ server_result.results }}"
-  loop_control:
-    index_var: idx
-    label: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}"
-  when:
-    - server_result.results is defined
-    - item.hcloud_server is defined
-
 # Info
 - name: Server info
   ansible.builtin.debug:
@@ -683,6 +669,21 @@
       volume_size: "{{ volume_size }} GB"
       public_ip: "{{ item.hcloud_server.ipv4_address | default('N/A') }}"
       private_ip: "{{ item.hcloud_server.private_networks_info[0].ip | default('N/A') }}"
+  loop: "{{ server_result.results }}"
+  loop_control:
+    index_var: idx
+    label: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}"
+  when:
+    - server_result.results is defined
+    - item.hcloud_server is defined
+
+# Check SSH access
+- name: Wait for host to be available via SSH
+  ansible.builtin.wait_for:
+    host: "{{ item.hcloud_server.ipv4_address if server_public_ip | bool else item.hcloud_server.private_networks_info[0].ip }}"
+    port: 22
+    delay: 5
+    timeout: 300
   loop: "{{ server_result.results }}"
   loop_control:
     index_var: idx
