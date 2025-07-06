@@ -619,15 +619,19 @@
 
 - name: Wait for host to be available via SSH
   ansible.builtin.wait_for:
-    host: "{{ (item.data.droplet.networks.v4 | selectattr('type', 'equalto', ip_address_type)).0.ip_address }}"
+    host: >-
+      {{
+        (item.data.droplet.networks.v4
+         | selectattr('type', 'equalto',
+           'public' if server_public_ip | bool else 'private')
+         | first).ip_address
+      }}
     port: 22
     delay: 5
     timeout: 300
   loop: "{{ droplet_result.results }}"
   loop_control:
     label: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}"
-  vars:
-    ip_address_type: "{{ 'public' if server_public_ip | bool else 'private' }}"
   when:
     - droplet_result.results is defined
     - item.data is defined
