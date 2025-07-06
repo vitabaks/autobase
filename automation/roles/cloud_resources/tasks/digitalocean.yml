@@ -631,6 +631,7 @@
     timeout: 300
   loop: "{{ droplet_result.results }}"
   loop_control:
+    index_var: idx
     label: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}"
   when:
     - droplet_result.results is defined

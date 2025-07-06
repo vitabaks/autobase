@@ -499,6 +499,7 @@
     timeout: "{{ 1800 if server_type is search('metal') else 300 }}" # 30 min for bare metal, 5 min for VMs
   loop: "{{ server_result.results }}"
   loop_control:
+    index_var: idx
     label: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}"
   when:
     - server_result.results is defined
@@ -519,6 +520,7 @@
       private_ip: "{{ item.networkInterfaces[0].networkIP | default('N/A') }}"
   loop: "{{ server_result.results }}"
   loop_control:
+    index_var: idx
     label: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}"
   when:
     - server_result.results is defined
