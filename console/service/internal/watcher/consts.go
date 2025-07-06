@@ -6,5 +6,5 @@ const (
 	ContainerStatusDead     = "dead"
 
 	LogFieldSystemInfo     = "System info"
-	LogFieldConnectionInfo = "deploy-finish : Connection info"
+	LogFieldConnectionInfo = "deploy_finish : Connection info"
 )

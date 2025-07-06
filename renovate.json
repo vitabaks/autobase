@@ -4,23 +4,31 @@
     "config:recommended",
     "group:recommended",
     "schedule:daily",
+    ":prHourlyLimit2",
     ":automergeMinor",
-    ":automergeRequireAllStatusChecks",
-    ":prHourlyLimit1"
+    ":automergeRequireAllStatusChecks"
   ],
   "labels": ["dependencies"],
-  "minimumReleaseAge": "5 days",
+  "minimumReleaseAge": "3 days",
+  "packageRules": [
+    {
+      "matchPackageNames": ["boto3"],
+      "schedule": ["every weekend"]
+    }
+  ],
   "customManagers": [
     {
       "customType": "regex",
-      "managerFilePatterns": ["/automation/roles/common/defaults/.*\\.ya?ml$/"],
-      "matchStrings": [
-        "datasource=(?<datasource>.*?) depName=(?<depName>.*?)?( registryUrls=(?<registryUrls>.*?))?( versioning=(?<versioning>.*?))?( extractVersion=(?<extractVersion>.*?))?\\s.*?_version: (?<currentValue>.*)\\s"
+      "managerFilePatterns": [
+        "automation/roles/common/defaults/main.yml",
+        "automation/roles/consul/defaults/main.yml"
       ],
-      "registryUrlTemplate": "{{#if registryUrls}}{{{registryUrls}}}{{else}}https://github.com{{/if}}",
+      "matchStrings": [
+        "^\\s*datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+)(\\s+registryUrls=(?<registryUrls>\\S+))?(\\s+versioning=(?<versioning>\\S+))?(\\s+extractVersion=(?<extractVersion>\\S+))?\\s+.*?_version:\\s+(?<currentValue>.+)$"
+      ],
+      "registryUrlTemplate": "{{#if registryUrls}}{{registryUrls}}{{else}}https://github.com{{/if}}",
       "datasourceTemplate": "{{#if datasource}}{{datasource}}{{else}}github-releases{{/if}}",
-      "depNameTemplate": "{{#if depName}}{{depName}}{{else}}{{packageName}}{{/if}}",
-      "packageNameTemplate": "{{#if depName}}{{depName}}{{else}}{{packageName}}{{/if}}"
+      "depNameTemplate": "{{#if depName}}{{depName}}{{else}}{{packageName}}{{/if}}"
     }
   ]
 }
