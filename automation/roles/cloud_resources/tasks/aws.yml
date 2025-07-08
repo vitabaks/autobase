@@ -250,10 +250,10 @@
         image_id: "{{ server_image }}"
         key_name: "{{ ssh_key_name }}"
         region: "{{ server_location }}"
-        security_groups: "{{ ([] if not cloud_firewall | bool else [patroni_cluster_name + '-security-group']) }}"
-        vpc_subnet_id: "{{ server_network }}"
         network_interfaces:
-          - assign_public_ip: "{{ server_public_ip | bool }}"
+          - subnet_id: "{{ server_network }}"
+            groups: "{{ ([] if not cloud_firewall | bool else [ec2_security_group_result.group_id]) }}"
+            assign_public_ip: "{{ server_public_ip | bool }}"
             delete_on_termination: true
         volumes:
           - device_name: /dev/sda1
@@ -310,7 +310,7 @@
               key_name: "{{ ssh_key_name }}"
               network_interfaces:
                 - subnet_id: "{{ server_network }}"
-                  groups: "{{ ec2_security_group_result.group_id }}"
+                  groups: "{{ ([] if not cloud_firewall | bool else [ec2_security_group_result.group_id]) }}"
                   associate_public_ip_address: "{{ server_public_ip | bool }}"
                   delete_on_termination: true
                   device_index: 0
