@@ -78,8 +78,13 @@ const ClustersTableExportButton: FC<ClustersTableRemoveButtonProps> = ({ cluster
       // Convert extra_vars array of 'key=value' to object for vars
       const vars: Record<string, any> = {};
       (response.extra_vars || []).forEach(pair => {
-        const [key, valueRaw] = pair.split('=', 2);
-        vars[key] = parseVariableValue(valueRaw);
+        // Split only at the first '='
+        const eqIdx = pair.indexOf('=');
+        if (eqIdx !== -1) {
+          const key = pair.slice(0, eqIdx);
+          const valueRaw = pair.slice(eqIdx + 1);
+          vars[key] = parseVariableValue(valueRaw);
+        }
       });
 
       // Only include valid servers (with ip and name)
@@ -117,6 +122,30 @@ const ClustersTableExportButton: FC<ClustersTableRemoveButtonProps> = ({ cluster
         }
       });
 
+      // Special handling for ssh_public_keys:
+      // always export as array of single-line strings, no extra quotes, preserve all characters
+      if (typeof vars.ssh_public_keys === 'string') {
+        let keyStr = vars.ssh_public_keys.trim().replace(/^'+|'+$/g, '').replace(/\s+/g, ' ');
+        vars.ssh_public_keys = [keyStr];
+      } else if (Array.isArray(vars.ssh_public_keys)) {
+        vars.ssh_public_keys = vars.ssh_public_keys
+          .map(k =>
+            typeof k === 'string'
+              ? k.trim().replace(/^'+|'+$/g, '').replace(/\s+/g, ' ')
+              : k
+          )
+          .filter(k => typeof k === 'string' && k.length > 0);
+      }
+
+      // Force js-yaml to use plain style for ssh_public_keys (no quotes, no block/literal)
+      const yamlOptions = {
+        noRefs: true,
+        lineWidth: -1,
+        styles: {
+          '!!str': () => undefined
+        }
+      };
+
       const inventory = {
         all: {
           vars,
@@ -136,7 +165,7 @@ const ClustersTableExportButton: FC<ClustersTableRemoveButtonProps> = ({ cluster
       };
 
       // Convert to YAML and download
-      const inventoryYAML = yaml.dump(inventory, { noRefs: true });
+      const inventoryYAML = yaml.dump(inventory, yamlOptions);
       const blob = new Blob([inventoryYAML], { type: 'text/yaml' });
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -165,4 +194,4 @@ const ClustersTableExportButton: FC<ClustersTableRemoveButtonProps> = ({ cluster
   );
 };
 
-export default ClustersTableExportButton; 
+export default ClustersTableExportButton;
