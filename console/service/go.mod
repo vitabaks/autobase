@@ -17,7 +17,7 @@ require (
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/pressly/goose/v3 v3.24.3
-	github.com/rs/zerolog v1.32.0
+	github.com/rs/zerolog v1.34.0
 	github.com/segmentio/asm v1.2.0
 	go.openly.dev/pointy v1.3.0
 	golang.org/x/sync v0.12.0
