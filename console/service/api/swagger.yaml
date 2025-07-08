@@ -1229,6 +1229,14 @@ definitions:
         description: "Project for cluster"
       connection_info:
         type: object
+      extra_vars:
+        type: array
+        items:
+          type: string
+        description: "Ansible variables"
+      inventory:
+        type: string
+        description: "Ansible inventory"
 
   ClusterInfo.AdditionalSettings:
     type: object
