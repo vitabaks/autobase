@@ -20,7 +20,7 @@ require (
 	github.com/rs/zerolog v1.34.0
 	github.com/segmentio/asm v1.2.0
 	go.openly.dev/pointy v1.3.0
-	golang.org/x/sync v0.12.0
+	golang.org/x/sync v0.15.0
 	gotest.tools/v3 v3.5.2
 )
 
