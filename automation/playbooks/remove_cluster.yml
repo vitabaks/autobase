@@ -1,6 +1,6 @@
 ---
 - name: vitabaks.autobase.remove_cluster | Remove PostgreSQL HA Cluster
-  hosts: postgres_cluster
+  hosts: postgres_cluster:pgbackrest
   become: true
   gather_facts: true
   tasks:
@@ -40,18 +40,22 @@
               {{ default_postgresql_data_dir }}\
               {% endif %}"
       ignore_errors: true
-      when: remove_postgres | default(false) | bool
+      when: remove_postgres | default(false) | bool and inventory_hostname in groups['postgres_cluster']
 
     - block:
         - name: Run pgBackRest stop
           become: true
           become_user: postgres
           ansible.builtin.command: "pgbackrest --stanza={{ stanza_name }} stop --force"
+          register: pgbackrest_stop_result
+          when: ('pgbackrest' in groups and groups['pgbackrest'] | length > 0 and inventory_hostname in groups['pgbackrest']) or
+            (('pgbackrest' not in groups or groups['pgbackrest'] | length == 0) and inventory_hostname == groups['postgres_cluster'][0])
 
         - name: Delete pgBackRest stanza
           become: true
           become_user: postgres
-          ansible.builtin.command: "pgbackrest --stanza={{ stanza_name }} stanza-delete"
+          ansible.builtin.command: "pgbackrest --stanza={{ stanza_name }} stanza-delete --force"
+          when: pgbackrest_stop_result is defined and pgbackrest_stop_result is changed
 
         - name: Delete pgBackRest cron job
           ansible.builtin.file:
