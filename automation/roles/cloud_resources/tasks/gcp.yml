@@ -278,7 +278,10 @@
               disk_name: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}-storage"
               disk_size_gb: "{{ volume_size | int }}"
               disk_type: "{{ volume_type | default('pd-ssd', true) }}"
-        network_interfaces: "{{ network_interfaces }}"
+        network_interfaces:
+          - network:
+              selfLink: "global/networks/{{ gcp_network_name }}"
+            access_configs: "{{ [{'name': 'External NAT', 'type': 'ONE_TO_ONE_NAT'}] if server_public_ip | bool else omit }}" 
         metadata:
           ssh-keys: "root:{{ ssh_key_content }}"
         scheduling:
@@ -295,12 +298,6 @@
       loop_control:
         index_var: idx
         label: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}"
-      vars:
-        network_interfaces: >-
-          [{
-            "network": { "selfLink": "global/networks/{{ gcp_network_name }}" },
-            "access_configs": [{'name': 'External NAT', 'type': 'ONE_TO_ONE_NAT'}] if server_public_ip | bool else omit
-          }]
       register: server_result
       until: server_result is success
       delay: 10
@@ -497,7 +494,7 @@
     msg:
       id: "{{ item.id | default('N/A') }}"
       name: "{{ server_name | lower }}{{ '%02d' % (idx + 1) | default('N/A') }}"
-      image: "{{ item.disks[0].licenses[0] | basename | default('N/A')}}"
+      image: "{{ item.disks[0].licenses[0] | basename | default('N/A') }}"
       type: "{{ item.machineType | basename | default('N/A') }}"
       volume_size: "{{ volume_size | default('N/A') }} GB"
       public_ip: "{{ item.networkInterfaces[0].accessConfigs[0].natIP | default('N/A') }}"
