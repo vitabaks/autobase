@@ -281,7 +281,7 @@
         network_interfaces:
           - network:
               selfLink: "global/networks/{{ gcp_network_name }}"
-            access_configs: "{{ [{'name': 'External NAT', 'type': 'ONE_TO_ONE_NAT'}] if server_public_ip | bool else omit }}" 
+            access_configs: "{{ [{'name': 'External NAT', 'type': 'ONE_TO_ONE_NAT'}] if server_public_ip | bool else omit }}"
         metadata:
           ssh-keys: "root:{{ ssh_key_content }}"
         scheduling:
