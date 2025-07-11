@@ -1,0 +1,56 @@
+---
+
+- block:
+    - name: Stop and disable systemd-timesyncd service
+      ansible.builtin.systemd:
+        name: systemd-timesyncd
+        enabled: false
+        state: stopped
+      failed_when: false
+      tags: ntp_cleanup
+
+    - name: Remove NTP package if installed
+      ansible.builtin.package:
+        name: "{{ item }}"
+        state: absent
+      loop:
+        - ntp
+        - ntpd
+        - ntpdate
+        - ntpsec
+        - openntpd
+      when: ansible_os_family in ["Debian", "RedHat"]
+      tags: ntp_cleanup
+
+    - name: Install chrony package
+      ansible.builtin.package:
+        name: chrony
+        state: present
+      register: package_status
+      until: package_status is success
+      delay: 5
+      retries: 3
+      environment: "{{ proxy_env | default({}) }}"
+      tags: chrony_install
+
+    - name: Ensure chrony service is enabled and started
+      ansible.builtin.systemd:
+        name: chrony
+        enabled: true
+        state: started
+      tags: chrony_install
+
+    - name: Copy the chrony.conf template file
+      ansible.builtin.template:
+        src: chrony.conf.j2
+        dest: /etc/chrony/chrony.conf
+        owner: root
+        group: root
+        mode: '0644'
+      notify: "restart chrony"
+      tags: chrony_conf
+
+  when: chrony_enabled is defined and chrony_enabled | bool
+  tags: chrony
+
+...
