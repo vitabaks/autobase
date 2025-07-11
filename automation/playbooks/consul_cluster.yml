@@ -10,7 +10,7 @@
   pre_tasks:
 
     - name: Gather ansible_distribution from localhost
-      setup:
+      ansible.builtin.setup:
         gather_subset:
         - '!all'
         - '!min'
