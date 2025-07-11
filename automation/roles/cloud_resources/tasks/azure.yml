@@ -359,10 +359,77 @@
       loop_control:
         label: "{{ patroni_cluster_name }}-{{ item }}"
       register: azure_load_balancer
-      when: cloud_load_balancer | bool and
+      when: cloud_load_balancer | bool and not cloud_load_balancer_unified | bool and
         (item == 'primary' or
         (item == 'replica' and server_count | int > 1) or
         (item in ['sync', 'async'] and server_count | int > 1 and synchronous_mode | bool))
+
+    - name: "Azure: Create or modify unified Load Balancer"
+      azure.azcollection.azure_rm_loadbalancer:
+        resource_group: "{{ azure_resource_group | default('postgres-cluster-resource-group' ~ '-' ~ server_location) }}"
+        name: "{{ patroni_cluster_name }}-{{item}}"
+        location: "{{ server_location }}"
+        frontend_ip_configurations:
+          - name: "{{ patroni_cluster_name }}-lb-frontend"
+            public_ip_address: "{{ database_public_access | bool | ternary(patroni_cluster_name ~ '-lb-public-ip', omit) }}"
+            subnet: "{{ database_public_access | bool | ternary(omit, network_info.virtualnetworks[0].subnets[0].id) }}"
+        backend_address_pools:
+          - name: "{{ patroni_cluster_name }}-lb-backend"
+        probes:
+          - name: "{{ patroni_cluster_name }}-primary-probe"
+            protocol: "Http"
+            port: "{{ patroni_restapi_port }}"
+            request_path: "/primary"
+            interval: 5
+            fail_count: 2
+          - name: "{{ patroni_cluster_name }}-replica-probe"
+            protocol: "Http"
+            port: "{{ patroni_restapi_port }}"
+            request_path: "/replica"
+            interval: 5
+            fail_count: 2
+          - name: "{{ patroni_cluster_name }}-sync-probe"
+            protocol: "Http"
+            port: "{{ patroni_restapi_port }}"
+            request_path: "/sync"
+            interval: 5
+            fail_count: 2
+        load_balancing_rules:
+          - name: "{{ patroni_cluster_name }}-primary-rule"
+            frontend_ip_configuration: "{{ patroni_cluster_name }}-lb-frontend"
+            frontend_port: "{{ postgresql_port | default('5432') }}"
+            backend_address_pool: "{{ patroni_cluster_name }}-lb-backend"
+            backend_port: "{{ postgresql_port | default('5432') }}"
+            probe: "{{ patroni_cluster_name }}-primary-probe"
+            protocol: "Tcp"
+            idle_timeout: 10
+            enable_floating_ip: false
+            disable_outbound_snat: true
+          - name: "{{ patroni_cluster_name }}-replica-rule"
+            frontend_ip_configuration: "{{ patroni_cluster_name }}-lb-frontend"
+            frontend_port: "{{ cloud_load_balancer_replica_port | default(postgresql_port | default('5432') | int + 1) }}"
+            backend_address_pool: "{{ patroni_cluster_name }}-lb-backend"
+            backend_port: "{{ postgresql_port | default('5432') }}"
+            probe: "{{ patroni_cluster_name }}-replica-probe"
+            protocol: "Tcp"
+            idle_timeout: 10
+            enable_floating_ip: false
+            disable_outbound_snat: true
+          - name: "{{ patroni_cluster_name }}-sync-rule"
+            frontend_ip_configuration: "{{ patroni_cluster_name }}-lb-frontend"
+            frontend_port: "{{ cloud_load_balancer_sync_port | default(postgresql_port | default('5432') | int + 2) }}"
+            backend_address_pool: "{{ patroni_cluster_name }}-lb-backend"
+            backend_port: "{{ postgresql_port | default('5432') }}"
+            probe: "{{ patroni_cluster_name }}-sync-probe"
+            protocol: "Tcp"
+            idle_timeout: 10
+            enable_floating_ip: false
+            disable_outbound_snat: true
+        sku: "Standard"
+      loop:
+        - "lb"
+      register: azure_load_balancer
+      when: cloud_load_balancer | bool and cloud_load_balancer_unified | bool
 
     - name: Extract virtual machine private IPs
       ansible.builtin.set_fact:
