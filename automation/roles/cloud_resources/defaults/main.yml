@@ -33,8 +33,8 @@ database_public_allowed_ips: "" # (comma-separated list of IP addresses in CIDR 
 # Load balancer
 cloud_load_balancer: true # Create a Load Balancer in the Cloud.
 cloud_load_balancer_unified: false # Creates a single load balancer with different ports
-cloud_load_balancer_replica_port: 5433
-cloud_load_balancer_sync_port: 5434
+cloud_load_balancer_replica_port: 5001
+cloud_load_balancer_sync_port: 5002
 
 # Backups (if 'pgbackrest_install' or 'wal_g_install' is 'true')
 aws_s3_bucket_create: true # if 'cloud_provider=aws'
