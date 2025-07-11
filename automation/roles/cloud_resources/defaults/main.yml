@@ -10,20 +10,19 @@ server_image: "" # (required) OS image for the server. For Azure, use variables 
 server_location: "" # (required) Server location or region.
 server_network: "" # (optional) If provided, the server will be added to this network (needs to be created beforehand).
 server_spot: false # Spot instance. Applicable for AWS, GCP, Azure.
+server_public_ip: true # Determines if a public IP should be assigned to the created instance.
 
 volume_type: "" # Volume type. Defaults: 'gp3' for AWS, 'pd-ssd' for GCP, 'StandardSSD_LRS' for Azure.
 volume_size: 100 # Storage size for the data directory (in gigabytes).
 system_volume_type: "" # System volume type. Defaults: 'gp3' for AWS, 'pd-ssd' for GCP, 'StandardSSD_LRS' for Azure.
 system_volume_size: 100 # System volume size (in gigabytes). Applicable for AWS, GCP, Azure.
 
-ssh_key_name: "" # Name of the SSH key to be added to the server.
-# Note: If not provided, all cloud available SSH keys will be added (applicable to DigitalOcean, Hetzner).
+ssh_key_name: "" # Name of the SSH key to be added to the server. Note: If not provided, all cloud available SSH keys will be added (applicable to DigitalOcean, Hetzner).
 ssh_key_content: "" # (optional) If provided, the public key content will be added to the cloud (directly to the server for GCP).
 
 # Firewall / Security Group
 cloud_firewall: true # Specify 'false' if you don't want to configure Firewall rules, or want to manage them yourself.
-
-ssh_public_access: true # Allow public ssh access (required for deployment from the public network).
+ssh_public_access: true # Allow public ssh access (required for deployment from the public network). Applicable if server_public_ip is set to true.
 ssh_public_allowed_ips: "" # (comma-separated list of IP addresses in CIDR format) If empty, then public access is allowed for any IP address.
 netdata_public_access: true # Allow access to the Netdata monitoring from the public network (if 'netdata_install' is 'true').
 netdata_public_allowed_ips: "" # (comma-separated list of IP addresses in CIDR format) If empty, then public access is allowed for any IP address.
@@ -34,7 +33,7 @@ database_public_allowed_ips: "" # (comma-separated list of IP addresses in CIDR 
 cloud_load_balancer: true # Create a Load Balancer in the Cloud.
 aws_load_balancer_type: "nlb" # 'nlb' = Network Load Balancer; 'clb' = Classic Load Balancer (previous generation).
 
-# Backups (if 'pgbackrest_install' or 'wal_g_install' is 'true')
+# Bucket (if 'pgbackrest_install' or 'wal_g_install' is 'true')
 aws_s3_bucket_create: true # if 'cloud_provider=aws'
 aws_s3_bucket_name: "{{ patroni_cluster_name }}-backup" # Name of the S3 bucket. Bucket naming rules: https://docs.aws.amazon.com/AmazonS3/latest/userguide/bucketnamingrules.html
 aws_s3_bucket_region: "{{ server_location }}" # The AWS region to use.
