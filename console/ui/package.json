@@ -46,7 +46,7 @@
   },
   "devDependencies": {
     "@faker-js/faker": "^8.4.1",
-    "@rtk-query/codegen-openapi": "^1.2.0",
+    "@rtk-query/codegen-openapi": "^2.0.0",
     "@testing-library/dom": "^10.4.0",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^15.0.7",
