@@ -7,6 +7,21 @@
   check_mode: false
 
 # RedHat
+- name: Update dnf cache
+  ansible.builtin.shell: dnf clean all && dnf -y makecache
+  args:
+    executable: /bin/bash
+  register: dnf_status
+  until: dnf_status is success
+  delay: 5
+  retries: 3
+  when:
+    - installation_method == "packages"
+    - ansible_os_family == "RedHat"
+    - not skip_dnf_makecache | default(false) | bool
+  environment: "{{ proxy_env | default({}) }}"
+  tags: install_packages, install_postgres
+
 - name: Install system packages
   ansible.builtin.dnf:
     name: "{{ item }}"
