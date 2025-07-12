@@ -113,7 +113,7 @@
         timeout: 30
         validate_certs: false
       when:
-        - install_postgresql_repo|bool
+        - install_postgresql_repo | bool
         - "'pgdg-redhat-repo' not in ansible_facts.packages"
       tags: install_postgresql_repo
 
@@ -127,7 +127,7 @@
       delay: 5
       retries: 3
       when:
-        - install_postgresql_repo|bool
+        - install_postgresql_repo | bool
         - "'pgdg-redhat-repo' not in ansible_facts.packages"
       tags: install_postgresql_repo
 

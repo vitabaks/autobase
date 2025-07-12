@@ -17,11 +17,11 @@
   delay: 5
   retries: 3
   environment: "{{ proxy_env | default({}) }}"
-  when: >
-    installation_method == "packages"
-    and ansible_os_family == "RedHat"
-    and (system_packages | default([]) | length > 0)
-    and (item not in ansible_facts.packages)
+  when:
+    - installation_method == "packages"
+    - ansible_os_family == "RedHat"
+    - (system_packages | default([]) | length > 0)
+    - (item not in ansible_facts.packages)
   tags: install_packages
 
 - name: Set Python alternative
@@ -113,8 +113,7 @@
       until: package_status is success
       delay: 5
       retries: 3
-      when:
-        - (item not in ansible_facts.packages | list)
+      when: (item not in ansible_facts.packages | list)
   environment: "{{ proxy_env | default({}) }}"
   when:
     - installation_method == "packages"
@@ -192,7 +191,10 @@
       until: apt_status is success
       delay: 5
       retries: 3
-      when: ansible_os_family == "Debian" and copy_packages_result.changed and (item not in ansible_facts.packages | list)
+      when:
+        - ansible_os_family == "Debian"
+        - copy_packages_result.changed
+        - (item not in ansible_facts.packages | list)
 
     - name: Install packages
       ansible.builtin.dnf:
