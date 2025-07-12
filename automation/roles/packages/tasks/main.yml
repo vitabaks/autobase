@@ -113,7 +113,7 @@
       until: package_status is success
       delay: 5
       retries: 3
-      when: (item not in ansible_facts.packages | list)
+      when: item not in ansible_facts.packages
   environment: "{{ proxy_env | default({}) }}"
   when:
     - installation_method == "packages"
@@ -157,7 +157,7 @@
     - installation_method == "packages"
     - ansible_os_family == "Debian"
     - postgresql_packages | default([]) | length > 0
-    - (item not in ansible_facts.packages | list)
+    - item not in ansible_facts.packages
   tags: install_packages, install_postgres
 
 # Extensions
@@ -194,7 +194,7 @@
       when:
         - ansible_os_family == "Debian"
         - copy_packages_result.changed
-        - (item not in ansible_facts.packages | list)
+        - item not in ansible_facts.packages
 
     - name: Install packages
       ansible.builtin.dnf:
