@@ -33,6 +33,7 @@
   environment: "{{ proxy_env | default({}) }}"
   when: installation_method == "packages" and ansible_os_family == "Debian"
   tags: add_repo
+  check_mode: false
 
 - block: # RedHat/CentOS
     - name: Add repository GPG key
@@ -161,6 +162,7 @@
   environment: "{{ proxy_env | default({}) }}"
   when: installation_method == "packages" and ansible_os_family == "RedHat"
   tags: add_repo
+  check_mode: false
 
 - name: Extensions repository
   ansible.builtin.import_tasks: extensions.yml
