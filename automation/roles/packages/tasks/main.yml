@@ -196,7 +196,6 @@
       when:
         - ansible_os_family == "Debian"
         - copy_packages_result.changed
-        - item not in ansible_facts.packages
 
     - name: Install packages
       ansible.builtin.dnf:

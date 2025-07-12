@@ -9,13 +9,13 @@
 - block: # Debian/Ubuntu
     - name: Make sure the python3-debian package is present
       ansible.builtin.apt:
-        pkg:
-          - python3-debian
+        name: python3-debian
         state: present
       register: apt_status
       until: apt_status is success
       delay: 5
       retries: 3
+      when: "'python3-debian' not in ansible_facts.packages"
 
     - name: Add repository
       ansible.builtin.deb822_repository:

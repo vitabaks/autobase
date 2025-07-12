@@ -38,7 +38,7 @@
 
     # Ansible requires the iproute package for network facts to be populated
     - name: Install iproute package
-      ansible.builtin.package:
+      ansible.builtin.dnf:
         name: iproute
         state: present
       register: package_status
