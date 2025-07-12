@@ -70,5 +70,6 @@
     - role: vitabaks.autobase.etc_hosts
     - role: vitabaks.autobase.timezone
     - role: vitabaks.autobase.ntp
+    - role: vitabaks.autobase.chrony
 
     - role: vitabaks.autobase.etcd

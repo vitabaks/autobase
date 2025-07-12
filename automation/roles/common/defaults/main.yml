@@ -792,7 +792,20 @@ etc_hosts: []
 #  - "10.128.64.143 pgbackrest.minio.local minio.local s3.eu-west-3.amazonaws.com"  # example (MinIO)
 #  - ""
 
+# Only one of ntp_enabled or chrony_enabled must be true
 ntp_enabled: false # or 'true' if you want to install and configure the ntp service
+chrony_enabled: false
+chrony_enable_logging: false
+chrony_maxupdateskew: "100.0"
+chrony_makestep_threshold: "1"
+chrony_makestep_limit: "-1"
+chrony_maxdistance: "1000000000"
+chrony_leapsectz: true
+chrony_minsources: 2
+chrony_allow_networks:
+#  - "10.0.0.0/8"
+#  - "172.16.0.0/24"
+#  - "192.168.0.0/16"
 ntp_servers: []
 #  - "10.128.64.44"
 #  - "10.128.64.45"
