@@ -1,21 +1,11 @@
 ---
 # Install packages from repository
+- name: Gather package facts
+  ansible.builtin.package_facts:
+    manager: auto
+  check_mode: false
 
 # RedHat
-- name: Update dnf cache
-  ansible.builtin.shell: dnf clean all && dnf -y makecache
-  args:
-    executable: /bin/bash
-  register: dnf_status
-  until: dnf_status is success
-  delay: 5
-  retries: 3
-  when:
-    - installation_method == "packages"
-    - ansible_os_family == "RedHat"
-  environment: "{{ proxy_env | default({}) }}"
-  tags: install_packages, install_postgres
-
 - name: Install system packages
   ansible.builtin.dnf:
     name: "{{ item }}"
@@ -27,10 +17,11 @@
   delay: 5
   retries: 3
   environment: "{{ proxy_env | default({}) }}"
-  when:
-    - installation_method == "packages"
-    - ansible_os_family == "RedHat"
-    - system_packages | default('') | length > 0
+  when: >
+    installation_method == "packages"
+    and ansible_os_family == "RedHat"
+    and (system_packages | default([]) | length > 0)
+    and (item not in ansible_facts.packages)
   tags: install_packages
 
 - name: Set Python alternative
@@ -89,6 +80,7 @@
     - installation_method == "packages"
     - ansible_os_family == "Debian"
     - system_packages | default('') | length > 0
+    - (item not in ansible_facts.packages)
   tags: install_packages
 
 # Install PostgreSQL from repository
@@ -121,6 +113,8 @@
       until: package_status is success
       delay: 5
       retries: 3
+      when:
+        - (item not in ansible_facts.packages | list)
   environment: "{{ proxy_env | default({}) }}"
   when:
     - installation_method == "packages"
@@ -164,6 +158,7 @@
     - installation_method == "packages"
     - ansible_os_family == "Debian"
     - postgresql_packages | default([]) | length > 0
+    - (item not in ansible_facts.packages | list)
   tags: install_packages, install_postgres
 
 # Extensions
@@ -197,7 +192,7 @@
       until: apt_status is success
       delay: 5
       retries: 3
-      when: ansible_os_family == "Debian" and copy_packages_result.changed
+      when: ansible_os_family == "Debian" and copy_packages_result.changed and (item not in ansible_facts.packages | list)
 
     - name: Install packages
       ansible.builtin.dnf:

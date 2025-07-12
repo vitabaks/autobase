@@ -16,6 +16,7 @@
 - name: Gather the package facts
   ansible.builtin.package_facts:
     manager: auto
+  check_mode: false
 
 - name: Clean up previous consul data
   block:

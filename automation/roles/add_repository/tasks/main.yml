@@ -1,4 +1,9 @@
 ---
+- name: Gather installed package facts
+  ansible.builtin.package_facts:
+  check_mode: false
+  tags: install_postgresql_repo
+
 - block: # Debian/Ubuntu
     - name: Make sure the python3-debian package is present
       ansible.builtin.apt:
@@ -107,7 +112,9 @@
         dest: /tmp/
         timeout: 30
         validate_certs: false
-      when: install_postgresql_repo|bool
+      when:
+        - install_postgresql_repo|bool
+        - "'pgdg-redhat-repo' not in ansible_facts.packages"
       tags: install_postgresql_repo
 
     - name: Install PostgreSQL repository
@@ -119,7 +126,9 @@
       until: package_status is success
       delay: 5
       retries: 3
-      when: install_postgresql_repo|bool
+      when:
+        - install_postgresql_repo|bool
+        - "'pgdg-redhat-repo' not in ansible_facts.packages"
       tags: install_postgresql_repo
 
     # Enable Debuginfo repository
