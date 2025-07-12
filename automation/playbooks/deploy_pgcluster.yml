@@ -33,7 +33,6 @@
     - name: Gather package facts
       ansible.builtin.package_facts:
         manager: auto
-      when: ansible_facts.packages is not defined
       check_mode: false
 
     # Ansible requires the iproute package for network facts to be populated
