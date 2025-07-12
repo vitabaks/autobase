@@ -20,8 +20,8 @@
   when:
     - installation_method == "packages"
     - ansible_os_family == "RedHat"
-    - (system_packages | default([]) | length > 0)
-    - (item not in ansible_facts.packages)
+    - system_packages | default([]) | length > 0
+    - item not in ansible_facts.packages
   tags: install_packages
 
 - name: Set Python alternative
@@ -80,7 +80,7 @@
     - installation_method == "packages"
     - ansible_os_family == "Debian"
     - system_packages | default('') | length > 0
-    - (item not in ansible_facts.packages)
+    - item not in ansible_facts.packages
   tags: install_packages
 
 # Install PostgreSQL from repository

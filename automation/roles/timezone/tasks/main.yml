@@ -14,7 +14,7 @@
       environment: "{{ proxy_env | default({}) }}"
       when:
         - installation_method == "packages"
-        - ('tzdata' not in ansible_facts.packages)
+        - "'tzdata' not in ansible_facts.packages"
 
     - name: Set timezone to "{{ timezone }}"
       become: true

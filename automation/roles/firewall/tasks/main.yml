@@ -12,7 +12,7 @@
   until: package_status is success
   delay: 5
   retries: 3
-  when: ('iptables' not in ansible_facts.packages)
+  when: "'iptables' not in ansible_facts.packages"
 
 - name: Flush iptables the first time playbook runs.
   ansible.builtin.command:
