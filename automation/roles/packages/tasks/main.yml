@@ -131,6 +131,7 @@
       until: package_status is success
       delay: 5
       retries: 3
+      when: "'postgresql-common' not in ansible_facts.packages"
 
     - name: Disable initializing of a default postgresql cluster
       ansible.builtin.replace:
@@ -152,12 +153,12 @@
       until: apt_status is success
       delay: 5
       retries: 3
+      when: item not in ansible_facts.packages
   environment: "{{ proxy_env | default({}) }}"
   when:
     - installation_method == "packages"
     - ansible_os_family == "Debian"
     - postgresql_packages | default([]) | length > 0
-    - item not in ansible_facts.packages
   tags: install_packages, install_postgres
 
 # Extensions
