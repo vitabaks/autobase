@@ -17,7 +17,25 @@
 
     - name: Expose bind_address as facts
       ansible.builtin.set_fact:
-        bind_address: "{{ ansible_all_ipv4_addresses | ansible.utils.ipaddr('private') | first }}"
+        bind_address: >-
+          {{
+            (ansible_interfaces 
+            | reject('match', '^lo$') 
+            | reject('match', '^docker.*') 
+            | reject('match', '^br-.*') 
+            | reject('match', '^veth.*') 
+            | reject('match', '.*_gwbridge$') 
+            | map('extract', ansible_facts) 
+            | selectattr('ipv4', 'defined') 
+            | map(attribute='ipv4.address') 
+            | select('ansible.utils.ipaddr', 'private') 
+            | list)[0] | default(
+              ansible_all_ipv4_addresses 
+              | ansible.utils.ipaddr('private') 
+              | reject('ansible.utils.ipaddr', '172.17.0.0/12') 
+              | first
+            )
+          }}
       when: bind_address is not defined
 
     - name: Update apt cache
