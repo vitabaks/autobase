@@ -1,4 +1,10 @@
 ---
+- name: Gather package facts
+  ansible.builtin.package_facts:
+    manager: auto
+  when: ansible_facts.packages is not defined
+  check_mode: false
+
 - name: Install keepalived packages
   ansible.builtin.package:
     name: keepalived
@@ -7,6 +13,7 @@
   delay: 5
   retries: 3
   environment: "{{ proxy_env | default({}) }}"
+  when: "'keepalived' not in ansible_facts.packages"
   tags: keepalived_install, keepalived
 
 - name: Make sure the kernel parameters "net.ipv4.ip_nonlocal_bind", "net.ipv4.ip_forward" are enabled

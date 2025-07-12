@@ -7,19 +7,27 @@
     - pgbackrest_auto_conf | default(true) | bool # to be able to disable auto backup settings
   tags: pgbackrest, pgbackrest_conf
 
+- name: Gather package facts
+  ansible.builtin.package_facts:
+    manager: auto
+  when: ansible_facts.packages is not defined
+  check_mode: false
+
 - block:
     # Debian pgdg repo
-    - name: Make sure the gnupg, apt-transport-https and python3-debian packages are present
+    - name: Ensure required packages are present
       ansible.builtin.apt:
-        pkg:
-          - gnupg
-          - apt-transport-https
-          - python3-debian
+        name: "{{ item }}"
         state: present
       register: apt_status
       until: apt_status is success
       delay: 5
       retries: 3
+      loop:
+        - gnupg
+        - apt-transport-https
+        - python3-debian
+      when: item not in ansible_facts.packages
 
     - name: Add pgdg repository and signing key
       ansible.builtin.deb822_repository:
@@ -83,6 +91,7 @@
   delay: 5
   retries: 3
   environment: "{{ proxy_env | default({}) }}"
+  when: "'pgbackrest' not in ansible_facts.packages"
   tags: pgbackrest, pgbackrest_install
 
 - block:

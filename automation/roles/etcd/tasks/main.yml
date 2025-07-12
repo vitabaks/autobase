@@ -2,6 +2,12 @@
 - name: Make sure handlers are flushed immediately
   ansible.builtin.meta: flush_handlers
 
+- name: Gather package facts
+  ansible.builtin.package_facts:
+    manager: auto
+  when: ansible_facts.packages is not defined
+  check_mode: false
+
 - name: Make sure the unzip/tar packages are present
   ansible.builtin.package:
     name:
@@ -13,6 +19,7 @@
   delay: 5
   retries: 3
   environment: "{{ proxy_env | default({}) }}"
+  when: "'unzip' not in ansible_facts.packages or 'tar' not in ansible_facts.packages"
   tags: etcd, etcd_install
 
 - name: Expose etcd_bind_address as facts

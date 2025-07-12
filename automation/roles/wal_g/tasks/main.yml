@@ -1,4 +1,10 @@
 ---
+- name: Gather package facts
+  ansible.builtin.package_facts:
+    manager: auto
+  when: ansible_facts.packages is not defined
+  check_mode: false
+
 # Automatic setup of the backup configuration based on the selected cloud provider.
 # if 'cloud_provider' is 'aws', 'gcp', 'azure', 'digitalocean'.
 - ansible.builtin.import_tasks: auto_conf.yml
@@ -75,37 +81,41 @@
 # (if 'wal_g_installation_method' is 'src')
 - block:
     - name: Install lib dependencies to build WAL-G
-      ansible.builtin.package:
-        name:
-          - libbrotli-dev
-          # - liblzo2-dev  # https://github.com/wal-g/wal-g/issues/1412
-          - libsodium-dev
-          - make
-          - cmake
-          - git
+      ansible.builtin.apt:
+        name: "{{ item }}"
         state: present
       register: package_status
       until: package_status is success
       delay: 5
       retries: 3
-      when: ansible_os_family == "Debian"
+      loop:
+          - libbrotli-dev
+          - libsodium-dev
+          - make
+          - cmake
+          - git
+      when:
+        - ansible_os_family == "Debian"
+        - item not in ansible_facts.packages
 
     - name: Install lib dependencies to build WAL-G
-      ansible.builtin.package:
-        name:
+      ansible.builtin.dnf:
+        name: "{{ item }}"
+        state: present
+      register: package_status
+      until: package_status is success
+      delay: 5
+      retries: 3
+      loop:
           - brotli-devel
-          # - lzo-devel  # https://github.com/wal-g/wal-g/issues/1412
           - libsodium-devel
           - make
           - cmake
           - gcc
           - git
-        state: present
-      register: package_status
-      until: package_status is success
-      delay: 5
-      retries: 3
-      when: ansible_os_family == "RedHat"
+      when:
+        - ansible_os_family == "RedHat"
+        - item not in ansible_facts.packages
 
     - name: Check the installed Go version
       ansible.builtin.shell: |

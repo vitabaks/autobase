@@ -1,5 +1,11 @@
 ---
 - block:
+    - name: Gather package facts
+      ansible.builtin.package_facts:
+        manager: auto
+      when: ansible_facts.packages is not defined
+      check_mode: false
+
     - name: Make sure that the tzdata package is installed
       become: true
       become_method: sudo
@@ -7,7 +13,9 @@
         name: tzdata
         state: present
       environment: "{{ proxy_env | default({}) }}"
-      when: installation_method == "packages"
+      when:
+        - installation_method == "packages"
+        - "'tzdata' not in ansible_facts.packages"
 
     - name: Set timezone to "{{ timezone }}"
       become: true

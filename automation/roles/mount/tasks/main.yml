@@ -1,4 +1,10 @@
 ---
+- name: Gather package facts
+  ansible.builtin.package_facts:
+    manager: auto
+  when: ansible_facts.packages is not defined
+  check_mode: false
+
 - block:
     # Try to detect an empty disk (if 'cloud_provider' is defined)
     - name: Detect empty volume
@@ -68,28 +74,33 @@
     # ZFS Pool (if fstype is 'zfs')
     - block:
         - name: Install zfs
-          ansible.builtin.package:
+          ansible.builtin.apt:
             name: zfsutils-linux
             state: present
           register: package_status
           until: package_status is success
           delay: 5
           retries: 3
-          when: ansible_distribution == 'Ubuntu'
+          when:
+            - ansible_distribution == 'Ubuntu'
+            - "'zfsutils-linux' not in ansible_facts.packages"
 
         - name: Install zfs
-          ansible.builtin.package:
-            name:
-              - "linux-headers-{{ ansible_kernel }}"
-              - dpkg-dev
-              - zfs-dkms
-              - zfsutils-linux
+          ansible.builtin.apt:
+            name: "{{ item }}"
             state: present
           register: package_status
+          loop:
+            - "linux-headers-{{ ansible_kernel }}"
+            - dpkg-dev
+            - zfs-dkms
+            - zfsutils-linux
           until: package_status is success
           delay: 5
           retries: 3
-          when: ansible_distribution == 'Debian'
+          when:
+            - ansible_distribution == 'Debian'
+            - item not in ansible_facts.packages
 
         - block: # RedHat based
             - name: Download zfs-release
@@ -108,15 +119,17 @@
               retries: 3
 
             - name: Install zfs
-              ansible.builtin.package:
-                name:
-                  - kernel-devel
-                  - zfs
+              ansible.builtin.dnf:
+                name: "{{ item }}"
                 state: present
               register: package_status
               until: package_status is success
               delay: 5
               retries: 3
+              loop:
+                - kernel-devel
+                - zfs
+              when: item not in ansible_facts.packages
           when: ansible_os_family == 'RedHat'
 
         - name: Load the ZFS module

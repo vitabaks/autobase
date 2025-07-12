@@ -1,21 +1,25 @@
 ---
 # File: install_linux_repo.yml - package installation tasks for Consul
-
 - name: Install OS packages
   ansible.builtin.package:
-    name: "{{ consul_repo_prerequisites }}"
+    name: "{{ item }}"
     state: present
   register: package_status
   until: package_status is success
   delay: 5
   retries: 3
   become: true
-  when: consul_os_repo_prerequisites | default(true) | bool
+  loop: "{{ consul_repo_prerequisites | default([]) }}"
+  when:
+    - item not in ansible_facts.packages
+    - consul_os_repo_prerequisites | default(true) | bool
   tags: installation
 
-- name: Gather the package facts
+- name: Gather package facts
   ansible.builtin.package_facts:
     manager: auto
+  when: ansible_facts.packages is not defined
+  check_mode: false
 
 - name: Clean up previous consul data
   block:
@@ -63,14 +67,15 @@
 
     - name: Make sure the python3-debian package is present
       ansible.builtin.apt:
-        pkg:
-          - python3-debian
+        name: python3-debian
         state: present
       register: apt_status
       until: apt_status is success
       delay: 5
       retries: 3
-      when: ansible_os_family == "Debian"
+      when:
+        - ansible_os_family == "Debian"
+        - "'python3-debian' not in ansible_facts.packages"
 
     - name: Add hashicorp repository
       ansible.builtin.deb822_repository:

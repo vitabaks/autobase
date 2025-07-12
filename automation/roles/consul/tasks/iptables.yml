@@ -1,5 +1,11 @@
 ---
 # File: iptables.yml - iptables tasks for Consul
+- name: Gather package facts
+  ansible.builtin.package_facts:
+    manager: auto
+  check_mode: false
+  when: ansible_facts.packages is not defined
+  tags: install_postgresql_repo
 
 - name: Install iptables
   ansible.builtin.apt:
@@ -8,6 +14,7 @@
   until: apt_status is success
   delay: 5
   retries: 3
+  when: "'iptables' not in ansible_facts.packages"
 
 - name: Redirect local DNS (1/4)
   ansible.builtin.iptables:
