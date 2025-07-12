@@ -13,9 +13,10 @@
   when: consul_os_repo_prerequisites | default(true) | bool
   tags: installation
 
-- name: Gather the package facts
+- name: Gather package facts
   ansible.builtin.package_facts:
     manager: auto
+  when: ansible_facts.packages is not defined
   check_mode: false
 
 - name: Clean up previous consul data

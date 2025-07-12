@@ -1,7 +1,9 @@
 ---
-- name: Gather installed package facts
+- name: Gather package facts
   ansible.builtin.package_facts:
+    manager: auto
   check_mode: false
+  when: ansible_facts.packages is not defined
   tags: install_postgresql_repo
 
 - block: # Debian/Ubuntu

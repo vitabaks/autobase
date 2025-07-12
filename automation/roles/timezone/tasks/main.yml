@@ -3,6 +3,7 @@
     - name: Gather package facts
       ansible.builtin.package_facts:
         manager: auto
+      when: ansible_facts.packages is not defined
       check_mode: false
 
     - name: Make sure that the tzdata package is installed
