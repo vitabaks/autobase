@@ -19,21 +19,25 @@
       ansible.builtin.set_fact:
         bind_address: >-
           {{
-            (ansible_interfaces
-            | reject('match', '^lo$')
-            | reject('match', '^docker.*')
-            | reject('match', '^br-.*')
-            | reject('match', '^veth.*')
-            | reject('match', '.*_gwbridge$')
-            | map('extract', ansible_facts)
-            | selectattr('ipv4', 'defined')
-            | map(attribute='ipv4.address')
-            | select('ansible.utils.ipaddr', 'private')
-            | list)[0] | default(
-              ansible_all_ipv4_addresses
-              | ansible.utils.ipaddr('private')
-              | reject('ansible.utils.ipaddr', '172.17.0.0/12')
-              | first
+            (
+              ansible_interfaces | default([])
+              | reject('match', '^lo$')
+              | reject('match', '^docker.*')
+              | reject('match', '^br-.*')
+              | reject('match', '^veth.*')
+              | reject('match', '.*_gwbridge$')
+              | map('extract', ansible_facts | default({}))
+              | selectattr('ipv4', 'defined')
+              | map(attribute='ipv4.address')
+              | select('ansible.utils.ipaddr', 'private')
+              | list
+            ) | first | default(
+              (
+                ansible_all_ipv4_addresses | default([])
+                | ansible.utils.ipaddr('private')
+                | reject('ansible.utils.ipaddr', '172.17.0.0/12')
+                | list
+              ) | first | default(ansible_default_ipv4.address | default('127.0.0.1'))
             )
           }}
       when: bind_address is not defined
