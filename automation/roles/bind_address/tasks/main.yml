@@ -1,4 +1,9 @@
 ---
+- name: Gather package facts
+  ansible.builtin.package_facts:
+    manager: auto
+  check_mode: false
+  when: ansible_facts.packages is not defined
 
 # Ansible requires the iproute package for network facts to be populated
 - name: Install iproute package
@@ -46,12 +51,13 @@
   ansible.builtin.set_fact:
     bind_address: >-
       {{
-        (
-          ansible_all_ipv4_addresses | default([])
-          | ansible.utils.ipaddr('private')
-          | reject('equalto', docker0_ip | default(''))
-          | list
-        )[0] | default('')
+        ansible_all_ipv4_addresses
+        | default([])
+        | ansible.utils.ipaddr('private')
+        | reject('equalto', docker0_ip | default(''))
+        | list
+        | first
+        | default('')
       }}
   check_mode: false
   when: bind_address is not defined
