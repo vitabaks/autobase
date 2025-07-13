@@ -1,5 +1,10 @@
 ---
 # Install "perf" (Linux profiling with performance counters) and "FlameGraph".
+- name: Gather package facts
+  ansible.builtin.package_facts:
+    manager: auto
+  when: ansible_facts.packages is not defined
+  check_mode: false
 
 # RedHat
 - name: Install perf
@@ -11,18 +16,34 @@
   until: package_status is success
   delay: 5
   retries: 3
-  when: ansible_os_family == "RedHat"
+  when:
+    - ansible_os_family == "RedHat"
+    - "'perf' not in ansible_facts.packages"
 
 # Debian
 - name: Install perf
   ansible.builtin.apt:
-    name: "{{ 'linux-tools-common' if ansible_distribution == 'Ubuntu' else 'linux-perf' }}"
+    name: linux-tools-common
     state: present
   register: apt_status
   until: apt_status is success
   delay: 5
   retries: 3
-  when: ansible_os_family == "Debian"
+  when:
+    - (ansible_os_family == "Debian" and ansible_distribution == 'Ubuntu')
+    - "'linux-tools-common' not in ansible_facts.packages"
+
+- name: Install perf
+  ansible.builtin.apt:
+    name: linux-perf
+    state: present
+  register: apt_status
+  until: apt_status is success
+  delay: 5
+  retries: 3
+  when:
+    - (ansible_os_family == "Debian" and ansible_distribution != 'Ubuntu')
+    - "'linux-perf' not in ansible_facts.packages"
 
 # Check if perf is installed correctly, or build a perf from the source code
 - name: Check if perf is installed
@@ -59,20 +80,24 @@
 
     - name: Install basic build tools
       ansible.builtin.package:
-        name:
+        name: "{{ item }}"
+        state: present
+      loop:
           - make
           - gcc
           - flex
           - bison
-        state: present
       register: build_tools_result
       when:
         - get_url_result is defined
         - get_url_result is success
+        - item not in ansible_facts.packages
 
     - name: Install required libraries
-      ansible.builtin.package:
-        name:
+      ansible.builtin.apt:
+        name: "{{ item }}"
+        state: present
+      loop:
           - pkg-config
           - libzstd1
           - libdwarf-dev
@@ -98,15 +123,17 @@
           - libbabeltrace-dev
           - libiberty-dev
           - libzstd-dev
-        state: present
       when:
         - ansible_os_family == "Debian"
         - build_tools_result is defined
         - build_tools_result is success
+        - item not in ansible_facts.packages
 
     - name: Install required libraries
-      ansible.builtin.package:
-        name:
+      ansible.builtin.dnf:
+        name: "{{ item }}"
+        state: present
+      loop:
           - pkgconf
           - libzstd
           - libdwarf-devel
@@ -126,11 +153,11 @@
           - perl-devel
           - libbabeltrace-devel
           - libzstd-devel
-        state: present
       when:
         - ansible_os_family == "RedHat"
         - build_tools_result is defined
         - build_tools_result is success
+        - item not in ansible_facts.packages
 
     - name: Build perf from source
       become: true
@@ -160,10 +187,11 @@
 
 # FlameGraph
 - block:
-    - name: Make sure the git are present
+    - name: Install git package
       ansible.builtin.package:
         name: git
         state: present
+      when: "'git' not in ansible_facts.packages"
 
     - name: "Download 'FlameGraph' to /var/opt/FlameGraph"
       ansible.builtin.git:
