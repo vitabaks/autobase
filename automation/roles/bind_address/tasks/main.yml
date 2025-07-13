@@ -1,0 +1,69 @@
+---
+- name: Gather package facts
+  ansible.builtin.package_facts:
+    manager: auto
+  check_mode: false
+  when: ansible_facts.packages is not defined
+
+# Ansible requires the iproute package for network facts to be populated
+- name: Install iproute package
+  ansible.builtin.dnf:
+    name: iproute
+    state: present
+  register: package_status
+  until: package_status is success
+  delay: 5
+  retries: 3
+  check_mode: false
+  when:
+    - ansible_os_family == "RedHat"
+    - "'iproute' not in ansible_facts.packages"
+
+- name: Install iproute2 package
+  ansible.builtin.apt:
+    name: iproute2
+    state: present
+  register: apt_status
+  until: apt_status is success
+  delay: 5
+  retries: 3
+  check_mode: false
+  when:
+    - ansible_os_family == "Debian"
+    - "'iproute2' not in ansible_facts.packages"
+
+- name: Gather network facts
+  ansible.builtin.setup:
+    gather_subset:
+      - network
+  check_mode: false
+  when: ansible_all_ipv4_addresses is not defined
+
+# Get docker0 interface IP if it exists
+- name: Get docker0 interface IP
+  ansible.builtin.set_fact:
+    docker0_ip: "{{ ansible_docker0.ipv4.address | default('') }}"
+  check_mode: false
+  when: ansible_docker0 is defined and ansible_docker0.ipv4 is defined
+
+# Define bind_address for each host (first private IPv4, excluding docker0), unless set in inventory.
+- name: Expose bind_address as facts
+  ansible.builtin.set_fact:
+    bind_address: >-
+      {{
+        ansible_all_ipv4_addresses
+        | default([])
+        | ansible.utils.ipaddr('private')
+        | reject('equalto', docker0_ip | default(''))
+        | list
+        | first
+        | default('')
+      }}
+  check_mode: false
+  when: bind_address is not defined
+
+- name: No suitable bind_address found
+  ansible.builtin.fail:
+    msg: "No suitable private IP address found automatically. Please set the 'bind_address' variable in inventory."
+  check_mode: false
+  when: bind_address == ''

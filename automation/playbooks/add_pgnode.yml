@@ -10,48 +10,18 @@
     - name: Gather package facts
       ansible.builtin.package_facts:
         manager: auto
-      when: ansible_facts.packages is not defined
       check_mode: false
+      tags: always
 
-    # Ansible requires the iproute package for network facts to be populated
-    - name: Install iproute package
-      ansible.builtin.package:
-        name: iproute
-        state: present
-      register: package_status
-      until: package_status is success
-      delay: 5
-      retries: 3
-      when:
-        - ansible_os_family == "RedHat"
-        - "'iproute' not in ansible_facts.packages"
-
-    - name: Install iproute2 package
-      ansible.builtin.apt:
-        name: iproute2
-        state: present
-      register: apt_status
-      until: apt_status is success
-      delay: 5
-      retries: 3
-      when:
-        - ansible_os_family == "Debian"
-        - "'iproute2' not in ansible_facts.packages"
-
-    - name: Gather network facts
-      ansible.builtin.setup:
-        gather_subset:
-          - network
-      when: ansible_all_ipv4_addresses is not defined
-
-    - name: Expose bind_address as facts
-      ansible.builtin.set_fact:
-        bind_address: "{{ ansible_all_ipv4_addresses | ansible.utils.ipaddr('private') | first }}"
-      when: bind_address is not defined
+    - name: Define bind_address
+      ansible.builtin.include_role:
+        name: vitabaks.autobase.bind_address
+      tags: always
 
     - name: Set maintenance variable
       ansible.builtin.set_fact:
         postgresql_cluster_maintenance: true
+      tags: always
 
     - name: "[Pre-Check] Check if there is a node with new_node set to true"
       ansible.builtin.set_fact:

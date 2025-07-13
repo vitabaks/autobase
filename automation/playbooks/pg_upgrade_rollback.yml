@@ -10,16 +10,14 @@
   gather_facts: true
   any_errors_fatal: true
   tasks:
-    - name: Gather network facts
-      ansible.builtin.setup:
-        gather_subset:
-          - network
-      when: ansible_all_ipv4_addresses is not defined
+    - name: Gather package facts
+      ansible.builtin.package_facts:
+        manager: auto
+      check_mode: false
 
-    - name: Expose bind_address as facts
-      ansible.builtin.set_fact:
-        bind_address: "{{ ansible_all_ipv4_addresses | ansible.utils.ipaddr('private') | first }}"
-      when: bind_address is not defined
+    - name: Define bind_address
+      ansible.builtin.include_role:
+        name: vitabaks.autobase.bind_address
 
     - name: '[Prepare] Add host to group "primary" (in-memory inventory)'
       ansible.builtin.add_host:

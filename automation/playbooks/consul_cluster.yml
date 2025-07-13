@@ -13,6 +13,12 @@
         manager: auto
       when: ansible_facts.packages is not defined
       check_mode: false
+      tags: always
+
+    - name: Define bind_address
+      ansible.builtin.include_role:
+        name: vitabaks.autobase.bind_address
+      tags: always
 
     - name: Gather ansible_distribution from localhost
       ansible.builtin.setup:
@@ -23,17 +29,6 @@
       become: false
       delegate_to: localhost
       delegate_facts: true
-
-    - name: Gather network facts
-      ansible.builtin.setup:
-        gather_subset:
-          - network
-      when: ansible_all_ipv4_addresses is not defined
-
-    - name: Expose bind_address as facts
-      ansible.builtin.set_fact:
-        bind_address: "{{ ansible_all_ipv4_addresses | ansible.utils.ipaddr('private') | first }}"
-      when: bind_address is not defined
 
     - name: Check if the consul role requirements (ansible.utils) are installed
       ansible.builtin.command: ansible-galaxy collection list ansible.utils
