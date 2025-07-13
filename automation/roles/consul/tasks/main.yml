@@ -10,7 +10,7 @@
   when:
     - consul_install_dependencies | bool
   block:
-    - name: Make sure the python3-pip package are present on controlling host
+    - name: Make sure the python3-pip package are present on control host
       ansible.builtin.package:
         name: python3-pip
         state: present
@@ -23,7 +23,7 @@
       ignore_errors: true
       when: not is_virtualenv or is_virtualenv == None
 
-    - name: Install netaddr dependency on controlling host (with --user)
+    - name: Install netaddr dependency on control host (with --user)
       ansible.builtin.pip:
         name: netaddr
         extra_args: --user
@@ -36,7 +36,7 @@
       run_once: true
       when: not is_virtualenv or is_virtualenv == None
 
-    - name: Install netaddr dependency on controlling host (virtualenv)
+    - name: Install netaddr dependency on control host (virtualenv)
       ansible.builtin.pip:
         name: netaddr
       environment:

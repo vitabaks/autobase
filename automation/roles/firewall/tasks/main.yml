@@ -1,4 +1,10 @@
 ---
+- name: Gather package facts
+  ansible.builtin.package_facts:
+    manager: auto
+  when: ansible_facts.packages is not defined
+  check_mode: false
+
 - name: Ensure iptables is present.
   ansible.builtin.package:
     name: iptables
@@ -7,6 +13,7 @@
   until: package_status is success
   delay: 5
   retries: 3
+  when: "'iptables' not in ansible_facts.packages"
 
 - name: Flush iptables the first time playbook runs.
   ansible.builtin.command:
