@@ -17,7 +17,16 @@
   ansible.builtin.set_fact:
     bind_address: >-
       {{
-        (ansible_all_ipv4_addresses | ansible.utils.ipaddr('private') | reject('equalto', docker0_ip | default('')) | list)[0] |
-        default((ansible_all_ipv4_addresses | ansible.utils.ipaddr('private'))[0], true)
+        (
+          ansible_all_ipv4_addresses | default([])
+          | ansible.utils.ipaddr('private')
+          | reject('equalto', docker0_ip | default(''))
+          | list
+        )[0] | default('')
       }}
   when: bind_address is not defined
+
+- name: No suitable bind_address found
+  ansible.builtin.fail:
+    msg: "No suitable private ip address found!"
+  when: bind_address == ''
