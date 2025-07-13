@@ -38,7 +38,6 @@
     - name: Define bind_address
       ansible.builtin.include_role:
         name: vitabaks.autobase.bind_address
-      check_mode: false
       tags: always
 
     - name: "[Prepare] Set maintenance variable"
