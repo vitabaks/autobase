@@ -12,7 +12,7 @@ permissions:
 jobs:
   release:
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Set TERM environment variable
         run: echo "TERM=xterm" >> $GITHUB_ENV
@@ -48,10 +48,10 @@ jobs:
         run: |
           # Get the previous tag
           PREV_TAG=$(git describe --tags --abbrev=0 HEAD~1 2>/dev/null || echo "")
-          
+
           echo "## What's Changed" > release_notes.md
           echo "" >> release_notes.md
-          
+
           if [ -n "$PREV_TAG" ]; then
             # Get commits between previous tag and current tag
             git log ${PREV_TAG}..${{ steps.tag.outputs.tag }} --pretty=format:"* %s (%h)" --no-merges >> release_notes.md
@@ -59,7 +59,7 @@ jobs:
             # If no previous tag, get all commits
             git log ${{ steps.tag.outputs.tag }} --pretty=format:"* %s (%h)" --no-merges >> release_notes.md
           fi
-          
+
           echo "" >> release_notes.md
           echo "" >> release_notes.md
           echo "## Docker Images" >> release_notes.md
