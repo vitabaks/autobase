@@ -50,7 +50,7 @@ Or include the playbook in your project by calling it from within an existing pl
 
 ```yaml
 - name: Autobase
-  hosts: etcd_cluster
+  hosts: all
   become: true
   become_user: root
   gather_facts: true
