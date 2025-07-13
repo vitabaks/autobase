@@ -1,21 +1,14 @@
 ---
-- name: "Fetch TLS certificate, key and CA from {{ selected_group[0] }}"
+- name: "Fetch TLS certificate, key and CA from {{ inventory_hostname }}"
   run_once: true
   ansible.builtin.slurp:
     src: "{{ fetch_tls_dir | default(tls_dir | default('/etc/tls')) }}/{{ item }}"
-  delegate_to: "{{ selected_group[0] }}"
   register: tls_files
   loop:
     - "{{ fetch_tls_privatekey | default(tls_privatekey | default('server.key')) }}"
     - "{{ fetch_tls_cert | default(tls_cert | default('server.crt')) }}"
     - "{{ fetch_tls_ca_cert | default(tls_ca_cert | default('ca.crt')) }}"
-  vars:
-    selected_group: >-
-      {{
-        groups[tls_group_name]
-        if (tls_group_name | default('') | length > 0 and tls_group_name in groups)
-        else groups['master']
-      }}
+  when: tls_group_name | d('master') in group_names
   tags: tls, tls_cert_copy
 
 - name: Create directory {{ copy_tls_dir | default(tls_dir | default('/etc/tls')) }}
