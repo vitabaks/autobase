@@ -8,10 +8,15 @@
   become_user: postgres
   any_errors_fatal: true
   pre_tasks:
+    - name: Gather package facts
+      ansible.builtin.package_facts:
+        manager: auto
+      check_mode: false
+
     - name: Define bind_address
       ansible.builtin.include_role:
         name: vitabaks.autobase.bind_address
-      when: bind_address is not defined
+      check_mode: false
 
     - name: "[Prepare] Get Patroni Cluster Leader Node"
       ansible.builtin.uri:

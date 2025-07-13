@@ -6,10 +6,17 @@
   become_method: sudo
   any_errors_fatal: true
   tasks:
+    - name: Gather package facts
+      ansible.builtin.package_facts:
+        manager: auto
+      check_mode: false
+      tags: always
+
     - name: Define bind_address
       ansible.builtin.include_role:
         name: vitabaks.autobase.bind_address
-      when: bind_address is not defined
+      check_mode: false
+      tags: always
 
     - name: "[Prepare] Get Patroni Cluster Leader Node"
       ansible.builtin.uri:

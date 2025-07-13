@@ -9,16 +9,18 @@
     vip_manager_disable: false # or 'true' for disable vip-manager service (if installed)
 
   pre_tasks:
-    - name: Define bind_address
-      ansible.builtin.include_role:
-        name: vitabaks.autobase.bind_address
-      when: bind_address is not defined
-
     - name: Gather package facts
       ansible.builtin.package_facts:
         manager: auto
       when: ansible_facts.packages is not defined
       check_mode: false
+      tags: always
+
+    - name: Define bind_address
+      ansible.builtin.include_role:
+        name: vitabaks.autobase.bind_address
+      check_mode: false
+      tags: always
 
     - name: Update apt cache
       ansible.builtin.apt:

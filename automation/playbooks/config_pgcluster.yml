@@ -33,15 +33,18 @@
       ansible.builtin.package_facts:
         manager: auto
       check_mode: false
+      tags: always
 
     - name: Define bind_address
       ansible.builtin.include_role:
         name: vitabaks.autobase.bind_address
-      when: bind_address is not defined
+      check_mode: false
+      tags: always
 
     - name: "[Prepare] Set maintenance variable"
       ansible.builtin.set_fact:
         postgresql_cluster_maintenance: true
+      tags: always
 
     - name: "[Prepare] Get Patroni Cluster Leader Node"
       ansible.builtin.uri:
