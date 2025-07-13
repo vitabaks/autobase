@@ -24,7 +24,11 @@
     # Define bind_address for each host (first private IPv4, excluding docker0), unless set in inventory.
     - name: Expose bind_address as facts
       ansible.builtin.set_fact:
-        bind_address: "{{ (ansible_all_ipv4_addresses | ansible.utils.ipaddr('private') | reject('equalto', docker0_ip | default('')) | list)[0] | default((ansible_all_ipv4_addresses | ansible.utils.ipaddr('private'))[0], true) }}"
+        bind_address: >-
+          {{
+            (ansible_all_ipv4_addresses | ansible.utils.ipaddr('private') | reject('equalto', docker0_ip | default('')) | list)[0] |
+            default((ansible_all_ipv4_addresses | ansible.utils.ipaddr('private'))[0], true)
+          }}
       when: bind_address is not defined
 
     - name: Update apt cache
