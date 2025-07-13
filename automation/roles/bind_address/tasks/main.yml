@@ -6,6 +6,10 @@
       - network
   when: ansible_all_ipv4_addresses is not defined
 
+- name: Debug ansible_all_ipv4_addresses
+  ansible.builtin.debug:
+    var: ansible_all_ipv4_addresses
+
 # Get docker0 interface IP if it exists
 - name: Get docker0 interface IP
   ansible.builtin.set_fact:
