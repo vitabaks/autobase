@@ -39,6 +39,10 @@
         name: vitabaks.autobase.bind_address
       when: bind_address is not defined
 
+    - name: "[Prepare] Set maintenance variable"
+      ansible.builtin.set_fact:
+        postgresql_cluster_maintenance: true
+
     - name: "[Prepare] Get Patroni Cluster Leader Node"
       ansible.builtin.uri:
         url: http://{{ patroni_bind_address | default(bind_address, true) }}:{{ patroni_restapi_port | default('8008') }}/leader
