@@ -69,3 +69,6 @@
       when: ntp_package == "chrony"
   when: ntp_enabled | default(false) | bool
   tags: ntp, ntp_conf
+
+- name: Make sure handlers are flushed immediately
+  ansible.builtin.meta: flush_handlers
