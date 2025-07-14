@@ -1,13 +1,10 @@
 ---
-name: "Release"
+name: "Publish Ansible collection"
 
 on:
   push:
     tags:
       - "*"
-
-permissions:
-  contents: write
 
 jobs:
   release:
@@ -43,47 +40,9 @@ jobs:
           cd automation
           ansible-galaxy collection build
 
-      - name: Generate release notes
-        id: release_notes
-        run: |
-          # Get the previous tag
-          PREV_TAG=$(git describe --tags --abbrev=0 HEAD~1 2>/dev/null || echo "")
-
-          echo "## What's Changed" > release_notes.md
-          echo "" >> release_notes.md
-
-          if [ -n "$PREV_TAG" ]; then
-            # Get commits between previous tag and current tag
-            git log ${PREV_TAG}..${{ steps.tag.outputs.tag }} --pretty=format:"* %s (%h)" --no-merges >> release_notes.md
-          else
-            # If no previous tag, get all commits
-            git log ${{ steps.tag.outputs.tag }} --pretty=format:"* %s (%h)" --no-merges >> release_notes.md
-          fi
-
-          echo "" >> release_notes.md
-          echo "" >> release_notes.md
-          echo "## Docker Images" >> release_notes.md
-          echo "* \`autobase/automation:${{ steps.tag.outputs.tag }}\`" >> release_notes.md
-          echo "" >> release_notes.md
-          echo "## Ansible Galaxy Collection" >> release_notes.md
-          echo "* \`vitabaks.autobase:${{ steps.tag.outputs.tag }}\`" >> release_notes.md
-          echo "" >> release_notes.md
-          echo "Install with: \`ansible-galaxy collection install vitabaks.autobase:${{ steps.tag.outputs.tag }}\`" >> release_notes.md
-
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ steps.tag.outputs.tag }}
-          name: Release ${{ steps.tag.outputs.tag }}
-          body_path: release_notes.md
-          files: |
-            automation/vitabaks-autobase-${{ steps.tag.outputs.tag }}.tar.gz
-          draft: false
-          prerelease: false
-
       - name: Publish to Ansible Galaxy
         run: |
           cd automation
-          ansible-galaxy collection publish vitabaks-autobase-${{ steps.tag.outputs.tag }}.tar.gz --token ${{ secrets.ANSIBLE_GALAXY_TOKEN }}
+          ansible-galaxy collection publish vitabaks-autobase-${{ steps.tag.outputs.tag }}.tar.gz --token $ANSIBLE_GALAXY_TOKEN
         env:
           ANSIBLE_GALAXY_TOKEN: ${{ secrets.ANSIBLE_GALAXY_TOKEN }}
