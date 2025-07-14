@@ -1,42 +1,69 @@
+# Welcome to the chrony configuration file. See chrony.conf(5) for more info.
+
+{% if ansible_os_family == 'Debian' %}
+# Include configuration files found in /etc/chrony/conf.d.
+confdir /etc/chrony/conf.d
+
+# Use time sources from DHCP.
+sourcedir /run/chrony-dhcp
+
+# Use NTP sources found in /etc/chrony/sources.d.
+sourcedir /etc/chrony/sources.d
+{% endif %}
+
+# This directive specify the location of the file containing ID/key pairs for NTP authentication.
+keyfile /etc/chrony/chrony.keys
+
 # Use public servers from the pool.ntp.org project.
-# Please consider joining the pool (http://www.pool.ntp.org/join.html).
-{% if ntp_servers is defined and ntp_servers | length > 0 %}
+{% if ntp_servers | default([]) | length > 0 %}
 {% for item in ntp_servers %}
 server {{ item }} iburst
 {% endfor %}
+{% else %}
+pool pool.ntp.org iburst maxsources 4
 {% endif %}
 
-# Record the rate at which the system clock gains/losses time.
-driftfile /var/lib/chrony/drift
+# This directive specify the file into which chronyd will store the rate information.
+driftfile {{ '/var/lib/chrony/chrony.drift' if ansible_os_family == 'Debian' else '/var/lib/chrony/drift' }}
 
-# Allow the system clock to be stepped in the first three updates
-# if its offset is larger than 1 second.
-makestep 1.0 3
+# Save NTS keys and cookies.
+ntsdumpdir /var/lib/chrony
 
-# Enable kernel synchronization of the real-time clock (RTC).
-rtcsync
+# Uncomment the following line to turn logging on.
+{% if chrony_enable_logging | default(false) %}
+log tracking measurements statistics
+{% else %}
+#log tracking measurements statistics
+{% endif %}
 
-# Enable hardware timestamping on all interfaces that support it.
-#hwtimestamp *
-
-# Increase the minimum number of selectable sources required to adjust
-# the system clock.
-#minsources 2
-
-# Allow NTP client access from local network.
-#allow 192.168.0.0/16
-
-# Serve time even if not synchronized to a time source.
-#local stratum 10
-
-# Specify file containing keys for NTP authentication.
-keyfile /etc/chrony.keys
-
-# Get TAI-UTC offset and leap seconds from the system tz database.
-leapsectz right/UTC
-
-# Specify directory for log files.
+# Log files location.
 logdir /var/log/chrony
 
-# Select which information is logged.
-#log measurements statistics tracking
+# Stop bad estimates upsetting machine clock.
+maxupdateskew {{ chrony_maxupdateskew | default('100.0') }}
+
+# This directive enables kernel synchronisation (every 11 minutes) of the real-time clock. Note that it can't be used along with the 'rtcfile' directive.
+rtcsync
+
+# Step the system clock instead of slewing it if the adjustment is larger than one second, but only in the first three clock updates.
+makestep {{ chrony_makestep_threshold | default('1') }} {{ chrony_makestep_limit | default('-1') }}
+
+# Maximum distance to accept time sources
+maxdistance {{ chrony_maxdistance | default('1000000000') }}
+
+# Get TAI-UTC offset and leap seconds from the system tz database.
+{% if chrony_leapsectz | default(true) %}
+leapsectz right/UTC
+{% endif %}
+
+# Allow NTP client access from local network
+{% if chrony_allow_networks | default([]) | length > 0 %}
+{% for network in chrony_allow_networks %}
+allow {{ network }}
+{% endfor %}
+{% endif %}
+
+# Minimum sources for better reliability in DB clusters
+{% if chrony_minsources is defined %}
+minsources {{ chrony_minsources }}
+{% endif %}
