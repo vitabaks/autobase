@@ -20,4 +20,5 @@
   when:
     - postgresql_databases | default('') | length > 0
     - patroni_standby_cluster.host | default('') | length < 1 # do not perform on the Standby Cluster
+    - not ansible_check_mode # Skip database creation in check mode
   tags: postgresql_databases

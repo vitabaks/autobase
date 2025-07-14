@@ -3,14 +3,44 @@
   "extends": [
     "config:recommended",
     "group:recommended",
-    "schedule:daily",
     ":prHourlyLimit2",
     ":automergeMinor",
     ":automergeRequireAllStatusChecks"
   ],
   "labels": ["dependencies"],
   "minimumReleaseAge": "3 days",
+  "schedule": ["before 4am on Monday"],
   "packageRules": [
+    {
+      "description": "Group and schedule npm dependencies for bi-weekly updates",
+      "matchManagers": ["npm"],
+      "groupName": "npm dependencies",
+      "schedule": ["before 4am every 2 weeks on Monday"]
+    },
+    {
+      "description": "Group and schedule Go dependencies for bi-weekly updates",
+      "matchManagers": ["gomod"],
+      "groupName": "go dependencies", 
+      "schedule": ["before 4am every 2 weeks on Monday"]
+    },
+    {
+      "description": "Group and schedule Python dependencies for bi-weekly updates",
+      "matchManagers": ["pip_requirements", "pip_setup", "pipenv", "poetry"],
+      "groupName": "python dependencies",
+      "schedule": ["before 4am every 2 weeks on Monday"]
+    },
+    {
+      "description": "Group and schedule Docker/Compose dependencies for weekly updates",
+      "matchManagers": ["dockerfile", "docker-compose"],
+      "groupName": "docker dependencies",
+      "schedule": ["before 4am on Monday"]
+    },
+    {
+      "description": "Group and schedule Ansible Galaxy dependencies for weekly updates", 
+      "matchManagers": ["ansible-galaxy"],
+      "groupName": "ansible galaxy dependencies",
+      "schedule": ["before 4am on Monday"]
+    },
     {
       "matchPackageNames": ["boto3"],
       "schedule": ["every weekend"]
