@@ -1,32 +1,28 @@
-# Welcome to the chrony configuration file. See chrony.conf(5) for more
-# information about usable directives.
+# Welcome to the chrony configuration file. See chrony.conf(5) for more info.
 
+{% if ansible_os_family == 'Debian' %}
 # Include configuration files found in /etc/chrony/conf.d.
 confdir /etc/chrony/conf.d
-
-# Use public servers from the pool.ntp.org project.
-# Please consider joining the pool (http://www.pool.ntp.org/join.html).
-{% if ntp_servers is defined and ntp_servers | length > 0 %}
-{% for item in ntp_servers %}
-server {{ item }} iburst
-{% endfor %}
-{% else %}
-# Default fallback NTP servers if none specified
-pool ntp.ubuntu.com iburst maxsources 4
-pool 0.ubuntu.pool.ntp.org iburst maxsources 1
-pool 1.ubuntu.pool.ntp.org iburst maxsources 1
-pool 2.ubuntu.pool.ntp.org iburst maxsources 2
-{% endif %}
 
 # Use time sources from DHCP.
 sourcedir /run/chrony-dhcp
 
 # Use NTP sources found in /etc/chrony/sources.d.
 sourcedir /etc/chrony/sources.d
+{% endif %}
 
 # This directive specify the location of the file containing ID/key pairs for
 # NTP authentication.
 keyfile /etc/chrony/chrony.keys
+
+# Use public servers from the pool.ntp.org project.
+{% if ntp_servers is defined and ntp_servers | length > 0 %}
+{% for item in ntp_servers %}
+server {{ item }} iburst
+{% endfor %}
+{% else %}
+pool pool.ntp.org iburst maxsources 4
+{% endif %}
 
 # This directive specify the file into which chronyd will store the rate
 # information.
