@@ -1,5 +1,10 @@
 ---
 # Install packages from repository
+- name: Gather package facts
+  ansible.builtin.package_facts:
+    manager: auto
+  when: ansible_facts.packages is not defined
+  check_mode: false
 
 # RedHat
 - name: Update dnf cache
@@ -13,6 +18,7 @@
   when:
     - installation_method == "packages"
     - ansible_os_family == "RedHat"
+    - not (skip_dnf_makecache | default(false) | bool)
   environment: "{{ proxy_env | default({}) }}"
   tags: install_packages, install_postgres
 
@@ -30,7 +36,8 @@
   when:
     - installation_method == "packages"
     - ansible_os_family == "RedHat"
-    - system_packages | default('') | length > 0
+    - system_packages | default([]) | length > 0
+    - item not in ansible_facts.packages
   tags: install_packages
 
 - name: Set Python alternative
@@ -89,6 +96,7 @@
     - installation_method == "packages"
     - ansible_os_family == "Debian"
     - system_packages | default('') | length > 0
+    - item not in ansible_facts.packages
   tags: install_packages
 
 # Install PostgreSQL from repository
@@ -121,6 +129,7 @@
       until: package_status is success
       delay: 5
       retries: 3
+      when: item not in ansible_facts.packages
   environment: "{{ proxy_env | default({}) }}"
   when:
     - installation_method == "packages"
@@ -138,6 +147,7 @@
       until: package_status is success
       delay: 5
       retries: 3
+      when: "'postgresql-common' not in ansible_facts.packages"
 
     - name: Disable initializing of a default postgresql cluster
       ansible.builtin.replace:
@@ -159,6 +169,7 @@
       until: apt_status is success
       delay: 5
       retries: 3
+      when: item not in ansible_facts.packages
   environment: "{{ proxy_env | default({}) }}"
   when:
     - installation_method == "packages"
@@ -197,7 +208,9 @@
       until: apt_status is success
       delay: 5
       retries: 3
-      when: ansible_os_family == "Debian" and copy_packages_result.changed
+      when:
+        - ansible_os_family == "Debian"
+        - copy_packages_result.changed
 
     - name: Install packages
       ansible.builtin.dnf:

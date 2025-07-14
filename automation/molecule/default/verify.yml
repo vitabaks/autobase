@@ -12,10 +12,20 @@
           - network
       when: ansible_all_ipv4_addresses is not defined
 
-    # Define bind_address for each host (first private IPv4), unless set in inventory.
+    # Get docker0 interface IP if it exists
+    - name: Get docker0 interface IP
+      ansible.builtin.set_fact:
+        docker0_ip: "{{ ansible_docker0.ipv4.address | default('') }}"
+      when: ansible_docker0 is defined and ansible_docker0.ipv4 is defined
+
+    # Define bind_address for each host (first private IPv4, excluding docker0), unless set in inventory.
     - name: Expose bind_address as facts
       ansible.builtin.set_fact:
-        bind_address: "{{ ansible_all_ipv4_addresses | ansible.utils.ipaddr('private') | first }}"
+        bind_address: >-
+          {{
+            (ansible_all_ipv4_addresses | ansible.utils.ipaddr('private') | reject('equalto', docker0_ip | default('')) | list)[0] |
+            default((ansible_all_ipv4_addresses | ansible.utils.ipaddr('private'))[0], true)
+          }}
       when: bind_address is not defined
 
   tasks:
