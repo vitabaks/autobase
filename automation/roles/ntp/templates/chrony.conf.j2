@@ -11,8 +11,7 @@ sourcedir /run/chrony-dhcp
 sourcedir /etc/chrony/sources.d
 {% endif %}
 
-# This directive specify the location of the file containing ID/key pairs for
-# NTP authentication.
+# This directive specify the location of the file containing ID/key pairs for NTP authentication.
 keyfile /etc/chrony/chrony.keys
 
 # Use public servers from the pool.ntp.org project.
@@ -24,9 +23,8 @@ server {{ item }} iburst
 pool pool.ntp.org iburst maxsources 4
 {% endif %}
 
-# This directive specify the file into which chronyd will store the rate
-# information.
-driftfile /var/lib/chrony/chrony.drift
+# This directive specify the file into which chronyd will store the rate information.
+driftfile {{ '/var/lib/chrony/chrony.drift' if ansible_os_family == 'Debian' else '/var/lib/chrony/drift' }}
 
 # Save NTS keys and cookies.
 ntsdumpdir /var/lib/chrony
@@ -44,23 +42,16 @@ logdir /var/log/chrony
 # Stop bad estimates upsetting machine clock.
 maxupdateskew {{ chrony_maxupdateskew | default('100.0') }}
 
-# This directive enables kernel synchronisation (every 11 minutes) of the
-# real-time clock. Note that it can't be used along with the 'rtcfile' directive.
+# This directive enables kernel synchronisation (every 11 minutes) of the real-time clock. Note that it can't be used along with the 'rtcfile' directive.
 rtcsync
 
-# Step the system clock instead of slewing it if the adjustment is larger than
-# one second, but only in the first three clock updates.
-#makestep 1 -1
+# Step the system clock instead of slewing it if the adjustment is larger than one second, but only in the first three clock updates.
 makestep {{ chrony_makestep_threshold | default('1') }} {{ chrony_makestep_limit | default('-1') }}
 
 # Maximum distance to accept time sources
-#maxdistance 1000000000
 maxdistance {{ chrony_maxdistance | default('1000000000') }}
 
 # Get TAI-UTC offset and leap seconds from the system tz database.
-# This directive must be commented out when using time sources serving
-# leap-smeared time.
-#leapsectz right/UTC
 {% if chrony_leapsectz | default(true) %}
 leapsectz right/UTC
 {% endif %}
