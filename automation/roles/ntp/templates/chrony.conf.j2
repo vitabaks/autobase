@@ -16,7 +16,7 @@ sourcedir /etc/chrony/sources.d
 keyfile /etc/chrony/chrony.keys
 
 # Use public servers from the pool.ntp.org project.
-{% if ntp_servers is defined and ntp_servers | length > 0 %}
+{% if ntp_servers | default([]) | length > 0 %}
 {% for item in ntp_servers %}
 server {{ item }} iburst
 {% endfor %}
@@ -66,7 +66,7 @@ leapsectz right/UTC
 {% endif %}
 
 # Allow NTP client access from local network
-{% if chrony_allow_networks is defined and chrony_allow_networks | length > 0 %}
+{% if chrony_allow_networks | default([]) | length > 0 %}
 {% for network in chrony_allow_networks %}
 allow {{ network }}
 {% endfor %}
