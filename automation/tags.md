@@ -21,11 +21,9 @@
 - locales
 - timezone
 - ntp
+- - ntp_cleanup
 - - ntp_install
 - - ntp_conf
-- chrony
-- - chrony_install
-- - chrony_conf
 - ssh_keys
 - fetch_files
 - copy_files

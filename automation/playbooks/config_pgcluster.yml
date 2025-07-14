@@ -158,7 +158,6 @@
     - role: vitabaks.autobase.io_scheduler
     - role: vitabaks.autobase.locales
     - role: vitabaks.autobase.ntp
-    - role: vitabaks.autobase.chrony
     - role: vitabaks.autobase.ssh_keys
     - role: vitabaks.autobase.copy
     - role: vitabaks.autobase.pgpass
