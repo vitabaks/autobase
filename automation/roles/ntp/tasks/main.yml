@@ -70,5 +70,30 @@
   when: ntp_enabled | default(false) | bool
   tags: ntp, ntp_conf
 
+# Prevent failures in CI for containers (RedHat family)
+- block:
+    - name: Ensure override dir exists
+      ansible.builtin.file:
+        path: /etc/systemd/system/chronyd.service.d
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
+
+    - name: Create systemd override for chronyd ExecStart
+      ansible.builtin.copy:
+        dest: /etc/systemd/system/chronyd.service.d/override.conf
+        content: |
+          [Service]
+          ExecStart=
+          ExecStart=/usr/sbin/chronyd -x $OPTIONS
+
+    - name: Reload systemd daemon after override
+      ansible.builtin.systemd:
+        daemon_reload: true
+  when:
+    - ansible_virtualization_type in ['container', 'docker', 'lxc', 'podman']
+    - ansible_os_family == 'RedHat'
+
 - name: Make sure handlers are flushed immediately
   ansible.builtin.meta: flush_handlers
