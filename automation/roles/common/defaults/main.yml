@@ -798,7 +798,6 @@ ntp_servers: []
 #  - "10.128.64.44"
 #  - "10.128.64.45"
 ntp_package: chrony
-chrony_enabled: false
 chrony_enable_logging: false
 chrony_maxupdateskew: "100.0"
 chrony_makestep_threshold: "1"
