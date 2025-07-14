@@ -28,6 +28,7 @@
   when:
     - ntp_enabled | default(false) | bool
     - ntp_package | default('chrony') == "chrony"
+    - item in ansible_facts.packages
   tags: ntp, ntp_cleanup
 
 # Install NTP or Chrony service
