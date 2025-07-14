@@ -492,13 +492,13 @@
 - name: Server info
   ansible.builtin.debug:
     msg:
-      id: "{{ item.id | default('N/A') }}"
-      name: "{{ server_name | lower }}{{ '%02d' % (idx + 1) | default('N/A') }}"
-      image: "{{ item.disks[0].licenses[0] | basename | default('N/A') }}"
-      type: "{{ item.machineType | basename | default('N/A') }}"
-      volume_size: "{{ volume_size | default('N/A') }} GB"
-      public_ip: "{{ item.networkInterfaces[0].accessConfigs[0].natIP | default('N/A') }}"
-      private_ip: "{{ item.networkInterfaces[0].networkIP | default('N/A') }}"
+      id: "{{ item.id | default('N/A', true) }}"
+      name: "{{ server_name | lower }}{{ '%02d' % (idx + 1) | default('N/A', true) }}"
+      image: "{{ item.disks[0].licenses[0] | basename | default('N/A', true) }}"
+      type: "{{ item.machineType | basename | default('N/A', true) }}"
+      volume_size: "{{ volume_size | default('N/A', true) }} GB"
+      public_ip: "{{ item.networkInterfaces[0].accessConfigs[0].natIP | default('N/A', true) }}"
+      private_ip: "{{ item.networkInterfaces[0].networkIP | default('N/A', true) }}"
   loop: "{{ server_result.results }}"
   loop_control:
     index_var: idx

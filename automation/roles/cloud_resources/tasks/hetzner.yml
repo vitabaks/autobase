@@ -662,13 +662,13 @@
 - name: Server info
   ansible.builtin.debug:
     msg:
-      id: "{{ item.hcloud_server.id | default('N/A') }}"
-      name: "{{ item.hcloud_server.name | default('N/A') }}"
-      image: "{{ item.hcloud_server.image | default('N/A') }}"
-      type: "{{ item.hcloud_server.server_type | default('N/A') }}"
+      id: "{{ item.hcloud_server.id | default('N/A', true) }}"
+      name: "{{ item.hcloud_server.name | default('N/A', true) }}"
+      image: "{{ item.hcloud_server.image | default('N/A', true) }}"
+      type: "{{ item.hcloud_server.server_type | default('N/A', true) }}"
       volume_size: "{{ volume_size }} GB"
-      public_ip: "{{ item.hcloud_server.ipv4_address | default('N/A') }}"
-      private_ip: "{{ item.hcloud_server.private_networks_info[0].ip | default('N/A') }}"
+      public_ip: "{{ item.hcloud_server.ipv4_address | default('N/A', true) }}"
+      private_ip: "{{ item.hcloud_server.private_networks_info[0].ip | default('N/A', true) }}"
   loop: "{{ server_result.results }}"
   loop_control:
     index_var: idx

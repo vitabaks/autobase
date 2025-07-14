@@ -443,24 +443,25 @@
 - name: Server info
   ansible.builtin.debug:
     msg:
-      id: "{{ item.ansible_facts.azure_vm.id | default('N/A') }}"
-      name: "{{ item.ansible_facts.azure_vm.name | default('N/A') }}"
-      image: "{{ item.ansible_facts.azure_vm.storage_profile.image_reference | default('N/A') }}"
-      type: "{{ item.ansible_facts.azure_vm.hardware_profile.vm_size | default('N/A') }}"
-      volume_size: "{{ item.ansible_facts.azure_vm.storage_profile.data_disks[0].disk_size_gb | default('N/A') }} GB"
-      volume_type: "{{ item.ansible_facts.azure_vm.storage_profile.data_disks[0].managed_disk.storage_account_type | default('N/A') }}"
+      id: "{{ item.ansible_facts.azure_vm.id | default('N/A', true) }}"
+      name: "{{ item.ansible_facts.azure_vm.name | default('N/A', true) }}"
+      image: "{{ item.ansible_facts.azure_vm.storage_profile.image_reference | default('N/A', true) }}"
+      type: "{{ item.ansible_facts.azure_vm.hardware_profile.vm_size | default('N/A', true) }}"
+      volume_size: "{{ item.ansible_facts.azure_vm.storage_profile.data_disks[0].disk_size_gb | default('N/A', true) }} GB"
+      volume_type: "{{ item.ansible_facts.azure_vm.storage_profile.data_disks[0].managed_disk.storage_account_type | default('N/A', true) }}"
       public_ip: >-
         {{
           (public_ip_address.results if public_ip_address is defined else [])
-          | selectattr('idx', 'equalto', item.idx) | map(attribute='state.ip_address') | first | default('N/A')
+          | selectattr('idx', 'equalto', item.idx) | map(attribute='state.ip_address') | first | default('N/A', true)
         }}
       private_ip: >-
         {{
-          item.ansible_facts.azure_vm.network_profile.network_interfaces[0].properties.ip_configurations[0].private_ip_address | default('N/A')
+          item.ansible_facts.azure_vm.network_profile.network_interfaces[0].properties.ip_configurations[0].private_ip_address | default('N/A', true)
         }}
   loop: "{{ server_result.results }}"
   loop_control:
-    label: "{{ item.ansible_facts.azure_vm.name | default('N/A') }}"
+    index_var: idx
+    label: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}"
   when:
     - server_result.results is defined
     - item.ansible_facts is defined

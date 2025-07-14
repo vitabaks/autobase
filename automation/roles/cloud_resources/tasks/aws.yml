@@ -507,13 +507,13 @@
 - name: Server info
   ansible.builtin.debug:
     msg:
-      id: "{{ item.instances[0].instance_id | default('N/A') }}"
-      name: "{{ item.instances[0].tags.Name | default('N/A') }}"
-      image: "{{ item.instances[0].image_id | default('N/A') }}"
-      type: "{{ item.instances[0].instance_type | default('N/A') }}"
+      id: "{{ item.instances[0].instance_id | default('N/A', true) }}"
+      name: "{{ item.instances[0].tags.Name | default('N/A', true) }}"
+      image: "{{ item.instances[0].image_id | default('N/A', true) }}"
+      type: "{{ item.instances[0].instance_type | default('N/A', true) }}"
       volume_size: "{{ volume_size }} GB"
-      public_ip: "{{ item.instances[0].public_ip_address | default('N/A') }}"
-      private_ip: "{{ item.instances[0].private_ip_address | default('N/A') }}"
+      public_ip: "{{ item.instances[0].public_ip_address | default('N/A', true) }}"
+      private_ip: "{{ item.instances[0].private_ip_address | default('N/A', true) }}"
   loop: "{{ server_result.results }}"
   loop_control:
     index_var: idx
