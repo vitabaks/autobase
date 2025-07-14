@@ -1,4 +1,9 @@
 ---
+- name: Gather package facts
+  ansible.builtin.package_facts:
+    manager: auto
+  when: ansible_facts.packages is not defined
+  check_mode: false
 
 # Cleanup existing NTP services
 - block:
@@ -34,7 +39,9 @@
   delay: 5
   retries: 3
   environment: "{{ proxy_env | default({}) }}"
-  when: ntp_enabled | default(false) | bool
+  when:
+    - ntp_enabled | default(false) | bool
+    - ntp_package | default('chrony') not in ansible_facts.packages
   tags: ntp, ntp_install
 
 # Configure NTP or Chrony service
