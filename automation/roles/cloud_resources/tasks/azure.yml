@@ -2,7 +2,7 @@
 # Dependencies
 - name: Install Python dependencies
   block:
-    - name: Ensure that 'python3-pip' package is present on controlling host
+    - name: Ensure that 'python3-pip' package is present on control host
       ansible.builtin.command: which pip3
       register: pip3_check
       failed_when: false
@@ -26,7 +26,7 @@
         - pip3_check.rc != 0
         - ansible_os_family == "Debian"
 
-    - name: Install 'python3-pip' package on controlling host
+    - name: Install 'python3-pip' package on control host
       ansible.builtin.package:
         name: python3-pip
         state: present
@@ -38,7 +38,7 @@
         - pip3_check.rc != 0
         - ansible_distribution != "MacOSX"
 
-    - name: Ensure that Azure collection is installed on controlling host
+    - name: Ensure that Azure collection is installed on control host
       ansible.builtin.command: ansible-galaxy collection list azure.azcollection
       changed_when: false
       failed_when: false
@@ -62,7 +62,7 @@
       changed_when: false
       when: ansible_collections_path is not defined
 
-    - name: Ensure that Azure collection requirements is present on controlling host
+    - name: Ensure that Azure collection requirements is present on control host
       ansible.builtin.pip:
         requirements: "{{ ansible_collections_path | default(collections_path.stdout) }}/azure/azcollection/requirements.txt"
         executable: pip3

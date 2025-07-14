@@ -1,8 +1,13 @@
 ---
 # tasks file for cron
+- name: Gather package facts
+  ansible.builtin.package_facts:
+    manager: auto
+  when: ansible_facts.packages is not defined
+  check_mode: false
 
-- name: Make sure that the cronie package is installed
-  ansible.builtin.package:
+- name: Install cronie package
+  ansible.builtin.dnf:
     name: cronie
     state: present
   register: package_status
@@ -11,11 +16,12 @@
   retries: 3
   environment: "{{ proxy_env | default({}) }}"
   when:
-    - cron_jobs is defined and cron_jobs | length > 0
     - ansible_os_family == "RedHat"
+    - "'cronie' not in ansible_facts.packages"
+    - cron_jobs is defined and cron_jobs | length > 0
   tags: cron
 
-- name: Make sure that the cron package is installed
+- name: Install cron package
   ansible.builtin.apt:
     name: cron
     state: present
@@ -25,8 +31,9 @@
   retries: 3
   environment: "{{ proxy_env | default({}) }}"
   when:
-    - cron_jobs is defined and cron_jobs | length > 0
     - ansible_os_family == "Debian"
+    - "'cron' not in ansible_facts.packages"
+    - cron_jobs is defined and cron_jobs | length > 0
   tags: cron
 
 - name: Add cron jobs
