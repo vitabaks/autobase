@@ -12,6 +12,7 @@
         name: systemd-timesyncd
         enabled: false
         state: stopped
+      failed_when: false
 
     - name: Remove NTP package if installed
       ansible.builtin.package:
@@ -23,7 +24,7 @@
         - ntpdate
         - ntpsec
         - openntpd
-  failed_when: false
+      failed_when: false
   when:
     - ntp_enabled | default(false) | bool
     - ntp_package | default('chrony') == "chrony"
