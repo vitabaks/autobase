@@ -806,7 +806,7 @@ chrony_makestep_limit: "-1"
 chrony_maxdistance: "1000000000"
 chrony_leapsectz: true
 chrony_minsources: 2
-chrony_allow_networks:
+chrony_allow_networks: []
 #  - "10.0.0.0/8"
 #  - "172.16.0.0/24"
 #  - "192.168.0.0/16"
