@@ -793,7 +793,7 @@ etc_hosts: []
 #  - ""
 
 # NTP (Network Time Protocol) service
-ntp_enabled: true # or 'true' if you want to install and configure the ntp/chrony service
+ntp_enabled: true # install and configure the ntp or chrony service
 ntp_servers: []
 #  - "10.128.64.44"
 #  - "10.128.64.45"
