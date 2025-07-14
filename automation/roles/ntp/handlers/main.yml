@@ -6,16 +6,18 @@
     state: restarted
   listen: "restart ntp"
 
-- name: Restart ntpd service
+- name: Restart chrony service
   ansible.builtin.systemd:
-    name: ntpd
+    name: chrony
     enabled: true
     state: restarted
-  listen: "restart ntpd"
+  listen: "restart chrony"
+  when: ansible_os_family == "Debian"
 
 - name: Restart chronyd service
   ansible.builtin.systemd:
     name: chronyd
     enabled: true
     state: restarted
-  listen: "restart chronyd"
+  listen: "restart chrony"
+  when: ansible_os_family == "RedHat"
