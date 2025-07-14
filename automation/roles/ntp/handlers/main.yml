@@ -12,12 +12,10 @@
     enabled: true
     state: restarted
   listen: "restart chrony"
-  when: ansible_os_family == "Debian"
 
 - name: Restart chronyd service
   ansible.builtin.systemd:
     name: chronyd
     enabled: true
     state: restarted
-  listen: "restart chrony"
-  when: ansible_os_family == "RedHat"
+  listen: "restart chronyd"
