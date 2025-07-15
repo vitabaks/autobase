@@ -4,7 +4,7 @@
   become_user: postgres
   community.postgresql.postgresql_user:
     name: "{{ item.name }}"
-    password: "{{ item.password }}"
+    password: "{{ item.password | default(omit) }}"
     encrypted: true
     role_attr_flags: "{{ item.flags }}"
     login_host: "127.0.0.1"
@@ -19,7 +19,6 @@
     label: "{{ item.name }}"
   when:
     - postgresql_users | default('') | length > 0
-    - item.password | default('') | length > 0 # Ensure the password is not empty
     - patroni_standby_cluster.host | default('') | length < 1 # do not perform on the Standby Cluster
   tags: postgresql_users
 
