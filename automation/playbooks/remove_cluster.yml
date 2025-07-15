@@ -46,7 +46,7 @@
         - name: Run pgBackRest stop
           become: true
           become_user: postgres
-          ansible.builtin.command: "pgbackrest --stanza={{ stanza_name }} stop --force"
+          ansible.builtin.command: "pgbackrest --stanza={{ pgbackrest_stanza | default(default_pgbackrest_stanza) }} stop --force"
           register: pgbackrest_stop_result
           when: ('pgbackrest' in groups and groups['pgbackrest'] | length > 0 and inventory_hostname in groups['pgbackrest']) or
             (('pgbackrest' not in groups or groups['pgbackrest'] | length == 0) and inventory_hostname == groups['postgres_cluster'][0])
@@ -54,19 +54,19 @@
         - name: Delete pgBackRest stanza
           become: true
           become_user: postgres
-          ansible.builtin.command: "pgbackrest --stanza={{ stanza_name }} stanza-delete --force"
+          ansible.builtin.command: "pgbackrest --stanza={{ pgbackrest_stanza | default(default_pgbackrest_stanza) }} stanza-delete --force"
           when: pgbackrest_stop_result is defined and pgbackrest_stop_result is changed
 
         - name: Delete pgBackRest cron job
           ansible.builtin.file:
             path: "{{ item.file }}"
             state: absent
-          loop: "{{ cron_jobs | unique(attribute='file') }}"
+          loop: "{{ pgbackrest_cron_jobs | default(default_pgbackrest_cron_jobs) | unique(attribute='file') }}"
           loop_control:
             label: "{{ item.file }}"
       vars:
-        stanza_name: "{{ pgbackrest_stanza | default(patroni_cluster_name | default('postgres-cluster')) }}"
-        cron_jobs: "{{ pgbackrest_cron_jobs | default([{ 'file': '/etc/cron.d/pgbackrest-' ~ stanza_name }]) }}"
+        default_pgbackrest_stanza: "{{ patroni_cluster_name | default('postgres-cluster') }}"
+        default_pgbackrest_cron_jobs: "{{ [{ 'file': '/etc/cron.d/pgbackrest-' ~ default_pgbackrest_stanza }] }}"
       ignore_errors: true
       when: remove_pgbackrest | default(false) | bool
 
