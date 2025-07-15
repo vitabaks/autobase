@@ -51,7 +51,7 @@
             - server_cert.stat.exists | default(false)
       when:
         - not tls_cert_regenerate | default(false) | bool
-        - inventory_hostname == selected_group[0]
+        - inventory_hostname == (groups[tls_group_name | default('master')][0])
 
     # Clean up existing certificates if tls_cert_regenerate is true
     - name: Clean up existing certificates
@@ -66,13 +66,7 @@
       when: tls_cert_regenerate | default(false)| bool
   vars:
     tls_directory: "{{ generate_tls_dir | default(tls_dir | default('/etc/tls')) }}"
-    selected_group: >-
-      {{
-        groups[tls_group_name]
-        if (tls_group_name | default('') | length > 0 and tls_group_name in groups)
-        else groups['postgres_cluster']
-      }}
-  when: inventory_hostname in selected_group
+  when: inventory_hostname in (groups[tls_group_name | default('postgres_cluster')])
   tags: tls, tls_cert_generate
 
 # Generate new certificates
@@ -180,14 +174,8 @@
         content: "{{ certificate.certificate }}"
   vars:
     tls_directory: "{{ generate_tls_dir | default(tls_dir | default('/etc/tls')) }}"
-    selected_group: >-
-      {{
-        [groups[tls_group_name][0]]
-        if (tls_group_name | default('') | length > 0 and tls_group_name in groups)
-        else [groups['master'][0]]
-      }}
   when:
-    - inventory_hostname in selected_group
+    - inventory_hostname == (groups[tls_group_name | default('master')][0])
     - tls_cert_regenerate | default(false) | bool or
       (not ca_cert.stat.exists | default(false) or
       not server_key.stat.exists | default(false) or
