@@ -2,7 +2,7 @@
 # Dependencies
 - name: Install Python dependencies
   block:
-    - name: Ensure that 'python3-pip' package is present on controlling host
+    - name: Ensure that 'python3-pip' package is present on control host
       ansible.builtin.command: which pip3
       register: pip3_check
       failed_when: false
@@ -26,7 +26,7 @@
         - pip3_check.rc != 0
         - ansible_os_family == "Debian"
 
-    - name: Install 'python3-pip' package on controlling host
+    - name: Install 'python3-pip' package on control host
       ansible.builtin.package:
         name: python3-pip
         state: present
@@ -38,7 +38,7 @@
         - pip3_check.rc != 0
         - ansible_distribution != "MacOSX"
 
-    - name: Ensure that 'boto3' dependency is present on controlling host
+    - name: Ensure that 'boto3' dependency is present on control host
       ansible.builtin.pip:
         name: boto3
         executable: pip3
@@ -142,7 +142,7 @@
                 'ports': [ansible_ssh_port | default(22)],
                 'cidr_ip': ssh_public_allowed_ips | default('0.0.0.0/0', true) | split(',')
               }
-            ] if ssh_public_access | bool else []) +
+            ] if server_public_ip | bool and ssh_public_access | bool else []) +
             ([
               {
                 'rule_desc': 'Netdata public access',
@@ -234,6 +234,11 @@
       register: ec2_security_group_result
       when: cloud_firewall | bool
 
+    # Determine which IP address (public or private)
+    - name: "Set variable: ip_address_type"
+      ansible.builtin.set_fact:
+        ip_address_type: "{{ 'public_ip_address' if server_public_ip | bool else 'private_ip_address' }}"
+
     # Server and volume
     - name: "AWS: Create or modify EC2 instance"
       amazon.aws.ec2_instance:
@@ -245,10 +250,10 @@
         image_id: "{{ server_image }}"
         key_name: "{{ ssh_key_name }}"
         region: "{{ server_location }}"
-        security_groups: "{{ ([] if not cloud_firewall | bool else [patroni_cluster_name + '-security-group']) }}"
-        vpc_subnet_id: "{{ server_network }}"
         network_interfaces:
-          - assign_public_ip: true
+          - subnet_id: "{{ server_network }}"
+            groups: "{{ ([] if not cloud_firewall | bool else [ec2_security_group_result.group_id]) }}"
+            assign_public_ip: "{{ server_public_ip | bool }}"
             delete_on_termination: true
         volumes:
           - device_name: /dev/sda1
@@ -267,8 +272,8 @@
         label: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}"
       register: server_result
       until:
-        - server_result.instances[0].public_ip_address is defined
-        - server_result.instances[0].public_ip_address | length > 0
+        - server_result.instances[0][ip_address_type] is defined
+        - server_result.instances[0][ip_address_type] | length > 0
       retries: 3
       delay: 10
       when: not server_spot | default(aws_ec2_spot_instance | default(false)) | bool
@@ -305,8 +310,8 @@
               key_name: "{{ ssh_key_name }}"
               network_interfaces:
                 - subnet_id: "{{ server_network }}"
-                  groups: "{{ ec2_security_group_result.group_id }}"
-                  associate_public_ip_address: true
+                  groups: "{{ ([] if not cloud_firewall | bool else [ec2_security_group_result.group_id]) }}"
+                  associate_public_ip_address: "{{ server_public_ip | bool }}"
                   delete_on_termination: true
                   device_index: 0
               block_device_mappings:
@@ -343,8 +348,8 @@
             label: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}"
           register: ec2_spot_instance_result
           until:
-            - ec2_spot_instance_result.instances[0].public_ip_address is defined
-            - ec2_spot_instance_result.instances[0].public_ip_address | length > 0
+            - ec2_spot_instance_result.instances[0][ip_address_type] is defined
+            - ec2_spot_instance_result.instances[0][ip_address_type] | length > 0
           retries: 3
           delay: 10
           when: item.spot_request.spot_instance_request_id is defined
@@ -498,53 +503,56 @@
         - aws_s3_bucket_create | bool
   when: state == 'present'
 
+# Info
+- name: Server info
+  ansible.builtin.debug:
+    msg:
+      id: "{{ item.instances[0].instance_id | default('N/A', true) }}"
+      name: "{{ item.instances[0].tags.Name | default('N/A', true) }}"
+      image: "{{ item.instances[0].image_id | default('N/A', true) }}"
+      type: "{{ item.instances[0].instance_type | default('N/A', true) }}"
+      volume_size: "{{ volume_size }} GB"
+      public_ip: "{{ item.instances[0].public_ip_address | default('N/A', true) }}"
+      private_ip: "{{ item.instances[0].private_ip_address | default('N/A', true) }}"
+  loop: "{{ server_result.results }}"
+  loop_control:
+    index_var: idx
+    label: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}"
+  when:
+    - server_result.results is defined
+    - item.instances is defined
+
+# Check SSH access
 - name: Wait for host to be available via SSH
   ansible.builtin.wait_for:
-    host: "{{ item.instances[0].public_ip_address }}"
+    host: "{{ item.instances[0][ip_address_type] }}"
     port: 22
     delay: 5
     timeout: 300
   loop: "{{ server_result.results }}"
   loop_control:
-    label: "{{ item.instances[0].public_ip_address | default('N/A') }}"
-  when:
-    - server_result.results is defined
-    - item.instances is defined
-
-# Info
-- name: Server info
-  ansible.builtin.debug:
-    msg:
-      id: "{{ item.instances[0].instance_id }}"
-      name: "{{ item.instances[0].tags.Name }}"
-      image: "{{ item.instances[0].image_id }}"
-      type: "{{ item.instances[0].instance_type }}"
-      volume_size: "{{ volume_size }} GB"
-      public_ip: "{{ item.instances[0].public_ip_address }}"
-      private_ip: "{{ item.instances[0].private_ip_address }}"
-  loop: "{{ server_result.results }}"
-  loop_control:
-    label: "{{ item.instances[0].public_ip_address | default('N/A') }}"
+    index_var: idx
+    label: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}"
   when:
     - server_result.results is defined
     - item.instances is defined
 
 # Inventory
 - block:
-    - name: "Inventory | Initialize ip_addresses variable"
-      ansible.builtin.set_fact:
-        ip_addresses: []
-
     - name: "Inventory | Extract IP addresses"
       ansible.builtin.set_fact:
         ip_addresses: >-
-          {{ ip_addresses +
-            [{'public_ip': item.instances[0].public_ip_address,
-              'private_ip': item.instances[0].private_ip_address}]
+          {{ ip_addresses | default([]) +
+            [{
+              'public_ip': item.instances[0].public_ip_address | default(''),
+              'private_ip': item.instances[0].private_ip_address | default('')
+            }]
           }}
       loop: "{{ server_result.results | selectattr('instances', 'defined') }}"
       loop_control:
-        label: "public_ip: {{ item.instances[0].public_ip_address }}, private_ip: {{ item.instances[0].private_ip_address }}"
+        label: >-
+          public_ip: {{ item.instances[0].public_ip_address | default('') }},
+          private_ip: {{ item.instances[0].private_ip_address | default('') }}
 
     - name: "Inventory | Generate in-memory inventory"
       ansible.builtin.import_tasks: inventory.yml

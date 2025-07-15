@@ -2,7 +2,7 @@
 # Dependencies
 - name: Install Python dependencies
   block:
-    - name: Ensure that 'python3-pip' package is present on controlling host
+    - name: Ensure that 'python3-pip' package is present on control host
       ansible.builtin.command: which pip3
       register: pip3_check
       failed_when: false
@@ -26,7 +26,7 @@
         - pip3_check.rc != 0
         - ansible_os_family == "Debian"
 
-    - name: Install 'python3-pip' package on controlling host
+    - name: Install 'python3-pip' package on control host
       ansible.builtin.package:
         name: python3-pip
         state: present
@@ -38,7 +38,7 @@
         - pip3_check.rc != 0
         - ansible_distribution != "MacOSX"
 
-    - name: Ensure that 'google-auth' dependency is present on controlling host
+    - name: Ensure that 'google-auth' dependency is present on control host
       ansible.builtin.pip:
         name: google-auth
         executable: pip3
@@ -134,6 +134,7 @@
         state: present
       when:
         - ssh_public_access | bool
+        - server_public_ip | bool
         - cloud_firewall | bool
 
     - name: "GCP: Create or modify Netdata public firewall rule"
@@ -280,9 +281,7 @@
         network_interfaces:
           - network:
               selfLink: "global/networks/{{ gcp_network_name }}"
-            access_configs:
-              - name: External NAT
-                type: ONE_TO_ONE_NAT
+            access_configs: "{{ [{'name': 'External NAT', 'type': 'ONE_TO_ONE_NAT'}] if server_public_ip | bool else omit }}"
         metadata:
           ssh-keys: "root:{{ ssh_key_content }}"
         scheduling:
@@ -489,54 +488,58 @@
         - gcp_bucket_create | bool
   when: state == 'present'
 
-- name: Wait for host to be available via SSH
-  ansible.builtin.wait_for:
-    host: "{{ item.networkInterfaces[0].accessConfigs[0].natIP }}"
-    port: 22
-    delay: 5
-    timeout: "{{ 1800 if server_type is search('metal') else 300 }}" # timeout 30 minutes for bare metal instances and 5 minutes for regular VMs
-  loop: "{{ server_result.results }}"
-  loop_control:
-    label: "{{ item.networkInterfaces[0].accessConfigs[0].natIP | default('N/A') }}"
-  when:
-    - server_result.results is defined
-    - item.networkInterfaces is defined
-
 # Info
 - name: Server info
   ansible.builtin.debug:
     msg:
-      id: "{{ item.id }}"
-      name: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}"
-      image: "{{ item.disks[0].licenses[0] | basename }}"
-      type: "{{ item.machineType | basename }}"
-      volume_size: "{{ volume_size }} GB"
-      public_ip: "{{ item.networkInterfaces[0].accessConfigs[0].natIP }}"
-      private_ip: "{{ item.networkInterfaces[0].networkIP }}"
+      id: "{{ item.id | default('N/A', true) }}"
+      name: "{{ server_name | lower }}{{ '%02d' % (idx + 1) | default('N/A', true) }}"
+      image: "{{ item.disks[0].licenses[0] | basename | default('N/A', true) }}"
+      type: "{{ item.machineType | basename | default('N/A', true) }}"
+      volume_size: "{{ volume_size | default('N/A', true) }} GB"
+      public_ip: "{{ item.networkInterfaces[0].accessConfigs[0].natIP | default('N/A', true) }}"
+      private_ip: "{{ item.networkInterfaces[0].networkIP | default('N/A', true) }}"
   loop: "{{ server_result.results }}"
   loop_control:
     index_var: idx
-    label: "{{ item.networkInterfaces[0].accessConfigs[0].natIP | default('N/A') }}"
+    label: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}"
   when:
     - server_result.results is defined
     - item.networkInterfaces is defined
 
+# Check SSH access
+- name: Wait for host to be available via SSH
+  ansible.builtin.wait_for:
+    host: "{{ item.networkInterfaces[0].accessConfigs[0].natIP if server_public_ip | bool else item.networkInterfaces[0].networkIP }}"
+    port: 22
+    delay: 5
+    timeout: "{{ 1800 if server_type is search('metal') else 300 }}" # 30 min for bare metal, 5 min for VMs
+  loop: "{{ server_result.results }}"
+  loop_control:
+    index_var: idx
+    label: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}"
+  when:
+    - server_result.results is defined
+    - item.networkInterfaces is defined
+    - item.networkInterfaces[0].accessConfigs[0].natIP is defined or
+      item.networkInterfaces[0].networkIP is defined
+
 # Inventory
 - block:
-    - name: "Inventory | Initialize ip_addresses variable"
-      ansible.builtin.set_fact:
-        ip_addresses: []
-
     - name: "Inventory | Extract IP addresses"
       ansible.builtin.set_fact:
         ip_addresses: >-
-          {{ ip_addresses +
-            [{'public_ip': item.networkInterfaces[0].accessConfigs[0].natIP,
-              'private_ip': item.networkInterfaces[0].networkIP}]
+          {{ ip_addresses | default([]) +
+            [{
+              'public_ip': item.networkInterfaces[0].accessConfigs[0].natIP | default(''),
+              'private_ip': item.networkInterfaces[0].networkIP | default('')
+            }]
           }}
       loop: "{{ server_result.results | selectattr('networkInterfaces', 'defined') }}"
       loop_control:
-        label: "public_ip: {{ item.networkInterfaces[0].accessConfigs[0].natIP }}, private_ip: {{ item.networkInterfaces[0].networkIP }}"
+        label: >-
+          public_ip: {{ item.networkInterfaces[0].accessConfigs[0].natIP | default('') }},
+          private_ip: {{ item.networkInterfaces[0].networkIP | default('') }}
 
     - name: "Inventory | Generate in-memory inventory"
       ansible.builtin.import_tasks: inventory.yml

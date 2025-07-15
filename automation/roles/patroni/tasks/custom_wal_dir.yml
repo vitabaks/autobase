@@ -1,5 +1,11 @@
 ---
-# 🔄 Determine base pg_wal_dir name
+- name: Gather package facts
+  ansible.builtin.package_facts:
+    manager: auto
+  when: ansible_facts.packages is not defined
+  check_mode: false
+
+# Determine base pg_wal_dir name
 - name: Roles.patroni.custom_wal_dir | Set pg_wal_dir based on postgresql_version
   ansible.builtin.set_fact:
     pg_wal_dir: "{{ 'pg_wal' if postgresql_version | int >= 10 else 'pg_xlog' }}"
@@ -33,6 +39,7 @@
       delay: 5
       retries: 3
       environment: "{{ proxy_env | default({}) }}"
+      when: "'rsync' not in ansible_facts.packages or 'sshpass' not in ansible_facts.packages"
 
     - name: Execute CHECKPOINT before stopping PostgreSQL
       become: true

@@ -2,7 +2,7 @@
 # Dependencies
 - name: Install Python dependencies
   block:
-    - name: Ensure that 'python3-pip' package is present on controlling host
+    - name: Ensure that 'python3-pip' package is present on control host
       ansible.builtin.command: which pip3
       register: pip3_check
       failed_when: false
@@ -26,7 +26,7 @@
         - pip3_check.rc != 0
         - ansible_os_family == "Debian"
 
-    - name: Install 'python3-pip' package on controlling host
+    - name: Install 'python3-pip' package on control host
       ansible.builtin.package:
         name: python3-pip
         state: present
@@ -38,7 +38,7 @@
         - pip3_check.rc != 0
         - ansible_distribution != "MacOSX"
 
-    - name: Ensure that 'hcloud' dependency is present on controlling host
+    - name: Ensure that 'hcloud' dependency is present on control host
       ansible.builtin.pip:
         name: hcloud
         executable: pip3
@@ -51,7 +51,7 @@
         PATH: "{{ ansible_env.PATH }}:/usr/local/bin:/usr/bin"
         PIP_BREAK_SYSTEM_PACKAGES: "1"
 
-    - name: Ensure that 'boto3' dependency is present on controlling host
+    - name: Ensure that 'boto3' dependency is present on control host
       ansible.builtin.pip:
         name: boto3
         executable: pip3
@@ -234,7 +234,7 @@
                 'port': ansible_ssh_port | default('22'),
                 'source_ips': ssh_public_allowed_ips | default('0.0.0.0/0,::/0', true) | split(',')
               }
-            ] if ssh_public_access | bool else []) +
+            ] if server_public_ip | bool and ssh_public_access | bool else []) +
             ([
               {
                 'description': 'Netdata',
@@ -473,7 +473,7 @@
         image: "{{ server_image | lower }}"
         ssh_keys: "{{ ssh_key_names }}"
         location: "{{ server_location }}"
-        enable_ipv4: true
+        enable_ipv4: "{{ server_public_ip | bool }}"
         enable_ipv6: false
         private_networks:
           - "{{ server_network }}"
@@ -658,54 +658,56 @@
       when: cloud_load_balancer | bool
   when: state == 'present'
 
+# Info
+- name: Server info
+  ansible.builtin.debug:
+    msg:
+      id: "{{ item.hcloud_server.id | default('N/A', true) }}"
+      name: "{{ item.hcloud_server.name | default('N/A', true) }}"
+      image: "{{ item.hcloud_server.image | default('N/A', true) }}"
+      type: "{{ item.hcloud_server.server_type | default('N/A', true) }}"
+      volume_size: "{{ volume_size }} GB"
+      public_ip: "{{ item.hcloud_server.ipv4_address | default('N/A', true) }}"
+      private_ip: "{{ item.hcloud_server.private_networks_info[0].ip | default('N/A', true) }}"
+  loop: "{{ server_result.results }}"
+  loop_control:
+    index_var: idx
+    label: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}"
+  when:
+    - server_result.results is defined
+    - item.hcloud_server is defined
+
+# Check SSH access
 - name: Wait for host to be available via SSH
   ansible.builtin.wait_for:
-    host: "{{ item.hcloud_server.ipv4_address }}"
+    host: "{{ item.hcloud_server.ipv4_address if server_public_ip | bool else item.hcloud_server.private_networks_info[0].ip }}"
     port: 22
     delay: 5
     timeout: 300
   loop: "{{ server_result.results }}"
   loop_control:
-    label: "{{ item.hcloud_server.ipv4_address | default('N/A') }}"
-  when:
-    - server_result.results is defined
-    - item.hcloud_server is defined
-
-# Info
-- name: Server info
-  ansible.builtin.debug:
-    msg:
-      id: "{{ item.hcloud_server.id }}"
-      name: "{{ item.hcloud_server.name }}"
-      image: "{{ item.hcloud_server.image }}"
-      type: "{{ item.hcloud_server.server_type }}"
-      volume_size: "{{ volume_size }} GB"
-      public_ip: "{{ item.hcloud_server.ipv4_address }}"
-      private_ip: "{{ item.hcloud_server.private_networks_info[0].ip }}"
-  loop: "{{ server_result.results }}"
-  loop_control:
     index_var: idx
-    label: "{{ item.hcloud_server.ipv4_address | default('N/A') }}"
+    label: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}"
   when:
     - server_result.results is defined
     - item.hcloud_server is defined
 
 # Inventory
 - block:
-    - name: "Inventory | Initialize ip_addresses variable"
-      ansible.builtin.set_fact:
-        ip_addresses: []
-
     - name: "Inventory | Extract IP addresses"
       ansible.builtin.set_fact:
         ip_addresses: >-
-          {{ ip_addresses +
-            [{'public_ip': item.hcloud_server.ipv4_address,
-              'private_ip': item.hcloud_server.private_networks_info[0].ip}]
+          {{ ip_addresses | default([]) +
+            [{
+              'public_ip': item.hcloud_server.ipv4_address | default(''),
+              'private_ip': item.hcloud_server.private_networks_info[0].ip | default('')
+            }]
           }}
       loop: "{{ server_result.results | selectattr('hcloud_server', 'defined') }}"
       loop_control:
-        label: "public_ip: {{ item.hcloud_server.ipv4_address }}, private_ip: {{ item.hcloud_server.private_networks_info[0].ip }}"
+        label: >-
+          public_ip: {{ item.hcloud_server.ipv4_address | default('') }},
+          private_ip: {{ item.hcloud_server.private_networks_info[0].ip | default('') }}
 
     - name: "Inventory | Generate in-memory inventory"
       ansible.builtin.import_tasks: inventory.yml

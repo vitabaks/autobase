@@ -20,7 +20,7 @@
         labels:
           owner: molecule
 
-    - name: "Install netaddr dependency on controlling host"
+    - name: "Install netaddr dependency on control host"
       ansible.builtin.pip:
         name: netaddr
       become: false

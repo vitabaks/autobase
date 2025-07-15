@@ -1,45 +1,99 @@
 ---
-- block:
-    # Debian
-    - name: Install ntp package
-      ansible.builtin.package:
-        name: ntp
-        state: present
-      register: package_status
-      until: package_status is success
-      delay: 5
-      retries: 3
-      environment: "{{ proxy_env | default({}) }}"
-      when: ansible_os_family == "Debian"
-      tags: ntp_install
+- name: Gather package facts
+  ansible.builtin.package_facts:
+    manager: auto
+  when: ansible_facts.packages is not defined
+  check_mode: false
 
+# Cleanup existing NTP services
+- block:
+    - name: Stop and disable systemd-timesyncd service
+      ansible.builtin.systemd:
+        name: systemd-timesyncd
+        enabled: false
+        state: stopped
+      failed_when: false
+
+    - name: Remove NTP package if installed
+      ansible.builtin.package:
+        name: "{{ item }}"
+        state: absent
+      loop:
+        - ntp
+        - ntpd
+        - ntpdate
+        - ntpsec
+        - openntpd
+      failed_when: false
+      when: item in ansible_facts.packages
+  when:
+    - ntp_enabled | default(false) | bool
+    - ntp_package | default('chrony') == "chrony"
+  tags: ntp, ntp_cleanup
+
+# Install NTP or Chrony service
+- name: "Install {{ ntp_package | default('chrony') }} package"
+  ansible.builtin.package:
+    name: "{{ ntp_package | default('chrony') }}"
+    state: present
+  register: package_status
+  until: package_status is success
+  delay: 5
+  retries: 3
+  environment: "{{ proxy_env | default({}) }}"
+  when:
+    - ntp_enabled | default(false) | bool
+    - ntp_package | default('chrony') not in ansible_facts.packages
+  tags: ntp, ntp_install
+
+# Configure NTP or Chrony service
+- block:
     - name: Copy the ntp.conf file
       ansible.builtin.template:
         src: ntp.conf.j2
         dest: /etc/ntp.conf
+        owner: root
+        group: root
+        mode: '0644'
       notify: "restart ntp"
-      when: ansible_os_family == "Debian"
-      tags: ntp_conf
+      when: ntp_package == "ntp"
 
-    # RedHat
-    - name: Install chrony package
-      ansible.builtin.package:
-        name: chrony
-        state: present
-      register: package_status
-      until: package_status is success
-      delay: 5
-      retries: 3
-      environment: "{{ proxy_env | default({}) }}"
-      tags: ntp_install
-      when: ansible_os_family == "RedHat"
-
-    - name: Copy the chrony.conf template file
+    - name: Copy the chrony.conf file
       ansible.builtin.template:
         src: chrony.conf.j2
-        dest: /etc/chrony.conf
-      notify: "restart chronyd"
-      tags: ntp_conf
-      when: ansible_os_family == "RedHat"
-  when: ntp_enabled is defined and ntp_enabled|bool
-  tags: ntp
+        dest: "{{ '/etc/chrony/chrony.conf' if ansible_os_family == 'Debian' else '/etc/chrony.conf' }}"
+        owner: root
+        group: root
+        mode: '0644'
+      notify: "{{ 'restart chrony' if ansible_os_family == 'Debian' else 'restart chronyd' }}"
+      when: ntp_package == "chrony"
+  when: ntp_enabled | default(false) | bool
+  tags: ntp, ntp_conf
+
+# Prevent failures in CI for containers (RedHat family)
+- block:
+    - name: Ensure override dir exists
+      ansible.builtin.file:
+        path: /etc/systemd/system/chronyd.service.d
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
+
+    - name: Create systemd override for chronyd ExecStart
+      ansible.builtin.copy:
+        dest: /etc/systemd/system/chronyd.service.d/override.conf
+        content: |
+          [Service]
+          ExecStart=
+          ExecStart=/usr/sbin/chronyd -x $OPTIONS
+
+    - name: Reload systemd daemon after override
+      ansible.builtin.systemd:
+        daemon_reload: true
+  when:
+    - ansible_virtualization_type in ['container', 'docker', 'lxc', 'podman']
+    - ansible_os_family == 'RedHat'
+
+- name: Make sure handlers are flushed immediately
+  ansible.builtin.meta: flush_handlers

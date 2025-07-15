@@ -6,11 +6,17 @@
   loop: "{{ groups['postgres_cluster'] }}"
   when: hostvars[groups['postgres_cluster'][0]].ansible_hostname is not defined
 
+- name: Gather package facts
+  ansible.builtin.package_facts:
+    manager: auto
+  when: ansible_facts.packages is not defined
+  check_mode: false
+
 # Install HAProxy from rpm/deb packages
 - block:
     # RedHat
     - name: Install HAProxy package
-      ansible.builtin.package:
+      ansible.builtin.dnf:
         name: haproxy
         state: present
       register: package_status
@@ -18,7 +24,9 @@
       delay: 5
       retries: 3
       environment: "{{ proxy_env | default({}) }}"
-      when: ansible_os_family == "RedHat"
+      when:
+        - ansible_os_family == "RedHat"
+        - "'haproxy' not in ansible_facts.packages"
       tags: haproxy, load_balancing
 
     # Debian
@@ -31,7 +39,9 @@
       delay: 5
       retries: 3
       environment: "{{ proxy_env | default({}) }}"
-      when: ansible_os_family == "Debian"
+      when:
+        - ansible_os_family == "Debian"
+        - "'haproxy' not in ansible_facts.packages"
   when: installation_method == "packages"
   tags: haproxy, load_balancing
 
@@ -169,14 +179,12 @@
 
 - block:
     - name: selinux | make sure the python3-libsemanage, python3-policycoreutils packages is present
-      ansible.builtin.package:
-        name: "{{ packages }}"
-        state: present
-        update_cache: true
-      vars:
-        packages:
+      ansible.builtin.dnf:
+        name:
           - python3-libsemanage
           - python3-policycoreutils
+        state: present
+        update_cache: true
       register: package_status
       until: package_status is success
       delay: 5
@@ -185,6 +193,7 @@
       when:
         - ansible_os_family == "RedHat"
         - installation_method == "packages"
+        - "'python3-libsemanage' not in ansible_facts.packages or 'python3-policycoreutils' not in ansible_facts.packages"
 
     - name: selinux | set haproxy_connect_any flag to enable tcp connections
       ansible.posix.seboolean:

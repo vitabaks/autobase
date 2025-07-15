@@ -46,10 +46,17 @@ Execute it directly:
 ansible-playbook -i inventory vitabaks.autobase.deploy_pgcluster
 ```
 
-Or include the playbook in your project:
+Or include the playbook in your project by calling it from within an existing playbook:
 
 ```yaml
-- name: Run Autobase deployment
+- name: Autobase
+  hosts: all
+  become: true
+  become_user: root
+  gather_facts: true
+  any_errors_fatal: true
+
+- name: Run Autobase playbook
   ansible.builtin.import_playbook: vitabaks.autobase.deploy_pgcluster
 ```
 

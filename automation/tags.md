@@ -21,6 +21,7 @@
 - locales
 - timezone
 - ntp
+- - ntp_cleanup
 - - ntp_install
 - - ntp_conf
 - ssh_keys

@@ -7,41 +7,21 @@
   gather_facts: true
 
   pre_tasks:
-    # Ansible requires the iproute package for network facts to be populated
-    - name: Make sure that the iproute is installed
-      ansible.builtin.package:
-        name: iproute
-        state: present
-      register: package_status
-      until: package_status is success
-      delay: 5
-      retries: 3
-      when: ansible_os_family == "RedHat"
+    - name: Gather package facts
+      ansible.builtin.package_facts:
+        manager: auto
+      check_mode: false
+      tags: always
 
-    - name: Make sure that the iproute2 is installed
-      ansible.builtin.apt:
-        name: iproute2
-        state: present
-      register: apt_status
-      until: apt_status is success
-      delay: 5
-      retries: 3
-      when: ansible_os_family == "Debian"
-
-    - name: Gather network facts
-      ansible.builtin.setup:
-        gather_subset:
-          - network
-      when: ansible_all_ipv4_addresses is not defined
-
-    - name: Expose bind_address as facts
-      ansible.builtin.set_fact:
-        bind_address: "{{ ansible_all_ipv4_addresses | ansible.utils.ipaddr('private') | first }}"
-      when: bind_address is not defined
+    - name: Define bind_address
+      ansible.builtin.include_role:
+        name: vitabaks.autobase.bind_address
+      tags: always
 
     - name: Set maintenance variable
       ansible.builtin.set_fact:
         postgresql_cluster_maintenance: true
+      tags: always
 
     - name: "[Pre-Check] Check if there is a node with new_node set to true"
       ansible.builtin.set_fact:
@@ -101,6 +81,7 @@
         - new_node | default(false) | bool
         - ansible_os_family == "Debian"
         - installation_method | default('packages') == "packages"
+        - "'gnupg' not in ansible_facts.packages or 'apt-transport-https' not in ansible_facts.packages"
 
     - name: Build a firewall_ports_dynamic_var
       ansible.builtin.set_fact:
