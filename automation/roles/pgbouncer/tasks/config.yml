@@ -62,6 +62,21 @@
       register: exists_func_user
       changed_when: false
 
+    - name: "Check if {{ pgbouncer_auth_username }} user exists"
+      become: true
+      become_user: postgres
+      community.postgresql.postgresql_user:
+        name: "{{ pgbouncer_auth_username }}"
+        password: "{{ pgbouncer_auth_password | default(omit) }}"
+        role_attr_flags: "LOGIN"
+        login_host: "127.0.0.1"
+        login_port: "{{ postgresql_port }}"
+        login_user: "{{ patroni_superuser_username }}"
+        login_password: "{{ patroni_superuser_password }}"
+        login_db: "postgres"
+        state: present
+      when: exists_func_user.stdout == "f"
+
     - name: "Create 'user_search' function for pgbouncer 'auth_query' option"
       become: true
       become_user: postgres
