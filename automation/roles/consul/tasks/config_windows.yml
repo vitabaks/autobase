@@ -5,7 +5,7 @@
   ansible.windows.win_copy:
     dest: "{{ config_item.dest }}"
     content: "{{ lookup('template', consul_config_template_path, convert_data=True) | to_nice_json }}"
-  with_items:
+  loop:
     - dest: "{{ consul_config_path }}/config.json"
       config_version: "{{ consul_node_role }}"
       when: true

@@ -1,7 +1,13 @@
 ---
+- name: Gather package facts
+  ansible.builtin.package_facts:
+    manager: auto
+  when: ansible_facts.packages is not defined
+  check_mode: false
+
 # Debian
 - name: Install pgbouncer package
-  ansible.builtin.package:
+  ansible.builtin.apt:
     name: pgbouncer
     state: latest
   register: package_status
@@ -9,7 +15,9 @@
   delay: 5
   retries: 3
   environment: "{{ proxy_env | default({}) }}"
-  when: ansible_os_family == "Debian"
+  when:
+    - ansible_os_family == "Debian"
+    - "'pgbouncer' not in ansible_facts.packages"
   tags: pgbouncer_install, pgbouncer
 
 # RedHat
@@ -23,7 +31,9 @@
   delay: 5
   retries: 3
   environment: "{{ proxy_env | default({}) }}"
-  when: ansible_os_family == "RedHat"
+  when:
+    - ansible_os_family == "RedHat"
+    - "'pgbouncer' not in ansible_facts.packages"
   tags: pgbouncer_install, pgbouncer
 
 - name: Ensure config directory "{{ pgbouncer_conf_dir }}" exist

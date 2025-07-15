@@ -4,13 +4,12 @@ import { useTranslation } from 'react-i18next';
 import RouterPaths from '@app/router/routerPathsConfig';
 import { generateAbsoluteRouterPath } from '@shared/lib/functions.ts';
 import { useNavigate } from 'react-router-dom';
-import { Box, Button, Container, Typography } from '@mui/material';
-import theme from '@shared/theme/theme.ts';
-import { grey } from '@mui/material/colors';
+import { Box, Button, Container, Typography, useTheme } from '@mui/material';
 
 const Page404: FC = () => {
   const { t } = useTranslation('shared');
   const navigate = useNavigate();
+  const theme = useTheme();
 
   const handleReturnButton = () => navigate(generateAbsoluteRouterPath(RouterPaths.clusters.absolutePath));
 
@@ -22,7 +21,7 @@ const Page404: FC = () => {
           <Typography variant={'h4'} fontWeight="bold">
             {t('404Title')}
           </Typography>
-          <Typography color={grey[600]} whiteSpace="pre-line">
+          <Typography color="text.secondary" whiteSpace="pre-line">
             {t('404Text')}
           </Typography>
           <Box>

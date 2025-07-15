@@ -10,16 +10,7 @@
   loop:
     - "{{ confd_package_repo }}"
   environment: "{{ proxy_env | default({}) }}"
-  when: installation_method == "repo" and confd_package_repo | length > 0
-  tags: get_confd, confd
-
-# install confd package from file
-- name: Copy "confd" binary file to /usr/local/bin/
-  ansible.builtin.copy:
-    src: "{{ files_dir | default(playbook_dir ~ '/files') }}/{{ confd_package_file }}"
-    dest: /usr/local/bin/confd
-    mode: u+x,g+x,o+x
-  when: installation_method == "file" and confd_package_file | length > 0
+  when: installation_method == "packages" and confd_package_repo | length > 0
   tags: get_confd, confd
 
 - name: Create conf directories
@@ -117,7 +108,7 @@
         backrefs: true
       loop:
         - regexp: "^.*bind.*:{{ haproxy_listen_port.stats }}$"
-          line: "    bind {{ hostvars[inventory_hostname].inventory_hostname }}:{{ haproxy_listen_port.stats }}"
+          line: "    bind {{ haproxy_bind_address | default(bind_address, true) }}:{{ haproxy_listen_port.stats }}"
         - regexp: "^.*bind.*:{{ haproxy_listen_port.master }}$"
           line: "    bind {{ cluster_vip }}:{{ haproxy_listen_port.master }}"
         - regexp: "^.*bind.*:{{ haproxy_listen_port.replicas }}$"
@@ -140,15 +131,15 @@
         backrefs: true
       loop:
         - regexp: "^.*bind.*:{{ haproxy_listen_port.stats }}$"
-          line: "    bind {{ hostvars[inventory_hostname].inventory_hostname }}:{{ haproxy_listen_port.stats }}"
+          line: "    bind {{ haproxy_bind_address | default(bind_address, true) }}:{{ haproxy_listen_port.stats }}"
         - regexp: "^.*bind.*:{{ haproxy_listen_port.master }}$"
-          line: "    bind {{ hostvars[inventory_hostname].inventory_hostname }}:{{ haproxy_listen_port.master }}"
+          line: "    bind {{ haproxy_bind_address | default(bind_address, true) }}:{{ haproxy_listen_port.master }}"
         - regexp: "^.*bind.*:{{ haproxy_listen_port.replicas }}$"
-          line: "    bind {{ hostvars[inventory_hostname].inventory_hostname }}:{{ haproxy_listen_port.replicas }}"
+          line: "    bind {{ haproxy_bind_address | default(bind_address, true) }}:{{ haproxy_listen_port.replicas }}"
         - regexp: "^.*bind.*:{{ haproxy_listen_port.replicas_sync }}$"
-          line: "    bind {{ hostvars[inventory_hostname].inventory_hostname }}:{{ haproxy_listen_port.replicas_sync }}"
+          line: "    bind {{ haproxy_bind_address | default(bind_address, true) }}:{{ haproxy_listen_port.replicas_sync }}"
         - regexp: "^.*bind.*:{{ haproxy_listen_port.replicas_async }}$"
-          line: "    bind {{ hostvars[inventory_hostname].inventory_hostname }}:{{ haproxy_listen_port.replicas_async }}"
+          line: "    bind {{ haproxy_bind_address | default(bind_address, true) }}:{{ haproxy_listen_port.replicas_async }}"
       loop_control:
         loop_var: line_item_2
         label: "{{ line_item_2.line }}"

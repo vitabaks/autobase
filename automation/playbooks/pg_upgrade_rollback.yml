@@ -10,6 +10,15 @@
   gather_facts: true
   any_errors_fatal: true
   tasks:
+    - name: Gather package facts
+      ansible.builtin.package_facts:
+        manager: auto
+      check_mode: false
+
+    - name: Define bind_address
+      ansible.builtin.include_role:
+        name: vitabaks.autobase.bind_address
+
     - name: '[Prepare] Add host to group "primary" (in-memory inventory)'
       ansible.builtin.add_host:
         name: "{{ item }}"

@@ -7,9 +7,21 @@
   gather_facts: true
 
   pre_tasks:
+    - name: Gather package facts
+      ansible.builtin.package_facts:
+        manager: auto
+      check_mode: false
+      tags: always
+
+    - name: Define bind_address
+      ansible.builtin.include_role:
+        name: vitabaks.autobase.bind_address
+      tags: always
+
     - name: Set maintenance variable
       ansible.builtin.set_fact:
         postgresql_cluster_maintenance: true
+      tags: always
 
     - name: "[Pre-Check] Check if there is a node with new_node set to true"
       ansible.builtin.set_fact:
@@ -52,7 +64,7 @@
       when:
         - new_node | default(false) | bool
         - ansible_os_family == "Debian"
-        - installation_method | default('repo') == "repo"
+        - installation_method | default('packages') == "packages"
 
     - name: Make sure the gnupg and apt-transport-https packages are present
       ansible.builtin.apt:
@@ -68,7 +80,8 @@
       when:
         - new_node | default(false) | bool
         - ansible_os_family == "Debian"
-        - installation_method | default('repo') == "repo"
+        - installation_method | default('packages') == "packages"
+        - "'gnupg' not in ansible_facts.packages or 'apt-transport-https' not in ansible_facts.packages"
 
     - name: Build a firewall_ports_dynamic_var
       ansible.builtin.set_fact:

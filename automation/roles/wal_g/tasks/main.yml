@@ -1,4 +1,10 @@
 ---
+- name: Gather package facts
+  ansible.builtin.package_facts:
+    manager: auto
+  when: ansible_facts.packages is not defined
+  check_mode: false
+
 # Automatic setup of the backup configuration based on the selected cloud provider.
 # if 'cloud_provider' is 'aws', 'gcp', 'azure', 'digitalocean'.
 - ansible.builtin.import_tasks: auto_conf.yml
@@ -64,7 +70,7 @@
         mode: u+x,g+x,o+x
         remote_src: true
   when:
-    - installation_method == "repo"
+    - installation_method == "packages"
     - wal_g_installation_method == "binary"
     - wal_g_version is version('1.0', '>=')
     - (wal_g_installed_version.stderr is search("command not found") or wal_g_installed_version.stdout != wal_g_version)
@@ -75,37 +81,41 @@
 # (if 'wal_g_installation_method' is 'src')
 - block:
     - name: Install lib dependencies to build WAL-G
-      ansible.builtin.package:
-        name:
-          - libbrotli-dev
-          # - liblzo2-dev  # https://github.com/wal-g/wal-g/issues/1412
-          - libsodium-dev
-          - make
-          - cmake
-          - git
+      ansible.builtin.apt:
+        name: "{{ item }}"
         state: present
       register: package_status
       until: package_status is success
       delay: 5
       retries: 3
-      when: ansible_os_family == "Debian"
+      loop:
+          - libbrotli-dev
+          - libsodium-dev
+          - make
+          - cmake
+          - git
+      when:
+        - ansible_os_family == "Debian"
+        - item not in ansible_facts.packages
 
     - name: Install lib dependencies to build WAL-G
-      ansible.builtin.package:
-        name:
+      ansible.builtin.dnf:
+        name: "{{ item }}"
+        state: present
+      register: package_status
+      until: package_status is success
+      delay: 5
+      retries: 3
+      loop:
           - brotli-devel
-          # - lzo-devel  # https://github.com/wal-g/wal-g/issues/1412
           - libsodium-devel
           - make
           - cmake
           - gcc
           - git
-        state: present
-      register: package_status
-      until: package_status is success
-      delay: 5
-      retries: 3
-      when: ansible_os_family == "RedHat"
+      when:
+        - ansible_os_family == "RedHat"
+        - item not in ansible_facts.packages
 
     - name: Check the installed Go version
       ansible.builtin.shell: |
@@ -188,7 +198,7 @@
         PATH: "{{ ansible_env.PATH }}:/usr/local/go/bin"
   environment: "{{ proxy_env | default({}) }}"
   when:
-    - installation_method == "repo"
+    - installation_method == "packages"
     - (wal_g_installation_method == "src" or (ansible_os_family == "RedHat" and ansible_distribution_major_version == '8'))
     - wal_g_version is version('1.0', '>=')
     - (wal_g_installed_version.stderr is search("command not found") or wal_g_installed_version.stdout != wal_g_version)
@@ -222,60 +232,10 @@
         mode: u+x,g+x,o+x
         remote_src: true
   when:
-    - installation_method == "repo"
+    - installation_method == "packages"
     - wal_g_installation_method == "binary"
     - wal_g_version is version('0.2.19', '<=')
     - (wal_g_installed_version.stderr is search("command not found") or wal_g_installed_version.stdout != wal_g_version)
-  tags: wal-g, wal_g, wal_g_install
-
-# installation_method == "file"
-
-# A precompiled binary (package in tar.gz)
-- block:
-    - name: "Extract WAL-G archive {{ wal_g_package_file }} into /tmp"
-      ansible.builtin.unarchive:
-        src: "{{ wal_g_package_file }}"
-        dest: /tmp/
-        extra_opts:
-          - --no-same-owner
-
-    - name: Copy WAL-G binary file to "{{ wal_g_path.split(' ')[0] }}"
-      ansible.builtin.copy:
-        src: "/tmp/{{ wal_g_package_file.split('.tar.gz')[0] | basename }}"
-        dest: "{{ wal_g_path.split(' ')[0] }}"
-        mode: u+x,g+x,o+x
-        remote_src: true
-  check_mode: false
-  when:
-    - installation_method == "file"
-    - wal_g_version is version('1.0', '>=')
-    - (wal_g_installed_version.stderr is search("command not found") or
-      wal_g_installed_version.stdout != wal_g_version)
-    - (wal_g_package_file is defined and wal_g_package_file | length > 0)
-  tags: wal-g, wal_g, wal_g_install
-
-# older versions of WAL-G (for compatibility)
-- block:
-    - name: "Extract WAL-G archive {{ wal_g_package_file }} into /tmp"
-      ansible.builtin.unarchive:
-        src: "{{ wal_g_package_file }}"
-        dest: /tmp/
-        extra_opts:
-          - --no-same-owner
-
-    - name: Copy WAL-G binary file to "{{ wal_g_path.split(' ')[0] }}"
-      ansible.builtin.copy:
-        src: "/tmp/wal-g"
-        dest: "{{ wal_g_path.split(' ')[0] }}"
-        mode: u+x,g+x,o+x
-        remote_src: true
-  check_mode: false
-  when:
-    - installation_method == "file"
-    - wal_g_version is version('0.2.19', '<=')
-    - (wal_g_installed_version.stderr is search("command not found") or
-      wal_g_installed_version.stdout != wal_g_version)
-    - wal_g_package_file == "wal-g.linux-amd64.tar.gz"
   tags: wal-g, wal_g, wal_g_install
 
 # Ensure the WAL_G_PREFETCH directory is created if configured

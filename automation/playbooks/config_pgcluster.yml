@@ -29,20 +29,32 @@
   become_method: sudo
   gather_facts: true
   pre_tasks:
+    - name: Gather package facts
+      ansible.builtin.package_facts:
+        manager: auto
+      check_mode: false
+      tags: always
+
+    - name: Define bind_address
+      ansible.builtin.include_role:
+        name: vitabaks.autobase.bind_address
+      tags: always
+
     - name: "[Prepare] Set maintenance variable"
       ansible.builtin.set_fact:
         postgresql_cluster_maintenance: true
+      tags: always
 
     - name: "[Prepare] Get Patroni Cluster Leader Node"
       ansible.builtin.uri:
-        url: http://{{ inventory_hostname }}:{{ patroni_restapi_port | default('8008') }}/leader
+        url: http://{{ patroni_bind_address | default(bind_address, true) }}:{{ patroni_restapi_port | default('8008') }}/leader
         status_code: 200
       register: patroni_leader_result
       changed_when: false
       failed_when: false
       check_mode: false
       environment:
-        no_proxy: "{{ inventory_hostname }}"
+        no_proxy: "{{ patroni_bind_address | default(bind_address, true) }}"
 
     # Stop, if Patroni is unavailable
     - name: The Patroni cluster is unhealthy
@@ -108,14 +120,14 @@
     - name: Build a firewall_ports_dynamic_var
       ansible.builtin.set_fact:
         firewall_ports_dynamic_var: "{{ firewall_ports_dynamic_var | default([]) + (firewall_allowed_tcp_ports_for[item] | default([])) }}"
-      loop: "{{ hostvars[inventory_hostname].group_names }}"
+      loop: "{{ hostvars[patroni_bind_address | default(bind_address, true)].group_names }}"
       when: firewall_enabled_at_boot | default(false) | bool
       tags: config_firewall, firewall
 
     - name: Build a firewall_rules_dynamic_var
       ansible.builtin.set_fact:
         firewall_rules_dynamic_var: "{{ firewall_rules_dynamic_var | default([]) + (firewall_additional_rules_for[item] | default([])) }}"
-      loop: "{{ hostvars[inventory_hostname].group_names }}"
+      loop: "{{ hostvars[patroni_bind_address | default(bind_address, true)].group_names }}"
       when: firewall_enabled_at_boot | default(false) | bool
       tags: firewall
 

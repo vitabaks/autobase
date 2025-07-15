@@ -2,7 +2,7 @@
 # Dependencies
 - name: Install Python dependencies
   block:
-    - name: Ensure that 'python3-pip' package is present on controlling host
+    - name: Ensure that 'python3-pip' package is present on control host
       ansible.builtin.command: which pip3
       register: pip3_check
       failed_when: false
@@ -26,7 +26,7 @@
         - pip3_check.rc != 0
         - ansible_os_family == "Debian"
 
-    - name: Install 'python3-pip' package on controlling host
+    - name: Install 'python3-pip' package on control host
       ansible.builtin.package:
         name: python3-pip
         state: present
@@ -38,7 +38,7 @@
         - pip3_check.rc != 0
         - ansible_distribution != "MacOSX"
 
-    - name: Ensure that 'dopy' dependency is present on controlling host
+    - name: Ensure that 'dopy' dependency is present on control host
       ansible.builtin.pip:
         name: dopy
         executable: pip3
@@ -50,7 +50,7 @@
         PATH: "{{ ansible_env.PATH }}:/usr/local/bin:/usr/bin"
         PIP_BREAK_SYSTEM_PACKAGES: "1"
 
-    - name: Ensure that 'boto3' dependency is present on controlling host
+    - name: Ensure that 'boto3' dependency is present on control host
       ansible.builtin.pip:
         name: boto3
         executable: pip3
@@ -247,7 +247,7 @@
                   'addresses': ssh_public_allowed_ips | default('0.0.0.0/0,::/0', true) | split(',')
                 }
               }
-            ] if ssh_public_access | bool else []) +
+            ] if server_public_ip | bool and ssh_public_access | bool else []) +
             ([
               {
                 'protocol': 'tcp',
@@ -479,6 +479,8 @@
       when: cloud_firewall | bool
 
     # Server and volume
+    # Note: module doesn't support disabling public IP,
+    # but we do not open public SSH in Firewall and use private IP if server_public_ip: false
     - name: "DigitalOcean: Create or modify Droplet"
       community.digitalocean.digital_ocean_droplet:
         oauth_token: "{{ lookup('ansible.builtin.env', 'DO_API_TOKEN') }}"
@@ -615,56 +617,62 @@
         - digital_ocean_spaces_create | bool
   when: state == 'present'
 
+# Info
+- name: Server info
+  ansible.builtin.debug:
+    msg:
+      id: "{{ item.data.droplet.id | default('N/A', true) }}"
+      name: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}"
+      image: "{{ item.data.droplet.image.description | default('N/A', true) }}"
+      type: "{{ server_type }}"
+      volume_size: "{{ volume_size }} GB"
+      public_ip: "{{ (item.data.droplet.networks.v4 | selectattr('type', 'equalto', 'public')).0.ip_address | default('N/A', true) }}"
+      private_ip: "{{ (item.data.droplet.networks.v4 | selectattr('type', 'equalto', 'private')).0.ip_address | default('N/A', true) }}"
+  loop: "{{ droplet_result.results }}"
+  loop_control:
+    index_var: idx
+    label: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}"
+  when:
+    - droplet_result.results is defined
+    - item.data is defined
+
+# Check SSH access
 - name: Wait for host to be available via SSH
   ansible.builtin.wait_for:
-    host: "{{ (item.data.droplet.networks.v4 | selectattr('type', 'equalto', 'public')).0.ip_address }}"
+    host: >-
+      {{
+        (item.data.droplet.networks.v4
+         | selectattr('type', 'equalto',
+           'public' if server_public_ip | bool else 'private')
+         | first).ip_address
+      }}
     port: 22
     delay: 5
     timeout: 300
   loop: "{{ droplet_result.results }}"
   loop_control:
-    label: "{{ (item.data.droplet.networks.v4 | default('') | selectattr('type', 'equalto', 'public')).0.ip_address | default('N/A') }}"
-  when:
-    - droplet_result.results is defined
-    - item.data is defined
-
-# Info
-- name: Server info
-  ansible.builtin.debug:
-    msg:
-      id: "{{ item.data.droplet.id }}"
-      name: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}"
-      image: "{{ item.data.droplet.image.description }}"
-      type: "{{ server_type }}"
-      volume_size: "{{ volume_size }} GB"
-      public_ip: "{{ (item.data.droplet.networks.v4 | selectattr('type', 'equalto', 'public')).0.ip_address }}"
-      private_ip: "{{ (item.data.droplet.networks.v4 | selectattr('type', 'equalto', 'private')).0.ip_address }}"
-  loop: "{{ droplet_result.results }}"
-  loop_control:
     index_var: idx
-    label: "{{ (item.data.droplet.networks.v4 | default('') | selectattr('type', 'equalto', 'public')).0.ip_address | default('N/A') }}"
+    label: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}"
   when:
     - droplet_result.results is defined
     - item.data is defined
 
 # Inventory
 - block:
-    - name: "Inventory | Initialize ip_addresses variable"
-      ansible.builtin.set_fact:
-        ip_addresses: []
-
     - name: "Inventory | Extract IP addresses"
       ansible.builtin.set_fact:
         ip_addresses: >-
-          {{ ip_addresses +
-            [{'public_ip': (item.data.droplet.networks.v4 | selectattr('type', 'equalto', 'public')).0.ip_address,
-              'private_ip': (item.data.droplet.networks.v4 | selectattr('type', 'equalto', 'private')).0.ip_address}]
+          {{ ip_addresses | default([]) +
+            [{
+              'public_ip': (item.data.droplet.networks.v4 | selectattr('type', 'equalto', 'public')).0.ip_address | default(''),
+              'private_ip': (item.data.droplet.networks.v4 | selectattr('type', 'equalto', 'private')).0.ip_address | default('')
+            }]
           }}
       loop: "{{ droplet_result.results | selectattr('data', 'defined') }}"
       loop_control:
         label: >-
-          public_ip: {{ (item.data.droplet.networks.v4 | selectattr('type', 'equalto', 'public')).0.ip_address }},
-          private_ip: {{ (item.data.droplet.networks.v4 | selectattr('type', 'equalto', 'private')).0.ip_address }}
+          public_ip: {{ (item.data.droplet.networks.v4 | selectattr('type', 'equalto', 'public')).0.ip_address | default('') }},
+          private_ip: {{ (item.data.droplet.networks.v4 | selectattr('type', 'equalto', 'private')).0.ip_address | default('') }}
 
     - name: "Inventory | Generate in-memory inventory"
       ansible.builtin.import_tasks: inventory.yml

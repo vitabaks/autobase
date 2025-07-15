@@ -1,14 +1,12 @@
-# Please specify the ip addresses and connection settings for your environment
-# The specified ip addresses will be used to listen by the cluster components.
-# Attention! Specify private IP addresses so that the cluster does not listen a public IP addresses.
-# For deploying via public IPs, add 'ansible_host=public_ip_address' variable for each node.
+# This is an example inventory file for Ansible to deploy a PostgreSQL HA cluster.
 #
-# "postgresql_exists=true" if PostgreSQL is already exists and running
-# "hostname=" variable is optional (used to change the server name)
-# "new_node=true" to add a new server to an existing cluster using the add_pgnode.yml playbook
-# balancer_tags="key=value" the Balancer tags for the /replica, /sync, /async endpoints. Must match 'patroni_tags'.
-# patroni_tags="key=value" the Patroni tags in "key=value" format separated by commas.
-# patroni_replicatefrom="<hostname>" the Patroni node to replicate from (cascading replication).
+# postgresql_exists      - Set to true if PostgreSQL is already installed and running on the server.
+# hostname               - Hostname to set on this server (optional). If specified, the server will be renamed to this value.
+# new_node               - Set to true to add this server as a new node to an existing cluster.
+# balancer_tags          - Balancer tags in "key=value" format for the /replica, /sync, /async endpoints. Must match patroni_tags.
+# patroni_tags           - Patroni tags in "key=value" format, separated by commas.
+# patroni_replicatefrom  - The Patroni hostname this node should replicate from (for cascading replication).
+# bind_address           - The IP address cluster services should bind to on this host. Defaults to the first available private IP address.
 
 # if dcs_exists: false and dcs_type: "etcd"
 [etcd_cluster]  # recommendation: 3, or 5-7 nodes
@@ -46,8 +44,8 @@
 master
 replica
 
-# if pgbackrest_install: true and "repo_host" is set
-[pgbackrest]  # optional (Dedicated Repository Host)
+# if pgbackrest_install: true and "repo_host" is set (optional)
+[pgbackrest]  # Dedicated Repository Host
 #10.128.64.110
 
 [pgbackrest:vars]

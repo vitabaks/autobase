@@ -9,6 +9,18 @@
     vip_manager_disable: false # or 'true' for disable vip-manager service (if installed)
 
   pre_tasks:
+    - name: Gather package facts
+      ansible.builtin.package_facts:
+        manager: auto
+      when: ansible_facts.packages is not defined
+      check_mode: false
+      tags: always
+
+    - name: Define bind_address
+      ansible.builtin.include_role:
+        name: vitabaks.autobase.bind_address
+      tags: always
+
     - name: Update apt cache
       ansible.builtin.apt:
         update_cache: true
@@ -18,7 +30,7 @@
       delay: 5
       retries: 3
       environment: "{{ proxy_env | default({}) }}"
-      when: ansible_os_family == "Debian" and installation_method | default('repo') == "repo"
+      when: ansible_os_family == "Debian" and installation_method | default('packages') == "packages"
 
     - name: Make sure the gnupg and apt-transport-https packages are present
       ansible.builtin.apt:
@@ -31,7 +43,10 @@
       delay: 5
       retries: 3
       environment: "{{ proxy_env | default({}) }}"
-      when: ansible_os_family == "Debian" and installation_method | default('repo') == "repo"
+      when:
+        - ansible_os_family == "Debian"
+        - installation_method | default('packages') == "packages"
+        - "'gnupg' not in ansible_facts.packages or 'apt-transport-https' not in ansible_facts.packages"
 
     - name: Build a firewall_ports_dynamic_var
       ansible.builtin.set_fact:

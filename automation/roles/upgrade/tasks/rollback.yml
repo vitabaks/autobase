@@ -15,13 +15,13 @@
 # If the cluster is already healthy, the process stops to avoid unnecessary actions.
 - name: "[Rollback] Check Patroni cluster state"
   ansible.builtin.uri:
-    url: http://{{ inventory_hostname }}:{{ patroni_restapi_port }}/cluster
+    url: http://{{ patroni_bind_address | default(bind_address, true) }}:{{ patroni_restapi_port }}/cluster
     return_content: true
   register: patroni_cluster_result
   failed_when: false
   changed_when: false
   environment:
-    no_proxy: "{{ inventory_hostname }}"
+    no_proxy: "{{ patroni_bind_address | default(bind_address, true) }}"
   when:
     - inventory_hostname in groups['primary']
 
@@ -120,7 +120,7 @@
 - name: '[Rollback] Wait for port "{{ patroni_restapi_port }}" to become open on the host'
   ansible.builtin.wait_for:
     port: "{{ patroni_restapi_port }}"
-    host: "{{ inventory_hostname }}"
+    host: "{{ patroni_bind_address | default(bind_address, true) }}"
     state: started
     timeout: "{{ (pg_start_stop_timeout | int) // 2 }}"
     delay: 2
@@ -136,14 +136,14 @@
 
 - name: "[Rollback] Check Patroni is healthy on the Leader"
   ansible.builtin.uri:
-    url: http://{{ inventory_hostname }}:{{ patroni_restapi_port }}/leader
+    url: http://{{ patroni_bind_address | default(bind_address, true) }}:{{ patroni_restapi_port }}/leader
     status_code: 200
   register: patroni_leader_result
   until: patroni_leader_result.status == 200
   retries: "{{ (pg_start_stop_timeout | int) // 2 }}"
   delay: 2
   environment:
-    no_proxy: "{{ inventory_hostname }}"
+    no_proxy: "{{ patroni_bind_address | default(bind_address, true) }}"
   when:
     - inventory_hostname in groups['primary']
 
@@ -159,7 +159,7 @@
 - name: '[Rollback] Wait for port "{{ patroni_restapi_port }}" to become open on the host'
   ansible.builtin.wait_for:
     port: "{{ patroni_restapi_port }}"
-    host: "{{ inventory_hostname }}"
+    host: "{{ patroni_bind_address | default(bind_address, true) }}"
     state: started
     timeout: "{{ (pg_start_stop_timeout | int) // 2 }}"
     delay: 2
@@ -168,14 +168,14 @@
 
 - name: "[Rollback] Check Patroni is healthy on the Replica"
   ansible.builtin.uri:
-    url: http://{{ inventory_hostname }}:{{ patroni_restapi_port }}/health
+    url: http://{{ patroni_bind_address | default(bind_address, true) }}:{{ patroni_restapi_port }}/health
     status_code: 200
   register: patroni_replica_result
   until: patroni_replica_result.status == 200
   retries: "{{ (pg_start_stop_timeout | int) // 2 }}"
   delay: 2
   environment:
-    no_proxy: "{{ inventory_hostname }}"
+    no_proxy: "{{ patroni_bind_address | default(bind_address, true) }}"
   when:
     - inventory_hostname in groups['secondary']
 

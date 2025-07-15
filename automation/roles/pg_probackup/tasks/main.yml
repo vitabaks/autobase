@@ -44,7 +44,7 @@
       retries: 3
   environment: "{{ proxy_env | default({}) }}"
   when:
-    - installation_method == "repo"
+    - installation_method == "packages"
     - ansible_os_family == "Debian"
     - pg_probackup_install_from_postgrespro_repo|bool
   tags: pg_probackup, pg_probackup_repo, pg_probackup_install
@@ -101,7 +101,7 @@
       retries: 3
   environment: "{{ proxy_env | default({}) }}"
   when:
-    - installation_method == "repo"
+    - installation_method == "packages"
     - ansible_os_family == "RedHat"
     - pg_probackup_install_from_postgrespro_repo|bool
   tags: pg_probackup, pg_probackup_repo, pg_probackup_install

@@ -2,7 +2,7 @@ backend = "etcdv3"
 nodes = [
 {% if not dcs_exists|bool %}
   {% for host in groups['etcd_cluster'] %}
-  "{{ patroni_etcd_protocol | default('http', true) }}://{{ hostvars[host]['inventory_hostname'] }}:2379",
+  "{{ patroni_etcd_protocol | default('http', true) }}://{{ hostvars[host]['etcd_bind_address'] | default(hostvars[host]['bind_address'], true) }}:2379",
   {% endfor %}
 {% endif %}
 {% if dcs_exists|bool %}

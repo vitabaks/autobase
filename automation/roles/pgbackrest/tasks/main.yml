@@ -7,19 +7,27 @@
     - pgbackrest_auto_conf | default(true) | bool # to be able to disable auto backup settings
   tags: pgbackrest, pgbackrest_conf
 
+- name: Gather package facts
+  ansible.builtin.package_facts:
+    manager: auto
+  when: ansible_facts.packages is not defined
+  check_mode: false
+
 - block:
     # Debian pgdg repo
-    - name: Make sure the gnupg, apt-transport-https and python3-debian packages are present
+    - name: Ensure required packages are present
       ansible.builtin.apt:
-        pkg:
-          - gnupg
-          - apt-transport-https
-          - python3-debian
+        name: "{{ item }}"
         state: present
       register: apt_status
       until: apt_status is success
       delay: 5
       retries: 3
+      loop:
+        - gnupg
+        - apt-transport-https
+        - python3-debian
+      when: item not in ansible_facts.packages
 
     - name: Add pgdg repository and signing key
       ansible.builtin.deb822_repository:
@@ -42,7 +50,7 @@
       retries: 3
   environment: "{{ proxy_env | default({}) }}"
   when:
-    - installation_method == "repo"
+    - installation_method == "packages"
     - ansible_os_family == "Debian"
     - pgbackrest_install_from_pgdg_repo|bool
   tags: pgbackrest, pgbackrest_repo, pgbackrest_install
@@ -69,7 +77,7 @@
       ansible.builtin.command: dnf clean all
   environment: "{{ proxy_env | default({}) }}"
   when:
-    - installation_method == "repo"
+    - installation_method == "packages"
     - ansible_os_family == "RedHat"
     - pgbackrest_install_from_pgdg_repo|bool
   tags: pgbackrest, pgbackrest_repo, pgbackrest_install
@@ -83,6 +91,7 @@
   delay: 5
   retries: 3
   environment: "{{ proxy_env | default({}) }}"
+  when: "'pgbackrest' not in ansible_facts.packages"
   tags: pgbackrest, pgbackrest_install
 
 - block:
@@ -93,8 +102,8 @@
         owner: postgres
         group: postgres
         mode: "0755"
-      loop: "{{ pgbackrest_conf.global }}"
-      when: item.option == 'log-path'
+      loop: "{{ pgbackrest_conf.global | default([], true) }}"
+      when: item.option | default('') == 'log-path'
       loop_control:
         label: "{{ item.value }}"
 
@@ -105,8 +114,11 @@
         owner: postgres
         group: postgres
         mode: "0750"
-      loop: "{{ pgbackrest_conf.global }}"
-      when: item.option == 'repo1-path' and pgbackrest_repo_host | length < 1
+      loop: "{{ pgbackrest_conf.global | default([], true) }}"
+      when:
+        - item.option | default('') == 'repo1-path'
+        - pgbackrest_repo_type | lower == 'posix'
+        - pgbackrest_repo_host | length < 1
       loop_control:
         label: "{{ item.value }}"
 
@@ -117,8 +129,8 @@
         owner: postgres
         group: postgres
         mode: "0750"
-      loop: "{{ pgbackrest_conf.global }}"
-      when: item.option == 'spool-path'
+      loop: "{{ pgbackrest_conf.global | default([], true) }}"
+      when: item.option | default('') == 'spool-path'
       loop_control:
         label: "{{ item.value }}"
 
@@ -137,7 +149,9 @@
         owner: postgres
         group: postgres
         mode: "0644"
-  when: "'postgres_cluster' in group_names"
+  when:
+    - "'postgres_cluster' in group_names"
+    - pgbackrest_conf is defined
   tags: pgbackrest, pgbackrest_conf
 
 # Dedicated pgbackrest server (if "repo_host" is set)
@@ -149,8 +163,8 @@
         owner: "{{ pgbackrest_repo_user }}"
         group: "{{ pgbackrest_repo_user }}"
         mode: "0755"
-      loop: "{{ pgbackrest_server_conf.global }}"
-      when: item.option == 'log-path'
+      loop: "{{ pgbackrest_server_conf.global | default([]) }}"
+      when: item.option | default('') == 'log-path'
       loop_control:
         label: "{{ item.value }}"
 
@@ -161,8 +175,8 @@
         owner: "{{ pgbackrest_repo_user }}"
         group: "{{ pgbackrest_repo_user }}"
         mode: "0750"
-      loop: "{{ pgbackrest_server_conf.global }}"
-      when: item.option == 'repo1-path'
+      loop: "{{ pgbackrest_server_conf.global | default([]) }}"
+      when: item.option | default('') == 'repo1-path'
       loop_control:
         label: "{{ item.value }}"
 
@@ -199,6 +213,7 @@
         mode: "0644"
   when:
     - "'pgbackrest' in group_names"
+    - pgbackrest_server_conf is defined
     - pgbackrest_repo_host is defined
     - pgbackrest_repo_host | length > 0
   tags: pgbackrest, pgbackrest_conf
@@ -216,6 +231,7 @@
     - pgbackrest_cron_jobs is defined
     - pgbackrest_cron_jobs | length > 0
   tags: pgbackrest, pgbackrest_cron
+
 # - import_tasks: bootstrap_script.yml
 #  when:
 #    - patroni_cluster_bootstrap_method is defined

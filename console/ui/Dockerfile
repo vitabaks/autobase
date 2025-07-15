@@ -6,7 +6,7 @@ COPY console/ui/ .
 
 RUN yarn install --frozen-lockfile --network-timeout 1000000 && yarn vite build
 
-FROM nginx:1.26-bookworm AS runtime
+FROM nginx:1.29-bookworm AS runtime
 LABEL maintainer="Vitaliy Kukharik vitabaks@gmail.com"
 
 WORKDIR /usr/share/nginx/html
