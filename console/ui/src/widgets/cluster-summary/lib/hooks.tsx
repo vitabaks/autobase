@@ -36,7 +36,7 @@ const useGetCloudProviderConfig = () => {
         title: t('cloud'),
         children: (
           <Stack direction={'row'} spacing={1} alignItems="center">
-            <Icon fontSize="large">
+            <Icon fontSize="large" sx={{ display: 'flex', alignItems: 'center' }}>
               <img
                 src={data[CLUSTER_FORM_FIELD_NAMES.PROVIDER]?.icon}
                 alt={data[CLUSTER_FORM_FIELD_NAMES.PROVIDER]?.description?.[0]}
