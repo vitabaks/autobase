@@ -15,7 +15,7 @@
     tls_files:
       server_key: "{{ tls_files_raw.results[0].content }}"
       server_crt: "{{ tls_files_raw.results[1].content }}"
-      ca_crt:     "{{ tls_files_raw.results[2].content }}"
+      ca_crt: "{{ tls_files_raw.results[2].content }}"
   when: inventory_hostname == (groups[tls_group_name | default('master')][0])
   tags: tls, tls_cert_copy
 
