@@ -8,7 +8,7 @@
     - "{{ fetch_tls_privatekey | default(tls_privatekey | default('server.key')) }}"
     - "{{ fetch_tls_cert | default(tls_cert | default('server.crt')) }}"
     - "{{ fetch_tls_ca_cert | default(tls_ca_cert | default('ca.crt')) }}"
-  when: tls_group_name | d('master') in group_names
+  when: tls_group_name | default('master') in group_names
   tags: tls, tls_cert_copy
 
 - name: Create directory {{ copy_tls_dir | default(tls_dir | default('/etc/tls')) }}
