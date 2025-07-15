@@ -1,14 +1,21 @@
 ---
+- name: Gather package facts
+  ansible.builtin.package_facts:
+    manager: auto
+  check_mode: false
+  when: ansible_facts.packages is not defined
+  tags: install_postgresql_repo
+
 - block: # Debian/Ubuntu
     - name: Make sure the python3-debian package is present
       ansible.builtin.apt:
-        pkg:
-          - python3-debian
+        name: python3-debian
         state: present
       register: apt_status
       until: apt_status is success
       delay: 5
       retries: 3
+      when: "'python3-debian' not in ansible_facts.packages"
 
     - name: Add repository
       ansible.builtin.deb822_repository:
@@ -33,6 +40,7 @@
   environment: "{{ proxy_env | default({}) }}"
   when: installation_method == "packages" and ansible_os_family == "Debian"
   tags: add_repo
+  ignore_errors: "{{ ansible_check_mode }}"
 
 - block: # RedHat/CentOS
     - name: Add repository GPG key
@@ -107,7 +115,9 @@
         dest: /tmp/
         timeout: 30
         validate_certs: false
-      when: install_postgresql_repo|bool
+      when:
+        - install_postgresql_repo | bool
+        - "'pgdg-redhat-repo' not in ansible_facts.packages"
       tags: install_postgresql_repo
 
     - name: Install PostgreSQL repository
@@ -119,7 +129,9 @@
       until: package_status is success
       delay: 5
       retries: 3
-      when: install_postgresql_repo|bool
+      when:
+        - install_postgresql_repo | bool
+        - "'pgdg-redhat-repo' not in ansible_facts.packages"
       tags: install_postgresql_repo
 
     # Enable Debuginfo repository
@@ -161,6 +173,7 @@
   environment: "{{ proxy_env | default({}) }}"
   when: installation_method == "packages" and ansible_os_family == "RedHat"
   tags: add_repo
+  ignore_errors: "{{ ansible_check_mode }}"
 
 - name: Extensions repository
   ansible.builtin.import_tasks: extensions.yml

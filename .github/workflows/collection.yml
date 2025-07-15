@@ -1,0 +1,48 @@
+---
+name: "Publish Ansible collection"
+
+on:
+  push:
+    tags:
+      - "*"
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Set TERM environment variable
+        run: echo "TERM=xterm" >> $GITHUB_ENV
+
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: make bootstrap-dev
+
+      - name: Get tag name
+        id: tag
+        run: echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Update galaxy.yml version
+        run: |
+          sed -i "s/^version:.*/version: ${{ steps.tag.outputs.tag }}/" automation/galaxy.yml
+
+      - name: Build Ansible collection
+        run: |
+          cd automation
+          ansible-galaxy collection build
+
+      - name: Publish to Ansible Galaxy
+        run: |
+          cd automation
+          ansible-galaxy collection publish vitabaks-autobase-${{ steps.tag.outputs.tag }}.tar.gz --token $ANSIBLE_GALAXY_TOKEN
+        env:
+          ANSIBLE_GALAXY_TOKEN: ${{ secrets.ANSIBLE_GALAXY_TOKEN }}

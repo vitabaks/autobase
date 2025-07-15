@@ -2,7 +2,7 @@
 # Dependencies
 - name: Install Python dependencies
   block:
-    - name: Ensure that 'python3-pip' package is present on controlling host
+    - name: Ensure that 'python3-pip' package is present on control host
       ansible.builtin.command: which pip3
       register: pip3_check
       failed_when: false
@@ -26,7 +26,7 @@
         - pip3_check.rc != 0
         - ansible_os_family == "Debian"
 
-    - name: Install 'python3-pip' package on controlling host
+    - name: Install 'python3-pip' package on control host
       ansible.builtin.package:
         name: python3-pip
         state: present
@@ -38,7 +38,7 @@
         - pip3_check.rc != 0
         - ansible_distribution != "MacOSX"
 
-    - name: Ensure that Azure collection is installed on controlling host
+    - name: Ensure that Azure collection is installed on control host
       ansible.builtin.command: ansible-galaxy collection list azure.azcollection
       changed_when: false
       failed_when: false
@@ -62,7 +62,7 @@
       changed_when: false
       when: ansible_collections_path is not defined
 
-    - name: Ensure that Azure collection requirements is present on controlling host
+    - name: Ensure that Azure collection requirements is present on control host
       ansible.builtin.pip:
         requirements: "{{ ansible_collections_path | default(collections_path.stdout) }}/azure/azcollection/requirements.txt"
         executable: pip3
@@ -163,6 +163,7 @@
         index_var: idx
         label: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}-public-ip"
       register: public_ip_address
+      when: server_public_ip | bool
 
     # Security Group (Firewall)
     - name: "Azure: Create or modify Security Group"
@@ -182,7 +183,7 @@
               'access': 'Allow',
               'priority': 1200,
               'direction': 'Inbound'
-            }] if ssh_public_access | bool else []) +
+            }] if server_public_ip | bool and ssh_public_access | bool else []) +
             ([{
               'name': 'public-netdata-rule',
               'description': 'Netdata public access',
@@ -259,7 +260,7 @@
         ip_configurations:
           - name: ipconfig1
             primary: true
-            public_ip_address_name: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}-public-ip"
+            public_ip_address_name: "{{ server_public_ip | bool | ternary(server_name | lower ~ '%02d' % (idx + 1) ~ '-public-ip', None) }}"
         dns_servers:
           - 8.8.8.8
       loop: "{{ range(0, server_count | int) | list }}"
@@ -438,6 +439,34 @@
         - azure_blob_storage_create | bool
   when: state == 'present'
 
+# Info
+- name: Server info
+  ansible.builtin.debug:
+    msg:
+      id: "{{ item.ansible_facts.azure_vm.id | default('N/A', true) }}"
+      name: "{{ item.ansible_facts.azure_vm.name | default('N/A', true) }}"
+      image: "{{ item.ansible_facts.azure_vm.storage_profile.image_reference | default('N/A', true) }}"
+      type: "{{ item.ansible_facts.azure_vm.hardware_profile.vm_size | default('N/A', true) }}"
+      volume_size: "{{ item.ansible_facts.azure_vm.storage_profile.data_disks[0].disk_size_gb | default('N/A', true) }} GB"
+      volume_type: "{{ item.ansible_facts.azure_vm.storage_profile.data_disks[0].managed_disk.storage_account_type | default('N/A', true) }}"
+      public_ip: >-
+        {{
+          (public_ip_address.results if public_ip_address is defined else [])
+          | selectattr('idx', 'equalto', item.idx) | map(attribute='state.ip_address') | first | default('N/A', true)
+        }}
+      private_ip: >-
+        {{
+          item.ansible_facts.azure_vm.network_profile.network_interfaces[0].properties.ip_configurations[0].private_ip_address | default('N/A', true)
+        }}
+  loop: "{{ server_result.results }}"
+  loop_control:
+    index_var: idx
+    label: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}"
+  when:
+    - server_result.results is defined
+    - item.ansible_facts is defined
+
+# Check SSH access - via a public IP address
 - name: "Wait for host to be available via SSH"
   ansible.builtin.wait_for:
     host: "{{ item.state.ip_address }}"
@@ -449,54 +478,41 @@
     index_var: idx
     label: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}"
   when:
-    - public_ip_address.results is defined
+    - public_ip_address.results | default([]) | length > 0
     - item.state.ip_address is defined
 
-# Info
-- name: Server info
-  ansible.builtin.debug:
-    msg:
-      id: "{{ item.ansible_facts.azure_vm.id | default('N/A') }}"
-      name: "{{ item.ansible_facts.azure_vm.name | default('N/A') }}"
-      image: "{{ item.ansible_facts.azure_vm.storage_profile.image_reference | default('N/A') }}"
-      type: "{{ item.ansible_facts.azure_vm.hardware_profile.vm_size | default('N/A') }}"
-      volume_size: "{{ item.ansible_facts.azure_vm.storage_profile.data_disks[0].disk_size_gb | default('N/A') }} GB"
-      volume_type: "{{ item.ansible_facts.azure_vm.storage_profile.data_disks[0].managed_disk.storage_account_type | default('N/A') }}"
-      public_ip: >-
-        {{
-          public_ip_address.results | selectattr('idx', 'equalto', item.idx) | map(attribute='state.ip_address') | first | default('N/A')
-        }}
-      private_ip: >-
-        {{
-          item.ansible_facts.azure_vm.network_profile.network_interfaces[0].properties.ip_configurations[0].private_ip_address | default('N/A')
-        }}
+# Check SSH access - via a private IP address (if public IP is not defined)
+- name: "Wait for host to be available via SSH"
+  ansible.builtin.wait_for:
+    host: "{{ item.ansible_facts.azure_vm.network_profile.network_interfaces[0].properties.ip_configurations[0].private_ip_address }}"
+    port: 22
+    delay: 5
+    timeout: 300
   loop: "{{ server_result.results }}"
   loop_control:
-    label: "{{ item.ansible_facts.azure_vm.name | default('N/A') }}"
+    index_var: idx
+    label: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}"
   when:
+    - public_ip_address.results | default([]) | length == 0
     - server_result.results is defined
-    - item.ansible_facts is defined
+    - item.ansible_facts.azure_vm.network_profile.network_interfaces[0].properties.ip_configurations[0].private_ip_address is defined
 
 # Inventory
 - block:
-    - name: "Inventory | Initialize ip_addresses variable"
-      ansible.builtin.set_fact:
-        ip_addresses: []
-
     - name: "Inventory | Extract IP addresses"
-      ansible.builtin.set_fact:
+      ansible.builtin.set_fact: # yamllint disable rule:line-length
         ip_addresses: >-
-          {{ ip_addresses +
+          {{ ip_addresses | default([]) +
             [{
-              'public_ip': public_ip_address.results | selectattr('idx', 'equalto', item.idx) | map(attribute='state.ip_address') | first,
-              'private_ip': item.ansible_facts.azure_vm.network_profile.network_interfaces[0].properties.ip_configurations[0].private_ip_address
+              'public_ip': (public_ip_address.results if public_ip_address is defined else []) | selectattr('idx', 'equalto', item.idx) | map(attribute='state.ip_address') | first | default(''),
+              'private_ip': item.ansible_facts.azure_vm.network_profile.network_interfaces[0].properties.ip_configurations[0].private_ip_address | default('')
             }]
           }}
       loop: "{{ server_result.results | selectattr('ansible_facts.azure_vm', 'defined') }}"
       loop_control:
         label: >-
-          public_ip: {{ public_ip_address.results | selectattr('idx', 'equalto', item.idx) | map(attribute='state.ip_address') | first }},
-          private_ip: {{ item.ansible_facts.azure_vm.network_profile.network_interfaces[0].properties.ip_configurations[0].private_ip_address }}
+          public_ip: {{ (public_ip_address.results if public_ip_address is defined else []) | selectattr('idx', 'equalto', item.idx) | map(attribute='state.ip_address') | first | default('') }},
+          private_ip: {{ item.ansible_facts.azure_vm.network_profile.network_interfaces[0].properties.ip_configurations[0].private_ip_address | default('') }}
 
     - name: "Inventory | Generate in-memory inventory"
       ansible.builtin.import_tasks: inventory.yml
@@ -535,6 +551,7 @@
       loop_control:
         index_var: idx
         label: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}-public-ip"
+      when: server_public_ip | bool
 
     - name: "Azure: Delete Load Balancer"
       azure.azcollection.azure_rm_loadbalancer:
