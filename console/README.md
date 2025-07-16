@@ -18,17 +18,17 @@ The Console stack consists of the following core components:
 ### Architecture
 
 ```
-+--------+       +---------------+       +---------------+       +--------------+       +--------------+
-|        |       |               |       |               |       |              |       |              |
-|  User  +------>+    Console    +------>+    Console    +------>+  Automation  +------>+  PostgreSQL  |
-|        |       |      UI       |       |      API      |       |  (Ansible)   |       |   Clusters   |
-+--------+       +---------------+       +---------------+       +--------------+       +--------------+
-                                                 |
-                                                 v
-                                          +---------------+
-                                          |    Console    |
-                                          |      DB       |
-                                          +---------------+
++----------+      +-------------+      +-------------+      +--------------+      +--------------+
+|          |      |             |      |             |      |              |      |              |
+|   User   +----->+   Console   +----->+   Console   +----->+  Automation  +----->+  PostgreSQL  |
+|          |      |      UI     |      |     API     |      |  (Ansible)   |      |   Clusters   |
++----------+      +-------------+      +-------------+      +--------------+      +--------------+
+                                              |
+                                              v
+                                       +-------------+
+                                       |   Console   |
+                                       |      DB     |
+                                       +-------------+
 ```
 
 - The user interacts with the UI, which sends requests to the API.
