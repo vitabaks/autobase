@@ -92,9 +92,9 @@ func OrderByConverter(sortByFromApi *string, defaultField string, convMap map[st
 			if len(sortBy) == 0 {
 				continue
 			}
-			order := "ASC"
+			order := "asc"
 			if sortBy[0] == '-' {
-				order = "DESC"
+				order = "desc"
 				sortBy = sortBy[1:]
 			}
 			tableField := convMap[sortBy]
