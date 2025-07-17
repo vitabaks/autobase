@@ -94,16 +94,14 @@
           }}
         tls_bind_address_var: >-
           {{
-            'etcd_bind_address' if tls_group_name | default('') == 'etcd_cluster'
-            else 'consul_bind_address' if tls_group_name | default('') == 'consul_instances'
-            else 'patroni_bind_address' if tls_group_name | default('') == 'postgres_cluster'
+            'etcd_bind_address' if (tls_group_name | default('') == 'etcd_cluster' and etcd_bind_address | default('') | length > 0)
+            else 'consul_bind_address' if (tls_group_name | default('') == 'consul_instances' and consul_bind_address | default('') | length > 0)
+            else 'patroni_bind_address' if (tls_group_name | default('') == 'postgres_cluster' and patroni_bind_address | default('') | length > 0)
             else 'bind_address'
           }}
         tls_bind_addresses: >-
           {{
-            tls_hosts | map('extract', hostvars) |
-            map('json_query', tls_bind_address_var + ' || bind_address') |
-            select('string') | select('length') | list
+            tls_hosts | map('extract', hostvars, tls_bind_address_var) | map('regex_replace', '^', 'IP:') | list
           }}
       when: tls_subject_alt_name | default('') | length < 1
 
