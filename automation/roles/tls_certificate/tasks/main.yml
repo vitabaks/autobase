@@ -81,7 +81,7 @@
             (
               tls_hosts | map('extract', hostvars, 'ansible_hostname') | map('regex_replace', '^', 'DNS:') | list +
               tls_hosts | map('extract', hostvars, 'ansible_fqdn') | map('regex_replace', '^', 'DNS:') | list +
-              tls_hosts | map('extract', hostvars, tls_bind_address_var) | map('regex_replace', '^', 'IP:') | list +
+              tls_bind_addresses | map('regex_replace', '^', 'IP:') | list +
               ['DNS:localhost', 'IP:127.0.0.1']
             ) | unique | join(',')
           }}
@@ -98,6 +98,12 @@
             else 'consul_bind_address' if tls_group_name | default('') == 'consul_instances'
             else 'patroni_bind_address' if tls_group_name | default('') == 'postgres_cluster'
             else 'bind_address'
+          }}
+        tls_bind_addresses: >-
+          {{
+            tls_hosts | map('extract', hostvars) |
+            map('json_query', tls_bind_address_var + ' || bind_address') |
+            select('string') | select('length') | list
           }}
       when: tls_subject_alt_name | default('') | length < 1
 
