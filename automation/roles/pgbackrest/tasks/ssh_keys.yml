@@ -90,7 +90,7 @@
 
 - name: known_hosts | Get public ssh keys of hosts (ssh-keyscan)
   ansible.builtin.command: "ssh-keyscan -trsa -p {{ hostvars[item].ansible_ssh_port | default(hostvars[item].ansible_port) | default(22) }} {{ item }}"
-  loop: "{{ groups['all'] }}"
+  loop: "{{ groups['postgres_cluster'] }}"
   register: ssh_known_host_keyscan
   changed_when: false
 
