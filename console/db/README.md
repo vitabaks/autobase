@@ -15,7 +15,7 @@ Goose uses a specific naming convention to order and apply migrations:
 
 - Versioned Migrations: These migrations have a version number and are applied in sequence. The naming format is `<version>_<description>.sql`
   - Example: `20240520144338_initial_scheme_setup`
-  - Note: You can use the following command `goose create mogration_file_name sql` to create a new migration file.
+  - Note: You can use the following command `goose create <autobase_version> sql` to create a new migration file.
 
 Example migrations:
 
@@ -38,11 +38,12 @@ status
 Output example:
 
 ```
-status
-
-2024/05/20 17:50:33     Applied At                  Migration
-2024/05/20 17:50:33     =======================================
-2024/05/20 17:50:33     Mon May 20 14:49:26 2024 -- 20240520144338_2.0.0_initial_scheme_setup.sql
+2025/07/18 01:18:42     Applied At                  Migration
+2025/07/18 01:18:42     =======================================
+2025/07/18 01:18:42     Tue Jun 24 17:41:43 2025 -- 20240520144338_2.0.0_initial_scheme_setup.sql
+2025/07/18 01:18:42     Tue Jun 24 17:41:43 2025 -- 20241205103951_2.1.0.sql
+2025/07/18 01:18:42     Tue Jun 24 17:41:43 2025 -- 20250323121343_2.2.0.sql
+2025/07/18 01:18:42     Thu Jul 17 18:12:15 2025 -- 20250717180401_2.3.0.sql
 ```
 
 ### Database Schema
