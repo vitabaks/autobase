@@ -81,7 +81,7 @@
             (
               tls_hosts | map('extract', hostvars, 'ansible_hostname') | map('regex_replace', '^', 'DNS:') | list +
               tls_hosts | map('extract', hostvars, 'ansible_fqdn') | map('regex_replace', '^', 'DNS:') | list +
-              tls_hosts | map('extract', hostvars, 'bind_address') | map('regex_replace', '^', 'IP:') | list +
+              tls_hosts | map('extract', hostvars, tls_bind_address_var) | map('regex_replace', '^', 'IP:') | list +
               ['DNS:localhost', 'IP:127.0.0.1']
             ) | unique | join(',')
           }}
@@ -92,6 +92,14 @@
             if (tls_group_name | default('') | length > 0 and tls_group_name in groups)
             else ansible_play_hosts
           }}
+        tls_bind_address_var: >-
+          {{
+            'etcd_bind_address' if (tls_group_name | default('') == 'etcd_cluster' and etcd_bind_address | default('') | length > 0)
+            else 'consul_bind_address' if (tls_group_name | default('') == 'consul_instances' and consul_bind_address | default('') | length > 0)
+            else 'patroni_bind_address' if (tls_group_name | default('') == 'postgres_cluster' and patroni_bind_address | default('') | length > 0)
+            else 'bind_address'
+          }}
+
       when: tls_subject_alt_name | default('') | length < 1
 
     - name: "Display Certificate subjectAltName future value"
