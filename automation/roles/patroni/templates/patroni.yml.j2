@@ -65,6 +65,7 @@ etcd3:
 consul:
   host: 127.0.0.1:8500
   checks: []
+  register_service: true
   {% if consul_tls_enable | default(false) | bool %}
   scheme: https
   cacert: {{ patroni_consul_cacert | default('/etc/patroni/tls/consul/ca.crt') }}

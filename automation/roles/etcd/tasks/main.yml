@@ -95,6 +95,7 @@
         generate_tls_owner: "etcd"
         generate_tls_common_name: "etcd"
         generate_tls_dir: "{{ etcd_tls_dir | default('/etc/etcd/tls') }}"
+        generate_tls_address: etcd_bind_address
         tls_cert_regenerate: "{{ etcd_tls_cert_regenerate | default(false) }}" # Do not generate new certificates if they already exist.
       when: etcd_on_dedicated_nodes | default(false) | bool
 

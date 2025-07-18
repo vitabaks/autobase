@@ -81,7 +81,7 @@
             (
               tls_hosts | map('extract', hostvars, 'ansible_hostname') | map('regex_replace', '^', 'DNS:') | list +
               tls_hosts | map('extract', hostvars, 'ansible_fqdn') | map('regex_replace', '^', 'DNS:') | list +
-              tls_hosts | map('extract', hostvars, 'bind_address') | map('regex_replace', '^', 'IP:') | list +
+              tls_hosts | map('extract', hostvars, generate_tls_address) | map('regex_replace', '^', 'IP:') | list +
               ['DNS:localhost', 'IP:127.0.0.1']
             ) | unique | join(',')
           }}

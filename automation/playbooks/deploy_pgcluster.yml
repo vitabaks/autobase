@@ -184,6 +184,7 @@
       vars:
         tls_group_name: "postgres_cluster"
         tls_cert_regenerate: "{{ patroni_tls_cert_regenerate | default(false) }}" # Do not generate new certificates if they already exist.
+        generate_tls_address: patroni_bind_address
       when: tls_cert_generate | default(true) | bool
 
 - name: vitabaks.autobase.deploy_pgcluster | Deploy etcd cluster
@@ -193,7 +194,7 @@
 
 - name: vitabaks.autobase.deploy_pgcluster | Deploy Consul
   ansible.builtin.import_playbook: consul_cluster.yml
-  when: dcs_type | default('etcd') == "consul"
+  when: not dcs_exists and dcs_type | default('etcd') == "consul"
   tags: consul
 
 - name: vitabaks.autobase.deploy_pgcluster | Postgres Cluster Configuration

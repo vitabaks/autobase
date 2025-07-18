@@ -22,6 +22,7 @@
         generate_tls_owner: "{{ consul_user }}"
         generate_tls_common_name: "{{ consul_tls_common_name | default('Consul') }}"
         generate_tls_dir: "{{ consul_tls_dir | default('/etc/consul/tls') }}"
+        generate_tls_address: consul_bind_address
         tls_group_name: "consul_instances"
         tls_cert_regenerate: "{{ consul_tls_cert_regenerate | default(false) }}" # Do not generate new certificates if they already exist.
       when: consul_on_dedicated_nodes | default(false) | bool
