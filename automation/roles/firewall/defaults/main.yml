@@ -18,7 +18,6 @@ firewall_additional_rules: []
 firewall_enable_ipv6: true
 firewall_ip6_additional_rules: []
 firewall_log_dropped_packets: true
-
 # Set to true to ensure other firewall management software is disabled.
 # firewall_disable_firewalld: false
 # firewall_disable_ufw: false

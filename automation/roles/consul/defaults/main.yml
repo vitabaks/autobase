@@ -45,7 +45,7 @@ consul_install_remotely: false
 ### Paths
 consul_bin_path: "/usr/local/bin"
 # consul_config_path: "/etc/consul"
-consul_config_type: 'hcl' # or json
+consul_config_type: "hcl" # or json
 consul_config_template_path: "templates/config.{{ consul_config_type }}.j2"
 # consul_configd_path: "/etc/consul.d"
 consul_bootstrap_state: "{{ consul_config_path }}/.consul_bootstrapped"

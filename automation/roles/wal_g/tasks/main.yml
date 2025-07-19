@@ -89,11 +89,11 @@
       delay: 5
       retries: 3
       loop:
-          - libbrotli-dev
-          - libsodium-dev
-          - make
-          - cmake
-          - git
+        - libbrotli-dev
+        - libsodium-dev
+        - make
+        - cmake
+        - git
       when:
         - ansible_os_family == "Debian"
         - item not in ansible_facts.packages
@@ -107,12 +107,12 @@
       delay: 5
       retries: 3
       loop:
-          - brotli-devel
-          - libsodium-devel
-          - make
-          - cmake
-          - gcc
-          - git
+        - brotli-devel
+        - libsodium-devel
+        - make
+        - cmake
+        - gcc
+        - git
       when:
         - ansible_os_family == "RedHat"
         - item not in ansible_facts.packages

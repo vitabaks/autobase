@@ -231,7 +231,6 @@
     - pgbackrest_cron_jobs is defined
     - pgbackrest_cron_jobs | length > 0
   tags: pgbackrest, pgbackrest_cron
-
 # - import_tasks: bootstrap_script.yml
 #  when:
 #    - patroni_cluster_bootstrap_method is defined

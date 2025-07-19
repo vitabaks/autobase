@@ -39,31 +39,35 @@ The Console stack consists of the following core components:
 ## Quick Start
 
 1. Clone the repository:
-    ```sh
-    git clone https://github.com/vitabaks/autobase.git
-    ```
+
+   ```sh
+   git clone https://github.com/vitabaks/autobase.git
+   ```
 
 2. Navigate to the `console` directory:
-    ```sh
-    cd autobase/console
-    ```
+
+   ```sh
+   cd autobase/console
+   ```
 
 3. Setup environment:
-    ```sh
-    cp .env.example .env
-    ```
+
+   ```sh
+   cp .env.example .env
+   ```
 
 4. Configure your `.env`:
-    ```sh
-    DOMAIN=your-domain.com  # Set your domain
-    EMAIL=your@email.com    # Required for Caddy SSL
-    AUTH_TOKEN=your-token   # Your authorization token
-    ```
+
+   ```sh
+   DOMAIN=your-domain.com  # Set your domain
+   EMAIL=your@email.com    # Required for Caddy SSL
+   AUTH_TOKEN=your-token   # Your authorization token
+   ```
 
 5. Run Docker Compose:
-    ```sh
-    docker compose up -d
-    ```
+   ```sh
+   docker compose up -d
+   ```
 
 ## Notes
 

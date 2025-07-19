@@ -109,7 +109,7 @@
 
         - name: Save gossip key
           ansible.builtin.set_fact:
-            consul_raw_key: "{{ consul_config_b64.content | b64decode | regex_findall('^encrypt = \"(.+)\"$', multiline=True) | first }}"
+            consul_raw_key: '{{ consul_config_b64.content | b64decode | regex_findall(''^encrypt = "(.+)"$'', multiline=True) | first }}'
 
       no_log: false
       when:
@@ -338,7 +338,7 @@
     dest: /etc/profile.d/consul_profile.sh
     owner: root
     group: root
-    mode: '755'
+    mode: "755"
 
 - ansible.builtin.include_tasks: ../tasks/dnsmasq.yml
   when: consul_dnsmasq_enable | bool

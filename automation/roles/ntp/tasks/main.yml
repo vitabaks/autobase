@@ -54,7 +54,7 @@
         dest: /etc/ntp.conf
         owner: root
         group: root
-        mode: '0644'
+        mode: "0644"
       notify: "restart ntp"
       when: ntp_package == "ntp"
 
@@ -64,7 +64,7 @@
         dest: "{{ '/etc/chrony/chrony.conf' if ansible_os_family == 'Debian' else '/etc/chrony.conf' }}"
         owner: root
         group: root
-        mode: '0644'
+        mode: "0644"
       notify: "{{ 'restart chrony' if ansible_os_family == 'Debian' else 'restart chronyd' }}"
       when: ntp_package == "chrony"
   when: ntp_enabled | default(false) | bool

@@ -59,7 +59,6 @@
   delay: 2
   environment:
     no_proxy: "{{ patroni_bind_address | default(bind_address, true) }}"
-  when:
-    (patronictl_switchover_result is defined and patronictl_switchover_result is success) or
+  when: (patronictl_switchover_result is defined and patronictl_switchover_result is success) or
     (patroni_leader_recheck is defined and patroni_leader_recheck.status | default('') != 200) or
     (patronictl_switchover_retry_result is defined and patronictl_switchover_retry_result is success)

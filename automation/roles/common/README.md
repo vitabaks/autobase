@@ -10,6 +10,7 @@ This role serves as a centralized place to define default variables shared acros
 ## Usage Notes
 
 - This role must be listed as a dependency in other roles via `meta/main.yml`:
+
   ```yaml
   dependencies:
     - role: vitabaks.autobase.common
@@ -22,16 +23,16 @@ This role serves as a centralized place to define default variables shared acros
 
 ## Important Guidelines
 
-- Do not redefine variables in the `defaults/` directory of dependent roles if they already exist in `common/defaults`.  Instead, comment them out or remove them to avoid duplication and priority conflicts. Example:
+- Do not redefine variables in the `defaults/` directory of dependent roles if they already exist in `common/defaults`. Instead, comment them out or remove them to avoid duplication and priority conflicts. Example:
 
   ```yaml
-    # Defined in roles/common/defaults/main.yml. Commented out here to prevent conflicts.
-    # mount:
-    #  - path: ""
-    #    src: ""
-    #    fstype: ""
-    #    opts: ""
-    #    state: ""
+  # Defined in roles/common/defaults/main.yml. Commented out here to prevent conflicts.
+  # mount:
+  #  - path: ""
+  #    src: ""
+  #    fstype: ""
+  #    opts: ""
+  #    state: ""
   ```
 
 - Variables from `common/defaults` are not available during playbook parsing. This affects conditional expressions such as `when:`
@@ -42,4 +43,3 @@ This role serves as a centralized place to define default variables shared acros
     ```
 
   - If a variable from `common` must be available during playbook parsing (e.g. used in 'when'), define it in `group_vars` or another appropriate location.
-
