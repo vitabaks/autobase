@@ -83,10 +83,10 @@
         name: "{{ item }}"
         state: present
       loop:
-          - make
-          - gcc
-          - flex
-          - bison
+        - make
+        - gcc
+        - flex
+        - bison
       register: build_tools_result
       when:
         - get_url_result is defined
@@ -98,31 +98,31 @@
         name: "{{ item }}"
         state: present
       loop:
-          - pkg-config
-          - libzstd1
-          - libdwarf-dev
-          - libdw-dev
-          - binutils-dev
-          - libcap-dev
-          - libelf-dev
-          - libnuma-dev
-          - python3-dev
-          - libssl-dev
-          - libunwind-dev
-          - libdwarf-dev
-          - zlib1g-dev
-          - liblzma-dev
-          - libaio-dev
-          - libtraceevent-dev
-          - debuginfod
-          - libpfm4-dev
-          - libslang2-dev
-          - systemtap-sdt-dev
-          - libperl-dev
-          - binutils-dev
-          - libbabeltrace-dev
-          - libiberty-dev
-          - libzstd-dev
+        - pkg-config
+        - libzstd1
+        - libdwarf-dev
+        - libdw-dev
+        - binutils-dev
+        - libcap-dev
+        - libelf-dev
+        - libnuma-dev
+        - python3-dev
+        - libssl-dev
+        - libunwind-dev
+        - libdwarf-dev
+        - zlib1g-dev
+        - liblzma-dev
+        - libaio-dev
+        - libtraceevent-dev
+        - debuginfod
+        - libpfm4-dev
+        - libslang2-dev
+        - systemtap-sdt-dev
+        - libperl-dev
+        - binutils-dev
+        - libbabeltrace-dev
+        - libiberty-dev
+        - libzstd-dev
       when:
         - ansible_os_family == "Debian"
         - build_tools_result is defined
@@ -134,25 +134,25 @@
         name: "{{ item }}"
         state: present
       loop:
-          - pkgconf
-          - libzstd
-          - libdwarf-devel
-          - elfutils-libelf-devel
-          - binutils-devel
-          - libcap-devel
-          - numactl-devel
-          - python3-devel
-          - openssl-devel
-          - libunwind-devel
-          - zlib-devel
-          - xz-devel
-          - libaio-devel
-          - libtraceevent-devel
-          - slang-devel
-          - systemtap-sdt-devel
-          - perl-devel
-          - libbabeltrace-devel
-          - libzstd-devel
+        - pkgconf
+        - libzstd
+        - libdwarf-devel
+        - elfutils-libelf-devel
+        - binutils-devel
+        - libcap-devel
+        - numactl-devel
+        - python3-devel
+        - openssl-devel
+        - libunwind-devel
+        - zlib-devel
+        - xz-devel
+        - libaio-devel
+        - libtraceevent-devel
+        - slang-devel
+        - systemtap-sdt-devel
+        - perl-devel
+        - libbabeltrace-devel
+        - libzstd-devel
       when:
         - ansible_os_family == "RedHat"
         - build_tools_result is defined

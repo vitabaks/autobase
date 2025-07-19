@@ -67,6 +67,7 @@ Tip: Start with `deploy_pgcluster` for initial provisioning, then use `config_pg
 If you need to start from the very beginning, you can use the `remove_cluster` playbook.
 
 Available variables:
+
 - `remove_postgres`: stop the PostgreSQL service and remove data
 - `remove_etcd`: stop the ETCD service and remove data
 - `remove_consul`: stop the Consul service and remove data
@@ -85,19 +86,23 @@ Autobase adheres to a modular design separating atomic logic (roles) and orchest
 ### List of Playbooks
 
 ###### 🚀 Deployment
+
 - `deploy_pgcluster` – Deploy a new highly available PostgreSQL cluster. This playbook also includes:
   - `etcd_cluster` – Provision and configure a new etcd cluster as the DCS (used if dcs_type: etcd).
   - `consul_cluster` – Provision and configure a new Consul cluster as the DCS (used if dcs_type: consul).
   - `balancers` – Deploy HAProxy for routing client traffic (used if with_haproxy_load_balancing: true).
 
 ###### 🛠️ Maintenance
+
 - `config_pgcluster` – Reconfigure PostgreSQL cluster settings (users, databases, extensions, etc.) after the initial deployment.
 - `update_pgcluster` – Perform rolling updates of PostgreSQL or system packages with minimal downtime.
 - `pg_upgrade` – Perform a major version in-place upgrade of PostgreSQL with minimal downtime.
 
 ###### ⬆️ Scaling
+
 - `add_pgnode` – Add a new PostgreSQL replica node to an existing cluster.
 - `add_balancer` – Add a new HAProxy load balancer node to the cluster (used if with_haproxy_load_balancing: true).
 
 ###### 🧹 Removal
+
 - `remove_cluster` – Remove the PostgreSQL cluster and optionally its DCS (etcd or Consul), including all data from the server.

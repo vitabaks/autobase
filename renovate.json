@@ -1,12 +1,6 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": [
-    "config:recommended",
-    "group:recommended",
-    ":prHourlyLimit2",
-    ":automergeMinor",
-    ":automergeRequireAllStatusChecks"
-  ],
+  "extends": ["config:recommended", "group:recommended", ":prHourlyLimit2", ":automergeMinor", ":automergeRequireAllStatusChecks"],
   "labels": ["dependencies"],
   "minimumReleaseAge": "3 days",
   "schedule": ["before 4am on Monday"],
@@ -20,7 +14,7 @@
     {
       "description": "Group and schedule Go dependencies for bi-weekly updates",
       "matchManagers": ["gomod"],
-      "groupName": "go dependencies", 
+      "groupName": "go dependencies",
       "schedule": ["before 4am every 2 weeks on Monday"]
     },
     {
@@ -36,7 +30,7 @@
       "schedule": ["before 4am on Monday"]
     },
     {
-      "description": "Group and schedule Ansible Galaxy dependencies for weekly updates", 
+      "description": "Group and schedule Ansible Galaxy dependencies for weekly updates",
       "matchManagers": ["ansible-galaxy"],
       "groupName": "ansible galaxy dependencies",
       "schedule": ["before 4am on Monday"]
@@ -49,10 +43,7 @@
   "customManagers": [
     {
       "customType": "regex",
-      "managerFilePatterns": [
-        "automation/roles/common/defaults/main.yml",
-        "automation/roles/consul/defaults/main.yml"
-      ],
+      "managerFilePatterns": ["automation/roles/common/defaults/main.yml", "automation/roles/consul/defaults/main.yml"],
       "matchStrings": [
         "^\\s*datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+)(\\s+registryUrls=(?<registryUrls>\\S+))?(\\s+versioning=(?<versioning>\\S+))?(\\s+extractVersion=(?<extractVersion>\\S+))?\\s+.*?_version:\\s+(?<currentValue>.+)$"
       ],
