@@ -10,7 +10,7 @@
 [![Molecule](https://github.com/vitabaks/autobase/actions/workflows/molecule.yml/badge.svg)](https://github.com/vitabaks/autobase/actions/workflows/molecule.yml)
 [![GitHub license](https://img.shields.io/github/license/vitabaks/autobase)](https://github.com/vitabaks/autobase/blob/master/LICENSE)
 <a href="https://algora.io/autobase/bounties/new">
-  <img
+<img
     src="https://img.shields.io/endpoint?url=https%3A%2F%2Falgora.io%2Fapi%2Fshields%2Fautobase%2Fbounties%3Fstatus%3Dopen"
     alt="Open Bounties"
   />
@@ -229,6 +229,7 @@ Alternatively, you can use [Ansible Collection](./automation/README.md)
 If you need to start from the very beginning, you can use the `remove_cluster` playbook.
 
 Available variables:
+
 - `remove_postgres`: stop the PostgreSQL service and remove data
 - `remove_etcd`: stop the ETCD service and remove data
 - `remove_consul`: stop the Consul service and remove data

@@ -6,8 +6,8 @@ import { convertTimestampToReadableTime } from '@shared/lib/functions.ts';
 export const OPERATIONS_TABLE_COLUMN_NAMES = Object.freeze({
   // names are used as sorting params, changes will break sorting
   ID: 'id',
-  STARTED: 'created_at',
-  FINISHED: 'updated_at',
+  STARTED: 'started',
+  FINISHED: 'finished',
   TYPE: 'type',
   STATUS: 'status',
   CLUSTER: 'cluster_name',

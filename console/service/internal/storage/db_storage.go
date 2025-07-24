@@ -697,7 +697,7 @@ func (s *dbStorage) GetOperations(ctx context.Context, req *GetOperationsReq) ([
 		curOffset = *req.Offset
 	}
 
-	subQuery := `WHERE project_id = $1 and started >= $2 and started <= $3`
+	subQuery := `where project_id = $1 and started >= $2 and finished <= $3`
 
 	var (
 		extraWhere           string
@@ -732,7 +732,7 @@ func (s *dbStorage) GetOperations(ctx context.Context, req *GetOperationsReq) ([
 		return nil, nil, err
 	}
 
-	orderBy := OrderByConverter(req.SortBy, "id DESC", operationSortFields)
+	orderBy := OrderByConverter(req.SortBy, "id desc", operationSortFields)
 
 	limit := " limit $" + strconv.Itoa(extraArgsCurPosition) + " offset $" + strconv.Itoa(extraArgsCurPosition+1)
 	extraArgs = append(extraArgs, curLimit, curOffset)

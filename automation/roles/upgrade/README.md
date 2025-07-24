@@ -25,7 +25,6 @@ Specify the current (old) version of PostgreSQL in the `pg_old_version` variable
    If any errors arise, such as schema object incompatibilities, resolve these issues and repeat the checks.
 
    Once the playbook completes the pre-checks without any errors, you should see the following messages in the Ansible log:
-
    - "`The database schema is compatible with PostgreSQL <new_version>`"
    - "`Clusters are compatible`"
 

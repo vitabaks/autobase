@@ -47,8 +47,8 @@ var (
 		"type":         "type",
 		"status":       "status",
 		"id":           "id",
-		"created_at":   "created_at",
-		"updated_at":   "updated_at",
+		"started":      "started",
+		"finished":     "finished",
 		"cluster":      "cluster",
 		"environment":  "environment",
 	}

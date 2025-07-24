@@ -1,0 +1,5 @@
+---
+pgdg_architecture_map:
+  amd64: x86_64
+  x86_64: x86_64
+  aarch64: aarch64

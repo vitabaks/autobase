@@ -3,7 +3,7 @@ swagger: '2.0'
 info:
   title: autobase console
   description: API for autobase console
-  version: 2.2.0
+  version: 2.3.0
 host: localhost:8080
 schemes:
   - http
@@ -832,14 +832,14 @@ paths:
           in: query
           required: false
           type: string
-          description: "Sort by fields. Example: sort_by=cluster_name,-type,status,id,created_at,updated_at\n
+          description: "Sort by fields. Example: sort_by=cluster_name,type,status,id,started,finished\n
           Supported values:\n
            - id\n
            - cluster_name\n
            - type\n
            - status\n
-           - started_at\n
-           - updated_at\n
+           - started\n
+           - finished\n
            - cluster\n
            - environment\n"
         - name: limit
