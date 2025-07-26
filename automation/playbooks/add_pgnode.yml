@@ -166,6 +166,12 @@
     - role: vitabaks.autobase.copy
     - role: vitabaks.autobase.cron
 
+    - role: vitabaks.autobase.docker
+      when:
+        - installation_method | default('packages') == "docker"
+        - docker_install | default(true) | bool
+      tags: docker, docker_install
+
 - name: vitabaks.autobase.add_pgnode | Configure pgBackRest
   hosts: pgbackrest:postgres_cluster
   become: true
@@ -205,7 +211,7 @@
       when: pg_probackup_install | default(false) | bool
 
     - role: vitabaks.autobase.pgbouncer
-      when: pgbouncer_install | default(false) | bool
+      when: pgbouncer_install | default(true) | bool
 
     - role: vitabaks.autobase.pgpass
 
