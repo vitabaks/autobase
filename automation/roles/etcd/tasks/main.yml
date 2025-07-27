@@ -69,8 +69,11 @@
 
 - name: Create etcd conf directory
   ansible.builtin.file:
-    path: "{{ etcd_conf_dir }}"
+    path: "{{ etcd_conf_dir | default('/etc/etcd') }}"
     state: directory
+    owner: etcd
+    group: etcd
+    mode: "0750"
   tags: etcd, etcd_conf
 
 # TLS
@@ -130,15 +133,6 @@
     src: templates/etcd.service.j2
     dest: /etc/systemd/system/etcd.service
   tags: etcd, etcd_conf
-
-- name:  Ensurce proper permission /etc/etcd
-  ansible.builtin.file:
-    path: "{{ etcd_conf_dir | default('/etc/etcd') }}"
-    state: directory
-    owner: etcd
-    group: etcd
-    mode: "0750"
-  tags: etcd, etcd_start
 
 - name: Enable and start etcd service
   ansible.builtin.systemd:
