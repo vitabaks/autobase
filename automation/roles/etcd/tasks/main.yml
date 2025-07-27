@@ -69,8 +69,11 @@
 
 - name: Create etcd conf directory
   ansible.builtin.file:
-    path: "{{ etcd_conf_dir }}"
+    path: "{{ etcd_conf_dir | default('/etc/etcd') }}"
     state: directory
+    owner: etcd
+    group: etcd
+    mode: "0750"
   tags: etcd, etcd_conf
 
 # TLS
