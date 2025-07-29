@@ -215,6 +215,12 @@
   roles:
     - role: vitabaks.autobase.pgbackrest
       when: pgbackrest_install | default(false) | bool
+  tasks:
+    - name: Create pgbackrest stanza (if missing)
+      ansible.builtin.include_role:
+        name: vitabaks.autobase.pgbackrest
+        tasks_from: stanza_create
+      when: pgbackrest_install | default(false) | bool
 
 - name: vitabaks.autobase.config_pgcluster | Restart patroni on secondary after config settings if need
   hosts: secondary
