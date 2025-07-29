@@ -74,7 +74,7 @@
       retries: 3
       when:
         - not ansible_check_mode
-        
+
     - name: Clean dnf cache
       ansible.builtin.command: dnf clean all
   environment: "{{ proxy_env | default({}) }}"
