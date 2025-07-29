@@ -226,10 +226,6 @@
     - not ansible_check_mode
   tags: pgbackrest, pgbackrest_ssh_keys
 
-- ansible.builtin.import_tasks: stanza_create.yml
-  when: pgbackrest_install | default(false) | bool
-  tags: pgbackrest, pgbackrest_stanza_create
-
 - ansible.builtin.import_tasks: cron.yml
   when:
     - pgbackrest_cron_jobs is defined

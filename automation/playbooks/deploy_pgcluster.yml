@@ -341,6 +341,12 @@
     - role: vitabaks.autobase.netdata
 
   tasks:
+    - name: Create pgbackrest stanza
+      ansible.builtin.include_role:
+        name: vitabaks.autobase.pgbackrest
+        tasks_from: stanza_create
+      when: pgbackrest_install | default(false) | bool
+
     - name: Install and configure pgbouncer
       ansible.builtin.include_role:
         name: vitabaks.autobase.pgbouncer
