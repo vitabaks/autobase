@@ -72,7 +72,9 @@
       until: package_status is success
       delay: 5
       retries: 3
-
+      when:
+        - not ansible_check_mode
+        
     - name: Clean dnf cache
       ansible.builtin.command: dnf clean all
   environment: "{{ proxy_env | default({}) }}"
