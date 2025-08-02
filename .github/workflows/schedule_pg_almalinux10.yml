@@ -29,5 +29,5 @@ jobs:
         env:
           PY_COLORS: "1"
           ANSIBLE_FORCE_COLOR: "1"
-          IMAGE_DISTRO: almalinux8
+          IMAGE_DISTRO: almalinux10
           IMAGE_NAMESPACE: glillico
