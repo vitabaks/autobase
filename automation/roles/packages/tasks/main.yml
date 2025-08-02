@@ -107,17 +107,20 @@
       ansible.builtin.command: "dnf -y -C module list postgresql"
       register: postgresql_module_result
       changed_when: false
-
+      when: ansible_distribution_major_version is version('10', '<')
+    
     - name: Disable postgresql appstream module
       ansible.builtin.command: "dnf -y -C module disable postgresql"
       when:
         - install_postgresql_repo | bool
+        - postgresql_module_result.stdout is defined
         - "'[x] ' not in postgresql_module_result.stdout"
 
     - name: Enable postgresql appstream module
       ansible.builtin.command: "dnf -y -C module enable postgresql"
       when:
         - not install_postgresql_repo | bool
+        - postgresql_module_result.stdout is defined
         - "'[x] ' in postgresql_module_result.stdout"
 
     - name: Install PostgreSQL packages
