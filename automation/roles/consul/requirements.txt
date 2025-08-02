@@ -1,4 +1,4 @@
-rich>=10.0.0,<11.0.0
+rich>=14.1.0,<14.2.0
 molecule===2.22
 docker
 netaddr

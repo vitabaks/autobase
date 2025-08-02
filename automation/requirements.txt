@@ -1,4 +1,4 @@
-ansible==9.13.0
+ansible==11.8.0
 boto3==1.39.15
 dopy==0.3.7
 google-auth==2.40.3
