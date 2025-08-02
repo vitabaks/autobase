@@ -33,7 +33,7 @@
 
     # known_hosts
     - name: known_hosts | for each host, scan for its ssh public key
-      ansible.builtin.command: "ssh-keyscan -trsa -p {{ ansible_ssh_port | default(22) }} {{ item }}"
+      ansible.builtin.command: "ssh-keyscan -trsa -p {{ ansible_ssh_port | default(22) }} {{ hostvars[item]['bind_address'] }}"
       loop: "{{ ssh_known_hosts }}"
       register: ssh_known_host_results
       changed_when: false
@@ -42,7 +42,7 @@
       become: true
       become_user: "{{ ssh_key_user }}"
       ansible.builtin.known_hosts:
-        name: "{{ item.item }}"
+        name: "{{ hostvars[item.item]['bind_address'] }}"
         key: "{{ item.stdout }}"
         path: "~{{ ssh_key_user }}/.ssh/known_hosts"
       no_log: true
