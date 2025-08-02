@@ -108,7 +108,7 @@
       register: postgresql_module_result
       changed_when: false
       when: ansible_distribution_major_version is version('10', '<')
-    
+
     - name: Disable postgresql appstream module
       ansible.builtin.command: "dnf -y -C module disable postgresql"
       when:
