@@ -89,7 +89,8 @@
     - pgbackrest_conf.global | selectattr('option', 'equalto', 'backup-standby') | map(attribute='value') | list | last | default('') == 'y'
 
 - name: known_hosts | Get public ssh keys of hosts (ssh-keyscan)
-  ansible.builtin.command: "ssh-keyscan -trsa -p {{ hostvars[item].ansible_ssh_port | default(hostvars[item].ansible_port) | default(22) }} {{ hostvars[item]['bind_address'] }}"
+  ansible.builtin.command: >
+    ssh-keyscan -trsa -p {{ hostvars[item].ansible_ssh_port | default(hostvars[item].ansible_port) | default(22) }} {{ hostvars[item]['bind_address'] }}
   loop: "{{ groups['postgres_cluster'] }}"
   register: ssh_known_host_keyscan
   changed_when: false
