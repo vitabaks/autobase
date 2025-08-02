@@ -60,7 +60,7 @@
   ansible.builtin.shell: |
     set -o pipefail;
 
-    pg_servers="{{ (groups['primary'] + groups['secondary']) | join('\n') }}"
+    pg_servers="{{ (groups['primary'] + groups['secondary']) | map('extract', hostvars, 'bind_address') | join('\n') }}"
     pg_servers_count="{{ groups['primary'] | default([]) | length + groups['secondary'] | default([]) | length }}"
     pg_slow_active_count_query="{{ pg_slow_active_count_query }}"
     pg_slow_active_terminate_query="{{ pg_slow_active_terminate_query }}"

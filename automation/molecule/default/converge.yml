@@ -21,6 +21,7 @@
         pgbouncer_processes: 2 # Test multiple pgbouncer processes (so_reuseport)
         patroni_tags: "datacenter=dc1,key1=value1"
         balancer_tags: "datacenter=dc1"
+        enable_ssh_key_based_authentication: true
         cacheable: true
       delegate_to: localhost
       run_once: true # noqa run-once
