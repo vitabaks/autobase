@@ -60,7 +60,7 @@
 
     - name: Set variables for Extensions test
       ansible.builtin.set_fact:
-        enable_timescale: true
+        enable_timescale: "{{ 'false' if ansible_distribution_major_version == '10' else 'true' }}" # no packages for RHEL 10 (TODO)
         enable_pg_repack: true
         enable_pg_cron: true
         enable_pgaudit: true
