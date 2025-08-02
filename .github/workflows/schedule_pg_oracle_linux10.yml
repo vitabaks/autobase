@@ -1,5 +1,5 @@
 ---
-name: scheduled PostgreSQL (OracleLinux 8)
+name: scheduled PostgreSQL (OracleLinux 10)
 
 on:
   schedule:

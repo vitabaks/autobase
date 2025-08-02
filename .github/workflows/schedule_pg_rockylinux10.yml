@@ -1,5 +1,5 @@
 ---
-name: scheduled PostgreSQL (RockyLinux 8)
+name: scheduled PostgreSQL (RockyLinux 10)
 
 on:
   schedule:
