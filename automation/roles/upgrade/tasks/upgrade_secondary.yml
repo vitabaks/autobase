@@ -25,7 +25,7 @@
 - block:
     - name: "Upgrade the PostgreSQL on the Replica (using rsync --hard-links)"
       vars:
-        secondary_servers: "{{ groups['secondary'] | join('\n') }}"
+        secondary_servers: "{{ groups['secondary'] | map('extract', hostvars, 'bind_address') | join('\n') }}"
         secondary_count: "{{ groups['secondary'] | length }}"
       ansible.builtin.shell: |
         set -o pipefail;
