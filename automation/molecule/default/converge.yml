@@ -14,7 +14,7 @@
         nameservers: ["8.8.8.8", "9.9.9.9"]
         timezone: "Etc/UTC"
         with_haproxy_load_balancing: "{{ [true, false] | random }}"
-        dcs_type: "{{ ['etcd', 'consul'] | random }}" # Set 'dcs_type' to either 'etcd' or 'consul' randomly
+        dcs_type: "{{ 'etcd' if ansible_distribution_major_version == '10' else ['etcd', 'consul'] | random }}" # TODO: Consul support for  RHEL 10
         consul_node_role: server # if dcs_type: "consul"
         consul_bootstrap_expect: true # if dcs_type: "consul"
         postgresql_version: 17 # to test custom WAL dir
