@@ -1,9 +1,9 @@
 ---
-name: scheduled PostgreSQL (RockyLinux 8)
+name: scheduled PostgreSQL (CentOS Stream 10)
 
 on:
   schedule:
-    - cron: "15 1 * * *"
+    - cron: "0 0 * * *"
 
 jobs:
   test:
@@ -29,4 +29,5 @@ jobs:
         env:
           PY_COLORS: "1"
           ANSIBLE_FORCE_COLOR: "1"
-          IMAGE_DISTRO: rockylinux8
+          IMAGE_DISTRO: centosstream10
+          IMAGE_NAMESPACE: glillico
