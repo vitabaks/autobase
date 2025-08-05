@@ -103,10 +103,7 @@
           when:
             - ansible_distribution == "OracleLinux"
             - ansible_distribution_major_version is version("8", ">=")
-      vars:
-        pg_devel_package: "postgresql{{ postgresql_version | string | replace('.', '') }}-devel"
-      when:
-        - pg_devel_package in postgresql_packages
+      when: postgresql_packages|join(" ") is search("devel")
 
     # Install PostgreSQL Repository
     - name: Get pgdg-redhat-repo-latest.noarch.rpm
