@@ -1035,11 +1035,11 @@ install_epel_repo: true # or 'false' (installed from the package "epel-release-l
 # Full PostgreSQL package version string (e.g., "17.5-1PGDG.rhel9").
 # Used only on RedHat-based distributions, where any minor version can be installed from the PGDG repo.
 # On Debian/Ubuntu, only the latest minor is available for each major release.
-postgresql_package_version_full: >-
-  {% if postgresql_version_minor | string == 'latest' %}
-  {% else %}
-  -{{ postgresql_version }}.{{ postgresql_version_minor }}-{{ postgresql_package_release }}PGDG.rhel{{ ansible_distribution_major_version }}
-  {% endif %}
+postgresql_package_version_full: "\
+  {% if postgresql_version_minor | string == 'latest' %}\
+  {% else %}\
+  -{{ postgresql_version }}.{{ postgresql_version_minor }}-{{ postgresql_package_release }}PGDG.rhel{{ ansible_distribution_major_version }}\
+  {% endif %}"
 postgresql_package_release: 3 # release number of the package in the PGDG repository.
 
 postgresql_os_specific_packages:
