@@ -1,7 +1,7 @@
 ansible==11.8.0
-ansible-lint==25.6.1
+ansible-lint==25.7.0
 yamllint==1.37.1
-molecule==25.6.0
+molecule==25.7.0
 molecule-plugins==23.7.0
 docker==7.1.0
 flake8==7.3.0
