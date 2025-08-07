@@ -101,8 +101,6 @@ It requires the installation of a consul in client mode on each application serv
 
 ## Compatibility
 
-RedHat and Debian based distros (x86_64)
-
 ###### Supported Linux Distributions:
 
 - **Debian**: 11, 12
@@ -111,6 +109,8 @@ RedHat and Debian based distros (x86_64)
 - **Oracle Linux**: 8, 9, 10
 - **Rocky Linux**: 8, 9, 10
 - **AlmaLinux**: 8, 9, 10
+
+Architecture: x86_64/amd64, arm64/aarch64
 
 ###### PostgreSQL versions:
 
