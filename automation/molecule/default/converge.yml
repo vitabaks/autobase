@@ -70,7 +70,7 @@
         enable_pg_stat_kcache: true
         enable_pg_wait_sampling: true
         enable_pg_partman: true
-        enable_citus: "{{ 'false' if ansible_distribution_release == 'noble' else 'true' }}" # no packages for Ubuntu 24.04 (TODO)
+        enable_citus: "{{ 'false' if ansible_distribution_release == 'trixie' else 'true' }}" # no packages for Debian 13 (TODO)
         enable_pgvectorscale: "{{ 'true' if ansible_distribution_release in ['bookworm', 'jammy', 'noble'] else 'false' }}" # only deb packages are available
         # create extension
         postgresql_extensions:
