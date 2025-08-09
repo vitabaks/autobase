@@ -16,6 +16,8 @@ jobs:
       fail-fast: false
       matrix:
         config:
+          - distro: debian13
+            tag: latest
           - distro: debian12
             tag: latest
             namespace: geerlingguy
@@ -31,12 +33,6 @@ jobs:
             tag: latest
             namespace: glillico
           - distro: almalinux10
-            tag: latest
-            namespace: glillico
-          - distro: centosstream10
-            tag: latest
-            namespace: glillico
-          - distro: oraclelinux10
             tag: latest
             namespace: glillico
 

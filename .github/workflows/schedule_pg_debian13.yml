@@ -1,0 +1,32 @@
+---
+name: scheduled PostgreSQL (Debian 13)
+
+on:
+  schedule:
+    - cron: "15 0 * * *"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Set TERM environment variable
+        run: echo "TERM=xterm" >> $GITHUB_ENV
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install dependencies
+        run: make bootstrap-dev
+
+      - name: Run Molecule tests
+        run: make molecule-test
+        env:
+          PY_COLORS: "1"
+          ANSIBLE_FORCE_COLOR: "1"
+          IMAGE_DISTRO: debian13
