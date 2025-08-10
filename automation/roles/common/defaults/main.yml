@@ -292,7 +292,8 @@ postgresql_extensions: []
 #  - { ext: "", db: "" }
 #  - { ext: "", db: "" }
 
-# Example PostgreSQL parameters (stored in DCS)
+# PostgreSQL parameters (cluster-wide, stored in DCS and applied to all nodes)
+# Note: To set host-level parameters, use 'local_postgresql_parameters' variable.
 postgresql_parameters:
   - { option: "max_connections", value: "1000" } # the actual limit is enforced at the connection pooler level (pool_size)
   - { option: "superuser_reserved_connections", value: "5" }
@@ -389,6 +390,10 @@ postgresql_parameters:
 #  - { option: "lock_timeout", value: "10s" } # reduce this timeout if possible
 #  - { option: "deadlock_timeout", value: "2s" }
 #  - { option: "", value: "" }
+
+# To set a different parameter (e.g., shared_buffers) for a specific host, define it in the inventory or host_vars. Example:
+# local_postgresql_parameters:
+#   - { option: "shared_buffers", value: "32GB" }
 
 # Set this variable to 'true' if you want the cluster to be automatically restarted
 # after changing the 'postgresql_parameters' variable that requires a restart in the 'config_pgcluster.yml' playbook.

@@ -169,6 +169,11 @@ postgresql:
 #      password: rewind_password
   parameters:
     unix_socket_directories: {{ postgresql_unix_socket_dir }}
+{% if local_postgresql_parameters is defined and local_postgresql_parameters | length > 0 %}
+  {% for parameter in local_postgresql_parameters %}
+    {{ parameter.option }}: "{{ parameter.value }}"
+  {% endfor %}
+{% endif %}
 {% if postgresql_stats_temp_directory_path is defined and postgresql_stats_temp_directory_path != 'none' and postgresql_version | int <= 14 %}
     stats_temp_directory: {{ postgresql_stats_temp_directory_path }}
 {% endif %}
