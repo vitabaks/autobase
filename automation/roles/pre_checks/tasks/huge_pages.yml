@@ -4,7 +4,7 @@
 # and "huge_pages" is not 'off' in postgresql_parameters.
 
 - block:
-    - name: "HugePages | Get shared_buffers value from postgresql_parameters variable"
+    - name: "HugePages | Get shared_buffers value from postgresql parameters"
       ansible.builtin.set_fact:
         shared_buffers: "{{ postgresql_parameters_shared_buffers }}"
         shared_buffers_value: "{{ postgresql_parameters_shared_buffers | regex_search('[0-9]+') | int }}"
