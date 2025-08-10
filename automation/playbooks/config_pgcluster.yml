@@ -66,7 +66,7 @@
   roles:
     - role: vitabaks.autobase.pre_checks
       vars:
-        minimal_ansible_version: 2.16.0
+        minimal_ansible_version: 2.17.0
         timescale_minimal_pg_version: 12 # if enable_timescale is defined
 
   tasks:
@@ -214,6 +214,12 @@
       tags: always
   roles:
     - role: vitabaks.autobase.pgbackrest
+      when: pgbackrest_install | default(false) | bool
+  tasks:
+    - name: Create pgbackrest stanza (if missing)
+      ansible.builtin.include_role:
+        name: vitabaks.autobase.pgbackrest
+        tasks_from: stanza_create
       when: pgbackrest_install | default(false) | bool
 
 - name: vitabaks.autobase.config_pgcluster | Restart patroni on secondary after config settings if need

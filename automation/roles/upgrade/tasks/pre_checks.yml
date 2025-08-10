@@ -313,7 +313,7 @@
   become_user: postgres
   ansible.builtin.shell: >
     rsync -e "ssh -o StrictHostKeyChecking=no" --archive --delete --hard-links --size-only --no-inc-recursive --omit-dir-times
-    /tmp/testrsync {{ item }}:/tmp/
+    /tmp/testrsync {{ hostvars[item]['bind_address'] }}:/tmp/
   args:
     executable: /bin/bash
   loop: "{{ groups.secondary | list }}"

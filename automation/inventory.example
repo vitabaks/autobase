@@ -3,8 +3,8 @@
 # postgresql_exists      - Set to true if PostgreSQL is already installed and running on the server.
 # hostname               - Hostname to set on this server (optional). If specified, the server will be renamed to this value.
 # new_node               - Set to true to add this server as a new node to an existing cluster.
-# balancer_tags          - Balancer tags in "key=value" format for the /replica, /sync, /async endpoints. Must match patroni_tags.
-# patroni_tags           - Patroni tags in "key=value" format, separated by commas.
+# balancer_tags          - Balancer tags for the /replica, /sync, /async Patroni endpoints, specified in "key=value" format, separated by commas.
+# patroni_tags           - Patroni tags, specified in "key=value" format, separated by commas (e.g. "nosync=true,nofailover=true").
 # patroni_replicatefrom  - The Patroni hostname this node should replicate from (for cascading replication).
 # bind_address           - The IP address cluster services should bind to on this host. Defaults to the first available private IP address.
 

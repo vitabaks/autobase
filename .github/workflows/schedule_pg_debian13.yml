@@ -1,5 +1,5 @@
 ---
-name: scheduled PostgreSQL (Debian 12)
+name: scheduled PostgreSQL (Debian 13)
 
 on:
   schedule:
@@ -29,4 +29,4 @@ jobs:
         env:
           PY_COLORS: "1"
           ANSIBLE_FORCE_COLOR: "1"
-          IMAGE_DISTRO: debian12
+          IMAGE_DISTRO: debian13

@@ -1,7 +1,7 @@
 ---
 # Collections must specify a minimum required ansible version to upload
 # to galaxy
-requires_ansible: ">=2.16.0"
+requires_ansible: ">=2.17.0"
 # Content that Ansible needs to load from another location or that has
 # been deprecated/removed
 # plugin_routing:

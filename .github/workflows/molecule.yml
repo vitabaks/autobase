@@ -16,6 +16,8 @@ jobs:
       fail-fast: false
       matrix:
         config:
+          - distro: debian13
+            tag: latest
           - distro: debian12
             tag: latest
             namespace: geerlingguy
@@ -24,8 +26,13 @@ jobs:
             namespace: geerlingguy
           - distro: rockylinux9
             tag: latest
+          - distro: rockylinux10
+            tag: latest
             namespace: geerlingguy
           - distro: almalinux9
+            tag: latest
+            namespace: glillico
+          - distro: almalinux10
             tag: latest
             namespace: glillico
 
@@ -36,10 +43,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Python 3.12
+      - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: "3.13"
 
       - name: Install dependencies
         run: make bootstrap-dev

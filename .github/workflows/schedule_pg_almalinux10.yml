@@ -1,9 +1,9 @@
 ---
-name: scheduled PostgreSQL (Debian 12)
+name: scheduled PostgreSQL (AlmaLinux 10)
 
 on:
   schedule:
-    - cron: "15 0 * * *"
+    - cron: "15 1 * * *"
 
 jobs:
   test:
@@ -29,4 +29,5 @@ jobs:
         env:
           PY_COLORS: "1"
           ANSIBLE_FORCE_COLOR: "1"
-          IMAGE_DISTRO: debian12
+          IMAGE_DISTRO: almalinux10
+          IMAGE_NAMESPACE: glillico

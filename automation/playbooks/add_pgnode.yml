@@ -114,7 +114,7 @@
 
     - role: vitabaks.autobase.pre_checks
       vars:
-        minimal_ansible_version: 2.16.0
+        minimal_ansible_version: 2.17.0
         timescale_minimal_pg_version: 12 # if enable_timescale is defined
       tags: always
 

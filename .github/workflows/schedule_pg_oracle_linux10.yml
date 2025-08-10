@@ -1,9 +1,9 @@
 ---
-name: scheduled PostgreSQL (AlmaLinux 8)
+name: scheduled PostgreSQL (OracleLinux 10)
 
 on:
   schedule:
-    - cron: "15 1 * * *"
+    - cron: "0 1 * * *"
 
 jobs:
   test:
@@ -16,10 +16,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Python 3.12
+      - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: "3.13"
 
       - name: Install dependencies
         run: make bootstrap-dev
@@ -29,5 +29,5 @@ jobs:
         env:
           PY_COLORS: "1"
           ANSIBLE_FORCE_COLOR: "1"
-          IMAGE_DISTRO: almalinux8
+          IMAGE_DISTRO: oraclelinux10
           IMAGE_NAMESPACE: glillico

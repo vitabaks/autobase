@@ -211,7 +211,8 @@ consul_services:
 # PostgreSQL parameters
 ############################################################
 
-postgresql_version: 17
+postgresql_version: 17 # Postgres major version
+postgresql_version_minor: "latest" # Postgres minor version (e.g. '5' for 17.5, or 'latest' for newest). Applicable only on RedHat-based distros.
 postgresql_listen_addr: "0.0.0.0" # Listen on all interfaces. Or use "{{ bind_address }},127.0.0.1" to listen on a specific IP address.
 postgresql_port: 5432
 postgresql_encoding: "UTF8" # for bootstrap only (initdb)
@@ -1032,6 +1033,18 @@ yum_repository: []
 install_postgresql_repo: true # or 'false' (installed from the package "pgdg-redhat-repo-latest.noarch.rpm")
 install_epel_repo: true # or 'false' (installed from the package "epel-release-latest.noarch.rpm")
 
+# Full PostgreSQL package version string (e.g., "17.5-1PGDG.rhel9").
+# Used only on RedHat-based distributions, where any minor version can be installed from the PGDG repo.
+# On Debian/Ubuntu, only the latest minor is available for each major release.
+postgresql_package_version_full: "\
+  {% if postgresql_version_minor | string == 'latest' %}\
+  {% else %}\
+  -{{ postgresql_version }}.{{ postgresql_version_minor }}-{{ postgresql_package_release }}PGDG.rhel{{ ansible_distribution_major_version }}\
+  {% endif %}"
+postgresql_package_release: 3 # release number of the package in the PGDG repository.
+# To find the correct release number, check the PGDG repository for your distribution, example:
+# https://download.postgresql.org/pub/repos/yum/17/redhat/rhel-9-x86_64/
+
 postgresql_os_specific_packages:
   Debian:
     - postgresql-{{ postgresql_version }}
@@ -1049,11 +1062,11 @@ postgresql_os_specific_packages:
 #   - postgresql-{{ postgresql_version }}-pgaudit
 #   - postgresql-{{ postgresql_version }}-partman
   RedHat:
-    - postgresql{{ postgresql_version }}
-    - postgresql{{ postgresql_version }}-server
-    - postgresql{{ postgresql_version }}-contrib
-    - postgresql{{ postgresql_version }}-devel
-#   - postgresql{{ postgresql_version }}-debuginfo
+    - postgresql{{ postgresql_version }}{{ postgresql_package_version_full }}
+    - postgresql{{ postgresql_version }}-server{{ postgresql_package_version_full }}
+    - postgresql{{ postgresql_version }}-contrib{{ postgresql_package_version_full }}
+    - postgresql{{ postgresql_version }}-devel{{ postgresql_package_version_full }}
+#   - postgresql{{ postgresql_version }}-debuginfo{{ postgresql_package_version_full }}
 #   - pg_repack_{{ postgresql_version }}
 #   - pg_cron_{{ postgresql_version }}
 #   - pg_stat_kcache_{{ postgresql_version }}
