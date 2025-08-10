@@ -391,7 +391,7 @@ postgresql_parameters:
 #  - { option: "deadlock_timeout", value: "2s" }
 #  - { option: "", value: "" }
 
-# Example: To set a different shared_buffers value for a specific host, define in its inventory:
+# To set a different parameter (e.g. shared_buffers) for a specific host, define in its inventory, example:
 # local_postgresql_parameters:
 #   - { option: "shared_buffers", value: "32GB" }
 
