@@ -122,14 +122,13 @@
 # pgBackRest (dedicated)
 - block:
     - name: pgbackrest | Check pg-path option
-      delegate_to: "{{ groups['pgbackrest'][0] }}"
       run_once: true
       ansible.builtin.command: "grep -c '^pg[0-9]*-path=' {{ pgbackrest_conf_file | dirname }}/conf.d/{{ pgbackrest_stanza }}.conf"
       register: pg_path_count
+      when: "'pgbackrest' in group_names"
       changed_when: false
 
     - name: pgbackrest | Update pg-path in pgbackrest.conf
-      delegate_to: "{{ groups['pgbackrest'][0] }}"
       run_once: true
       ansible.builtin.replace:
         path: "{{ pgbackrest_conf_file | dirname }}/conf.d/{{ pgbackrest_stanza }}.conf"
@@ -139,13 +138,16 @@
       loop_control:
         index_var: idx
         label: "pg{{ idx + 1 }}-path={{ pg_new_datadir }}"
-      when: pg_path_count.stdout | int > 0
+      when:
+        - pg_path_count.stdout | int > 0
+        - "'pgbackrest' in group_names"
 
     - name: pgbackrest | Upgrade stanza "{{ pgbackrest_stanza }}"
-      delegate_to: "{{ groups['pgbackrest'][0] }}"
       run_once: true
       ansible.builtin.command: "pgbackrest --stanza={{ pgbackrest_stanza }} --no-online stanza-upgrade"
-      when: pg_path_count.stdout | int > 0 and pgbackrest_stanza_upgrade | bool
+      when:
+        - pg_path_count.stdout | int > 0 and pgbackrest_stanza_upgrade | bool
+        - "'pgbackrest' in group_names"
   become: true
   become_user: "{{ pgbackrest_repo_user }}"
   ignore_errors: true # show the error and continue the playbook execution
