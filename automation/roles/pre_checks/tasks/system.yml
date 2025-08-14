@@ -18,5 +18,8 @@
 - name: Restart systemd-logind service
   ansible.builtin.systemd:
     name: systemd-logind
+    masked: false
     state: restarted
-  when: removeipc_result.changed
+  when:
+    - removeipc_result.changed
+    - ansible_service_mgr == "systemd"
