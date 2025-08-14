@@ -3,7 +3,7 @@ module postgresql-cluster-console
 go 1.24
 
 require (
-	github.com/docker/docker v26.1.5+incompatible
+	github.com/docker/docker v28.0.0+incompatible
 	github.com/docker/go-connections v0.6.0
 	github.com/gdex-lab/go-render v1.0.1
 	github.com/go-openapi/errors v0.22.1
