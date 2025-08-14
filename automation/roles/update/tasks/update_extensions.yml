@@ -55,6 +55,7 @@
         CREATE EXTENSION pg_stat_kcache"
   when:
     - patroni_leader_result.status == 200
+    - not ansible_check_mode
     - pg_old_extensions.stdout_lines | length > 0
     - ('pg_stat_statements' in pg_old_extensions.stdout_lines or
       'pg_stat_kcache' in pg_old_extensions.stdout_lines)
@@ -67,5 +68,6 @@
     CREATE EXTENSION pg_repack;"
   when:
     - patroni_leader_result.status == 200
+    - not ansible_check_mode
     - (pg_old_extensions.stdout_lines | length > 0
       and 'pg_repack' in pg_old_extensions.stdout_lines)
