@@ -3,8 +3,7 @@
   ansible.builtin.fail:
     msg: "Ansible version must be {{ minimal_ansible_version }} or higher"
   delegate_to: localhost
-  when:
-    - ansible_version.full is version(minimal_ansible_version, '<')
+  when: ansible_version.full is version(minimal_ansible_version, '<')
 
 - name: Checking Linux distribution
   ansible.builtin.fail:
@@ -16,6 +15,10 @@
     msg: "{{ ansible_distribution_version }} of {{ ansible_distribution }} is not supported"
   when: ansible_distribution_version is version_compare(os_minimum_versions[ansible_distribution], '<')
 
+- name: Perform pre-checks for system
+  ansible.builtin.import_tasks: system.yml
+  when: inventory_hostname in groups['postgres_cluster']
+
 - name: Perform pre-checks for pgbouncer
   ansible.builtin.import_tasks: pgbouncer.yml
   when:
@@ -25,13 +28,11 @@
 
 - name: Perform pre-checks for patroni
   ansible.builtin.import_tasks: patroni.yml
-  when:
-    - inventory_hostname in groups['postgres_cluster']
+  when: inventory_hostname in groups['postgres_cluster']
 
 - name: Perform pre-checks for huge_pages
   ansible.builtin.import_tasks: huge_pages.yml
-  when:
-    - inventory_hostname in groups['postgres_cluster']
+  when: inventory_hostname in groups['postgres_cluster']
 
 - name: Perform pre-checks for pgbackrest
   ansible.builtin.import_tasks: pgbackrest.yml
@@ -47,10 +48,10 @@
     - wal_g_install | bool
     - inventory_hostname in groups['postgres_cluster']
 
-- name: Generate passwords
-  ansible.builtin.import_tasks: passwords.yml
-  when: inventory_hostname in groups['postgres_cluster']
-
 - name: Perform pre-checks for extensions
   ansible.builtin.import_tasks: extensions.yml
   when: inventory_hostname == groups['master'][0]
+
+- name: Generate passwords
+  ansible.builtin.import_tasks: passwords.yml
+  when: inventory_hostname in groups['postgres_cluster']
