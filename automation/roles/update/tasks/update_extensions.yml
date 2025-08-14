@@ -7,7 +7,9 @@
     where installed_version <> default_version"
   register: pg_old_extensions
   changed_when: false
+  check_mode: false
   when:
+    - patroni_leader_result.status is defined
     - patroni_leader_result.status == 200
 
 # if there are no old extensions
@@ -27,7 +29,9 @@
   loop: "{{ pg_old_extensions.stdout_lines | reject('match', '^pg_repack$') | list }}"
   register: pg_old_extensions_update_result
   when:
+    - patroni_leader_result.status is defined
     - patroni_leader_result.status == 200
+    - not ansible_check_mode
     - (pg_old_extensions.stdout_lines | length > 0
       and not 'pg_stat_kcache' in pg_old_extensions.stdout_lines)
 
@@ -51,6 +55,7 @@
         CREATE EXTENSION pg_stat_kcache"
   when:
     - patroni_leader_result.status == 200
+    - not ansible_check_mode
     - pg_old_extensions.stdout_lines | length > 0
     - ('pg_stat_statements' in pg_old_extensions.stdout_lines or
       'pg_stat_kcache' in pg_old_extensions.stdout_lines)
@@ -63,5 +68,6 @@
     CREATE EXTENSION pg_repack;"
   when:
     - patroni_leader_result.status == 200
+    - not ansible_check_mode
     - (pg_old_extensions.stdout_lines | length > 0
       and 'pg_repack' in pg_old_extensions.stdout_lines)
