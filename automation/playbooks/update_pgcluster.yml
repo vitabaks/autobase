@@ -24,6 +24,7 @@
       register: patroni_leader_result
       changed_when: false
       failed_when: false
+      check_mode: false
       environment:
         no_proxy: "{{ patroni_bind_address | default(bind_address, true) }}"
       tags: always
@@ -211,6 +212,7 @@
       ansible.builtin.command: patronictl -c /etc/patroni/patroni.yml list
       register: patronictl_result
       changed_when: false
+      check_mode: false
       environment:
         PATH: "{{ ansible_env.PATH }}:/usr/bin:/usr/local/bin"
 
@@ -222,6 +224,7 @@
           -d postgres -tAXc "select current_setting('server_version')"
       register: postgres_version
       changed_when: false
+      check_mode: false
 
     - name: List the Patroni cluster members
       run_once: true # noqa run-once

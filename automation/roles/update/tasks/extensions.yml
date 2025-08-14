@@ -6,6 +6,7 @@
   register: patroni_leader_result
   changed_when: false
   failed_when: false
+  check_mode: false
   environment:
     no_proxy: "{{ patroni_bind_address | default(bind_address, true) }}"
 
@@ -15,7 +16,9 @@
     "select datname from pg_catalog.pg_database where datname <> 'template0'"
   register: databases_list
   changed_when: false
+  check_mode: false
   when:
+    - patroni_leader_result.status is defined
     - patroni_leader_result.status == 200
 
 - name: Update extensions in each database
