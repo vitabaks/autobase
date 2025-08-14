@@ -33,6 +33,7 @@
         name: "{{ ssh_key_user }}"
         shell: /bin/bash
         state: present
+        system: true
 
     - name: Create a 2048-bit SSH key for user "{{ ssh_key_user }}" in ~/.ssh/id_rsa (if not already exist)
       ansible.builtin.user:

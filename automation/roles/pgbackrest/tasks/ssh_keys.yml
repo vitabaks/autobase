@@ -29,6 +29,7 @@
   ansible.builtin.user:
     name: "{{ pgbackrest_repo_user }}"
     state: present
+    system: true
   when: "'pgbackrest' in group_names"
 
 - name: ssh_keys | Ensure ssh key are created for "{{ pgbackrest_repo_user }}" user on pgbackrest server
@@ -38,6 +39,13 @@
     ssh_key_bits: 2048
     ssh_key_file: .ssh/id_rsa
   when: "'pgbackrest' in group_names"
+
+- name: Ensure "postgres" exists on database servers
+  ansible.builtin.user:
+    name: "postgres"
+    state: present
+    system: true
+  when: "'postgres_cluster' in group_names"
 
 - name: ssh_keys | Ensure ssh key are created for "postgres" user on database servers
   ansible.builtin.user:

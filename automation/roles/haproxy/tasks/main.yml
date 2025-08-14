@@ -68,6 +68,7 @@
     comment: "HAProxy user"
     group: haproxy
     shell: /usr/sbin/nologin
+    system: true
   tags: haproxy, load_balancing
 
 - name: Create directories
