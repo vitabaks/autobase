@@ -1,0 +1,14 @@
+---
+# Used only for Debian/Ubuntu (Debian OS-Family)
+# https://docs.docker.com/engine/install/debian/#uninstall-old-versions
+
+docker_obsolete_packages:
+  - docker
+  - docker.io
+  - docker-engine
+  - docker-doc
+  - docker-compose
+  - docker-compose-v2
+  - podman-docker
+  - containerd
+  - runc
