@@ -4,7 +4,8 @@ export const LOCALES = Object.freeze({
   EN_US: 'en',
 });
 
-export const API_URL = getEnvVariable('VITE_API_URL');
+// Previously API_URL required VITE_API_URL (PG_CONSOLE_API_URL). Now default to reverse-proxied relative path.
+export const API_URL = getEnvVariable('VITE_API_URL') || '/api/v1';
 export const AUTH_TOKEN = getEnvVariable('VITE_AUTH_TOKEN');
 export const CLUSTERS_POLLING_INTERVAL = getEnvVariable('VITE_CLUSTERS_POLLING_INTERVAL');
 export const CLUSTER_OVERVIEW_POLLING_INTERVAL = getEnvVariable('VITE_CLUSTER_OVERVIEW_POLLING_INTERVAL');

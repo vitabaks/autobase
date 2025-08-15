@@ -39,13 +39,10 @@ services:
     restart: unless-stopped
     labels:
       caddy: ${DOMAIN}
-      caddy.route_0: /api/v1/*
-      caddy.route_0.reverse_proxy: autobase-console-api:8080
-      caddy.route_1: /*
-      caddy.route_1.reverse_proxy: autobase-console-ui:80
+      caddy.reverse_proxy: autobase-console-ui:80
     environment:
-      - PG_CONSOLE_API_URL=/api/v1
       - PG_CONSOLE_AUTHORIZATION_TOKEN=${AUTH_TOKEN}
+      - PG_CONSOLE_API_HOST=autobase-console-api
     networks:
       - autobase
       - caddy

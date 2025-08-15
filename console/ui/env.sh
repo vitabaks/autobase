@@ -2,8 +2,7 @@
 
 SEARCH_DIR="/usr/share/nginx/html/"
 
-# Set default values for environment variables if they are not set
-export VITE_API_URL=${VITE_API_URL:-${PG_CONSOLE_API_URL:-"http://localhost:8080/api/v1"}}
+# Removed VITE_API_URL (now defaults to /api/v1 in code)
 export VITE_AUTH_TOKEN=${VITE_AUTH_TOKEN:-${PG_CONSOLE_AUTHORIZATION_TOKEN:-"auth_token"}}
 export VITE_CLUSTERS_POLLING_INTERVAL=${PG_CONSOLE_CLUSTERS_POLLING_INTERVAL:-"60000"}
 export VITE_CLUSTER_OVERVIEW_POLLING_INTERVAL=${PG_CONSOLE_CLUSTER_OVERVIEW_POLLING_INTERVAL:-"60000"}
@@ -12,7 +11,6 @@ export VITE_OPERATION_LOGS_POLLING_INTERVAL=${PG_CONSOLE_OPERATION_LOGS_POLLING_
 
 # Find all .js files in the specified directory and replace placeholders with the environment variable values
 find "${SEARCH_DIR}" -type f -name '*.js' -exec sed -i -e "
-  s|REPLACE_ME_WITH_API_URL|${VITE_API_URL}|g;
   s|REPLACE_ME_WITH_AUTH_TOKEN|${VITE_AUTH_TOKEN}|g;
   s|REPLACE_ME_WITH_CLUSTERS_POLLING_INTERVAL|${VITE_CLUSTERS_POLLING_INTERVAL}|g;
   s|REPLACE_ME_WITH_CLUSTER_OVERVIEW_POLLING_INTERVAL|${VITE_CLUSTER_OVERVIEW_POLLING_INTERVAL}|g;
