@@ -76,7 +76,7 @@ There are several env variables that configure UI:
 | PG_CONSOLE_CLUSTER_OVERVIEW_POLLING_INTERVAL | 60000                        | Cluster overview refresh interval in milliseconds.          |
 | PG_CONSOLE_OPERATIONS_POLLING_INTERVAL       | 60000                        | Operations table refresh interval in milliseconds.          |
 | PG_CONSOLE_OPERATION_LOGS_POLLING_INTERVAL   | 10000                        | Operation logs refresh interval in milliseconds.            |
-| PG_CONSOLE_API_HOST                          | 127.0.0.1                    | Backend API address used by nginx reverse proxy.            |
+| PG_CONSOLE_API_HOST                          | localhost                    | Backend API address used by nginx reverse proxy.            |
 
 The UI now calls the API via a relative path /api/v1. Override only if needed by setting VITE_API_URL or adjusting nginx proxy host via PG_CONSOLE_API_HOST.
 
