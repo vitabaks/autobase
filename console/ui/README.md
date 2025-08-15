@@ -79,7 +79,7 @@ There are several env variables that configure UI:
 | PG_CONSOLE_API_HOST                          | localhost                    | Backend API address (used by nginx reverse proxy).          |
 | PG_CONSOLE_API_PORT                          | 8080                         | Backend API port.                                           |
 
-The UI now calls the API via a relative path /api/v1 with nginx proxy host via PG_CONSOLE_API_HOST. Override only if needed by setting PG_CONSOLE_API_URL variable.
+The UI communicates with the API using the relative path /api/v1 through the Nginx reverse proxy host specified by PG_CONSOLE_API_HOST. If needed, you can override this by setting the PG_CONSOLE_API_URL variable.
 
 ## Architecture
 
