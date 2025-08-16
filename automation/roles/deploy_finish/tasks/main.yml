@@ -150,15 +150,15 @@
     public_postgres_ip_addresses: "{{ groups['postgres_cluster'] | default([]) | map('extract', hostvars, 'ansible_ssh_host') | join(',') }}"
     haproxy_ip_addresses: >-
       {{
-        (groups['balancers'] | default([]) | map('extract', hostvars, 'haproxy_bind_address') | list)
-        | zip(groups['balancers'] | default([]) | map('extract', hostvars, 'bind_address') | list)
-        | map('list') | map('select') | map('first') | unique | join(',')
+        groups['balancers'] | default([]) | map('extract', hostvars) |
+        map('community.general.dict_kv', 'haproxy_bind_address', 'bind_address') |
+        map('first') | unique | join(',')
       }}
     postgres_ip_addresses: >-
       {{
-        (groups['postgres_cluster'] | default([]) | map('extract', hostvars, 'patroni_bind_address') | list)
-        | zip(groups['postgres_cluster'] | default([]) | map('extract', hostvars, 'bind_address') | list)
-        | map('list') | map('select') | map('first') | unique | join(',')
+        groups['postgres_cluster'] | default([]) | map('extract', hostvars) |
+        map('community.general.dict_kv', 'patroni_bind_address', 'bind_address') |
+        map('first') | unique | join(',')
       }}
     superuser_username: "{{ patroni_superuser_username }}"
     superuser_password: "{{ '********' if mask_password | default(false) | bool else patroni_superuser_password }}"
