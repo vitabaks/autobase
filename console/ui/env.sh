@@ -1,16 +1,27 @@
 #!/bin/sh
 
 SEARCH_DIR="/usr/share/nginx/html/"
+NGINX_CONF="/etc/nginx/nginx.conf"
 
 # Set default values for environment variables if they are not set
-export VITE_API_URL=${VITE_API_URL:-${PG_CONSOLE_API_URL:-"http://localhost:8080/api/v1"}}
+export VITE_API_URL=${VITE_API_URL:-${PG_CONSOLE_API_URL:-"/api/v1"}}
 export VITE_AUTH_TOKEN=${VITE_AUTH_TOKEN:-${PG_CONSOLE_AUTHORIZATION_TOKEN:-"auth_token"}}
 export VITE_CLUSTERS_POLLING_INTERVAL=${PG_CONSOLE_CLUSTERS_POLLING_INTERVAL:-"60000"}
 export VITE_CLUSTER_OVERVIEW_POLLING_INTERVAL=${PG_CONSOLE_CLUSTER_OVERVIEW_POLLING_INTERVAL:-"60000"}
 export VITE_OPERATIONS_POLLING_INTERVAL=${PG_CONSOLE_OPERATIONS_POLLING_INTERVAL:-"60000"}
 export VITE_OPERATION_LOGS_POLLING_INTERVAL=${PG_CONSOLE_OPERATION_LOGS_POLLING_INTERVAL:-"10000"}
 
-# Find all .js files in the specified directory and replace placeholders with the environment variable values
+# API host/port envs for nginx
+API_HOST="${PG_CONSOLE_API_HOST:-127.0.0.1}"
+API_PORT="${PG_CONSOLE_API_PORT:-8080}"
+
+# 1) Patch nginx.conf placeholders
+sed -i -e "
+  s|REPLACE_ME_WITH_API_HOST|$API_HOST|g;
+  s|REPLACE_ME_WITH_API_PORT|$API_PORT|g;
+" "$NGINX_CONF"
+
+# 2) Patch built JS with runtime env
 find "${SEARCH_DIR}" -type f -name '*.js' -exec sed -i -e "
   s|REPLACE_ME_WITH_API_URL|${VITE_API_URL}|g;
   s|REPLACE_ME_WITH_AUTH_TOKEN|${VITE_AUTH_TOKEN}|g;

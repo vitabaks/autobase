@@ -11,4 +11,8 @@ LABEL maintainer="Vitaliy Kukharik vitabaks@gmail.com"
 COPY --from=builder /go/src/pg-console/pg-console /usr/local/bin/
 COPY console/db/migrations /etc/db/migrations
 
+RUN apt-get clean && rm -rf /var/lib/apt/lists/partial \
+   && apt-get update -o Acquire::CompressionTypes::Order::=gz \
+   && DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y curl
+
 CMD ["/usr/local/bin/pg-console"]

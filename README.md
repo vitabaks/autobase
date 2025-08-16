@@ -151,7 +151,6 @@ To run the autobase console, execute the following command:
 docker run -d --name autobase-console \
   --publish 80:80 \
   --publish 8080:8080 \
-  --env PG_CONSOLE_API_URL=http://localhost:8080/api/v1 \
   --env PG_CONSOLE_AUTHORIZATION_TOKEN=secret_token \
   --env PG_CONSOLE_DOCKER_IMAGE=autobase/automation:latest \
   --volume console_postgres:/var/lib/postgresql \
@@ -160,9 +159,6 @@ docker run -d --name autobase-console \
   --restart=unless-stopped \
   autobase/console:latest
 ```
-
-> [!NOTE]
-> If you are running the console on a dedicated server (rather than on your laptop), replace `localhost` with the server’s IP address in the `PG_CONSOLE_API_URL` variable.
 
 > [!TIP]
 > It is recommended to run the console in the same network as your database servers to enable monitoring of the cluster status.
