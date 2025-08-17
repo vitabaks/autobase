@@ -78,6 +78,7 @@
   when:
     - "'postgres_cluster' in group_names"
     - hostvars[item].get('pgbackrest_server_sshkey') is not none
+    - hostvars[item].get('pgbackrest_server_sshkey', {}).get('content', '') | length > 0
 
 - name: ssh_keys | Add database ssh keys in "~{{ pgbackrest_repo_user }}/.ssh/authorized_keys" on pgbackrest server
   ansible.posix.authorized_key:
@@ -88,6 +89,7 @@
   when:
     - "'pgbackrest' in group_names"
     - hostvars[item].get('postgres_cluster_sshkey') is not none
+    - hostvars[item].get('postgres_cluster_sshkey', {}).get('content', '') | length > 0
 
 # if 'backup-standby' are specified in pgbackrest_conf.global
 - name: ssh_keys | Add ssh keys in "~postgres/.ssh/authorized_keys" on database servers
@@ -100,6 +102,7 @@
     - "'postgres_cluster' in group_names"
     - pgbackrest_conf.global | selectattr('option', 'equalto', 'backup-standby') | map(attribute='value') | list | last | default('') == 'y'
     - hostvars[item].get('postgres_cluster_sshkey') is not none
+    - hostvars[item].get('postgres_cluster_sshkey', {}).get('content', '') | length > 0
 
 - name: known_hosts | Get public ssh keys of hosts (ssh-keyscan)
   ansible.builtin.command: >
