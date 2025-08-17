@@ -176,7 +176,7 @@
     - role: vitabaks.autobase.pgbackrest
       when: pgbackrest_install|bool
 
-- name: vitabaks.autobase.add_pgnode | Import etcd cluster playbook  
+- name: vitabaks.autobase.add_pgnode | Import etcd cluster playbook
   ansible.builtin.import_playbook: etcd_cluster.yml
   when: dcs_type | default('etcd') == "etcd"
   tags: etcd

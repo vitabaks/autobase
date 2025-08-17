@@ -89,9 +89,9 @@
         generate_tls_common_name: "etcd"
         generate_tls_dir: "{{ etcd_tls_dir | default('/etc/etcd/tls') }}"
         tls_cert_regenerate: "{{ etcd_tls_cert_regenerate | default('new_replica' in groups) }}"  # Regenerate when adding nodes
-      when: 
+      when:
         - not etcd_on_dedicated_nodes | default(false) | bool
-        
+
     - name: Copy etcd TLS certificate, key and CA to all nodes
       ansible.builtin.include_role:
         name: vitabaks.autobase.tls_certificate
@@ -101,7 +101,7 @@
         fetch_tls_dir: "{{ etcd_tls_dir | default('/etc/etcd/tls') }}"
         copy_tls_dir: "{{ etcd_tls_dir | default('/etc/etcd/tls') }}"
         copy_tls_owner: "etcd"
-      when: 
+      when:
         - not etcd_on_dedicated_nodes | default(false) | bool
 
     # if 'etcd_on_dedicated_nodes' is 'true'
@@ -126,7 +126,7 @@
         copy_tls_dir: "{{ etcd_tls_dir | default('/etc/etcd/tls') }}"
         copy_tls_owner: "etcd"
       when: etcd_on_dedicated_nodes | default(false) | bool
-      
+
   when: tls_cert_generate | default(true) | bool
   tags: etcd, etcd_conf
 
@@ -189,7 +189,7 @@
   environment:
     ETCDCTL_API: "3"
   delegate_to: "{{ groups['etcd_cluster'] | difference([inventory_hostname]) | first }}"
-  when: 
+  when:
     - new_node | default(false) | bool
     - ansible_hostname not in etcd_member_list.stdout
   register: etcd_member_add_result
