@@ -79,19 +79,8 @@
 
 # TLS
 - block:
-    # if 'etcd_on_dedicated_nodes' is 'false'
-    - name: Copy etcd TLS certificate, key and CA from the master node
-      ansible.builtin.include_role:
-        name: vitabaks.autobase.tls_certificate
-        tasks_from: copy
-      vars:
-        tls_group_name: "postgres_cluster"
-        copy_tls_dir: "{{ etcd_tls_dir | default('/etc/etcd/tls') }}"
-        copy_tls_owner: "etcd"
-      when: not etcd_on_dedicated_nodes | default(false) | bool
-
-    # if 'etcd_on_dedicated_nodes' is 'true'
-    - name: Generate etcd TLS certificate
+    # if 'etcd_on_dedicated_nodes' is 'false' - generate TLS certificates
+    - name: Generate etcd TLS certificate (includes new nodes in SAN)
       ansible.builtin.include_role:
         name: vitabaks.autobase.tls_certificate
       vars:
@@ -99,7 +88,32 @@
         generate_tls_owner: "etcd"
         generate_tls_common_name: "etcd"
         generate_tls_dir: "{{ etcd_tls_dir | default('/etc/etcd/tls') }}"
-        tls_cert_regenerate: "{{ etcd_tls_cert_regenerate | default(false) }}" # Do not generate new certificates if they already exist.
+        tls_cert_regenerate: "{{ etcd_tls_cert_regenerate | default('new_replica' in groups) }}"  # Regenerate when adding nodes
+      when: 
+        - not etcd_on_dedicated_nodes | default(false) | bool
+        
+    - name: Copy etcd TLS certificate, key and CA to all nodes
+      ansible.builtin.include_role:
+        name: vitabaks.autobase.tls_certificate
+        tasks_from: copy
+      vars:
+        tls_group_name: "etcd_cluster"
+        fetch_tls_dir: "{{ etcd_tls_dir | default('/etc/etcd/tls') }}"
+        copy_tls_dir: "{{ etcd_tls_dir | default('/etc/etcd/tls') }}"
+        copy_tls_owner: "etcd"
+      when: 
+        - not etcd_on_dedicated_nodes | default(false) | bool
+
+    # if 'etcd_on_dedicated_nodes' is 'true'
+    - name: Generate etcd TLS certificate (includes new nodes in SAN)
+      ansible.builtin.include_role:
+        name: vitabaks.autobase.tls_certificate
+      vars:
+        tls_group_name: "etcd_cluster"
+        generate_tls_owner: "etcd"
+        generate_tls_common_name: "etcd"
+        generate_tls_dir: "{{ etcd_tls_dir | default('/etc/etcd/tls') }}"
+        tls_cert_regenerate: "{{ etcd_tls_cert_regenerate | default('new_replica' in groups) }}"  # Regenerate when adding nodes
       when: etcd_on_dedicated_nodes | default(false) | bool
 
     - name: Copy etcd TLS files to all etcd nodes
@@ -112,8 +126,10 @@
         copy_tls_dir: "{{ etcd_tls_dir | default('/etc/etcd/tls') }}"
         copy_tls_owner: "etcd"
       when: etcd_on_dedicated_nodes | default(false) | bool
+      
   when: tls_cert_generate | default(true) | bool
   tags: etcd, etcd_conf
+
 
 - name: Create etcd data directory
   ansible.builtin.file:
@@ -122,6 +138,7 @@
     owner: etcd
     mode: "0700"
   tags: etcd, etcd_conf
+
 
 - name: Generate etcd conf file
   ansible.builtin.template:
@@ -134,6 +151,49 @@
     src: templates/etcd.service.j2
     dest: /etc/systemd/system/etcd.service
   tags: etcd, etcd_conf
+
+# Add new node to existing etcd cluster before starting
+- name: Build etcd endpoints for existing cluster members
+  ansible.builtin.set_fact:
+    etcd_existing_endpoints: "{% for host in groups['etcd_cluster'] | difference([inventory_hostname]) %}{{ patroni_etcd_protocol | default('http', true) }}://{{ hostvars[host]['etcd_bind_address'] | default(hostvars[host]['bind_address'], true) }}:2379{% if not loop.last %},{% endif %}{% endfor %}"
+  when: new_node | default(false) | bool
+  tags: etcd, etcd_member_add
+
+- name: Check if member already exists in etcd cluster
+  ansible.builtin.command: >
+    /usr/local/bin/etcdctl member list
+    --endpoints={{ etcd_existing_endpoints }}
+    {% if etcd_tls_enable | default(false) | bool %}
+    --cacert={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_ca_crt | default('ca.crt') }}
+    --cert={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_server_crt | default('server.crt') }}
+    --key={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_server_key | default('server.key') }}
+    {% endif %}
+  environment:
+    ETCDCTL_API: "3"
+  delegate_to: "{{ groups['etcd_cluster'] | difference([inventory_hostname]) | first }}"
+  register: etcd_member_list
+  when: new_node | default(false) | bool
+  ignore_errors: true
+  tags: etcd, etcd_member_add
+
+- name: Add new etcd member to existing cluster
+  ansible.builtin.command: >
+    /usr/local/bin/etcdctl member add {{ ansible_hostname }}
+    --peer-urls={{ patroni_etcd_protocol | default('http', true) }}://{{ etcd_bind_address }}:2380
+    --endpoints={{ etcd_existing_endpoints }}
+    {% if etcd_tls_enable | default(false) | bool %}
+    --cacert={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_ca_crt | default('ca.crt') }}
+    --cert={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_server_crt | default('server.crt') }}
+    --key={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_server_key | default('server.key') }}
+    {% endif %}
+  environment:
+    ETCDCTL_API: "3"
+  delegate_to: "{{ groups['etcd_cluster'] | difference([inventory_hostname]) | first }}"
+  when: 
+    - new_node | default(false) | bool
+    - ansible_hostname not in etcd_member_list.stdout
+  register: etcd_member_add_result
+  tags: etcd, etcd_member_add
 
 - name: Enable and start etcd service
   ansible.builtin.systemd:
