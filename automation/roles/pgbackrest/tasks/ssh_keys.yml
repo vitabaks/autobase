@@ -75,7 +75,7 @@
     state: present
     key: "{{ hostvars[item].get('pgbackrest_server_sshkey', {}).get('content', '') | b64decode }}"
   loop: "{{ groups['pgbackrest'] | default([]) }}"
-  when: 
+  when:
     - "'postgres_cluster' in group_names"
     - hostvars[item].get('pgbackrest_server_sshkey') is not none
 
@@ -85,7 +85,7 @@
     state: present
     key: "{{ hostvars[item].get('postgres_cluster_sshkey', {}).get('content', '') | b64decode }}"
   loop: "{{ groups['postgres_cluster'] }}"
-  when: 
+  when:
     - "'pgbackrest' in group_names"
     - hostvars[item].get('postgres_cluster_sshkey') is not none
 
@@ -117,7 +117,7 @@
     path: "~postgres/.ssh/known_hosts"
   no_log: true
   loop: "{{ ssh_known_host_keyscan.results }}"
-  when: 
+  when:
     - "'postgres_cluster' in group_names"
     - item.stdout_lines | select('match', '^[^#].*') | list | length > 0
 
@@ -130,6 +130,6 @@
     path: "~{{ pgbackrest_repo_user }}/.ssh/known_hosts"
   no_log: true
   loop: "{{ ssh_known_host_keyscan.results }}"
-  when: 
+  when:
     - "'pgbackrest' in group_names"
     - item.stdout_lines | select('match', '^[^#].*') | list | length > 0
