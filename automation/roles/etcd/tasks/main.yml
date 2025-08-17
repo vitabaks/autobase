@@ -130,7 +130,6 @@
   when: tls_cert_generate | default(true) | bool
   tags: etcd, etcd_conf
 
-
 - name: Create etcd data directory
   ansible.builtin.file:
     path: "{{ etcd_data_dir | default('/var/lib/etcd') }}"
@@ -138,7 +137,6 @@
     owner: etcd
     mode: "0700"
   tags: etcd, etcd_conf
-
 
 - name: Generate etcd conf file
   ansible.builtin.template:
@@ -155,7 +153,12 @@
 # Add new node to existing etcd cluster before starting
 - name: Build etcd endpoints for existing cluster members
   ansible.builtin.set_fact:
-    etcd_existing_endpoints: "{% for host in groups['etcd_cluster'] | difference([inventory_hostname]) %}{{ patroni_etcd_protocol | default('http', true) }}://{{ hostvars[host]['etcd_bind_address'] | default(hostvars[host]['bind_address'], true) }}:2379{% if not loop.last %},{% endif %}{% endfor %}"
+    etcd_existing_endpoints: >-
+      {% for host in groups['etcd_cluster'] | difference([inventory_hostname]) -%}
+      {{ patroni_etcd_protocol | default('http', true) }}://
+      {{- hostvars[host]['etcd_bind_address'] | default(hostvars[host]['bind_address'], true) }}:2379
+      {%- if not loop.last %},{% endif -%}
+      {% endfor %}
   when: new_node | default(false) | bool
   tags: etcd, etcd_member_add
 
