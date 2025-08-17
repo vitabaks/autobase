@@ -307,8 +307,7 @@ postgresql_parameters:
   - { option: "max_locks_per_transaction", value: "512" }
   - { option: "max_prepared_transactions", value: "0" }
   - { option: "huge_pages", value: "try" } # "vm.nr_hugepages" is auto-configured for shared_buffers >= 8GB (if huge_pages_auto_conf is true)
-  - { option: "shared_buffers", value: "{{ (ansible_memtotal_mb * 0.25) | int }}MB" } # by default, 25% of RAM
-  - { option: "effective_cache_size", value: "{{ (ansible_memtotal_mb * 0.75) | int }}MB" } # by default, 75% of RAM
+  # Note: shared_buffers and effective_cache_size removed from here - can be set in local_postgresql_parameters for a manual per-node calculation, otherwise they are auto-configured based on available memory
   - { option: "work_mem", value: "64MB" } # increase it if possible
   - { option: "maintenance_work_mem", value: "512MB" } # or 2GB/4GB
   - { option: "checkpoint_timeout", value: "15min" } # or 30min
