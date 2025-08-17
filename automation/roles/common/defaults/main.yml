@@ -294,6 +294,8 @@ postgresql_extensions: []
 
 # PostgreSQL parameters (cluster-wide, stored in DCS and applied to all nodes)
 # Note: To set host-level parameters, use 'local_postgresql_parameters' variable.
+# Note: shared_buffers and effective_cache_size were removed from here.
+# They can be set in local_postgresql_parameters for a manual per-node calculation, otherwise they are auto-configured based on available memory
 postgresql_parameters:
   - { option: "max_connections", value: "1000" } # the actual limit is enforced at the connection pooler level (pool_size)
   - { option: "superuser_reserved_connections", value: "5" }
@@ -307,7 +309,6 @@ postgresql_parameters:
   - { option: "max_locks_per_transaction", value: "512" }
   - { option: "max_prepared_transactions", value: "0" }
   - { option: "huge_pages", value: "try" } # "vm.nr_hugepages" is auto-configured for shared_buffers >= 8GB (if huge_pages_auto_conf is true)
-  # Note: shared_buffers and effective_cache_size removed from here - can be set in local_postgresql_parameters for a manual per-node calculation, otherwise they are auto-configured based on available memory
   - { option: "work_mem", value: "64MB" } # increase it if possible
   - { option: "maintenance_work_mem", value: "512MB" } # or 2GB/4GB
   - { option: "checkpoint_timeout", value: "15min" } # or 30min

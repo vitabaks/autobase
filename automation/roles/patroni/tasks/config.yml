@@ -58,7 +58,7 @@
         body: '{"postgresql":{"parameters":{"{{ item.option }}":"{{ item.value }}"}}}'
         body_format: json
       loop: "{{ postgresql_parameters }}"
-      when: 
+      when:
         - item.value != "null"
         - item.option not in ['shared_buffers', 'effective_cache_size']
 
@@ -71,7 +71,7 @@
         body: '{"postgresql":{"parameters":{"{{ item.option }}":null}}}'
         body_format: json
       loop: "{{ postgresql_parameters }}"
-      when: 
+      when:
         - item.value == "null"
         - item.option not in ['shared_buffers', 'effective_cache_size']
 
