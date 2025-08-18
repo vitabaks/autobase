@@ -1062,5 +1062,17 @@
     owner: root
     group: root
     mode: "0644"
-  ignore_errors: true
+    create: true
+  register: patronictl_env_result
+  tags: patroni, patroni_env
+
+- name: Add PATRONICTL_CONFIG_FILE to /etc/profile.d/patroni.sh
+  ansible.builtin.copy:
+    content: |
+      #!/bin/bash
+      export PATRONICTL_CONFIG_FILE=/etc/patroni/patroni.yml
+    dest: /etc/profile.d/patroni.sh
+    owner: root
+    group: root
+    mode: "0644"
   tags: patroni, patroni_env

@@ -180,6 +180,9 @@
       ansible.builtin.copy:
         dest: "{{ tls_directory }}/{{ generate_tls_cert | default(tls_cert | default('server.crt')) }}"
         content: "{{ certificate.certificate }}"
+        owner: "{{ generate_tls_owner | default('root') }}"
+        group: "{{ generate_tls_owner | default('root') }}"
+        mode: "0644"
   vars:
     tls_directory: "{{ generate_tls_dir | default(tls_dir | default('/etc/tls')) }}"
   when:
