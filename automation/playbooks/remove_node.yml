@@ -51,63 +51,6 @@
 
   tasks:
     - block:
-        - name: Get etcd cluster member list # noqa run-once[task]
-          ansible.builtin.command: >-
-            /usr/local/bin/etcdctl member list
-            --endpoints=http://127.0.0.1:2379
-            {% if etcd_tls_enable | default(false) | bool %}
-            --cacert={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_ca_crt | default('ca.crt') }}
-            --cert={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_server_crt | default('server.crt') }}
-            --key={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_server_key | default('server.key') }}
-            {% endif %}
-          environment:
-            ETCDCTL_API: "3"
-          register: etcd_members_list
-          delegate_to: "{{ groups['etcd_cluster'] | difference([target_node]) | first }}"
-          failed_when: false
-          when:
-            - dcs_type | default('etcd') == 'etcd'
-            - "'etcd_cluster' in groups"
-            - groups['etcd_cluster'] | length > 0
-            - groups['etcd_cluster'] | difference([target_node]) | length > 0
-            - inventory_hostname != target_node
-          run_once: true
-
-        - name: Find target node etcd member ID # noqa run-once[task]
-          ansible.builtin.set_fact:
-            target_etcd_member_id: >-
-              {{ etcd_members_list.stdout_lines |
-              select('search', target_node) |
-              map('regex_replace', '^([^,]+),.*', '\\1') |
-              first | default('') }}
-          when:
-            - dcs_type | default('etcd') == 'etcd'
-            - etcd_members_list is defined
-            - etcd_members_list.rc == 0
-            - etcd_members_list.stdout is defined
-            - inventory_hostname != target_node
-          run_once: true
-
-        - name: Remove node from etcd cluster # noqa run-once[task]
-          ansible.builtin.command: >-
-            /usr/local/bin/etcdctl member remove {{ target_etcd_member_id }}
-            --endpoints=http://127.0.0.1:2379
-            {% if etcd_tls_enable | default(false) | bool %}
-            --cacert={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_ca_crt | default('ca.crt') }}
-            --cert={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_server_crt | default('server.crt') }}
-            --key={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_server_key | default('server.key') }}
-            {% endif %}
-          environment:
-            ETCDCTL_API: "3"
-          delegate_to: "{{ groups['etcd_cluster'] | difference([target_node]) | first }}"
-          when:
-            - dcs_type | default('etcd') == 'etcd'
-            - target_etcd_member_id is defined
-            - target_etcd_member_id | length > 0
-            - groups['etcd_cluster'] | difference([target_node]) | length > 0
-            - inventory_hostname != target_node
-          run_once: true
-
         - name: Stop patroni service on target node
           ansible.builtin.service:
             name: patroni
@@ -253,3 +196,58 @@
         - name: Fail the playbook
           ansible.builtin.fail:
             msg: "Failed to remove node '{{ target_node }}' from cluster"
+
+- name: vitabaks.autobase.remove_node | Remove node from etcd cluster
+  hosts: etcd_cluster:!{{ node_to_remove | default('') }}
+  become: true
+  gather_facts: false
+  vars:
+    target_node: "{{ node_to_remove | default('') }}"
+  tasks:
+    - name: Check if etcd TLS is enabled
+      ansible.builtin.stat:
+        path: "{{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_server_crt | default('server.crt') }}"
+      register: etcd_tls_cert_check
+      run_once: true
+
+    - name: Get etcd cluster member list
+      ansible.builtin.command: >-
+        /usr/local/bin/etcdctl
+        --endpoints={{ etcd_tls_cert_check.stat.exists | default(false) | bool | ternary('https', 'http') }}://127.0.0.1:2379
+        {% if etcd_tls_cert_check.stat.exists | default(false) | bool %}
+        --cacert={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_ca_crt | default('ca.crt') }}
+        --cert={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_server_crt | default('server.crt') }}
+        --key={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_server_key | default('server.key') }}
+        {% endif %}
+        member list
+      environment:
+        ETCDCTL_API: "3"
+      register: etcd_members_list
+      run_once: true
+
+    - name: Find target node etcd member ID
+      ansible.builtin.set_fact:
+        target_etcd_member_id: >-
+          {% for line in etcd_members_list.stdout_lines | default([]) %}
+            {% if target_node in line %}
+              {{ line.split(',')[0] | trim }}
+            {% endif %}
+          {% endfor %}
+      run_once: true
+
+    - name: Remove node from etcd cluster
+      ansible.builtin.command: >-
+        /usr/local/bin/etcdctl
+        --endpoints={{ etcd_tls_cert_check.stat.exists | default(false) | bool | ternary('https', 'http') }}://127.0.0.1:2379
+        {% if etcd_tls_cert_check.stat.exists | default(false) | bool %}
+        --cacert={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_ca_crt | default('ca.crt') }}
+        --cert={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_server_crt | default('server.crt') }}
+        --key={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_server_key | default('server.key') }}
+        {% endif %}
+        member remove {{ target_etcd_member_id | trim }}
+      environment:
+        ETCDCTL_API: "3"
+      when:
+        - target_etcd_member_id is defined
+        - target_etcd_member_id | trim | length > 0
+      run_once: true
