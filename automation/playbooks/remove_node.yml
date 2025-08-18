@@ -1,7 +1,7 @@
 ---
 # yamllint disable rule:line-length
 - name: vitabaks.autobase.remove_node | Remove PostgreSQL node from cluster
-  hosts: postgres_cluster
+  hosts: etcd_cluster
   become: true
   gather_facts: true
   strategy: linear
