@@ -1,14 +1,16 @@
 ---
+# yamllint disable rule:line-length
 - name: vitabaks.autobase.remove_node | Remove PostgreSQL node from cluster
   hosts: postgres_cluster
   become: true
   gather_facts: true
+  strategy: linear
   vars:
     target_node: "{{ node_to_remove | default('') }}"
 
   pre_tasks:
     - name: Validate that node_to_remove is specified
-      ansible.builtin.fail:
+      ansible.builtin.fail: # noqa run-once[task]
         msg: >-
           Please specify the node_to_remove variable with the hostname of
           the node to remove from the cluster.
@@ -16,13 +18,13 @@
       run_once: true
 
     - name: Validate that target node exists in inventory
-      ansible.builtin.fail:
+      ansible.builtin.fail: # noqa run-once[task]
         msg: >-
           Node '{{ target_node }}' is not found in the postgres_cluster group.
       when: target_node not in groups['postgres_cluster']
       run_once: true
 
-    - name: Get cluster status
+    - name: Get cluster status # noqa run-once[task]
       ansible.builtin.command: >-
         patronictl -c {{ patroni_config_file | default('/etc/patroni/patroni.yml') }}
         list
@@ -34,13 +36,13 @@
       run_once: true
 
     - name: Check if target node is primary
-      ansible.builtin.set_fact:
+      ansible.builtin.set_fact: # noqa run-once[task]
         is_target_primary: >-
           {{ cluster_status.stdout is search(target_node + '.*Leader') }}
       run_once: true
 
     - name: Fail if trying to remove primary node
-      ansible.builtin.fail:
+      ansible.builtin.fail: # noqa run-once[task]
         msg: >-
           Cannot remove primary node '{{ target_node }}'. Please perform
           switchover first or specify a replica node.
@@ -49,7 +51,7 @@
 
   tasks:
     - block:
-        - name: Get etcd cluster member list
+        - name: Get etcd cluster member list # noqa run-once[task]
           ansible.builtin.command: >-
             /usr/local/bin/etcdctl member list
             --endpoints=http://127.0.0.1:2379
@@ -71,7 +73,7 @@
             - inventory_hostname != target_node
           run_once: true
 
-        - name: Find target node etcd member ID
+        - name: Find target node etcd member ID # noqa run-once[task]
           ansible.builtin.set_fact:
             target_etcd_member_id: >-
               {{ etcd_members_list.stdout_lines |
@@ -86,7 +88,7 @@
             - inventory_hostname != target_node
           run_once: true
 
-        - name: Remove node from etcd cluster
+        - name: Remove node from etcd cluster # noqa run-once[task]
           ansible.builtin.command: >-
             /usr/local/bin/etcdctl member remove {{ target_etcd_member_id }}
             --endpoints=http://127.0.0.1:2379
@@ -113,7 +115,7 @@
             enabled: false
           when: inventory_hostname == target_node
 
-        - name: Remove node from Patroni cluster
+        - name: Remove node from Patroni cluster # noqa run-once[task]
           ansible.builtin.command: >-
             patronictl -c
             {{ patroni_config_file | default('/etc/patroni/patroni.yml') }}
@@ -126,7 +128,7 @@
           when: inventory_hostname != target_node
           run_once: true
 
-        - name: Get Consul cluster members
+        - name: Get Consul cluster members # noqa run-once[task]
           ansible.builtin.uri:
             url: "http://{{ consul_host }}:8500/v1/agent/members"
             method: GET
@@ -142,7 +144,7 @@
             - inventory_hostname != target_node
           run_once: true
 
-        - name: Force leave Consul cluster member
+        - name: Force leave Consul cluster member # noqa run-once[task]
           ansible.builtin.uri:
             url: "http://{{ consul_host }}:8500/v1/agent/force-leave/{{ target_node }}"
             method: PUT
@@ -223,7 +225,7 @@
             - dcs_type | default('etcd') == 'consul'
             - remove_consul_data | default(true) | bool
 
-        - name: Display removal summary
+        - name: Display removal summary # noqa run-once[task]
           ansible.builtin.debug:
             msg:
               - >-
@@ -238,7 +240,7 @@
           run_once: true
 
       rescue:
-        - name: Display error information
+        - name: Display error information # noqa run-once[task]
           ansible.builtin.debug:
             msg:
               - "Error occurred while removing node '{{ target_node }}'"
