@@ -105,9 +105,24 @@
     - hostvars[item].get('postgres_cluster_sshkey', {}).get('content', '') | length > 0
 
 - name: known_hosts | Get public ssh keys of hosts (ssh-keyscan)
-  ansible.builtin.command: >
-    ssh-keyscan -trsa -p {{ hostvars[item].ansible_ssh_port | default(hostvars[item].ansible_port) | default(22) }} {{ hostvars[item]['bind_address'] }}
-  loop: "{{ groups['postgres_cluster'] }}"
+  ansible.builtin.command: ssh-keyscan -p {{ target_port }} {{ target_host }}
+  loop: "{{ ((groups['postgres_cluster'] | default([])) + (groups['pgbackrest'] | default([]))) }}"
+  vars:
+    # Pull hostvars once to avoid repeating lookups
+    item_vars: "{{ hostvars[item] | default({}) }}"
+    # Address selection order:
+    #  - DB nodes: prefer bind_address
+    #  - pgBackRest host: prefer pgbackrest_repo_host if set
+    #  - fallback: ansible_host, then inventory name (item)
+    target_host: >-
+      {{
+        item_vars.get('bind_address')
+        or ((item in (groups['pgbackrest'] | default([]))) and item_vars.get('pgbackrest_repo_host'))
+        or item_vars.get('ansible_host')
+        or item
+      }}
+    # Port selection order: ansible_ssh_port -> ansible_port -> 22
+    target_port: "{{ item_vars.get('ansible_ssh_port') or item_vars.get('ansible_port') or 22 }}"
   register: ssh_known_host_keyscan
   changed_when: false
 
