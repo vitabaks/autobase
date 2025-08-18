@@ -126,7 +126,6 @@
           when: inventory_hostname != target_node
           run_once: true
 
-
         - name: Get Consul cluster members
           ansible.builtin.uri:
             url: "http://{{ consul_host }}:8500/v1/agent/members"
