@@ -1,0 +1,254 @@
+---
+- name: vitabaks.autobase.remove_node | Remove PostgreSQL node from cluster
+  hosts: postgres_cluster
+  become: true
+  gather_facts: true
+  vars:
+    target_node: "{{ node_to_remove | default('') }}"
+
+  pre_tasks:
+    - name: Validate that node_to_remove is specified
+      ansible.builtin.fail:
+        msg: >-
+          Please specify the node_to_remove variable with the hostname of
+          the node to remove from the cluster.
+      when: target_node | length == 0
+      run_once: true
+
+    - name: Validate that target node exists in inventory
+      ansible.builtin.fail:
+        msg: >-
+          Node '{{ target_node }}' is not found in the postgres_cluster group.
+      when: target_node not in groups['postgres_cluster']
+      run_once: true
+
+    - name: Get cluster status
+      ansible.builtin.command: >-
+        patronictl -c {{ patroni_config_file | default('/etc/patroni/patroni.yml') }}
+        list
+      register: cluster_status
+      failed_when: false
+      changed_when: false
+      delegate_to: >-
+        {{ groups['postgres_cluster'] | difference([target_node]) | first }}
+      run_once: true
+
+    - name: Check if target node is primary
+      ansible.builtin.set_fact:
+        is_target_primary: >-
+          {{ cluster_status.stdout is search(target_node + '.*Leader') }}
+      run_once: true
+
+    - name: Fail if trying to remove primary node
+      ansible.builtin.fail:
+        msg: >-
+          Cannot remove primary node '{{ target_node }}'. Please perform
+          switchover first or specify a replica node.
+      when: is_target_primary | bool
+      run_once: true
+
+  tasks:
+    - block:
+        - name: Get etcd cluster member list
+          ansible.builtin.command: >-
+            /usr/local/bin/etcdctl member list
+            --endpoints=http://127.0.0.1:2379
+            {% if etcd_tls_enable | default(false) | bool %}
+            --cacert={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_ca_crt | default('ca.crt') }}
+            --cert={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_server_crt | default('server.crt') }}
+            --key={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_server_key | default('server.key') }}
+            {% endif %}
+          environment:
+            ETCDCTL_API: "3"
+          register: etcd_members_list
+          delegate_to: "{{ groups['etcd_cluster'] | difference([target_node]) | first }}"
+          failed_when: false
+          when:
+            - dcs_type | default('etcd') == 'etcd'
+            - "'etcd_cluster' in groups"
+            - groups['etcd_cluster'] | length > 0
+            - groups['etcd_cluster'] | difference([target_node]) | length > 0
+            - inventory_hostname != target_node
+          run_once: true
+
+        - name: Find target node etcd member ID
+          ansible.builtin.set_fact:
+            target_etcd_member_id: >-
+              {{ etcd_members_list.stdout_lines |
+              select('search', target_node) |
+              map('regex_replace', '^([^,]+),.*', '\\1') |
+              first | default('') }}
+          when:
+            - dcs_type | default('etcd') == 'etcd'
+            - etcd_members_list is defined
+            - etcd_members_list.rc == 0
+            - etcd_members_list.stdout is defined
+            - inventory_hostname != target_node
+          run_once: true
+
+        - name: Remove node from etcd cluster
+          ansible.builtin.command: >-
+            /usr/local/bin/etcdctl member remove {{ target_etcd_member_id }}
+            --endpoints=http://127.0.0.1:2379
+            {% if etcd_tls_enable | default(false) | bool %}
+            --cacert={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_ca_crt | default('ca.crt') }}
+            --cert={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_server_crt | default('server.crt') }}
+            --key={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_server_key | default('server.key') }}
+            {% endif %}
+          environment:
+            ETCDCTL_API: "3"
+          delegate_to: "{{ groups['etcd_cluster'] | difference([target_node]) | first }}"
+          when:
+            - dcs_type | default('etcd') == 'etcd'
+            - target_etcd_member_id is defined
+            - target_etcd_member_id | length > 0
+            - groups['etcd_cluster'] | difference([target_node]) | length > 0
+            - inventory_hostname != target_node
+          run_once: true
+
+        - name: Stop patroni service on target node
+          ansible.builtin.service:
+            name: patroni
+            state: stopped
+            enabled: false
+          when: inventory_hostname == target_node
+
+        - name: Remove node from Patroni cluster
+          ansible.builtin.command: >-
+            patronictl -c
+            {{ patroni_config_file | default('/etc/patroni/patroni.yml') }}
+            remove {{ target_node }}
+          register: patroni_remove_result
+          failed_when: false
+          changed_when: patroni_remove_result.rc == 0
+          delegate_to: >-
+            {{ groups['postgres_cluster'] | difference([target_node]) | first }}
+          when: inventory_hostname != target_node
+          run_once: true
+
+
+        - name: Get Consul cluster members
+          ansible.builtin.uri:
+            url: "http://{{ consul_host }}:8500/v1/agent/members"
+            method: GET
+          register: consul_members
+          delegate_to: "{{ groups['consul_instances'][0] }}"
+          vars:
+            consul_host: >-
+              {{ hostvars[groups['consul_instances'][0]]['ansible_default_ipv4']['address'] }}
+          when:
+            - dcs_type | default('etcd') == 'consul'
+            - "'consul_instances' in groups"
+            - groups['consul_instances'] | length > 0
+            - inventory_hostname != target_node
+          run_once: true
+
+        - name: Force leave Consul cluster member
+          ansible.builtin.uri:
+            url: "http://{{ consul_host }}:8500/v1/agent/force-leave/{{ target_node }}"
+            method: PUT
+          delegate_to: "{{ groups['consul_instances'][0] }}"
+          vars:
+            consul_host: >-
+              {{ hostvars[groups['consul_instances'][0]]['ansible_default_ipv4']['address'] }}
+          when:
+            - dcs_type | default('etcd') == 'consul'
+            - consul_members is defined
+            - >-
+              consul_members.json | selectattr('Name', 'equalto', target_node)
+              | list | length > 0
+            - inventory_hostname != target_node
+          run_once: true
+
+        - name: Stop PostgreSQL service on target node
+          ansible.builtin.service:
+            name: postgresql
+            state: stopped
+            enabled: false
+          failed_when: false
+          when: inventory_hostname == target_node
+
+        - name: Remove PostgreSQL data directory on target node
+          ansible.builtin.file:
+            path: >-
+              {{ postgresql_data_dir | default(default_postgresql_data_dir) }}
+            state: absent
+          vars:
+            default_postgresql_version: "{{ postgresql_version | default('17') }}"
+            default_postgresql_home_dir: >-
+              {{ '/var/lib/postgresql' if ansible_os_family == 'Debian'
+              else '/var/lib/pgsql' }}
+            default_postgresql_cluster_name: >-
+              {{ 'main' if ansible_os_family == 'Debian' else 'data' }}
+            default_postgresql_data_dir: >-
+              {{ default_postgresql_home_dir }}/{{ default_postgresql_version }}/{{ default_postgresql_cluster_name }}
+          when:
+            - inventory_hostname == target_node
+            - remove_postgres_data | default(true) | bool
+
+        - name: Stop etcd service on target node
+          ansible.builtin.service:
+            name: etcd
+            state: stopped
+            enabled: false
+          failed_when: false
+          when:
+            - inventory_hostname == target_node
+            - dcs_type | default('etcd') == 'etcd'
+
+        - name: Remove etcd data directory on target node
+          ansible.builtin.file:
+            path: "{{ etcd_data_dir | default('/var/lib/etcd') }}"
+            state: absent
+          when:
+            - inventory_hostname == target_node
+            - dcs_type | default('etcd') == 'etcd'
+            - remove_etcd_data | default(true) | bool
+
+        - name: Stop consul service on target node
+          ansible.builtin.service:
+            name: consul
+            state: stopped
+            enabled: false
+          failed_when: false
+          when:
+            - inventory_hostname == target_node
+            - dcs_type | default('etcd') == 'consul'
+
+        - name: Remove consul data directory on target node
+          ansible.builtin.file:
+            path: "{{ consul_data_path | default('/var/lib/consul') }}"
+            state: absent
+          when:
+            - inventory_hostname == target_node
+            - dcs_type | default('etcd') == 'consul'
+            - remove_consul_data | default(true) | bool
+
+        - name: Display removal summary
+          ansible.builtin.debug:
+            msg:
+              - >-
+                Node '{{ target_node }}' has been successfully removed
+                from the cluster
+              - "Patroni cluster: ✓ Removed"
+              - "DCS ({{ dcs_type | default('etcd') }}): ✓ Removed"
+              - >-
+                PostgreSQL data: {{ '✓ Removed'
+                if remove_postgres_data | default(true) | bool
+                else '✗ Preserved' }}
+          run_once: true
+
+      rescue:
+        - name: Display error information
+          ansible.builtin.debug:
+            msg:
+              - "Error occurred while removing node '{{ target_node }}'"
+              - >-
+                Please check the logs and manually verify the cluster state
+              - >-
+                You may need to manually clean up remaining DCS entries
+          run_once: true
+
+        - name: Fail the playbook
+          ansible.builtin.fail:
+            msg: "Failed to remove node '{{ target_node }}' from cluster"
