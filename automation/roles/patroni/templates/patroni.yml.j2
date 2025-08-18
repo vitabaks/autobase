@@ -105,9 +105,7 @@ bootstrap:
       use_slots: true
       parameters:
       {% for parameter in postgresql_parameters %}
-        {% if parameter.option not in ['shared_buffers', 'effective_cache_size'] %}
         {{ parameter.option }}: "{{ parameter.value }}"
-        {% endif %}
       {% endfor %}
     {% if patroni_standby_cluster.host is defined and patroni_standby_cluster.host | length > 0 %}
     standby_cluster:
@@ -159,9 +157,6 @@ postgresql:
   bin_dir: {{ postgresql_bin_dir }}
   config_dir: {{ postgresql_conf_dir }}
   pgpass: {{ postgresql_home_dir }}/.pgpass_patroni
-{% if postgresql_data_dir is defined %}
-  custom_conf: {{ postgresql_data_dir }}/postgresql.node.conf
-{% endif %}
   authentication:
     replication:
       username: {{ patroni_replication_username }}

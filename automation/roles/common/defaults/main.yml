@@ -294,8 +294,6 @@ postgresql_extensions: []
 
 # PostgreSQL parameters (cluster-wide, stored in DCS and applied to all nodes)
 # Note: To set host-level parameters, use 'local_postgresql_parameters' variable.
-# Note: shared_buffers and effective_cache_size were removed from here.
-# They can be set in local_postgresql_parameters for a manual per-node calculation, otherwise they are auto-configured based on available memory
 postgresql_parameters:
   - { option: "max_connections", value: "1000" } # the actual limit is enforced at the connection pooler level (pool_size)
   - { option: "superuser_reserved_connections", value: "5" }
@@ -391,9 +389,10 @@ postgresql_parameters:
 #  - { option: "deadlock_timeout", value: "2s" }
 #  - { option: "", value: "" }
 
-# To set a different parameter (e.g., shared_buffers) for a specific host, define it in the inventory or host_vars. Example:
-# local_postgresql_parameters:
-#   - { option: "shared_buffers", value: "32GB" }
+# Host-level PostgreSQL parameters are defined locally in patroni.yml and override the common ones stored in DCS.
+local_postgresql_parameters:
+ - { option: "shared_buffers", value: "{{ (ansible_memtotal_mb * 0.25) | int }}MB" } # by default, 25% of RAM
+ - { option: "effective_cache_size", value: "{{ (ansible_memtotal_mb * 0.75) | int }}MB" } # by default, 75% of RAM
 
 # Set this variable to 'true' if you want the cluster to be automatically restarted
 # after changing the 'postgresql_parameters' variable that requires a restart in the 'config_pgcluster.yml' playbook.

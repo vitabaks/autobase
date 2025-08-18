@@ -28,16 +28,6 @@
     mode: "0700"
   tags: patroni
 
-- name: Generate per-node PostgreSQL configuration file
-  ansible.builtin.template:
-    src: templates/postgresql.node.conf.j2
-    dest: "{{ postgresql_data_dir }}/postgresql.node.conf"
-    owner: postgres
-    group: postgres
-    mode: "0640"
-  when: postgresql_data_dir is defined
-  tags: patroni, patroni_conf, patroni_node_conf
-
 - name: Update conf file "/etc/patroni/patroni.yml"
   ansible.builtin.template:
     src: templates/patroni.yml.j2
@@ -58,9 +48,7 @@
         body: '{"postgresql":{"parameters":{"{{ item.option }}":"{{ item.value }}"}}}'
         body_format: json
       loop: "{{ postgresql_parameters }}"
-      when:
-        - item.value != "null"
-        - item.option not in ['shared_buffers', 'effective_cache_size']
+      when: item.value != "null"
 
     - name: Delete postgresql parameters from DCS
       ansible.builtin.uri:
@@ -71,9 +59,7 @@
         body: '{"postgresql":{"parameters":{"{{ item.option }}":null}}}'
         body_format: json
       loop: "{{ postgresql_parameters }}"
-      when:
-        - item.value == "null"
-        - item.option not in ['shared_buffers', 'effective_cache_size']
+      when: item.value == "null"
 
     - name: Update postgresql slots in DCS
       ansible.builtin.uri:
