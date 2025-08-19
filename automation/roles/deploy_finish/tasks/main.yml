@@ -104,12 +104,12 @@
 - block:
     - name: "Set variable: haproxy_bind_address_var"
       ansible.builtin.set_fact:
-        haproxy_bind_address_var: "{{ haproxy_bind_address if haproxy_bind_address is defined else bind_address }}"
+        haproxy_bind_address_var: "{{ haproxy_bind_address | default(bind_address, true) }}"
       when: with_haproxy_load_balancing | bool
 
     - name: "Set variable: patroni_bind_address_var"
       ansible.builtin.set_fact:
-        patroni_bind_address_var: "{{ patroni_bind_address if patroni_bind_address is defined else bind_address }}"
+        patroni_bind_address_var: "{{ patroni_bind_address | default(bind_address, true) }}"
       when: not with_haproxy_load_balancing | bool
   when: cluster_vip is not defined or cluster_vip | length < 1
 
