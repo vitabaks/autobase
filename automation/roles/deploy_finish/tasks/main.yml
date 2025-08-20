@@ -152,12 +152,6 @@
       {{
         (groups['balancers'] | default([]) | map('extract', hostvars, 'haproxy_bind_address') | map('default', None, True) | list)
         | zip(groups['balancers'] | default([]) | map('extract', hostvars, 'bind_address') | map('default', None, True) | list)
-        | map('list') | map('select', 'truthy')| map('first') | unique | join(',')
-      }}
-    postgres_ip_addresses: >-
-      {{
-        (groups['postgres_cluster'] | default([]) | map('extract', hostvars, 'patroni_bind_address') | map('default', None, True) | list)
-        | zip(groups['postgres_cluster'] | default([]) | map('extract', hostvars, 'bind_address') | map('default', None, True) | list)
         | map('list') | map('select', 'truthy') | map('first') | unique | join(',')
       }}
     postgres_ip_addresses: >-
