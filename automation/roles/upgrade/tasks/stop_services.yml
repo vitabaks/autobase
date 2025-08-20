@@ -1,9 +1,11 @@
 ---
 - name: "Execute CHECKPOINT before stopping PostgreSQL"
   ansible.builtin.command: >
-    {{ pg_old_bindir }}/psql -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc "CHECKPOINT"
+    {{ pg_old_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc "CHECKPOINT"
   async: "{{ pg_start_stop_timeout | int }}" # run the command asynchronously
   poll: 0
+  environment:
+    PGPASSWORD: "{{ patroni_superuser_password }}"
   register: checkpoint_result
 
 - name: Wait for the CHECKPOINT to complete
