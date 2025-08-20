@@ -41,15 +41,6 @@ The `add_repository` role is responsible for:
 | `enable_timescaledb` | `false` | Enable TimescaleDB repository (alternative name) |
 | `enable_citus` | `false` | Enable Citus repository |
 
-### Architecture and Version Variables
-
-| Variable | Description |
-|----------|-------------|
-| `ansible_distribution_major_version` | OS major version (auto-detected) |
-| `ansible_architecture` | System architecture (auto-detected) |
-| `postgresql_version` | PostgreSQL major version |
-| `pgdg_architecture_map` | Architecture mapping for PGDG repositories |
-
 ## Repository Definitions
 
 ### APT Repository Format (Debian/Ubuntu)
