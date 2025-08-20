@@ -131,7 +131,7 @@ This role depends on:
 
 The role automatically enables additional repositories based on the distribution:
 
-- **CentOS 8**: PowerTools repository
+- **AlmaLinux/Rocky 8**: PowerTools repository
 - **RHEL 9+/AlmaLinux/Rocky**: CodeReady Linux Builder (crb) repository
 - **Oracle Linux 8+**: CodeReady Builder repository
 
