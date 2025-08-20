@@ -3,6 +3,8 @@
   ansible.builtin.command: >-
     {{ pg_new_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d {{ pg_target_dbname }} -tAXc
     "select extname from pg_catalog.pg_extension"
+  environment:
+    PGPASSWORD: "{{ patroni_superuser_password }}"
   register: pg_installed_extensions
   until: pg_installed_extensions is success
   delay: 5
@@ -18,6 +20,8 @@
     "select extname from pg_catalog.pg_extension e
     join pg_catalog.pg_available_extensions ae on extname = ae.name
     where installed_version <> default_version"
+  environment:
+    PGPASSWORD: "{{ patroni_superuser_password }}"
   register: pg_old_extensions
   until: pg_old_extensions is success
   delay: 5
@@ -44,6 +48,8 @@
   ansible.builtin.command: >-
     {{ pg_new_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d {{ pg_target_dbname }} -tAXc
     "ALTER EXTENSION {{ item }} UPDATE"
+  environment:
+    PGPASSWORD: "{{ patroni_superuser_password }}"
   ignore_errors: true # show the error and continue the playbook execution
   loop: "{{ pg_old_extensions.stdout_lines | reject('match', '^pg_repack$') | list }}"
   when:
@@ -60,6 +66,8 @@
       ansible.builtin.command: >-
         {{ pg_new_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d {{ pg_target_dbname }} -tAXc
         "ALTER EXTENSION {{ item }} UPDATE"
+      environment:
+        PGPASSWORD: "{{ patroni_superuser_password }}"
       ignore_errors: true # show the error and continue the playbook execution
       loop: "{{ pg_old_extensions.stdout_lines | reject('match', '^(pg_repack|pg_stat_statements|pg_stat_kcache)$') | list }}"
 
@@ -70,6 +78,8 @@
         "DROP EXTENSION pg_stat_statements CASCADE;
         CREATE EXTENSION pg_stat_statements;
         CREATE EXTENSION pg_stat_kcache"
+      environment:
+        PGPASSWORD: "{{ patroni_superuser_password }}"
       ignore_errors: true # show the error and continue the playbook execution
   when:
     - inventory_hostname in groups['primary']
