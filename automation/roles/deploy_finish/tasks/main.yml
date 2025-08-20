@@ -102,18 +102,6 @@
 
 # if 'cluster_vip' is not defined
 - block:
-    - name: "Set variable: haproxy_bind_address_var"
-      ansible.builtin.set_fact:
-        haproxy_bind_address_var: "{{ haproxy_bind_address | default(bind_address, true) }}"
-      when: with_haproxy_load_balancing | bool
-
-    - name: "Set variable: patroni_bind_address_var"
-      ansible.builtin.set_fact:
-        patroni_bind_address_var: "{{ patroni_bind_address | default(bind_address, true) }}"
-      when: not with_haproxy_load_balancing | bool
-  when: cluster_vip is not defined or cluster_vip | length < 1
-
-- block:
     # if 'with_haproxy_load_balancing' is 'true'
     - name: Connection info
       run_once: true
@@ -160,8 +148,18 @@
   vars:
     public_haproxy_ip_addresses: "{{ groups['balancers'] | default([]) | map('extract', hostvars, 'ansible_ssh_host') | join(',') }}"
     public_postgres_ip_addresses: "{{ groups['postgres_cluster'] | default([]) | map('extract', hostvars, 'ansible_ssh_host') | join(',') }}"
-    haproxy_ip_addresses: "{{ groups['balancers'] | default([]) | map('extract', hostvars, 'haproxy_bind_address_var') | join(',') }}"
-    postgres_ip_addresses: "{{ groups['postgres_cluster'] | default([]) | map('extract', hostvars, 'patroni_bind_address_var') | join(',') }}"
+    haproxy_ip_addresses: >-
+      {{
+        (groups['balancers'] | default([]) | map('extract', hostvars, 'haproxy_bind_address') | map('default', None, True) | list)
+        | zip(groups['balancers'] | default([]) | map('extract', hostvars, 'bind_address') | map('default', None, True) | list)
+        | map('list') | map('select', 'truthy')| map('first') | unique | join(',')
+      }}
+    postgres_ip_addresses: >-
+      {{
+        (groups['postgres_cluster'] | default([]) | map('extract', hostvars, 'patroni_bind_address') | map('default', None, True) | list)
+        | zip(groups['postgres_cluster'] | default([]) | map('extract', hostvars, 'bind_address') | map('default', None, True) | list)
+        | map('list') | map('select', 'truthy')| map('first') | unique | join(',')
+      }}
     superuser_username: "{{ patroni_superuser_username }}"
     superuser_password: "{{ '********' if mask_password | default(false) | bool else patroni_superuser_password }}"
     libpq_postgres_host_port: "{{ postgres_ip_addresses.split(',') | map('regex_replace', '$', ':' + postgresql_port | string) | join(',') }}"
