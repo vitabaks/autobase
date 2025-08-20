@@ -8,7 +8,7 @@
   run_once: true
   become: true
   become_user: postgres
-  ansible.builtin.command: "{{ postgresql_bin_dir }}/psql -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -Xc '\\du'"
+  ansible.builtin.command: "{{ postgresql_bin_dir }}/psql postgresql://{{ patroni_superuser_username }}:{{ patroni_superuser_password }}@127.0.0.1:{{ postgresql_port }}/postgres -Xc '\\du'"
   register: users_result
   delegate_to: "{{ groups.master[0] }}"
   changed_when: false
@@ -19,7 +19,7 @@
   run_once: true
   become: true
   become_user: postgres
-  ansible.builtin.command: "{{ postgresql_bin_dir }}/psql -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -Xc '\\l'"
+  ansible.builtin.command: "{{ postgresql_bin_dir }}/psql postgresql://{{ patroni_superuser_username }}:{{ patroni_superuser_password }}@127.0.0.1:{{ postgresql_port }}/postgres -Xc '\\l'"
   register: dbs_result
   delegate_to: "{{ groups.master[0] }}"
   changed_when: false
