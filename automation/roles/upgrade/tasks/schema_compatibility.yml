@@ -3,6 +3,8 @@
   ansible.builtin.command: >-
     {{ pg_old_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc
     "show shared_preload_libraries"
+  environment:
+    PGPASSWORD: "{{ patroni_superuser_password }}"
   changed_when: false
   register: pg_shared_preload_libraries
   when:
@@ -12,6 +14,8 @@
   ansible.builtin.command: >-
     {{ pg_old_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc
     "select current_setting('cron.database_name', true)"
+  environment:
+    PGPASSWORD: "{{ patroni_superuser_password }}"
   changed_when: false
   register: pg_cron_database_name
   when:

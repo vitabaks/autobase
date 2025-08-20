@@ -41,6 +41,8 @@
   ansible.builtin.command: >-
     {{ pg_old_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc
     "select rolname from pg_roles where oid = 10"
+  environment:
+    PGPASSWORD: "{{ patroni_superuser_password }}"
   changed_when: false
   register: pg_install_user
   when:
@@ -61,6 +63,8 @@
         current_setting('server_encoding') as server_encoding,
         current_setting('data_checksums') as data_checksums
     ) pg_settings"
+  environment:
+    PGPASSWORD: "{{ patroni_superuser_password }}"
   changed_when: false
   register: pg_settings
   when:

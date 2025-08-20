@@ -85,6 +85,8 @@
     {{ pg_new_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d {{ pg_target_dbname }} -tAXc
     "DROP EXTENSION pg_repack;
     CREATE EXTENSION pg_repack;"
+  environment:
+    PGPASSWORD: "{{ patroni_superuser_password }}"
   ignore_errors: true # show the error and continue the playbook execution
   when:
     - inventory_hostname in groups['primary']

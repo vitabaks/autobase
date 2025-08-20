@@ -204,6 +204,8 @@
       ansible.builtin.command: >-
         {{ postgresql_bin_dir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc
         "select current_setting('server_version')"
+      environment:
+        PGPASSWORD: "{{ patroni_superuser_password }}"
       register: postgres_version
       changed_when: false
 

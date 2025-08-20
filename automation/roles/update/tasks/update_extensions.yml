@@ -5,6 +5,8 @@
     "select extname from pg_extension e
     join pg_available_extensions ae on extname = ae.name
     where installed_version <> default_version"
+  environment:
+    PGPASSWORD: "{{ patroni_superuser_password }}"
   register: pg_old_extensions
   changed_when: false
   check_mode: false
@@ -25,6 +27,8 @@
   ansible.builtin.command: >-
     {{ postgresql_bin_dir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d {{ pg_target_dbname }} -tAXc
     "ALTER EXTENSION {{ item }} UPDATE"
+  environment:
+    PGPASSWORD: "{{ patroni_superuser_password }}"
   ignore_errors: true
   loop: "{{ pg_old_extensions.stdout_lines | reject('match', '^pg_repack$') | list }}"
   register: pg_old_extensions_update_result
@@ -42,6 +46,8 @@
       ansible.builtin.command: >-
         {{ postgresql_bin_dir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d {{ pg_target_dbname }} -tAXc
         "ALTER EXTENSION {{ item }} UPDATE"
+      environment:
+        PGPASSWORD: "{{ patroni_superuser_password }}"
       ignore_errors: true
       loop: "{{ pg_old_extensions.stdout_lines | reject('match', '^(pg_repack|pg_stat_statements|pg_stat_kcache)$') | list }}"
       register: pg_old_extensions_update_result
@@ -53,6 +59,8 @@
         "DROP EXTENSION pg_stat_statements CASCADE;
         CREATE EXTENSION pg_stat_statements;
         CREATE EXTENSION pg_stat_kcache"
+      environment:
+        PGPASSWORD: "{{ patroni_superuser_password }}"
   when:
     - patroni_leader_result.status == 200
     - not ansible_check_mode
@@ -66,6 +74,8 @@
     {{ postgresql_bin_dir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d {{ pg_target_dbname }} -tAXc
     "DROP EXTENSION pg_repack;
     CREATE EXTENSION pg_repack;"
+  environment:
+    PGPASSWORD: "{{ patroni_superuser_password }}"
   when:
     - patroni_leader_result.status == 200
     - not ansible_check_mode
