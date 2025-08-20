@@ -132,7 +132,7 @@
     - name: Enable PostgreSQL extras repository
       ansible.builtin.command: dnf config-manager --enable pgdg-rhel{{ ansible_distribution_major_version }}-extras
       register: pgdg_extras_result
-      failed_when: 
+      failed_when:
         - pgdg_extras_result.rc != 0
         - "'No matching repo' not in pgdg_extras_result.stderr"
       when:
