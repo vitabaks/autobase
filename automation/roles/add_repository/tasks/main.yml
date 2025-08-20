@@ -128,6 +128,18 @@
         - "'pgdg-redhat-repo' not in ansible_facts.packages"
       tags: install_postgresql_repo
 
+    # Enable PostgreSQL extras repository
+    - name: Enable PostgreSQL extras repository
+      ansible.builtin.command: dnf config-manager --enable pgdg-rhel{{ ansible_distribution_major_version }}-extras
+      register: pgdg_extras_result
+      failed_when: 
+        - pgdg_extras_result.rc != 0
+        - "'No matching repo' not in pgdg_extras_result.stderr"
+      when:
+        - install_postgresql_repo_extras | bool
+        - install_postgresql_repo | bool
+      tags: install_postgresql_repo
+
     # Enable Debuginfo repository
     - block:
         - name: Enable PostgreSQL debuginfo repository
