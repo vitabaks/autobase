@@ -158,7 +158,13 @@
       {{
         (groups['postgres_cluster'] | default([]) | map('extract', hostvars, 'patroni_bind_address') | map('default', None, True) | list)
         | zip(groups['postgres_cluster'] | default([]) | map('extract', hostvars, 'bind_address') | map('default', None, True) | list)
-        | map('list') | map('select', 'truthy')| map('first') | unique | join(',')
+        | map('list') | map('select', 'truthy') | map('first') | unique | join(',')
+      }}
+    postgres_ip_addresses: >-
+      {{
+        (groups['postgres_cluster'] | default([]) | map('extract', hostvars, 'patroni_bind_address') | map('default', None, True) | list)
+        | zip(groups['postgres_cluster'] | default([]) | map('extract', hostvars, 'bind_address') | map('default', None, True) | list)
+        | map('list') | map('select', 'truthy') | map('first') | unique | join(',')
       }}
     superuser_username: "{{ patroni_superuser_username }}"
     superuser_password: "{{ '********' if mask_password | default(false) | bool else patroni_superuser_password }}"
