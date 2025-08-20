@@ -1,7 +1,7 @@
 ---
 - name: Get a list of old PostgreSQL extensions
   ansible.builtin.command: >-
-    {{ postgresql_bin_dir }}/psql -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d {{ pg_target_dbname }} -tAXc
+    {{ postgresql_bin_dir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d {{ pg_target_dbname }} -tAXc
     "select extname from pg_extension e
     join pg_available_extensions ae on extname = ae.name
     where installed_version <> default_version"
@@ -23,7 +23,7 @@
 # excluding: 'pg_repack' (is exists), as it requires re-creation to update
 - name: Update old PostgreSQL extensions
   ansible.builtin.command: >-
-    {{ postgresql_bin_dir }}/psql -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d {{ pg_target_dbname }} -tAXc
+    {{ postgresql_bin_dir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d {{ pg_target_dbname }} -tAXc
     "ALTER EXTENSION {{ item }} UPDATE"
   ignore_errors: true
   loop: "{{ pg_old_extensions.stdout_lines | reject('match', '^pg_repack$') | list }}"
@@ -40,7 +40,7 @@
     # excluding: 'pg_stat_statements', because extension pg_stat_kcache depends on it (will be re-created)
     - name: Update old PostgreSQL extensions
       ansible.builtin.command: >-
-        {{ postgresql_bin_dir }}/psql -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d {{ pg_target_dbname }} -tAXc
+        {{ postgresql_bin_dir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d {{ pg_target_dbname }} -tAXc
         "ALTER EXTENSION {{ item }} UPDATE"
       ignore_errors: true
       loop: "{{ pg_old_extensions.stdout_lines | reject('match', '^(pg_repack|pg_stat_statements|pg_stat_kcache)$') | list }}"
@@ -49,7 +49,7 @@
     # re-create 'pg_stat_statements' and 'pg_stat_kcache' if an update is required
     - name: Recreate old pg_stat_statements and pg_stat_kcache extensions to update
       ansible.builtin.command: >-
-        {{ postgresql_bin_dir }}/psql -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d {{ pg_target_dbname }} -tAXc
+        {{ postgresql_bin_dir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d {{ pg_target_dbname }} -tAXc
         "DROP EXTENSION pg_stat_statements CASCADE;
         CREATE EXTENSION pg_stat_statements;
         CREATE EXTENSION pg_stat_kcache"
@@ -63,7 +63,7 @@
 # re-create the 'pg_repack' if it exists and an update is required
 - name: Recreate old pg_repack extension to update
   ansible.builtin.command: >-
-    {{ postgresql_bin_dir }}/psql -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d {{ pg_target_dbname }} -tAXc
+    {{ postgresql_bin_dir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d {{ pg_target_dbname }} -tAXc
     "DROP EXTENSION pg_repack;
     CREATE EXTENSION pg_repack;"
   when:

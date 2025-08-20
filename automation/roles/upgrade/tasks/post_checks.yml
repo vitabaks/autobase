@@ -1,9 +1,11 @@
 ---
 - name: Make sure that physical replication is active
   ansible.builtin.command: >-
-    {{ pg_new_bindir }}/psql -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc
+    {{ pg_new_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc
     "select count(*) from pg_stat_replication
     where application_name != 'pg_basebackup'"
+  environment:
+    PGPASSWORD: "{{ patroni_superuser_password }}"
   register: pg_replication_state
   until: pg_replication_state.stdout | int > 0
   retries: 30 # max wait time: 1 minute
