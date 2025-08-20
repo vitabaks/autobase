@@ -142,13 +142,6 @@ When PostgreSQL debuginfo packages are requested, the role:
 2. Creates new debuginfo repository entries if they don't exist
 3. Disables GPG checking for debuginfo packages
 
-### Error Handling
-
-The role includes robust error handling:
-- Retries package installations with exponential backoff
-- Gracefully handles missing PostgreSQL extras repositories
-- Continues execution in check mode even if repositories can't be validated
-
 ## Tags
 
 Available tags for selective execution:
