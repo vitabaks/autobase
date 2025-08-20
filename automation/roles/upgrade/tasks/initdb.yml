@@ -39,7 +39,7 @@
 
 - name: Get the current install user
   ansible.builtin.command: >-
-    {{ pg_old_bindir }}/psql -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc
+    {{ pg_old_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc
     "select rolname from pg_roles where oid = 10"
   changed_when: false
   register: pg_install_user
@@ -48,7 +48,7 @@
 
 - name: Get the current encodig and data_checksums settings
   ansible.builtin.command: >-
-    {{ pg_old_bindir }}/psql -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc "
+    {{ pg_old_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc "
     select row_to_json(pg_settings)
     from (
       select

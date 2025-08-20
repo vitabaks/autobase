@@ -202,7 +202,7 @@
 - block:
     - name: Check the PostgreSQL version
       ansible.builtin.command: >-
-        {{ postgresql_bin_dir }}/psql -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc
+        {{ postgresql_bin_dir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc
         "select current_setting('server_version')"
       register: postgres_version
       changed_when: false
