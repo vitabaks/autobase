@@ -29,6 +29,10 @@ services:
       timeout: 5s
       retries: 5
     restart: unless-stopped
+    depends_on:
+      autobase-console-db:
+        condition: service_healthy
+        restart: true
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - /tmp/ansible:/tmp/ansible
@@ -49,6 +53,10 @@ services:
       timeout: 5s
       retries: 5
     restart: unless-stopped
+    depends_on:
+      autobase-console-api:
+        condition: service_healthy
+        restart: true
     labels:
       caddy: ${DOMAIN}
       caddy.reverse_proxy: autobase-console-ui:80
