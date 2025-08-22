@@ -61,14 +61,21 @@ The Console stack consists of the following core components:
 5. Configure your `.env`:
 
    ```sh
-   DOMAIN=autobase.your-domain.com  # Set your domain
-   EMAIL=admin@your-domain.com      # Required for Caddy SSL
+   DOMAIN=autobase.your-domain.com  # Set your domain (required for Caddy SSL)
+   EMAIL=admin@your-domain.com      # Set your email (required for Caddy SSL)
    AUTH_TOKEN=your-secret-token     # Your authorization token
    ```
 
-6. Run Docker Compose:
+6. Run Docker Compose
+
+   with automatically handle SSL certificates for your domain (with using https connection to access UI-console):
    ```sh
    docker compose up -d
+   ```
+
+   without automatically handle SSL certificates for your domain (without using https connection to access UI-console):
+   ```sh
+   docker compose -f docker-compose.non-ssl.yml up -d
    ```
 
 ## Notes
