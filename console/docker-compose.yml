@@ -14,6 +14,10 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       - caddy_data:/data
     restart: unless-stopped
+    depends_on:
+      autobase-console-ui:
+        condition: service_healthy
+        restart: true
     labels:
       caddy.email: ${EMAIL}
 
