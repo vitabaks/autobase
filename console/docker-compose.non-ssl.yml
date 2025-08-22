@@ -15,7 +15,6 @@ services:
     depends_on:
       autobase-console-db:
         condition: service_healthy
-        restart: true
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - /tmp/ansible:/tmp/ansible
@@ -40,7 +39,6 @@ services:
     depends_on:
       autobase-console-api:
         condition: service_healthy
-        restart: true
     environment:
       - PG_CONSOLE_AUTHORIZATION_TOKEN=${AUTH_TOKEN}
       - PG_CONSOLE_API_HOST=autobase-console-api
