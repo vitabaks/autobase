@@ -66,5 +66,3 @@ volumes:
 networks:
   autobase:
     name: autobase
-
-
