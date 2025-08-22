@@ -66,14 +66,14 @@ The Console stack consists of the following core components:
    AUTH_TOKEN=your-secret-token     # Your authorization token
    ```
 
-6. Run Docker Compose
+6. Run Docker Compose:
 
-   with automatically handle SSL certificates for your domain (with using https connection to access console-UI):
+   to automatically handle SSL certificates for your domain (using https connection to access console-UI):
    ```sh
    docker compose up -d
    ```
 
-   without automatically handle SSL certificates for your domain (without using https connection to access console-UI):
+   without automatically handling SSL certificates for your domain (without using https connection to access console-UI):
    ```sh
    docker compose -f docker-compose.non-ssl.yml up -d
    ```
