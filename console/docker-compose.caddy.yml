@@ -1,5 +1,22 @@
 ---
 services:
+  caddy:
+    image: lucaslorentz/caddy-docker-proxy:ci-alpine
+    container_name: caddy
+    ports:
+      - 80:80
+      - 443:443
+    environment:
+      - CADDY_INGRESS_NETWORKS=caddy
+    networks:
+      - caddy
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - caddy_data:/data
+    restart: unless-stopped
+    labels:
+      caddy.email: ${EMAIL}
+
   autobase-console-api:
     image: autobase/console_api:2.3.2
     container_name: autobase-console-api
@@ -12,9 +29,6 @@ services:
       timeout: 5s
       retries: 5
     restart: unless-stopped
-    depends_on:
-      autobase-console-db:
-        condition: service_healthy
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - /tmp/ansible:/tmp/ansible
@@ -24,26 +38,26 @@ services:
       - PG_CONSOLE_DB_HOST=autobase-console-db
     networks:
       - autobase
+      - caddy
 
   autobase-console-ui:
     image: autobase/console_ui:2.3.2
     container_name: autobase-console-ui
-    ports:
-      - 80:80
     healthcheck:
       test: [ "CMD", "curl", "http://localhost:80/" ]
       interval: 10s
       timeout: 5s
       retries: 5
     restart: unless-stopped
-    depends_on:
-      autobase-console-api:
-        condition: service_healthy
+    labels:
+      caddy: ${DOMAIN}
+      caddy.reverse_proxy: autobase-console-ui:80
     environment:
       - PG_CONSOLE_AUTHORIZATION_TOKEN=${AUTH_TOKEN}
       - PG_CONSOLE_API_HOST=autobase-console-api
     networks:
       - autobase
+      - caddy
 
   autobase-console-db:
     image: autobase/console_db:2.3.2
@@ -62,8 +76,11 @@ services:
 volumes:
   console_postgres:
     name: console_postgres
+  caddy_data:
+    name: caddy_data
 
 networks:
   autobase:
     name: autobase
-
+  caddy:
+    name: caddy
