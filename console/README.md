@@ -68,14 +68,15 @@ The Console stack consists of the following core components:
 
 6. Run Docker Compose:
 
-   without automatically handling SSL certificates for your domain (without using https connection to access console-UI):
    ```sh
-   docker compose up -d
+   # with Caddy proxy
+   docker compose -f docker-compose.caddy.yml up -d
    ```
 
-   to automatically handle SSL certificates for your domain (using https connection to access console-UI):
+	Or, without automatic handling of SSL certificates for your domain
    ```sh
-   docker compose -f docker-compose.caddy.yml up -d
+   # without Caddy proxy
+   docker compose up -d
    ```
 
 ## Notes
