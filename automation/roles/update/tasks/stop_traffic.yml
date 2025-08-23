@@ -33,12 +33,14 @@
   become: true
   become_user: postgres
   ansible.builtin.command: >-
-    {{ postgresql_bin_dir }}/psql -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc
+    {{ postgresql_bin_dir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc
     "select count(*)
     from pg_stat_activity
     where pid <> pg_backend_pid()
     and backend_type = 'client backend'
     and state = 'active'"
+  environment:
+    PGPASSWORD: "{{ patroni_superuser_password }}"
   register: pg_active_count
   until: pg_active_count.stdout|int == 0
   retries: 300

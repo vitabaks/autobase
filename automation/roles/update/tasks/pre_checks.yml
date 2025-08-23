@@ -1,15 +1,19 @@
 ---
 - name: "[Pre-Check] (ALL) Test PostgreSQL DB Access"
   ansible.builtin.command: >-
-    {{ postgresql_bin_dir }}/psql -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc 'select 1'
+    {{ postgresql_bin_dir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc 'select 1'
+  environment:
+    PGPASSWORD: "{{ patroni_superuser_password }}"
   changed_when: false
   check_mode: false
 
 - name: "[Pre-Check] Make sure that physical replication is active"
   ansible.builtin.command: >-
-    {{ postgresql_bin_dir }}/psql -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc
+    {{ postgresql_bin_dir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc
     "select count(*) from pg_stat_replication
     where application_name != 'pg_basebackup'"
+  environment:
+    PGPASSWORD: "{{ patroni_superuser_password }}"
   register: pg_replication_state
   changed_when: false
   check_mode: false
@@ -27,10 +31,12 @@
 
 - name: "[Pre-Check] Make sure there is no high replication lag (more than {{ max_replication_lag_bytes | human_readable }})"
   ansible.builtin.command: >-
-    {{ postgresql_bin_dir }}/psql -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc
+    {{ postgresql_bin_dir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc
     "select pg_wal_lsn_diff(pg_current_wal_lsn(),replay_lsn) pg_lag_bytes
     from pg_stat_replication
     order by pg_lag_bytes desc limit 1"
+  environment:
+    PGPASSWORD: "{{ patroni_superuser_password }}"
   register: pg_lag_bytes
   changed_when: false
   failed_when: false
@@ -58,7 +64,7 @@
 
 - name: "[Pre-Check] Make sure there are no long-running transactions (more than {{ max_transaction_sec }} seconds)"
   ansible.builtin.command: >-
-    {{ postgresql_bin_dir }}/psql -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc
+    {{ postgresql_bin_dir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc
     "select pid, usename, client_addr, clock_timestamp() - xact_start as xact_age,
       state, wait_event_type ||':'|| wait_event as wait_events,
       left(regexp_replace(query, E'[ \\t\\n\\r]+', ' ', 'g'),100) as query
@@ -66,6 +72,8 @@
       where clock_timestamp() - xact_start > '{{ max_transaction_sec }} seconds'::interval
       and backend_type = 'client backend' and pid <> pg_backend_pid()
       order by xact_age desc limit 10"
+  environment:
+    PGPASSWORD: "{{ patroni_superuser_password }}"
   register: pg_long_transactions
   changed_when: false
   failed_when: false

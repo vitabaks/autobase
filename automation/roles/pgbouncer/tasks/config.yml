@@ -30,8 +30,10 @@
       become: true
       become_user: postgres
       ansible.builtin.command: >-
-        {{ postgresql_bin_dir }}/psql -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc
+        {{ postgresql_bin_dir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc
         "SELECT concat('\"', usename, '\" \"', passwd, '\"') FROM pg_shadow where usename != '{{ patroni_replication_username }}'"
+      environment:
+        PGPASSWORD: "{{ patroni_superuser_password }}"
       register: pg_shadow_result
       changed_when: false
       delegate_to: "{{ groups.master[0] }}"
@@ -57,8 +59,10 @@
       become: true
       become_user: postgres
       ansible.builtin.command: >-
-        {{ postgresql_bin_dir }}/psql -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d {{ pgbouncer_auth_dbname }} -tAXc
+        {{ postgresql_bin_dir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d {{ pgbouncer_auth_dbname }} -tAXc
         "select exists(select proname from pg_proc where proname='user_search')"
+      environment:
+        PGPASSWORD: "{{ patroni_superuser_password }}"
       register: exists_func_user
       changed_when: false
 
@@ -81,7 +85,7 @@
       become: true
       become_user: postgres
       ansible.builtin.command: >-
-        {{ postgresql_bin_dir }}/psql -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d {{ pgbouncer_auth_dbname }} -tAXc
+        {{ postgresql_bin_dir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d {{ pgbouncer_auth_dbname }} -tAXc
         "CREATE FUNCTION user_search(uname TEXT) RETURNS TABLE (usename name, passwd text) AS
         $$
         SELECT usename, passwd FROM pg_shadow WHERE usename=$1;
@@ -89,6 +93,8 @@
         LANGUAGE sql SECURITY DEFINER;
         REVOKE ALL ON FUNCTION user_search(uname TEXT) FROM public;
         GRANT EXECUTE ON FUNCTION user_search(uname TEXT) TO {{ pgbouncer_auth_username }}"
+      environment:
+        PGPASSWORD: "{{ patroni_superuser_password }}"
       when: exists_func_user.stdout == "f"
   when:
     - pgbouncer_auth_user | bool

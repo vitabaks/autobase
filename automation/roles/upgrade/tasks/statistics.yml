@@ -13,7 +13,7 @@
       ansible.builtin.shell: |
         echo $$ > /tmp/pg_terminator.pid
         for i in {1..{{ vacuumdb_analyze_timeout // 10 }}}; do
-          {{ pg_new_bindir }}/psql -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc "
+          {{ pg_new_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc "
           with blocker_pids(pid) as (
             select unnest(pg_blocking_pids(pid))
             from pg_stat_activity
@@ -35,6 +35,8 @@
         done
       args:
         executable: /bin/bash
+      environment:
+        PGPASSWORD: "{{ patroni_superuser_password }}"
       async: "{{ vacuumdb_analyze_timeout }}" # run the command asynchronously with a maximum duration
       poll: 0
       register: pg_terminator_analyze
@@ -46,7 +48,7 @@
       ansible.builtin.shell: |
         echo $$ >> /tmp/pg_terminator.pid
         for i in {1..{{ vacuumdb_analyze_timeout // 10 }}}; do
-          {{ pg_new_bindir }}/psql -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc "
+          {{ pg_new_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc "
           select
             clock_timestamp(),
             pg_terminate_backend(pid),
@@ -62,6 +64,8 @@
         done
       args:
         executable: /bin/bash
+      environment:
+        PGPASSWORD: "{{ patroni_superuser_password }}"
       async: "{{ vacuumdb_analyze_timeout }}" # run the command asynchronously with a maximum duration
       poll: 0
       register: pg_terminator_long_transactions

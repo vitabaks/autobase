@@ -1,9 +1,11 @@
 ---
 - name: "Execute CHECKPOINT before stopping PostgreSQL"
   ansible.builtin.command: >
-    {{ pg_old_bindir }}/psql -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc "CHECKPOINT"
+    {{ pg_old_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc "CHECKPOINT"
   async: "{{ pg_start_stop_timeout | int }}" # run the command asynchronously
   poll: 0
+  environment:
+    PGPASSWORD: "{{ patroni_superuser_password }}"
   register: checkpoint_result
 
 - name: Wait for the CHECKPOINT to complete
@@ -17,9 +19,11 @@
 # Wait for the window to appear without high replication lag before stopping PostgreSQL
 - name: "Wait until replication lag is less than {{ max_replication_lag_bytes | human_readable }}"
   ansible.builtin.command: >-
-    {{ pg_old_bindir }}/psql -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc
+    {{ pg_old_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc
     "select coalesce(max(pg_wal_lsn_diff(pg_current_wal_lsn(),replay_lsn)),1) as pg_lag_bytes
       from pg_stat_replication"
+  environment:
+    PGPASSWORD: "{{ patroni_superuser_password }}"
   register: pg_lag_bytes
   until: pg_lag_bytes.stdout|int < max_replication_lag_bytes|int
   retries: 60 # max wait time: 2 minutes
@@ -50,9 +54,11 @@
 # for compatibility with Postgres 9.x
 - name: "Wait until replication lag is less than {{ max_replication_lag_bytes | human_readable }}"
   ansible.builtin.command: >-
-    {{ pg_old_bindir }}/psql -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc
+    {{ pg_old_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc
     "select coalesce(max(pg_xlog_location_diff(pg_current_xlog_location(),replay_location)),1) as pg_lag_bytes
       from pg_stat_replication"
+  environment:
+    PGPASSWORD: "{{ patroni_superuser_password }}"
   register: pg_lag_bytes_9x
   until: pg_lag_bytes_9x.stdout|int < max_replication_lag_bytes|int
   retries: 60 # max wait time: 2 minutes
