@@ -1034,6 +1034,7 @@ yum_repository: []
 #    gpgcheck: "yes"
 
 install_postgresql_repo: true # or 'false' (installed from the package "pgdg-redhat-repo-latest.noarch.rpm")
+install_postgresql_repo_extras: true # enable PostgreSQL extras repository (e.g., pgdg-rhel8-extras)
 install_epel_repo: true # or 'false' (installed from the package "epel-release-latest.noarch.rpm")
 
 # Full PostgreSQL package version string (e.g., "17.5-1PGDG.rhel9").
