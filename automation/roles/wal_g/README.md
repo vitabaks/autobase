@@ -24,6 +24,13 @@ WAL-G is a fast and efficient tool for backing up and restoring PostgreSQL datab
 
 ### Operating System Support
 
+- **Debian**: 11, 12, 13
+- **Ubuntu**: 22.04, 24.04
+- **CentOS Stream**: 9, 10
+- **Oracle Linux**: 8, 9, 10
+- **Rocky Linux**: 8, 9, 10
+- **AlmaLinux**: 8, 9, 10
+
 - **Debian/Ubuntu**: 18.04, 20.04, 22.04, 24.04
 - **RHEL/CentOS/Rocky/AlmaLinux**: 8, 9 (RHEL 8 excluded for binary installation due to GLIBC requirements)
 - **Amazon Linux**: 2023
@@ -548,7 +555,7 @@ ansible-playbook playbook.yml --tags wal_g_conf
 
 ## License
 
-BSD
+MIT
 
 ## Author Information
 

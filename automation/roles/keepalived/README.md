@@ -26,6 +26,13 @@ Keepalived provides high availability for load balancers by managing virtual IP 
 
 ### Operating System Support
 
+- **Debian**: 11, 12, 13
+- **Ubuntu**: 22.04, 24.04
+- **CentOS Stream**: 9, 10
+- **Oracle Linux**: 8, 9, 10
+- **Rocky Linux**: 8, 9, 10
+- **AlmaLinux**: 8, 9, 10
+
 - **Debian/Ubuntu**: 18.04, 20.04, 22.22, 24.04
 - **RHEL/CentOS/Rocky/AlmaLinux**: 8, 9  
 - **Amazon Linux**: 2023
@@ -558,7 +565,7 @@ ansible-playbook playbook.yml --tags keepalived_conf
 
 ## License
 
-BSD
+MIT
 
 ## Author Information
 

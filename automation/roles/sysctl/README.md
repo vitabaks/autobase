@@ -23,6 +23,13 @@ System kernel parameters significantly impact PostgreSQL performance, memory man
 
 ### Operating System Support
 
+- **Debian**: 11, 12, 13
+- **Ubuntu**: 22.04, 24.04
+- **CentOS Stream**: 9, 10
+- **Oracle Linux**: 8, 9, 10
+- **Rocky Linux**: 8, 9, 10
+- **AlmaLinux**: 8, 9, 10
+
 - **Debian/Ubuntu**: 18.04, 20.04, 22.04, 24.04
 - **RHEL/CentOS/Rocky/AlmaLinux**: 8, 9
 - **Amazon Linux**: 2023
@@ -515,7 +522,7 @@ ansible-playbook playbook.yml --tags sysctl
 
 ## License
 
-BSD
+MIT
 
 ## Author Information
 
