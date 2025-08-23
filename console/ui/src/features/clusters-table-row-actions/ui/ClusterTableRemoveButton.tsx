@@ -11,7 +11,6 @@ import {
   Stack,
   Typography,
 } from '@mui/material';
-import { LoadingButton } from '@mui/lab';
 import { useTranslation } from 'react-i18next';
 import { ClustersTableRemoveButtonProps } from '@features/clusters-table-row-actions/model/types.ts';
 import { useDeleteClustersByIdMutation } from '@shared/api/api/clusters.ts';
@@ -55,13 +54,13 @@ const ClustersTableRemoveButton: FC<ClustersTableRemoveButtonProps> = ({ cluster
         </DialogContent>
         <DialogActions>
           <Button onClick={handleModalOpenState(false)}>{t('cancel', { ns: 'shared' })}</Button>
-          <LoadingButton
+          <Button
             type="submit"
             onClick={handleButtonClick}
             loadingIndicator={<CircularProgress size={24} />}
             loading={removeClusterTriggerState.isLoading}>
             {t('delete', { ns: 'shared' })}
-          </LoadingButton>
+          </Button>
         </DialogActions>
       </Dialog>
     </>

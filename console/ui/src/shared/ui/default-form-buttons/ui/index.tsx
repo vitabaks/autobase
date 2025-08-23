@@ -1,9 +1,8 @@
 import { FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import styled from '@emotion/styled';
-import { LoadingButton } from '@mui/lab';
+import { Button, CircularProgress } from '@mui/material';
 import { DefaultFormButtonsProps } from '@shared/ui/default-form-buttons/model/types.ts';
-import { CircularProgress } from '@mui/material';
 
 const StyledDefaultFormButtons = styled.div`
   display: flex;
@@ -31,17 +30,17 @@ const DefaultFormButtons: FC<DefaultFormButtonsProps> = ({
   return (
     <StyledDefaultFormButtons>
       <StyledStandardButtons>
-        <LoadingButton
+        <Button
           variant="contained"
           disabled={isDisabled}
           loading={isSubmitting}
           loadingIndicator={<CircularProgress size={24} />}
           type="submit">
           <span>{submitButtonLabel ?? t('save')}</span>
-        </LoadingButton>
-        <LoadingButton variant="outlined" onClick={cancelHandler} type="button">
+        </Button>
+        <Button variant="outlined" onClick={cancelHandler} type="button">
           <span>{cancelButtonLabel ?? t('cancel')}</span>
-        </LoadingButton>
+        </Button>
       </StyledStandardButtons>
       {children}
     </StyledDefaultFormButtons>
