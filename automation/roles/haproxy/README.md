@@ -4,15 +4,6 @@ This role installs and configures [HAProxy](http://www.haproxy.org/), a reliable
 
 ## Requirements
 
-### Operating System Support
-
-- **Debian**: 11, 12, 13
-- **Ubuntu**: 22.04, 24.04
-- **CentOS Stream**: 9, 10
-- **Oracle Linux**: 8, 9, 10
-- **Rocky Linux**: 8, 9, 10
-- **AlmaLinux**: 8, 9, 10
-
 ### Prerequisites
 
 - Target PostgreSQL servers must be accessible

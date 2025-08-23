@@ -4,15 +4,6 @@ This role installs and configures [etcd](https://etcd.io/), a distributed, relia
 
 ## Requirements
 
-### Operating System Support
-
-- **Debian**: 11, 12, 13
-- **Ubuntu**: 22.04, 24.04
-- **CentOS Stream**: 9, 10
-- **Oracle Linux**: 8, 9, 10
-- **Rocky Linux**: 8, 9, 10
-- **AlmaLinux**: 8, 9, 10
-
 ### Prerequisites
 
 - Network connectivity between etcd cluster members

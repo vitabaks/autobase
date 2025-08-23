@@ -4,15 +4,6 @@ This role manages PostgreSQL database users within a PostgreSQL cluster, providi
 
 ## Requirements
 
-### Operating System Support
-
-- **Debian**: 11, 12, 13
-- **Ubuntu**: 22.04, 24.04
-- **CentOS Stream**: 9, 10
-- **Oracle Linux**: 8, 9, 10
-- **Rocky Linux**: 8, 9, 10
-- **AlmaLinux**: 8, 9, 10
-
 ### Prerequisites
 
 - PostgreSQL server must be installed and running
