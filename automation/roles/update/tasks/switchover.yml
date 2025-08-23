@@ -8,6 +8,7 @@
   environment:
     no_proxy: "{{ patroni_bind_address | default(bind_address, true) }}"
   changed_when: false
+  check_mode: false
 
 # If the node is the current leader, perform switchover
 - name: Perform switchover of the Patroni leader role to another node

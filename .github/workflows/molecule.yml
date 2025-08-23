@@ -16,6 +16,8 @@ jobs:
       fail-fast: false
       matrix:
         config:
+          - distro: debian13
+            tag: latest
           - distro: debian12
             tag: latest
             namespace: geerlingguy
@@ -33,19 +35,13 @@ jobs:
           - distro: almalinux10
             tag: latest
             namespace: glillico
-          - distro: centosstream10
-            tag: latest
-            namespace: glillico
-          - distro: oraclelinux10
-            tag: latest
-            namespace: glillico
 
     steps:
       - name: Set TERM environment variable
         run: echo "TERM=xterm" >> $GITHUB_ENV
 
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Set up Python
         uses: actions/setup-python@v5

@@ -8,7 +8,15 @@
   run_once: true
   become: true
   become_user: postgres
-  ansible.builtin.command: "{{ postgresql_bin_dir }}/psql -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -Xc '\\du'"
+  ansible.builtin.command: >
+    {{ postgresql_bin_dir }}/psql
+    -h 127.0.0.1
+    -p {{ postgresql_port }}
+    -U {{ patroni_superuser_username }}
+    -d postgres
+    -Xc '\du'
+  environment:
+    PGPASSWORD: "{{ patroni_superuser_password }}"
   register: users_result
   delegate_to: "{{ groups.master[0] }}"
   changed_when: false
@@ -19,7 +27,15 @@
   run_once: true
   become: true
   become_user: postgres
-  ansible.builtin.command: "{{ postgresql_bin_dir }}/psql -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -Xc '\\l'"
+  ansible.builtin.command: >
+    {{ postgresql_bin_dir }}/psql
+    -h 127.0.0.1
+    -p {{ postgresql_port }}
+    -U {{ patroni_superuser_username }}
+    -d postgres
+    -Xc '\l'
+  environment:
+    PGPASSWORD: "{{ patroni_superuser_password }}"
   register: dbs_result
   delegate_to: "{{ groups.master[0] }}"
   changed_when: false
@@ -146,13 +162,23 @@
       when: not with_haproxy_load_balancing | bool and not pgbouncer_install | bool
   ignore_errors: true
   vars:
-    public_haproxy_ip_addresses: "{{ groups['balancers'] | default([]) | map('extract', hostvars, 'ansible_ssh_host') | join(',') }}"
-    public_postgres_ip_addresses: "{{ groups['postgres_cluster'] | default([]) | map('extract', hostvars, 'ansible_ssh_host') | join(',') }}"
-    haproxy_ip_addresses: "{{ groups['balancers'] | default([]) | map('extract', hostvars) | map(attribute='haproxy_bind_address', default=bind_address) | join(',') }}"
-    postgres_ip_addresses: "{{ groups['postgres_cluster'] | default([]) | map('extract', hostvars) | map(attribute='patroni_bind_address', default=bind_address) | join(',') }}"
+    public_haproxy_ip_addresses: "{{ groups['balancers'] | default([]) | map('extract', hostvars, 'ansible_ssh_host') | join(', ') }}"
+    public_postgres_ip_addresses: "{{ groups['postgres_cluster'] | default([]) | map('extract', hostvars, 'ansible_ssh_host') | join(', ') }}"
+    haproxy_ip_addresses: >-
+      {{
+        (groups['balancers'] | default([]) | map('extract', hostvars, 'haproxy_bind_address') | map('default', None, True) | list)
+        | zip(groups['balancers'] | default([]) | map('extract', hostvars, 'bind_address') | map('default', None, True) | list)
+        | map('list') | map('select', 'truthy') | map('first') | unique | join(', ')
+      }}
+    postgres_ip_addresses: >-
+      {{
+        (groups['postgres_cluster'] | default([]) | map('extract', hostvars, 'patroni_bind_address') | map('default', None, True) | list)
+        | zip(groups['postgres_cluster'] | default([]) | map('extract', hostvars, 'bind_address') | map('default', None, True) | list)
+        | map('list') | map('select', 'truthy') | map('first') | unique | join(', ')
+      }}
     superuser_username: "{{ patroni_superuser_username }}"
     superuser_password: "{{ '********' if mask_password | default(false) | bool else patroni_superuser_password }}"
-    libpq_postgres_host_port: "{{ postgres_ip_addresses.split(',') | map('regex_replace', '$', ':' + postgresql_port | string) | join(',') }}"
+    libpq_postgres_host_port: "{{ postgres_ip_addresses.split(',') | map('regex_replace', '$', ':' + postgresql_port | string) | join(', ') }}"
     libpq_load_balance: "{{ '&load_balance_hosts=random' if postgresql_version | int >= 16 else '' }}"
   when:
     - (cluster_vip is not defined or cluster_vip | length < 1)

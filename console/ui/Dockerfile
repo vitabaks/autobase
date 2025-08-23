@@ -15,6 +15,16 @@ COPY --from=builder /usr/src/pg-console/dist ./
 COPY console/ui/nginx/nginx.conf /etc/nginx/
 COPY console/ui/env.sh console/ui/.env console/ui/.env.production ./
 
+RUN apt-get clean && rm -rf /var/lib/apt/lists/partial \
+   && apt-get update -o Acquire::CompressionTypes::Order::=gz \
+   && DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y curl
+
 RUN chmod +x ./env.sh
+
+ARG PG_CONSOLE_API_HOST
+ENV PG_CONSOLE_API_HOST=${PG_CONSOLE_API_HOST:-"localhost"}
+
+ARG PG_CONSOLE_API_PORT
+ENV PG_CONSOLE_API_PORT=${PG_CONSOLE_API_PORT:-8080}
 
 CMD ["/bin/bash", "-c", "/usr/share/nginx/html/env.sh && nginx -g \"daemon off;\""]

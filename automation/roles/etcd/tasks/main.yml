@@ -65,6 +65,7 @@
     name: etcd
     shell: /usr/sbin/nologin
     home: "{{ etcd_data_dir }}"
+    system: true
   tags: etcd, etcd_conf
 
 - name: Create etcd conf directory

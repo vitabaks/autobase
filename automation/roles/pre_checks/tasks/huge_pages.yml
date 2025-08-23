@@ -4,18 +4,30 @@
 # and "huge_pages" is not 'off' in postgresql_parameters.
 
 - block:
-    - name: "HugePages | Get shared_buffers value from postgresql_parameters variable"
+    - name: "HugePages | Get shared_buffers value from postgresql parameters"
       ansible.builtin.set_fact:
         shared_buffers: "{{ postgresql_parameters_shared_buffers }}"
         shared_buffers_value: "{{ postgresql_parameters_shared_buffers | regex_search('[0-9]+') | int }}"
         shared_buffers_unit: "{{ postgresql_parameters_shared_buffers | regex_search('[A-Za-z]+') | lower }}"
       vars:
+        # Prefer 'shared_buffers' from local_postgresql_parameters (host-level override),
+        # fallback to cluster-wide postgresql_parameters (DCS), else use default 128MB.
         postgresql_parameters_shared_buffers: >-
           {{
-            (postgresql_parameters
-            | selectattr('option', 'equalto', 'shared_buffers')
-            | map(attribute='value')
-            | first | default('128MB'))
+            (
+              local_postgresql_parameters | default([])
+              | selectattr('option', 'equalto', 'shared_buffers')
+              | map(attribute='value') | first
+            )
+            | default(
+                (
+                  postgresql_parameters | default([])
+                  | selectattr('option', 'equalto', 'shared_buffers')
+                  | map(attribute='value') | first
+                ),
+                true
+              )
+            | default('128MB')
           }}
 
     - name: "HugePages | Set variable: shared_buffers_gb"
@@ -133,8 +145,27 @@
         - shared_buffers_gb | default(0) | int >= (min_shared_buffers_gb | default(8))
         - huge_pages_total.stdout | default(0) | int < huge_pages_required | int
         - not sysctl_conf_vm_nr_hugepages_sufficient | default(false)
-        - (not huge_pages_auto_conf | bool or (not sysctl_set | bool and
-          (postgresql_parameters | selectattr('option', 'equalto', 'huge_pages') | map(attribute='value') | first | default('try')) == 'on'))
+        - (not huge_pages_auto_conf | bool or (not sysctl_set | bool and huge_pages_mode == 'on'))
+  vars:
+    # Prefer 'huge_pages' from local_postgresql_parameters (host override),
+    # fallback to cluster-wide postgresql_parameters (DCS), else 'try'.
+    huge_pages_mode: >-
+      {{
+        (
+          local_postgresql_parameters | default([])
+          | selectattr('option', 'equalto', 'huge_pages')
+          | map(attribute='value') | first
+        )
+        | default(
+            (
+              postgresql_parameters | default([])
+              | selectattr('option', 'equalto', 'huge_pages')
+              | map(attribute='value') | first
+            ),
+            true
+        )
+        | default('try')
+      }}
   when:
-    - (postgresql_parameters | selectattr('option', 'equalto', 'huge_pages') | map(attribute='value') | first | default('try')) != 'off'
-    - (sysctl_set | bool or (postgresql_parameters | selectattr('option', 'equalto', 'huge_pages') | map(attribute='value') | first | default('try')) == 'on')
+    - huge_pages_mode != 'off'
+    - (sysctl_set | bool or huge_pages_mode == 'on')

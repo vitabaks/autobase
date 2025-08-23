@@ -292,7 +292,8 @@ postgresql_extensions: []
 #  - { ext: "", db: "" }
 #  - { ext: "", db: "" }
 
-# Example PostgreSQL parameters (stored in DCS)
+# PostgreSQL parameters (cluster-wide, stored in DCS and applied to all nodes)
+# Note: To set host-level parameters, use 'local_postgresql_parameters' variable.
 postgresql_parameters:
   - { option: "max_connections", value: "1000" } # the actual limit is enforced at the connection pooler level (pool_size)
   - { option: "superuser_reserved_connections", value: "5" }
@@ -306,8 +307,6 @@ postgresql_parameters:
   - { option: "max_locks_per_transaction", value: "512" }
   - { option: "max_prepared_transactions", value: "0" }
   - { option: "huge_pages", value: "try" } # "vm.nr_hugepages" is auto-configured for shared_buffers >= 8GB (if huge_pages_auto_conf is true)
-  - { option: "shared_buffers", value: "{{ (ansible_memtotal_mb * 0.25) | int }}MB" } # by default, 25% of RAM
-  - { option: "effective_cache_size", value: "{{ (ansible_memtotal_mb * 0.75) | int }}MB" } # by default, 75% of RAM
   - { option: "work_mem", value: "64MB" } # increase it if possible
   - { option: "maintenance_work_mem", value: "512MB" } # or 2GB/4GB
   - { option: "checkpoint_timeout", value: "15min" } # or 30min
@@ -389,6 +388,11 @@ postgresql_parameters:
 #  - { option: "lock_timeout", value: "10s" } # reduce this timeout if possible
 #  - { option: "deadlock_timeout", value: "2s" }
 #  - { option: "", value: "" }
+
+# Host-level PostgreSQL parameters are defined locally in patroni.yml and override the common ones stored in DCS.
+local_postgresql_parameters:
+ - { option: "shared_buffers", value: "{{ (ansible_memtotal_mb * 0.25) | int }}MB" } # by default, 25% of RAM
+ - { option: "effective_cache_size", value: "{{ (ansible_memtotal_mb * 0.75) | int }}MB" } # by default, 75% of RAM
 
 # Set this variable to 'true' if you want the cluster to be automatically restarted
 # after changing the 'postgresql_parameters' variable that requires a restart in the 'config_pgcluster.yml' playbook.
@@ -1030,6 +1034,7 @@ yum_repository: []
 #    gpgcheck: "yes"
 
 install_postgresql_repo: true # or 'false' (installed from the package "pgdg-redhat-repo-latest.noarch.rpm")
+install_postgresql_repo_extras: true # enable PostgreSQL extras repository (e.g., pgdg-rhel8-extras)
 install_epel_repo: true # or 'false' (installed from the package "epel-release-latest.noarch.rpm")
 
 # Full PostgreSQL package version string (e.g., "17.5-1PGDG.rhel9").

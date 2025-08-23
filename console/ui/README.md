@@ -71,12 +71,15 @@ There are several env variables that configure UI:
 
 | KEY                                          | DEFAULT                      | DESCRIPTION                                                 |
 |----------------------------------------------|------------------------------|-------------------------------------------------------------|
-| PG_CONSOLE_API_URL                           | http://localhost:8080/api/v1 | Default API URL where frontend will be sending requests to. |
 | PG_CONSOLE_AUTHORIZATION_TOKEN               | auth_token                   | Reference auth token that will be used for login.           |
-| PG_CONSOLE_CLUSTERS_POLLING_INTERVAL         | 60000                        | Clusters table refresh interval in milliseconds.                 |
-| PG_CONSOLE_CLUSTER_OVERVIEW_POLLING_INTERVAL | 60000                        | Cluster overview refresh interval in milliseconds.               |
-| PG_CONSOLE_OPERATIONS_POLLING_INTERVAL       | 60000                        | Operations table refresh interval in milliseconds.               |
-| PG_CONSOLE_OPERATION_LOGS_POLLING_INTERVAL   | 10000                        | Operation logs refresh interval in milliseconds.                 |
+| PG_CONSOLE_CLUSTERS_POLLING_INTERVAL         | 60000                        | Clusters table refresh interval in milliseconds.            |
+| PG_CONSOLE_CLUSTER_OVERVIEW_POLLING_INTERVAL | 60000                        | Cluster overview refresh interval in milliseconds.          |
+| PG_CONSOLE_OPERATIONS_POLLING_INTERVAL       | 60000                        | Operations table refresh interval in milliseconds.          |
+| PG_CONSOLE_OPERATION_LOGS_POLLING_INTERVAL   | 10000                        | Operation logs refresh interval in milliseconds.            |
+| PG_CONSOLE_API_HOST                          | localhost                    | Backend API address (used by nginx reverse proxy).          |
+| PG_CONSOLE_API_PORT                          | 8080                         | Backend API port.                                           |
+
+The UI communicates with the API using the relative path /api/v1 through the Nginx reverse proxy host specified by PG_CONSOLE_API_HOST. If needed, you can override this by setting the PG_CONSOLE_API_URL variable.
 
 ## Architecture
 

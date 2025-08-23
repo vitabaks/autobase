@@ -105,7 +105,7 @@ RedHat and Debian based distros (x86_64)
 
 ###### Supported Linux Distributions:
 
-- **Debian**: 11, 12
+- **Debian**: 11, 12, 13
 - **Ubuntu**: 22.04, 24.04
 - **CentOS Stream**: 9, 10
 - **Oracle Linux**: 8, 9, 10
@@ -121,8 +121,8 @@ all supported PostgreSQL versions
 _Table of results of daily automated testing of cluster deployment:_
 | Distribution | Test result |
 |--------------|:----------:|
-| Debian 11 | [![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/vitabaks/autobase/schedule_pg_debian11.yml?branch=master)](https://github.com/vitabaks/autobase/actions/workflows/schedule_pg_debian11.yml) |
-| Debian 12 | [![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/vitabaks/autobase/schedule_pg_debian11.yml?branch=master)](https://github.com/vitabaks/autobase/actions/workflows/schedule_pg_debian12.yml) |
+| Debian 12 | [![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/vitabaks/autobase/schedule_pg_debian12.yml?branch=master)](https://github.com/vitabaks/autobase/actions/workflows/schedule_pg_debian12.yml) |
+| Debian 13 | [![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/vitabaks/autobase/schedule_pg_debian13.yml?branch=master)](https://github.com/vitabaks/autobase/actions/workflows/schedule_pg_debian13.yml) |
 | Ubuntu 22.04 | [![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/vitabaks/autobase/schedule_pg_ubuntu2204.yml?branch=master)](https://github.com/vitabaks/autobase/actions/workflows/schedule_pg_ubuntu2204.yml) |
 | Ubuntu 24.04 | [![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/vitabaks/autobase/schedule_pg_ubuntu2204.yml?branch=master)](https://github.com/vitabaks/autobase/actions/workflows/schedule_pg_ubuntu2404.yml) |
 | CentOS Stream 9 | [![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/vitabaks/autobase/schedule_pg_centosstream9.yml?branch=master)](https://github.com/vitabaks/autobase/actions/workflows/schedule_pg_centosstream9.yml) |
@@ -150,8 +150,6 @@ To run the autobase console, execute the following command:
 ```
 docker run -d --name autobase-console \
   --publish 80:80 \
-  --publish 8080:8080 \
-  --env PG_CONSOLE_API_URL=http://localhost:8080/api/v1 \
   --env PG_CONSOLE_AUTHORIZATION_TOKEN=secret_token \
   --env PG_CONSOLE_DOCKER_IMAGE=autobase/automation:latest \
   --volume console_postgres:/var/lib/postgresql \
@@ -162,9 +160,6 @@ docker run -d --name autobase-console \
 ```
 
 > [!NOTE]
-> If you are running the console on a dedicated server (rather than on your laptop), replace `localhost` with the server’s IP address in the `PG_CONSOLE_API_URL` variable.
-
-> [!TIP]
 > It is recommended to run the console in the same network as your database servers to enable monitoring of the cluster status.
 
 Alternatively, you can use [Docker Compose](console/README.md).
@@ -187,25 +182,26 @@ While the Console (UI) is designed for ease of use and is suitable for most user
 > [!NOTE]
 > All dependencies and source code are bundled into the `autobase/automation` docker image. This means the deployment process comes down to simply launching a container with a few variable overrides.
 
-1. Prepare your inventory file
+1. Prepare your inventory
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/vitabaks/autobase/refs/heads/master/automation/inventory.example \
   --output ./inventory
 ```
 
-Specify the hosts and appropriate connection settings for your environment, such as ansible_user, ansible_ssh_pass, or ansible_ssh_private_key_file.
+Specify IP addresses and appropriate connection settings for your environment, such as ansible_user, ansible_ssh_pass, or ansible_ssh_private_key_file.
 
 ```bash
 nano ./inventory
 ```
 
-2. Prepare your variables file
+2. Prepare your variables
 
-Refer to the default [variables](https://github.com/vitabaks/autobase/blob/master/automation/roles/common/defaults/main.yml) for all configurable options. To override defaults, copy the relevant variables into your vars file.
+Refer to the default [variables](https://github.com/vitabaks/autobase/blob/master/automation/roles/common/defaults/main.yml) for all configurable options. Override them as needed using group_vars, host_vars, or directly in the inventory file.
 
 ```bash
-nano ./vars.yml
+mkdir -p ./group_vars
+nano ./group_vars/all.yml
 ```
 
 3. Run the deployment command
@@ -213,12 +209,11 @@ nano ./vars.yml
 ```bash
 docker run --rm -it \
   -e ANSIBLE_SSH_ARGS="-F none" \
-  -e ANSIBLE_INVENTORY=/autobase/inventory \
-  -v $PWD/inventory:/autobase/inventory \
-  -v $PWD/vars.yml:/vars.yml \
+  -e ANSIBLE_INVENTORY=/project/inventory \
+  -v $PWD:/project \
   -v $HOME/.ssh:/root/.ssh \
   autobase/automation:latest \
-    ansible-playbook deploy_pgcluster.yml -e "@/vars.yml"
+    ansible-playbook deploy_pgcluster.yml
 ```
 
 Tip: Start with `deploy_pgcluster` for initial provisioning, then use `config_pgcluster` for further configuration changes.

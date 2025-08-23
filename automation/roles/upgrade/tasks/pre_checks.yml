@@ -35,7 +35,9 @@
 
 - name: "[Pre-Check] Test PostgreSQL database access using a unix socket"
   ansible.builtin.command: >
-    {{ pg_old_bindir }}/psql -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc 'select 1'
+    {{ pg_old_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc 'select 1'
+  environment:
+    PGPASSWORD: "{{ patroni_superuser_password }}"
   register: socket_access_result
   changed_when: false
   failed_when: "socket_access_result.rc != 0 and 'no pg_hba.conf entry' not in socket_access_result.stderr"
@@ -59,8 +61,10 @@
 
 - name: "[Pre-Check] Check the current version of PostgreSQL"
   ansible.builtin.command: >-
-    {{ pg_old_bindir }}/psql -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc
+    {{ pg_old_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc
     "select setting::integer/10000 from pg_settings where name = 'server_version_num'"
+  environment:
+    PGPASSWORD: "{{ patroni_superuser_password }}"
   register: pg_current_version
   changed_when: false
   when:
@@ -70,8 +74,10 @@
 # for compatibility with Postgres 9.x
 - name: "[Pre-Check] Check the current version of PostgreSQL"
   ansible.builtin.command: >-
-    {{ pg_old_bindir }}/psql -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc
+    {{ pg_old_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc
     "select substring(setting from '^[0-9]+\.[0-9]+') from pg_settings where name = 'server_version'"
+  environment:
+    PGPASSWORD: "{{ patroni_superuser_password }}"
   register: pg_current_version_9x
   changed_when: false
   when:
@@ -109,8 +115,10 @@
 # which will later be cleaned up before executing initdb for a new version of PostgreSQL
 - name: "[Pre-Check] Ensure new data directory is different from the current one"
   ansible.builtin.command: >-
-    {{ pg_old_bindir }}/psql -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc
+    {{ pg_old_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc
     "show data_directory"
+  environment:
+    PGPASSWORD: "{{ patroni_superuser_password }}"
   changed_when: false
   register: pg_current_datadir
   when:
@@ -137,8 +145,10 @@
 
 - name: "[Pre-Check] Make sure that physical replication is active"
   ansible.builtin.command: >-
-    {{ pg_old_bindir }}/psql -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc
+    {{ pg_old_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc
     "select count(*) from pg_stat_replication where application_name != 'pg_basebackup'"
+  environment:
+    PGPASSWORD: "{{ patroni_superuser_password }}"
   register: pg_replication_state
   changed_when: false
   when:
@@ -154,10 +164,12 @@
 
 - name: "[Pre-Check] Make sure there is no high replication lag (more than {{ max_replication_lag_bytes | human_readable }})"
   ansible.builtin.command: >-
-    {{ pg_old_bindir }}/psql -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc
+    {{ pg_old_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc
     "select pg_wal_lsn_diff(pg_current_wal_lsn(),replay_lsn) as pg_lag_bytes
       from pg_stat_replication
       order by pg_lag_bytes desc limit 1"
+  environment:
+    PGPASSWORD: "{{ patroni_superuser_password }}"
   register: pg_lag_bytes
   changed_when: false
   failed_when: false
@@ -181,10 +193,12 @@
 # for compatibility with Postgres 9.x
 - name: "[Pre-Check] Make sure there is no high replication lag (more than {{ max_replication_lag_bytes | human_readable }})"
   ansible.builtin.command: >-
-    {{ pg_old_bindir }}/psql -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc
+    {{ pg_old_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc
     "select pg_xlog_location_diff(pg_current_xlog_location(),replay_location) as pg_lag_bytes
       from pg_stat_replication
       order by pg_lag_bytes desc limit 1"
+  environment:
+    PGPASSWORD: "{{ patroni_superuser_password }}"
   register: pg_lag_bytes_9x
   changed_when: false
   failed_when: false
@@ -207,7 +221,7 @@
 
 - name: "[Pre-Check] Make sure there are no long-running transactions (more than {{ max_transaction_sec }} seconds)"
   ansible.builtin.command: >-
-    {{ pg_old_bindir }}/psql -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc
+    {{ pg_old_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc
     "select pid, usename, client_addr, clock_timestamp() - xact_start as xact_age,
       state, wait_event_type ||':'|| wait_event as wait_events,
       left(regexp_replace(query, E'[ \\t\\n\\r]+', ' ', 'g'),100) as query
@@ -215,6 +229,8 @@
       where clock_timestamp() - xact_start > '{{ max_transaction_sec }} seconds'::interval
       and backend_type = 'client backend' and pid <> pg_backend_pid()
       order by xact_age desc limit 10"
+  environment:
+    PGPASSWORD: "{{ patroni_superuser_password }}"
   register: pg_long_transactions
   changed_when: false
   failed_when: false
@@ -240,12 +256,14 @@
 # for compatibility with Postgres 9.x
 - name: "[Pre-Check] Make sure there are no long-running transactions (more than {{ max_transaction_sec }} seconds)"
   ansible.builtin.command: >-
-    {{ pg_old_bindir }}/psql -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc
+    {{ pg_old_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc
     "select pid, usename, client_addr, clock_timestamp() - xact_start as xact_age,
       state, left(regexp_replace(query, E'[ \\t\\n\\r]+', ' ', 'g'),100) as query
       from pg_stat_activity
       where clock_timestamp() - xact_start > '{{ max_transaction_sec }} seconds'::interval
       order by xact_age desc limit 10"
+  environment:
+    PGPASSWORD: "{{ patroni_superuser_password }}"
   register: pg_long_transactions_9x
   changed_when: false
   failed_when: false
@@ -330,10 +348,12 @@
 # Tablespaces
 - name: "[Pre-Check] Check if PostgreSQL tablespaces exist"
   ansible.builtin.command: >-
-    {{ pg_old_bindir }}/psql -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc
+    {{ pg_old_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc
     "select pg_tablespace_location(oid) as tablespace_location
       from pg_tablespace
       where spcname not in ('pg_default','pg_global')"
+  environment:
+    PGPASSWORD: "{{ patroni_superuser_password }}"
   register: tablespace_location
   changed_when: false
   when:

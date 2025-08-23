@@ -1,9 +1,9 @@
 ---
-name: scheduled PostgreSQL (Ubuntu 22.04)
+name: scheduled PostgreSQL (Debian 13)
 
 on:
   schedule:
-    - cron: "30 0 * * *"
+    - cron: "15 0 * * *"
 
 jobs:
   test:
@@ -29,4 +29,4 @@ jobs:
         env:
           PY_COLORS: "1"
           ANSIBLE_FORCE_COLOR: "1"
-          IMAGE_DISTRO: ubuntu2204
+          IMAGE_DISTRO: debian13

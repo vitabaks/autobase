@@ -1,0 +1,25 @@
+---
+# https://www.postgresql.org/docs/current/kernel-resources.html#SYSTEMD-REMOVEIPC
+#
+# Configure systemd RemoveIPC=no to prevent errors like:
+# WARNING: could not remove shared memory segment "/PostgreSQL.1450751626": No such file or directory
+# FATAL: could not open shared memory segment "/PostgreSQL.3317458760": No such file or directory
+
+- name: Ensure RemoveIPC is disabled (RemoveIPC=no in logind.conf)
+  community.general.ini_file:
+    path: /etc/systemd/logind.conf
+    section: Login
+    option: RemoveIPC
+    value: "no"
+    create: true
+    backup: true
+  register: removeipc_result
+
+- name: Restart systemd-logind service
+  ansible.builtin.systemd:
+    name: systemd-logind
+    masked: false
+    state: restarted
+  when:
+    - removeipc_result.changed
+    - ansible_service_mgr == "systemd"
