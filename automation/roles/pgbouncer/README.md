@@ -12,58 +12,69 @@ This role installs and configures [PgBouncer](https://www.pgbouncer.org/), a lig
 
 ## Role Variables
 
+### Core Configuration
+
 | Variable | Default | Description |
 |----------|---------|-------------|
+| `pgbouncer_install` | `true` | Enable or disable PgBouncer installation and configuration |
+| `pgbouncer_listen_addr` | `"0.0.0.0"` | IP address for PgBouncer to bind to |
 | `pgbouncer_listen_port` | `6432` | Port for PgBouncer to listen on |
-| `pgbouncer_listen_addr` | `"*"` | IP address for PgBouncer to bind to |
-| `pgbouncer_max_client_conn` | `100` | Maximum number of client connections |
-| `pgbouncer_default_pool_size` | `20` | Default pool size per database |
-| `pgbouncer_min_pool_size` | `5` | Minimum pool size per database |
-| `pgbouncer_reserve_pool_size` | `5` | Reserve pool size for emergency |
-| `pgbouncer_processes` | `1` | Number of PgBouncer processes to run |
+| `pgbouncer_processes` | `1` | Number of PgBouncer processes (uses SO_REUSEPORT for multiple) |
 | `pgbouncer_conf_dir` | `"/etc/pgbouncer"` | PgBouncer configuration directory |
 | `pgbouncer_log_dir` | `"/var/log/pgbouncer"` | PgBouncer log directory |
-| `pgbouncer_pid_file` | `"/var/run/pgbouncer/pgbouncer.pid"` | PID file location |
+
+### Connection Management
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `pgbouncer_max_client_conn` | `100000` | Maximum number of client connections |
+| `pgbouncer_max_db_connections` | `10000` | Maximum number of database connections |
+| `pgbouncer_default_pool_size` | `100` | Default pool size per database |
+| `pgbouncer_default_pool_mode` | `"session"` | Default pooling mode (`session`, `transaction`, `statement`) |
+| `pgbouncer_query_wait_timeout` | `120` | Maximum time queries are allowed to spend waiting for execution |
+| `pgbouncer_max_prepared_statements` | `1024` | Maximum number of prepared statements per connection |
+
+### Authentication Configuration
+
+| Variable | Default | Description |
+|----------|---------|-------------|
 | `pgbouncer_auth_type` | `"md5"` | Authentication method (`md5`, `plain`, `cert`, `pam`) |
-| `pgbouncer_auth_file` | `"/etc/pgbouncer/userlist.txt"` | User authentication file |
-| `pgbouncer_admin_users` | `["postgres"]` | List of admin users |
-| `pgbouncer_stats_users` | `["postgres"]` | List of users who can view statistics |
+| `pgbouncer_auth_user` | `true` | Use auth_user function for authentication |
+| `pgbouncer_auth_username` | `"pgbouncer"` | Username for auth_user queries |
+| `pgbouncer_auth_password` | `""` | Password for auth_user (auto-generated if empty) |
+| `pgbouncer_auth_dbname` | `"postgres"` | Database name for auth_user queries |
+| `pgbouncer_admin_users` | `"{{ patroni_superuser_username }}"` | Comma-separated list of admin users |
+| `pgbouncer_stats_users` | `"{{ patroni_superuser_username }}"` | Comma-separated list of users who can view statistics |
 
-### Connection Pooling
+### Advanced Configuration
 
-```yaml
-# Pool modes: session, transaction, statement
-pgbouncer_pool_mode: "transaction"
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `pgbouncer_ignore_startup_parameters` | `"extra_float_digits,geqo,search_path"` | Comma-separated list of parameters to ignore |
 
-# Connection timeouts (in seconds)
-pgbouncer_server_connect_timeout: 15
-pgbouncer_server_login_retry: 15
-pgbouncer_client_login_timeout: 60
-pgbouncer_client_idle_timeout: 0
-pgbouncer_server_idle_timeout: 600
-pgbouncer_server_lifetime: 3600
-```
+### TLS Configuration
 
-### Database Configuration (from common role)
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `pgbouncer_tls_dir` | `"{{ tls_dir }}"` | TLS certificate directory |
+| `pgbouncer_client_tls_sslmode` | `"require"/"disable"` | Client TLS mode (based on TLS settings) |
+| `pgbouncer_client_tls_key_file` | `"{{ tls_privatekey }}"` | Client TLS private key file |
+| `pgbouncer_client_tls_cert_file` | `"{{ tls_cert }}"` | Client TLS certificate file |
+| `pgbouncer_client_tls_ca_file` | `"{{ tls_ca_cert }}"` | Client TLS CA certificate file |
+| `pgbouncer_client_tls_protocols` | `"secure"` | Client TLS protocols (tlsv1.2, tlsv1.3) |
+| `pgbouncer_client_tls_ciphers` | `"secure"` | Client TLS cipher suites |
+| `pgbouncer_server_tls_sslmode` | `"require"/"disable"` | Server TLS mode (based on TLS settings) |
+| `pgbouncer_server_tls_key_file` | `"{{ tls_privatekey }}"` | Server TLS private key file |
+| `pgbouncer_server_tls_cert_file` | `"{{ tls_cert }}"` | Server TLS certificate file |
+| `pgbouncer_server_tls_ca_file` | `"{{ tls_ca_cert }}"` | Server TLS CA certificate file |
+| `pgbouncer_server_tls_protocols` | `"secure"` | Server TLS protocols (tlsv1.2, tlsv1.3) |
+| `pgbouncer_server_tls_ciphers` | `"secure"` | Server TLS cipher suites |
 
-```yaml
-# PostgreSQL connection details
-postgresql_port: 5432
-patroni_superuser_username: "postgres"
-patroni_superuser_password: ""
+### Pool Configuration
 
-# Databases to configure in PgBouncer
-pgbouncer_databases: []
-  # Configured automatically based on postgresql_databases
-```
-
-## Dependencies
-
-```yaml
-dependencies:
-  - role: vitabaks.autobase.common
-```
-
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `pgbouncer_pools` | `[]` | List of database pool configurations (auto-configured from `postgresql_databases`) |
 
 ## Dependencies
 
