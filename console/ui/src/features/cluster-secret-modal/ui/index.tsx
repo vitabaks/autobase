@@ -119,10 +119,11 @@ const ClusterSecretModal: FC<ClusterSecretModalProps> = ({ isClusterFormDisabled
   return (
     <Stack direction="row" gap="8px" justifyContent="flex-start" alignItems="center">
       <Button
-        disabled={isClusterFormDisabled}
-        loading={isSubmitting || addSecretTriggerState.isLoading || addClusterTriggerState.isLoading}
+        disabled={isClusterFormDisabled || isSubmitting || addSecretTriggerState.isLoading || addClusterTriggerState.isLoading}
         onClick={handleModalOpenState(true)}
-        variant="contained">
+        variant="contained"
+        startIcon={isSubmitting || addSecretTriggerState.isLoading || addClusterTriggerState.isLoading ? <CircularProgress size={16} /> : undefined}
+      >
         {t('createCluster', { ns: 'clusters' })}
       </Button>
       <Box>
@@ -199,12 +200,12 @@ const ClusterSecretModal: FC<ClusterSecretModalProps> = ({ isClusterFormDisabled
                     </>
                   )}
                   <Button
-                    loading={isSubmitting || addSecretTriggerState.isLoading || addClusterTriggerState.isLoading}
-                    disabled={!isValid || !isDirty}
+                    disabled={!isValid || !isDirty || isSubmitting || addSecretTriggerState.isLoading || addClusterTriggerState.isLoading}
                     variant="contained"
                     type="submit"
-                    loadingIndicator={<CircularProgress size={24} />}
-                    fullWidth={false}>
+                    fullWidth={false}
+                    startIcon={isSubmitting || addSecretTriggerState.isLoading || addClusterTriggerState.isLoading ? <CircularProgress size={16} /> : undefined}
+                  >
                     {t('createCluster', { ns: 'clusters' })}
                   </Button>
                 </Stack>

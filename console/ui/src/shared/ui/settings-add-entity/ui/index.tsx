@@ -103,9 +103,9 @@ const SettingsAddEntity: FC<SettingsAddEntityProps> = ({
               <Button
                 type="submit"
                 variant="contained"
-                disabled={!isValid}
-                loadingIndicator={<CircularProgress size={24} />}
-                loading={isSubmitting || isLoading}>
+                disabled={!isValid || isSubmitting || isLoading}
+                startIcon={isSubmitting || isLoading ? <CircularProgress size={16} /> : undefined}
+              >
                 {submitButtonLabel ?? t('add')}
               </Button>
             </Stack>

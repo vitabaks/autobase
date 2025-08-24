@@ -1,7 +1,7 @@
 import { FC, useEffect, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { SettingsFormValues } from '@entities/settings-proxy-block/model/types.ts';
-import { Box, Stack, Button } from '@mui/material';
+import { Box, Stack, Button, CircularProgress } from '@mui/material';
 import SettingsProxyBlock from '@entities/settings-proxy-block';
 import { useTranslation } from 'react-i18next';
 import { SETTINGS_FORM_FIELDS_NAMES } from '@entities/settings-proxy-block/model/constants.ts';
@@ -82,8 +82,9 @@ const SettingsForm: FC = () => {
               <Button
                 type="submit"
                 variant="contained"
-                disabled={!isDirty || !isValid}
-                loading={postSettingsTriggerState.isLoading || patchSettingsTriggerState.isLoading}>
+                disabled={!isDirty || !isValid || postSettingsTriggerState.isLoading || patchSettingsTriggerState.isLoading}
+                startIcon={postSettingsTriggerState.isLoading || patchSettingsTriggerState.isLoading ? <CircularProgress size={16} /> : undefined}
+              >
                 {t('save')}
               </Button>
             </Stack>

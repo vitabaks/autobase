@@ -57,8 +57,9 @@ const ClustersTableRemoveButton: FC<ClustersTableRemoveButtonProps> = ({ cluster
           <Button
             type="submit"
             onClick={handleButtonClick}
-            loadingIndicator={<CircularProgress size={24} />}
-            loading={removeClusterTriggerState.isLoading}>
+            disabled={removeClusterTriggerState.isLoading}
+            startIcon={removeClusterTriggerState.isLoading ? <CircularProgress size={16} /> : undefined}
+          >
             {t('delete', { ns: 'shared' })}
           </Button>
         </DialogActions>

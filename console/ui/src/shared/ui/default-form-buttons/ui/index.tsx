@@ -32,10 +32,10 @@ const DefaultFormButtons: FC<DefaultFormButtonsProps> = ({
       <StyledStandardButtons>
         <Button
           variant="contained"
-          disabled={isDisabled}
-          loading={isSubmitting}
-          loadingIndicator={<CircularProgress size={24} />}
-          type="submit">
+          disabled={isDisabled || isSubmitting}
+          type="submit"
+          startIcon={isSubmitting ? <CircularProgress size={16} /> : undefined}
+        >
           <span>{submitButtonLabel ?? t('save')}</span>
         </Button>
         <Button variant="outlined" onClick={cancelHandler} type="button">
