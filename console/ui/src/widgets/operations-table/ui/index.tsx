@@ -18,6 +18,7 @@ import { useGetOperationsTableData } from '@widgets/operations-table/lib/hooks.t
 import { manageSortingOrder } from '@shared/lib/functions.ts';
 import { useQueryPolling } from '@shared/lib/hooks.tsx';
 import DefaultTable from '@shared/ui/default-table';
+import RowActionsMenu from '@features/row-actions-menu/ui';
 
 const OperationsTable: FC = () => {
   const { t, i18n } = useTranslation(['operations', 'shared']);
@@ -76,7 +77,7 @@ const OperationsTable: FC = () => {
       pagination,
       sorting,
     },
-    renderRowActionMenuItems: ({ closeMenu, row }) => <OperationsTableRowActions closeMenu={closeMenu} row={row} />,
+    renderRowActions: ({ row }) => <RowActionsMenu row={row} ActionsComponent={OperationsTableRowActions} />,
   };
 
   return (
