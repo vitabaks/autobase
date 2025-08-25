@@ -12,6 +12,7 @@ import { ClusterInfo } from '@shared/api/api/clusters.ts';
 import DefaultTable from '@shared/ui/default-table';
 import { Stack, Typography } from '@mui/material';
 import ClustersOverviewTableRowActions from '@features/clusters-overview-table-row-actions';
+import RowActionsMenu from '@features/row-actions-menu/ui';
 
 const ClusterOverviewTable: FC<ClusterOverviewTableProps> = ({ clusterName = '', items, isLoading }) => {
   const { t, i18n } = useTranslation('clusters');
@@ -35,9 +36,7 @@ const ClusterOverviewTable: FC<ClusterOverviewTableProps> = ({ clusterName = '',
         [CLUSTER_OVERVIEW_TABLE_COLUMN_NAMES.TAGS]: false,
       },
     },
-    renderRowActionMenuItems: ({ row, closeMenu }) => (
-      <ClustersOverviewTableRowActions row={row} closeMenu={closeMenu} />
-    ),
+    renderRowActions: ({ row }) => <RowActionsMenu row={row} ActionsComponent={ClustersOverviewTableRowActions} />,
   };
 
   return (

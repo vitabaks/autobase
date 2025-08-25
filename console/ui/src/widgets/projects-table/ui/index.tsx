@@ -9,6 +9,7 @@ import { useGetProjectsQuery } from '@shared/api/api/projects.ts';
 import ProjectsTableButtons from '@widgets/projects-table/ui/ProjectsTableButtons.tsx';
 import ProjectsTableRowActions from '@features/pojects-table-row-actions';
 import DefaultTable from '@shared/ui/default-table';
+import RowActionsMenu from '@features/row-actions-menu/ui';
 
 const ProjectsTable: FC = () => {
   const { t, i18n } = useTranslation(['settings', 'shared']);
@@ -44,7 +45,7 @@ const ProjectsTable: FC = () => {
       isLoading: projectsList.isFetching,
       pagination,
     },
-    renderRowActionMenuItems: ({ closeMenu, row }) => <ProjectsTableRowActions closeMenu={closeMenu} row={row} />,
+    renderRowActions: ({ row }) => <RowActionsMenu row={row} ActionsComponent={ProjectsTableRowActions} />,
   };
 
   return (
