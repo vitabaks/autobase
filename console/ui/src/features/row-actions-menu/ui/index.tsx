@@ -28,9 +28,7 @@ const RowActionsMenu: FC<RowActionsMenuProps> = ({ row, ActionsComponent }) => {
         anchorEl={anchorEl}
         open={!!anchorEl}
         onClose={handleCloseMenu}
-        slotProps={{
-          list: {
-            'aria-labelledby': 'basic-button',
+            'aria-labelledby': 'row-actions-menu-button',
           },
         }}>
         <ActionsComponent row={row} closeMenu={handleCloseMenu} />
