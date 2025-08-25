@@ -1,7 +1,7 @@
 import { FC, useEffect, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { SettingsFormValues } from '@entities/settings-proxy-block/model/types.ts';
-import { Box, Stack } from '@mui/material';
+import { Box, Stack, Button, CircularProgress } from '@mui/material';
 import SettingsProxyBlock from '@entities/settings-proxy-block';
 import { useTranslation } from 'react-i18next';
 import { SETTINGS_FORM_FIELDS_NAMES } from '@entities/settings-proxy-block/model/constants.ts';
@@ -10,7 +10,6 @@ import {
   usePatchSettingsByNameMutation,
   usePostSettingsMutation,
 } from '@shared/api/api/settings.ts';
-import { LoadingButton } from '@mui/lab';
 import { toast } from 'react-toastify';
 import { handleRequestErrorCatch } from '@shared/lib/functions.ts';
 import Spinner from '@shared/ui/spinner';
@@ -80,13 +79,14 @@ const SettingsForm: FC = () => {
           <form onSubmit={methods.handleSubmit(onSubmit)}>
             <Stack direction="column" gap={2} alignItems="flex-start" justifyContent="center">
               <SettingsProxyBlock />
-              <LoadingButton
+              <Button
                 type="submit"
                 variant="contained"
-                disabled={!isDirty || !isValid}
-                loading={postSettingsTriggerState.isLoading || patchSettingsTriggerState.isLoading}>
+                disabled={!isDirty || !isValid || postSettingsTriggerState.isLoading || patchSettingsTriggerState.isLoading}
+                startIcon={postSettingsTriggerState.isLoading || patchSettingsTriggerState.isLoading ? <CircularProgress size={16} /> : undefined}
+              >
                 {t('save')}
-              </LoadingButton>
+              </Button>
             </Stack>
           </form>
         </FormProvider>

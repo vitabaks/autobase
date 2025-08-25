@@ -18,7 +18,6 @@ import { generateAbsoluteRouterPath, handleRequestErrorCatch } from '@shared/lib
 import RouterPaths from '@app/router/routerPathsConfig';
 import { useNavigate } from 'react-router-dom';
 import { ClusterSecretModalFormValues, ClusterSecretModalProps } from '@features/cluster-secret-modal/model/types.ts';
-import { LoadingButton } from '@mui/lab';
 import { useGetSecretsQuery, usePostSecretsMutation } from '@shared/api/api/secrets.ts';
 import { CLUSTER_SECRET_MODAL_FORM_FIELD_NAMES } from '@features/cluster-secret-modal/model/constants.ts';
 import { useAppSelector } from '@app/redux/store/hooks.ts';
@@ -119,13 +118,14 @@ const ClusterSecretModal: FC<ClusterSecretModalProps> = ({ isClusterFormDisabled
 
   return (
     <Stack direction="row" gap="8px" justifyContent="flex-start" alignItems="center">
-      <LoadingButton
-        disabled={isClusterFormDisabled}
-        loading={isSubmitting || addSecretTriggerState.isLoading || addClusterTriggerState.isLoading}
+      <Button
+        disabled={isClusterFormDisabled || isSubmitting || addSecretTriggerState.isLoading || addClusterTriggerState.isLoading}
         onClick={handleModalOpenState(true)}
-        variant="contained">
+        variant="contained"
+        startIcon={isSubmitting || addSecretTriggerState.isLoading || addClusterTriggerState.isLoading ? <CircularProgress size={16} /> : undefined}
+      >
         {t('createCluster', { ns: 'clusters' })}
-      </LoadingButton>
+      </Button>
       <Box>
         <Modal open={isModalOpen} onClose={handleModalOpenState(false)}>
           <FormProvider {...methods}>
@@ -199,15 +199,15 @@ const ClusterSecretModal: FC<ClusterSecretModalProps> = ({ isClusterFormDisabled
                       />
                     </>
                   )}
-                  <LoadingButton
-                    loading={isSubmitting || addSecretTriggerState.isLoading || addClusterTriggerState.isLoading}
-                    disabled={!isValid || !isDirty}
+                  <Button
+                    disabled={!isValid || !isDirty || isSubmitting || addSecretTriggerState.isLoading || addClusterTriggerState.isLoading}
                     variant="contained"
                     type="submit"
-                    loadingIndicator={<CircularProgress size={24} />}
-                    fullWidth={false}>
+                    fullWidth={false}
+                    startIcon={isSubmitting || addSecretTriggerState.isLoading || addClusterTriggerState.isLoading ? <CircularProgress size={16} /> : undefined}
+                  >
                     {t('createCluster', { ns: 'clusters' })}
-                  </LoadingButton>
+                  </Button>
                 </Stack>
               </Card>
             </form>

@@ -17,6 +17,7 @@ import { getClusterTableColumns } from '@widgets/clusters-table/lib/functions.ts
 import { manageSortingOrder } from '@shared/lib/functions.ts';
 import { useQueryPolling } from '@shared/lib/hooks.tsx';
 import DefaultTable from '@shared/ui/default-table';
+import RowActionsMenu from '@features/row-actions-menu/ui';
 
 const ClustersTable: FC = () => {
   const { t, i18n } = useTranslation('clusters');
@@ -84,7 +85,7 @@ const ClustersTable: FC = () => {
         [CLUSTER_TABLE_COLUMN_NAMES.LOCATION]: false,
       },
     },
-    renderRowActionMenuItems: ({ closeMenu, row }) => <ClustersTableRowActions closeMenu={closeMenu} row={row} />,
+    renderRowActions: ({ row }) => <RowActionsMenu row={row} ActionsComponent={ClustersTableRowActions} />,
     renderEmptyRowsFallback: () => <ClustersEmptyRowsFallback />,
   };
 

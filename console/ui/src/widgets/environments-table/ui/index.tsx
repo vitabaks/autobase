@@ -9,6 +9,7 @@ import { useGetEnvironmentsQuery } from '@shared/api/api/environments.ts';
 import EnvironmentsTableButtons from '@widgets/environments-table/ui/EnvironmentsTableButtons.tsx';
 import EnvironmentsTableRowActions from '@features/environments-table-row-actions/ui';
 import DefaultTable from '@shared/ui/default-table';
+import RowActionsMenu from '@features/row-actions-menu/ui';
 
 const EnvironmentsTable: FC = () => {
   const { t, i18n } = useTranslation(['settings', 'shared']);
@@ -44,7 +45,7 @@ const EnvironmentsTable: FC = () => {
       isLoading: environmentsList.isFetching,
       pagination,
     },
-    renderRowActionMenuItems: ({ closeMenu, row }) => <EnvironmentsTableRowActions closeMenu={closeMenu} row={row} />,
+    renderRowActions: ({ row }) => <RowActionsMenu row={row} ActionsComponent={EnvironmentsTableRowActions} />,
   };
 
   return (

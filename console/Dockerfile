@@ -6,7 +6,7 @@ COPY console/service/ .
 
 RUN make build_in_docker
 
-FROM node:20-bookworm AS ui-builder
+FROM node:22-bookworm AS ui-builder
 WORKDIR /usr/src/pg-console
 
 COPY console/ui/ .

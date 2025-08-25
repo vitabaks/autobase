@@ -9,7 +9,6 @@ import { PROVIDERS } from '@shared/config/constants.ts';
 import { useAppSelector } from '@app/redux/store/hooks.ts';
 import { selectCurrentProject } from '@app/redux/slices/projectSlice/projectSelectors.ts';
 import { usePostSecretsMutation } from '@shared/api/api/secrets.ts';
-import { LoadingButton } from '@mui/lab';
 import { AUTHENTICATION_METHODS } from '@shared/model/constants.ts';
 import { toast } from 'react-toastify';
 import SecretFormBlock from '@entities/secret-form-block/ui';
@@ -127,15 +126,15 @@ const SettingsAddSecret: React.FC = () => {
                 {watchType ? (
                   <Stack gap={'16px'} alignItems="flex-start">
                     <SecretFormBlock secretType={watchType} isAdditionalInfoDisplayed />
-                    <LoadingButton
+                    <Button
                       type="submit"
                       variant="contained"
-                      disabled={!isValid}
+                      disabled={!isValid || isSubmitting || postSecretTriggerState.isLoading}
                       fullWidth={false}
-                      loadingIndicator={<CircularProgress size={24} />}
-                      loading={isSubmitting || postSecretTriggerState.isLoading}>
+                      startIcon={isSubmitting || postSecretTriggerState.isLoading ? <CircularProgress size={16} /> : undefined}
+                    >
                       {t('addSecret')}
-                    </LoadingButton>
+                    </Button>
                   </Stack>
                 ) : null}
               </Stack>

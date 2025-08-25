@@ -41,10 +41,8 @@ export type RootState = ReturnType<typeof rootReducer>;
 export const makeStore = (preloadedState?: Partial<RootState>) => {
   const store = configureStore({
     reducer: rootReducer,
-    // Adding the api middleware enables caching, invalidation, polling,
-    // and other useful features of `rtk-query`.
     middleware: (getDefaultMiddleware) => {
-      return getDefaultMiddleware().concat(
+      const apiMiddlewares = [
         baseApi.middleware,
         clustersApi.middleware,
         environmentsApi.middleware,
@@ -53,8 +51,11 @@ export const makeStore = (preloadedState?: Partial<RootState>) => {
         secretsApi.middleware,
         settingsApi.middleware,
         otherApi.middleware,
-        rtkQueryErrorLogger,
+      ];
+      const uniqueApiMiddlewares = apiMiddlewares.filter(
+        (mw, idx, arr) => arr.indexOf(mw) === idx,
       );
+      return getDefaultMiddleware().concat(uniqueApiMiddlewares, rtkQueryErrorLogger);
     },
     preloadedState,
   });
