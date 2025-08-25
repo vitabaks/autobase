@@ -22,7 +22,7 @@ const OverviewCluster: FC = () => {
     <Spinner />
   ) : (
     <Grid container spacing={2} padding={1}>
-      <Grid item xs={12}>
+      <Grid item size={{ xs: 12 }}>
         <ClusterOverviewTable
           clusterName={cluster.data?.name}
           items={cluster.data?.servers ?? []}
@@ -30,10 +30,10 @@ const OverviewCluster: FC = () => {
           refetch={cluster.refetch}
         />
       </Grid>
-      <Grid item xs={6}>
+      <Grid item size={{ xs: 6 }}>
         <ConnectionInfo connectionInfo={connectionInfo} />
       </Grid>
-      <Grid item xs={6}>
+      <Grid item size={{ xs: 6 }}>
         <ClusterInfo
           postgresVersion={cluster.data?.postgres_version}
           clusterName={cluster.data?.name}
