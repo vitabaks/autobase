@@ -21,23 +21,22 @@ const Page404 = lazy(() => import('@pages/404'));
 const Router: FC = () => {
   const routes = createRoutesFromElements(
     <Route
-      path=""
+      path="/"
       element={
         <Suspense fallback={<Spinner />}>
           <Outlet />
         </Suspense>
       }>
       <Route path={RouterPaths.login.absolutePath} element={<Login />} />
-      <Route path="" element={<PrivateRouteWrapper />}>
-        <Route path="" element={<Layout />}>
+      <Route path={RouterPaths.notFound.absolutePath} element={<Page404 />} />
+      <Route element={<PrivateRouteWrapper />}>
+        <Route element={<Layout />}>
           {ClustersRoutes()}
           {OperationsRoutes()}
           {SettingsRoutes()}
         </Route>
       </Route>
-      <Route path="*" element={<Navigate to={RouterPaths.notFound.absolutePath} replace />} />
-      <Route path={RouterPaths.notFound.absolutePath} element={<Page404 />} />
-      {/* anything that starts with "/" i.e. "/any-page" */}
+      <Route path="*" element={<Navigate to={`/${RouterPaths.notFound.absolutePath}`} replace />} />
     </Route>,
   );
 
