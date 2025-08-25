@@ -21,10 +21,16 @@ const RowActionsMenu: FC<RowActionsMenuProps> = ({ row, ActionsComponent }) => {
 
   return (
     <>
-      <IconButton onClick={handleOpenMenu}>
+      <IconButton
+        id="row-actions-menu-button"
+        aria-controls={anchorEl ? 'row-actions-menu' : undefined}
+        aria-haspopup="true"
+        aria-expanded={anchorEl ? 'true' : undefined}
+        onClick={handleOpenMenu}>
         <MoreHorizIcon />
       </IconButton>
       <Menu
+        id="row-actions-menu"
         anchorEl={anchorEl}
         open={!!anchorEl}
         onClose={handleCloseMenu}
