@@ -539,7 +539,9 @@
       become: true
       become_user: postgres
       ansible.builtin.command: >
-        {{ postgresql_bin_dir }}/psql -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc "CHECKPOINT"
+        {{ postgresql_bin_dir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc "CHECKPOINT"
+      environment:
+        PGPASSWORD: "{{ patroni_superuser_password }}"
       register: checkpoint_result
       until: checkpoint_result.rc == 0
       retries: 300
@@ -695,8 +697,10 @@
 
         - name: Wait for PostgreSQL recovery to complete (WAL apply)
           ansible.builtin.command: >-
-            {{ postgresql_bin_dir }}/psql -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres
+            {{ postgresql_bin_dir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres
             -tAXc "select pg_is_in_recovery()"
+          environment:
+            PGPASSWORD: "{{ patroni_superuser_password }}"
           register: pg_is_in_recovery
           until: pg_is_in_recovery.stdout == "f"
           retries: "{{ (cluster_restore_timeout | default(86400)) | int // 30 }}" # timeout 24 hours
@@ -811,8 +815,10 @@
       become: true
       become_user: postgres
       ansible.builtin.command: >-
-        {{ postgresql_bin_dir }}/psql -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc
+        {{ postgresql_bin_dir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc
         "select pg_is_in_recovery()"
+      environment:
+        PGPASSWORD: "{{ patroni_superuser_password }}"
       register: pg_is_in_recovery
       until: pg_is_in_recovery.stdout == "f"
       retries: "{{ (cluster_restore_timeout | default(86400)) | int // 30 }}" # timeout 24 hours
@@ -888,8 +894,10 @@
 - block: # PITR (custom bootstrap) - password reset for PostgreSQL users
     - name: Make sure the Master is not in recovery mode
       ansible.builtin.command: >-
-        {{ postgresql_bin_dir }}/psql -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc
+        {{ postgresql_bin_dir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc
         "select pg_is_in_recovery()"
+      environment:
+        PGPASSWORD: "{{ patroni_superuser_password }}"
       register: pg_is_in_recovery
       until: pg_is_in_recovery.stdout == "f"
       retries: "{{ (cluster_restore_timeout | default(86400)) | int // 30 }}" # timeout 24 hours

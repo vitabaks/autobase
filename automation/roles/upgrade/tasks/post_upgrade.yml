@@ -1,8 +1,10 @@
 ---
 - name: Ensure the current data directory is the new data directory
   ansible.builtin.command: >-
-    {{ pg_new_bindir }}/psql -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc
+    {{ pg_new_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc
     "show data_directory"
+  environment:
+    PGPASSWORD: "{{ patroni_superuser_password }}"
   register: pg_current_datadir
   until: pg_current_datadir is success
   delay: 5
@@ -215,8 +217,10 @@
 - name: Check the current PostgreSQL version
   run_once: true
   ansible.builtin.command: >-
-    {{ pg_new_bindir }}/psql -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc
+    {{ pg_new_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc
     "select current_setting('server_version')"
+  environment:
+    PGPASSWORD: "{{ patroni_superuser_password }}"
   register: postgres_version
   until: postgres_version is success
   delay: 5

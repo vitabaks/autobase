@@ -218,10 +218,14 @@
 
     - name: Check the current PostgreSQL version
       run_once: true # noqa run-once
-      ansible.builtin.command: |
-        psql -p {{ postgresql_port | default(5432) }} \
-          -U {{ patroni_superuser_username | default('postgres') }} \
-          -d postgres -tAXc "select current_setting('server_version')"
+      ansible.builtin.command: >
+        psql -h 127.0.0.1
+        -p {{ postgresql_port | default(5432) }}
+        -U {{ patroni_superuser_username | default('postgres') }}
+        -d postgres
+        -tAXc "select current_setting('server_version')"
+      environment:
+        PGPASSWORD: "{{ patroni_superuser_password | default('') }}"
       register: postgres_version
       changed_when: false
       check_mode: false

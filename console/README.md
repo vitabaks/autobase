@@ -61,13 +61,21 @@ The Console stack consists of the following core components:
 5. Configure your `.env`:
 
    ```sh
-   DOMAIN=autobase.your-domain.com  # Set your domain
-   EMAIL=admin@your-domain.com      # Required for Caddy SSL
+   DOMAIN=autobase.your-domain.com  # Set your domain (required for Caddy SSL)
+   EMAIL=admin@your-domain.com      # Set your email (required for Caddy SSL)
    AUTH_TOKEN=your-secret-token     # Your authorization token
    ```
 
 6. Run Docker Compose:
+
    ```sh
+   # with Caddy proxy
+   docker compose -f docker-compose.caddy.yml up -d
+   ```
+
+	Or, without automatic handling of SSL certificates for your domain
+   ```sh
+   # without Caddy proxy
    docker compose up -d
    ```
 

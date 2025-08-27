@@ -1,7 +1,6 @@
 import React, { FC, useState } from 'react';
 import { Button, Card, CircularProgress, Modal, Stack, TextField, Typography } from '@mui/material';
 import { Controller, useForm } from 'react-hook-form';
-import { LoadingButton } from '@mui/lab';
 import AddBoxOutlinedIcon from '@mui/icons-material/AddBoxOutlined';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { AddEntityFormValues, SettingsAddEntityProps } from '@shared/ui/settings-add-entity/model/types.ts';
@@ -101,14 +100,14 @@ const SettingsAddEntity: FC<SettingsAddEntityProps> = ({
                   )}
                 />
               </Stack>
-              <LoadingButton
+              <Button
                 type="submit"
                 variant="contained"
-                disabled={!isValid}
-                loadingIndicator={<CircularProgress size={24} />}
-                loading={isSubmitting || isLoading}>
+                disabled={!isValid || isSubmitting || isLoading}
+                startIcon={isSubmitting || isLoading ? <CircularProgress size={16} /> : undefined}
+              >
                 {submitButtonLabel ?? t('add')}
-              </LoadingButton>
+              </Button>
             </Stack>
           </Card>
         </form>
