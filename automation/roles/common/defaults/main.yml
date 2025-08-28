@@ -225,7 +225,7 @@ consul_services:
 
 postgresql_version: 17 # Postgres major version
 postgresql_version_minor: "latest" # Postgres minor version (e.g. '5' for 17.5, or 'latest' for newest). Applicable only on RedHat-based distros.
-# postgresql_connect_addr: "{{ hostname }}" # Set in case you would like connections to be established by domain name, not IP.
+# postgresql_connect_addr: "{{ ansible_hostname }}" # or 'ansible_fqdn'. Set in case you would like connections to be established by domain name, not IP.
 postgresql_listen_addr: "0.0.0.0" # Listen on all interfaces. Or use "{{ bind_address }},127.0.0.1" to listen on a specific IP address.
 postgresql_port: 5432
 postgresql_encoding: "UTF8" # for bootstrap only (initdb)
