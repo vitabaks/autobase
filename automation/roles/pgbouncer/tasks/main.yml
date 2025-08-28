@@ -163,7 +163,7 @@
   tags: pgbouncer
 
 - block:
-    # for add_pgnode.yml
+    # for add_node.yml
     - name: Fetch pgbouncer.ini file from master
       run_once: true
       ansible.builtin.fetch:

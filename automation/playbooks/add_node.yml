@@ -1,5 +1,5 @@
 ---
-- name: vitabaks.autobase.add_pgnode | PostgreSQL HA Cluster Scaling (add a replica node)
+- name: vitabaks.autobase.add_node | PostgreSQL HA Cluster Scaling (add a new node)
   hosts: postgres_cluster
   become: true
   become_method: sudo
@@ -135,7 +135,7 @@
       changed_when: false
       tags: always
 
-- name: vitabaks.autobase.add_pgnode | Configure new PostgreSQL node
+- name: vitabaks.autobase.add_node | Configure new PostgreSQL node
   hosts: new_replica
   become: true
   become_method: sudo
@@ -166,7 +166,7 @@
     - role: vitabaks.autobase.copy
     - role: vitabaks.autobase.cron
 
-- name: vitabaks.autobase.add_pgnode | Configure pgBackRest
+- name: vitabaks.autobase.add_node | Configure pgBackRest
   hosts: pgbackrest:postgres_cluster
   become: true
   become_method: sudo
@@ -176,17 +176,17 @@
     - role: vitabaks.autobase.pgbackrest
       when: pgbackrest_install|bool
 
-- name: vitabaks.autobase.add_pgnode | Import etcd cluster playbook
+- name: vitabaks.autobase.add_node | Import etcd cluster playbook
   ansible.builtin.import_playbook: etcd_cluster.yml
   when: dcs_type | default('etcd') == "etcd"
   tags: etcd
 
-- name: vitabaks.autobase.add_pgnode | Import Consul playbook
+- name: vitabaks.autobase.add_node | Import Consul playbook
   ansible.builtin.import_playbook: consul_cluster.yml
   when: dcs_type | default('etcd') == "consul"
   tags: consul
 
-- name: vitabaks.autobase.add_pgnode | Add new PostgreSQL replica to the cluster
+- name: vitabaks.autobase.add_node | Add new PostgreSQL replica to the cluster
   hosts: new_replica
   become: true
   become_method: sudo

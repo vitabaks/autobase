@@ -254,7 +254,7 @@
   when: patroni_log_destination == 'logfile'
   tags: patroni, patroni_conf
 
-- block: # for add_pgnode.yml
+- block: # for add_node.yml
     - name: Fetch patroni.yml conf file from master
       run_once: true
       ansible.builtin.fetch:
@@ -965,7 +965,7 @@
   become_user: postgres
   tags: patroni, point_in_time_recovery
 
-- block: # for add_pgnode.yml
+- block: # for add_node.yml
     - name: Prepare PostgreSQL | fetch pg_hba.conf file from master
       run_once: true
       ansible.builtin.fetch:

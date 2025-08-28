@@ -57,7 +57,7 @@
   when: existing_pgcluster is not defined or not existing_pgcluster|bool
   tags: vip, vip_manager, vip_manager_conf
 
-- block: # for add_pgnode.yml
+- block: # for add_node.yml
     - name: Fetch "{{ vip_manager_conf | basename }}" conf file from master
       run_once: true
       ansible.builtin.fetch:
