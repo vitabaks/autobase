@@ -15,16 +15,12 @@ patroni_cluster_name: "postgres-cluster" # the cluster name (must be unique for 
 patroni_superuser_username: "postgres"
 patroni_superuser_password: "" # Please specify a password. If not defined, will be generated automatically during deployment.
 patroni_superuser_auth_options:
-  - { option: "sslmode", value: "{{ 'require' if tls_cert_generate | bool else 'disable' }}" }
-  - { option: "sslkey", value: "{{ tls_dir }}/{{ tls_privatekey }}" }
-  - { option: "sslcert", value: "{{ tls_dir }}/{{ tls_cert }}" }
+  - { option: "sslmode", value: "{{ 'require' if tls_cert_generate | bool else 'disable' }}" } # or 'verify-ca', 'verify-full'
   - { option: "sslrootcert", value: "{{ tls_dir }}/{{ tls_ca_cert }}" } # or 'system'
 patroni_replication_username: "replicator"
 patroni_replication_password: "" # Please specify a password. If not defined, will be generated automatically during deployment.
 patroni_replication_auth_options:
-  - { option: "sslmode", value: "{{ 'require' if tls_cert_generate | bool else 'disable' }}" }
-  - { option: "sslkey", value: "{{ tls_dir }}/{{ tls_privatekey }}" }
-  - { option: "sslcert", value: "{{ tls_dir }}/{{ tls_cert }}" }
+  - { option: "sslmode", value: "{{ 'require' if tls_cert_generate | bool else 'disable' }}" } # or 'verify-ca', 'verify-full'
   - { option: "sslrootcert", value: "{{ tls_dir }}/{{ tls_ca_cert }}" } # or 'system'
 # Note: if sslmode: verify-full, and your certificate doesn't have IP address in the SAN,
 # set also the option postgresql_connect_addr to ensure TLS certificate validation is successful.
