@@ -14,17 +14,20 @@ patroni_cluster_name: "postgres-cluster" # the cluster name (must be unique for 
 
 patroni_superuser_username: "postgres"
 patroni_superuser_password: "" # Please specify a password. If not defined, will be generated automatically during deployment.
-patroni_superuser_auth_options: [] # In case non-standard auth options are needed, such as TLS certificate validation.
-  # - { option: "sslmode", value: "verify-full" }
-  # - { option: "sslrootcert", value: "system" }
+patroni_superuser_auth_options:
+  - { option: "sslmode", value: "{{ 'require' if tls_cert_generate | bool else 'disable' }}" }
+  - { option: "sslkey", value: "{{ tls_dir }}/{{ tls_privatekey }}" }
+  - { option: "sslcert", value: "{{ tls_dir }}/{{ tls_cert }}" }
+  - { option: "sslrootcert", value: "{{ tls_dir }}/{{ tls_ca_cert }}" } # or 'system'
 patroni_replication_username: "replicator"
 patroni_replication_password: "" # Please specify a password. If not defined, will be generated automatically during deployment.
-patroni_replication_auth_options: [] # In case non-standard auth options are needed, such as TLS certificate validation.
-  # - { option: "sslmode", value: "verify-full" }
-  # - { option: "sslrootcert", value: "system" }
+patroni_replication_auth_options:
+  - { option: "sslmode", value: "{{ 'require' if tls_cert_generate | bool else 'disable' }}" }
+  - { option: "sslkey", value: "{{ tls_dir }}/{{ tls_privatekey }}" }
+  - { option: "sslcert", value: "{{ tls_dir }}/{{ tls_cert }}" }
+  - { option: "sslrootcert", value: "{{ tls_dir }}/{{ tls_ca_cert }}" } # or 'system'
 # Note: if sslmode: verify-full, and your certificate doesn't have IP address in the SAN,
-# set also the option postgresql_connect_addr to ensure TLS certificate validation is successful:
-# postgresql_connect_addr: "{{ hostname }}" # hostname is defined in the inventory.
+# set also the option postgresql_connect_addr to ensure TLS certificate validation is successful.
 
 synchronous_mode: false # or 'true' for enable synchronous database replication
 synchronous_mode_strict: false # if 'true' then block all client writes to the master, when a synchronous replica is not available
@@ -483,7 +486,7 @@ pgbouncer_pools:
 # Patroni parameters
 ############################################################
 
-# patroni_restapi_connect_addr: "{{ hostname }}" # Set if you need connection to be established by domain name, not IP.
+# patroni_restapi_connect_addr: "{{ ansible_hostname }}" # or 'ansible_fqdn'. Set if you need connection to be established by domain name, not IP.
 patroni_restapi_listen_addr: "0.0.0.0" # Listen on all interfaces. Or use "{{ bind_address }}" to listen on a specific IP address.
 patroni_restapi_port: 8008
 patroni_restapi_username: "patroni"
