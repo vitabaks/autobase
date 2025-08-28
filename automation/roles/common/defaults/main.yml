@@ -14,8 +14,17 @@ patroni_cluster_name: "postgres-cluster" # the cluster name (must be unique for 
 
 patroni_superuser_username: "postgres"
 patroni_superuser_password: "" # Please specify a password. If not defined, will be generated automatically during deployment.
+patroni_superuser_auth_options: [] # In case non-standard auth options are needed, such as TLS certificate validation.
+  # - { option: "sslmode", value: "verify-full" }
+  # - { option: "sslrootcert", value: "system" }
 patroni_replication_username: "replicator"
 patroni_replication_password: "" # Please specify a password. If not defined, will be generated automatically during deployment.
+patroni_replication_auth_options: [] # In case non-standard auth options are needed, such as TLS certificate validation.
+  # - { option: "sslmode", value: "verify-full" }
+  # - { option: "sslrootcert", value: "system" }
+# Note: if sslmode: verify-full, and your certificate doesn't have IP adress in the SAN,
+# set also the option postgresql_connect_addr to ensure TLS certificate validation is successful:
+# postgresql_connect_addr: "{{ hostname }}" # hostname is defined in the inventory.
 
 synchronous_mode: false # or 'true' for enable synchronous database replication
 synchronous_mode_strict: false # if 'true' then block all client writes to the master, when a synchronous replica is not available
