@@ -22,7 +22,7 @@ patroni_replication_password: "" # Please specify a password. If not defined, wi
 patroni_replication_auth_options: [] # In case non-standard auth options are needed, such as TLS certificate validation.
   # - { option: "sslmode", value: "verify-full" }
   # - { option: "sslrootcert", value: "system" }
-# Note: if sslmode: verify-full, and your certificate doesn't have IP adress in the SAN,
+# Note: if sslmode: verify-full, and your certificate doesn't have IP address in the SAN,
 # set also the option postgresql_connect_addr to ensure TLS certificate validation is successful:
 # postgresql_connect_addr: "{{ hostname }}" # hostname is defined in the inventory.
 
