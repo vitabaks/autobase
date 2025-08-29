@@ -87,7 +87,7 @@
         generate_tls_owner: "etcd"
         generate_tls_common_name: "etcd"
         generate_tls_dir: "{{ etcd_tls_dir | default('/etc/etcd/tls') }}"
-        tls_cert_regenerate: "{{ etcd_tls_cert_regenerate | default(cluster_scaling | d(false)) }}"  # Regenerate when adding nodes
+        tls_cert_regenerate: "{{ etcd_tls_cert_regenerate | default(cluster_scaling | default(false)) }}"  # Regenerate when adding nodes
 
     - name: Copy etcd TLS certificate, key and CA to all nodes
       ansible.builtin.include_role:

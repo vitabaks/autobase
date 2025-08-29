@@ -11,7 +11,7 @@
         generate_tls_common_name: "{{ consul_tls_common_name | default('Consul') }}"
         generate_tls_dir: "{{ consul_tls_dir | default('/etc/consul/tls') }}"
         tls_group_name: "consul_instances"
-        tls_cert_regenerate: "{{ consul_tls_cert_regenerate | default(cluster_scaling | d(false)) }}"  # Regenerate when adding nodes
+        tls_cert_regenerate: "{{ consul_tls_cert_regenerate | default(cluster_scaling | default(false)) }}"  # Regenerate when adding nodes
 
     - name: Copy Consul TLS certificate, key and CA to all nodes
       ansible.builtin.include_role:
