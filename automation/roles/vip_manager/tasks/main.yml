@@ -54,10 +54,10 @@
     group: postgres
     mode: "0644"
   notify: "restart vip-manager"
-  when: existing_pgcluster is not defined or not existing_pgcluster|bool
+  when: cluster_scaling is not defined or not cluster_scaling | bool
   tags: vip, vip_manager, vip_manager_conf
 
-- block: # for add_node.yml
+- block: # if cluster_scaling (add_node.yml)
     - name: Fetch "{{ vip_manager_conf | basename }}" conf file from master
       run_once: true
       ansible.builtin.fetch:
@@ -85,7 +85,7 @@
       loop_control:
         label: "{{ item.line }}"
       notify: "restart vip-manager"
-  when: existing_pgcluster is defined and existing_pgcluster|bool
+  when: cluster_scaling is defined and cluster_scaling | bool
   tags: vip, vip_manager, vip_manager_conf
 
 - name: Generate systemd service file

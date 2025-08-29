@@ -241,7 +241,7 @@
     owner: postgres
     group: postgres
     mode: "0640"
-  when: existing_pgcluster is not defined or not existing_pgcluster|bool
+  when: cluster_scaling is not defined or not cluster_scaling | bool
   tags: patroni, patroni_conf
 
 - name: Create patroni log directory
@@ -254,7 +254,7 @@
   when: patroni_log_destination == 'logfile'
   tags: patroni, patroni_conf
 
-- block: # for add_node.yml
+- block: # if cluster_scaling (add_node.yml)
     - name: Fetch patroni.yml conf file from master
       run_once: true
       ansible.builtin.fetch:
@@ -323,7 +323,7 @@
         loop_var: patroni_config_with_cluster_vip_item
         label: "{{ patroni_config_with_cluster_vip_item.line }}"
       when: not with_haproxy_load_balancing|bool and not pgbouncer_install|bool and (cluster_vip is defined and cluster_vip | length > 0)
-  when: existing_pgcluster is defined and existing_pgcluster|bool
+  when: cluster_scaling is defined and cluster_scaling | bool
   tags: patroni, patroni_conf
 
 - name: Copy systemd service file "/etc/systemd/system/patroni.service"
@@ -775,7 +775,7 @@
       when: disable_archive_command | bool
   when: patroni_cluster_bootstrap_method != "initdb" and
     (pgbackrest_install | bool or wal_g_install | bool) and
-    (existing_pgcluster is not defined or not existing_pgcluster | bool)
+    (cluster_scaling is not defined or not cluster_scaling | bool)
   become: true
   become_user: postgres
   tags: patroni, point_in_time_recovery
@@ -790,7 +790,7 @@
         mode: "0640"
   when: patroni_cluster_bootstrap_method != "initdb" and
     postgresql_conf_dir != postgresql_data_dir and
-    (existing_pgcluster is not defined or not existing_pgcluster|bool)
+    (cluster_scaling is not defined or not cluster_scaling | bool)
   tags: patroni
 
 - block: # start patroni on master
@@ -888,7 +888,7 @@
       changed_when: pg_ctl_reload_result.rc == 0
       failed_when: false # exec 'reload' on all running postgres (to re-run with --tag pg_hba).
       when: generate_pg_hba is changed
-  when: existing_pgcluster is not defined or not existing_pgcluster|bool
+  when: cluster_scaling is not defined or not cluster_scaling | bool
   tags: patroni, pg_hba, pg_hba_generate
 
 - block: # PITR (custom bootstrap) - password reset for PostgreSQL users
@@ -959,13 +959,13 @@
   when:
     - patroni_cluster_bootstrap_method != "initdb"
     - (pgbackrest_install | bool or wal_g_install | bool)
-    - (existing_pgcluster is not defined or not existing_pgcluster | bool)
+    - (cluster_scaling is not defined or not cluster_scaling | bool)
     - patroni_standby_cluster.host | default('') | length < 1 # do not perform on the Standby Cluster
   become: true
   become_user: postgres
   tags: patroni, point_in_time_recovery
 
-- block: # for add_node.yml
+- block: # if cluster_scaling (add_node.yml)
     - name: Prepare PostgreSQL | fetch pg_hba.conf file from master
       run_once: true
       ansible.builtin.fetch:
@@ -982,7 +982,7 @@
         owner: postgres
         group: postgres
         mode: "0640"
-  when: existing_pgcluster is defined and existing_pgcluster|bool
+  when: cluster_scaling is defined and cluster_scaling | bool
     and postgresql_conf_dir != postgresql_data_dir
   tags: patroni, pg_hba, pg_hba_generate
 

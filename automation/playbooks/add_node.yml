@@ -164,11 +164,15 @@
 
 - name: vitabaks.autobase.add_node | Import etcd cluster playbook
   ansible.builtin.import_playbook: etcd_cluster.yml
+  vars:
+    cluster_scaling: true
   when: dcs_type | default('etcd') == "etcd"
   tags: etcd
 
 - name: vitabaks.autobase.add_node | Import Consul playbook
   ansible.builtin.import_playbook: consul_cluster.yml
+  vars:
+    cluster_scaling: true
   when: dcs_type | default('etcd') == "consul"
   tags: consul
 
@@ -220,7 +224,7 @@
   gather_facts: true
   any_errors_fatal: true
   vars:
-    existing_pgcluster: true
+    cluster_scaling: true
 
   pre_tasks:
     - name: Copy certificates
