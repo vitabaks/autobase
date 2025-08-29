@@ -121,52 +121,49 @@
     dest: /etc/systemd/system/etcd.service
   tags: etcd, etcd_conf
 
-# Add new node to existing etcd cluster before starting
-- name: Build etcd endpoints for existing cluster members
-  ansible.builtin.set_fact:
-    etcd_existing_endpoints: >-
-      {% for host in groups['etcd_cluster'] | difference([inventory_hostname]) -%}
-      {{ patroni_etcd_protocol | default('http', true) }}://
-      {{- hostvars[host]['etcd_bind_address'] | default(hostvars[host]['bind_address'], true) }}:2379
-      {%- if not loop.last %},{% endif -%}
-      {% endfor %}
-  when: new_node | default(false) | bool
-  tags: etcd, etcd_member_add
+- block: # if cluster_scaling (add_node.yml)
+    - name: Build etcd endpoints for existing cluster members
+      ansible.builtin.set_fact:
+        etcd_existing_endpoints: >-
+          {% for host in groups['etcd_cluster'] | difference([inventory_hostname]) -%}
+          {{ patroni_etcd_protocol | default('http', true) }}://
+          {{- hostvars[host]['etcd_bind_address'] | default(hostvars[host]['bind_address'], true) }}:2379
+          {%- if not loop.last %},{% endif -%}
+          {% endfor %}
 
-- name: Check if member already exists in etcd cluster
-  ansible.builtin.command: >
-    /usr/local/bin/etcdctl member list
-    --endpoints={{ etcd_existing_endpoints }}
-    {% if etcd_tls_enable | default(false) | bool %}
-    --cacert={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_ca_crt | default('ca.crt') }}
-    --cert={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_server_crt | default('server.crt') }}
-    --key={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_server_key | default('server.key') }}
-    {% endif %}
-  environment:
-    ETCDCTL_API: "3"
-  delegate_to: "{{ groups['etcd_cluster'] | difference([inventory_hostname]) | first }}"
-  register: etcd_member_list
-  when: new_node | default(false) | bool
-  ignore_errors: true
-  tags: etcd, etcd_member_add
+    - name: Check if member already exists in etcd cluster
+      ansible.builtin.command: >
+        /usr/local/bin/etcdctl member list
+        --endpoints={{ etcd_existing_endpoints }}
+        {% if etcd_tls_enable | default(false) | bool %}
+        --cacert={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_ca_crt | default('ca.crt') }}
+        --cert={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_server_crt | default('server.crt') }}
+        --key={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_server_key | default('server.key') }}
+        {% endif %}
+      environment:
+        ETCDCTL_API: "3"
+      delegate_to: "{{ groups['etcd_cluster'] | difference([inventory_hostname]) | first }}"
+      register: etcd_member_list
+      changed_when: false
 
-- name: Add new etcd member to existing cluster
-  ansible.builtin.command: >
-    /usr/local/bin/etcdctl member add {{ ansible_hostname }}
-    --peer-urls={{ patroni_etcd_protocol | default('http', true) }}://{{ etcd_bind_address }}:2380
-    --endpoints={{ etcd_existing_endpoints }}
-    {% if etcd_tls_enable | default(false) | bool %}
-    --cacert={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_ca_crt | default('ca.crt') }}
-    --cert={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_server_crt | default('server.crt') }}
-    --key={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_server_key | default('server.key') }}
-    {% endif %}
-  environment:
-    ETCDCTL_API: "3"
-  delegate_to: "{{ groups['etcd_cluster'] | difference([inventory_hostname]) | first }}"
+    # Add new node to existing etcd cluster before starting
+    - name: Add new etcd member to existing cluster
+      ansible.builtin.command: >
+        /usr/local/bin/etcdctl member add {{ ansible_hostname }}
+        --peer-urls={{ patroni_etcd_protocol | default('http', true) }}://{{ etcd_bind_address | default(bind_address) }}:2380
+        --endpoints={{ etcd_existing_endpoints }}
+        {% if etcd_tls_enable | default(false) | bool %}
+        --cacert={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_ca_crt | default('ca.crt') }}
+        --cert={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_server_crt | default('server.crt') }}
+        --key={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_server_key | default('server.key') }}
+        {% endif %}
+      environment:
+        ETCDCTL_API: "3"
+      delegate_to: "{{ groups['etcd_cluster'] | difference([inventory_hostname]) | first }}"
+      when: ansible_hostname not in etcd_member_list.stdout
   when:
+    - cluster_scaling is defined and cluster_scaling | bool
     - new_node | default(false) | bool
-    - ansible_hostname not in etcd_member_list.stdout
-  register: etcd_member_add_result
   tags: etcd, etcd_member_add
 
 - name: Enable and start etcd service
