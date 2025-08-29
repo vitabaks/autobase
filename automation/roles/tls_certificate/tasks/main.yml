@@ -41,9 +41,9 @@
               - "To force regeneration, set '{{ variable_name }}: true'"
           vars:
             variable_name: >-
-              {{ 'etcd_tls_cert_regenerate' if tls_group_name | default('') == 'etcd_cluster' and etcd_on_dedicated_nodes | default(false) | bool
-                 else 'patroni_tls_cert_regenerate' if tls_group_name | default('') == 'postgres_cluster' and etcd_on_dedicated_nodes | default(false) | bool
-                 else 'consul_tls_cert_regenerate' if tls_group_name | default('') == 'consul_instances' and consul_on_dedicated_nodes | default(false) | bool
+              {{ 'etcd_tls_cert_regenerate' if tls_group_name | default('') == 'etcd_cluster'
+                 else 'patroni_tls_cert_regenerate' if tls_group_name | default('') == 'postgres_cluster'
+                 else 'consul_tls_cert_regenerate' if tls_group_name | default('') == 'consul_instances'
                  else 'tls_cert_regenerate' }}
           when:
             - ca_cert.stat.exists | default(false)

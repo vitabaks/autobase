@@ -79,8 +79,7 @@
 
 # TLS
 - block:
-    # if 'etcd_on_dedicated_nodes' is 'false' - generate TLS certificates
-    - name: Generate etcd TLS certificate (includes new nodes in SAN)
+    - name: Generate etcd TLS certificate
       ansible.builtin.include_role:
         name: vitabaks.autobase.tls_certificate
       vars:
@@ -88,9 +87,7 @@
         generate_tls_owner: "etcd"
         generate_tls_common_name: "etcd"
         generate_tls_dir: "{{ etcd_tls_dir | default('/etc/etcd/tls') }}"
-        tls_cert_regenerate: "{{ etcd_tls_cert_regenerate | default('new_replica' in groups) }}"  # Regenerate when adding nodes
-      when:
-        - not etcd_on_dedicated_nodes | default(false) | bool
+        tls_cert_regenerate: "{{ etcd_tls_cert_regenerate | default(cluster_scaling|d(false)) }}"  # Regenerate when adding nodes
 
     - name: Copy etcd TLS certificate, key and CA to all nodes
       ansible.builtin.include_role:
@@ -101,32 +98,6 @@
         fetch_tls_dir: "{{ etcd_tls_dir | default('/etc/etcd/tls') }}"
         copy_tls_dir: "{{ etcd_tls_dir | default('/etc/etcd/tls') }}"
         copy_tls_owner: "etcd"
-      when:
-        - not etcd_on_dedicated_nodes | default(false) | bool
-
-    # if 'etcd_on_dedicated_nodes' is 'true'
-    - name: Generate etcd TLS certificate (includes new nodes in SAN)
-      ansible.builtin.include_role:
-        name: vitabaks.autobase.tls_certificate
-      vars:
-        tls_group_name: "etcd_cluster"
-        generate_tls_owner: "etcd"
-        generate_tls_common_name: "etcd"
-        generate_tls_dir: "{{ etcd_tls_dir | default('/etc/etcd/tls') }}"
-        tls_cert_regenerate: "{{ etcd_tls_cert_regenerate | default('new_replica' in groups) }}"  # Regenerate when adding nodes
-      when: etcd_on_dedicated_nodes | default(false) | bool
-
-    - name: Copy etcd TLS files to all etcd nodes
-      ansible.builtin.include_role:
-        name: vitabaks.autobase.tls_certificate
-        tasks_from: copy
-      vars:
-        tls_group_name: "etcd_cluster"
-        fetch_tls_dir: "{{ etcd_tls_dir | default('/etc/etcd/tls') }}"
-        copy_tls_dir: "{{ etcd_tls_dir | default('/etc/etcd/tls') }}"
-        copy_tls_owner: "etcd"
-      when: etcd_on_dedicated_nodes | default(false) | bool
-
   when: tls_cert_generate | default(true) | bool
   tags: etcd, etcd_conf
 

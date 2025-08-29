@@ -3,18 +3,6 @@
 
 # Enables TLS encryption with a self-signed certificate if 'tls_cert_generate' is 'true'.
 - block:
-    # if 'consul_on_dedicated_nodes' is 'false'
-    - name: Copy Consul TLS certificate, key and CA from the master node
-      ansible.builtin.include_role:
-        name: vitabaks.autobase.tls_certificate
-        tasks_from: copy
-      vars:
-        tls_group_name: "postgres_cluster"
-        copy_tls_dir: "{{ consul_tls_dir | default('/etc/consul/tls') }}"
-        copy_tls_owner: "{{ consul_user }}"
-      when: not consul_on_dedicated_nodes | default(false) | bool
-
-    # if 'consul_on_dedicated_nodes' is 'true'
     - name: Generate Consul TLS certificate
       ansible.builtin.include_role:
         name: vitabaks.autobase.tls_certificate
@@ -23,10 +11,9 @@
         generate_tls_common_name: "{{ consul_tls_common_name | default('Consul') }}"
         generate_tls_dir: "{{ consul_tls_dir | default('/etc/consul/tls') }}"
         tls_group_name: "consul_instances"
-        tls_cert_regenerate: "{{ consul_tls_cert_regenerate | default(false) }}" # Do not generate new certificates if they already exist.
-      when: consul_on_dedicated_nodes | default(false) | bool
+        tls_cert_regenerate: "{{ consul_tls_cert_regenerate | default(cluster_scaling|d(false)) }}"  # Regenerate when adding nodes
 
-    - name: Copy Consul TLS files to all nodes
+    - name: Copy Consul TLS certificate, key and CA to all nodes
       ansible.builtin.include_role:
         name: vitabaks.autobase.tls_certificate
         tasks_from: copy
@@ -35,7 +22,6 @@
         fetch_tls_dir: "{{ consul_tls_dir | default('/etc/consul/tls') }}"
         copy_tls_dir: "{{ consul_tls_dir | default('/etc/consul/tls') }}"
         copy_tls_owner: "{{ consul_user }}"
-      when: consul_on_dedicated_nodes | default(false) | bool
   when: tls_cert_generate | default(false) | bool
 
 # Copy the existing TLS certificates from the role's files directory if 'tls_cert_generate' is 'false'.
