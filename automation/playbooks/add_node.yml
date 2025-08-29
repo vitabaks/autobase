@@ -7,6 +7,60 @@
   gather_facts: true
 
   pre_tasks:
+    - name: Set maintenance variable
+      ansible.builtin.set_fact:
+        postgresql_cluster_maintenance: true
+      tags: always
+
+    - name: Build lists of nodes marked as new_node
+      run_once: true # noqa run-once
+      ansible.builtin.set_fact:
+        new_postgres_nodes: >-
+          {{
+            (groups['postgres_cluster'] | default([]))
+            | map('extract', hostvars)
+            | selectattr('new_node', 'defined')
+            | selectattr('new_node')
+            | map(attribute='inventory_hostname')
+            | list
+          }}
+        new_etcd_nodes: >-
+          {{
+            (groups['etcd_cluster'] | default([]))
+            | map('extract', hostvars)
+            | selectattr('new_node', 'defined')
+            | selectattr('new_node')
+            | map(attribute='inventory_hostname')
+            | list
+          }}
+        new_consul_nodes: >-
+          {{
+            (groups['consul_instances'] | default([]))
+            | map('extract', hostvars)
+            | selectattr('new_node', 'defined')
+            | selectattr('new_node')
+            | map(attribute='inventory_hostname')
+            | list
+          }}
+      tags: always
+
+    # Stop, if no nodes found with new_node variable
+    - name: No nodes found with new_node set to true
+      run_once: true # noqa run-once
+      ansible.builtin.fail:
+        msg: "Please specify the new_node=true variable for the new server to add it to the existing cluster."
+      when: (new_postgres_nodes + new_etcd_nodes + new_consul_nodes) | length < 1
+      tags: always
+
+    - name: Print a list of new nodes
+      run_once: true # noqa run-once
+      ansible.builtin.debug:
+        msg:
+          new_postgres_nodes: "{{ new_postgres_nodes | join(', ') if new_postgres_nodes | length > 0 else omit }}"
+          new_etcd_nodes: "{{ new_etcd_nodes | join(', ') if new_etcd_nodes | length > 0 else omit }}"
+          new_consul_nodes: "{{ new_consul_nodes | join(', ') if new_consul_nodes | length > 0 else omit }}"
+      tags: always
+
     - name: Gather package facts
       ansible.builtin.package_facts:
         manager: auto
@@ -16,34 +70,6 @@
     - name: Define bind_address
       ansible.builtin.include_role:
         name: vitabaks.autobase.bind_address
-      tags: always
-
-    - name: Set maintenance variable
-      ansible.builtin.set_fact:
-        postgresql_cluster_maintenance: true
-      tags: always
-
-    - name: "[Pre-Check] Check if there is a node with new_node set to true"
-      ansible.builtin.set_fact:
-        new_nodes: "{{ new_nodes | default([]) + [item] }}"
-      loop: "{{ groups['replica'] | default([]) }}"
-      when:
-        - "'replica' in groups and groups['replica'] | length > 0"
-        - hostvars[item]['new_node'] | default(false) | bool
-      tags: always
-
-    # Stop, if no nodes found with new_node variable
-    - name: "Pre-Check error. No nodes found with new_node set to true"
-      run_once: true # noqa run-once
-      ansible.builtin.fail:
-        msg: "Please specify the new_node=true variable for the new server to add it to the existing cluster."
-      when: new_nodes | default([]) | length < 1
-      tags: always
-
-    - name: Print a list of new nodes
-      run_once: true # noqa run-once
-      ansible.builtin.debug:
-        var: new_nodes
       tags: always
 
     - name: Add a new node to pg_hba.conf on existing cluster nodes
@@ -131,9 +157,20 @@
       ansible.builtin.add_host:
         name: "{{ item }}"
         groups: new_replica
-      loop: "{{ new_nodes }}"
+      loop: "{{ new_postgres_nodes }}"
       changed_when: false
+      when: new_postgres_nodes | length > 0
       tags: always
+
+- name: vitabaks.autobase.add_node | Import etcd cluster playbook
+  ansible.builtin.import_playbook: etcd_cluster.yml
+  when: dcs_type | default('etcd') == "etcd"
+  tags: etcd
+
+- name: vitabaks.autobase.add_node | Import Consul playbook
+  ansible.builtin.import_playbook: consul_cluster.yml
+  when: dcs_type | default('etcd') == "consul"
+  tags: consul
 
 - name: vitabaks.autobase.add_node | Configure new PostgreSQL node
   hosts: new_replica
@@ -175,16 +212,6 @@
   roles:
     - role: vitabaks.autobase.pgbackrest
       when: pgbackrest_install|bool
-
-- name: vitabaks.autobase.add_node | Import etcd cluster playbook
-  ansible.builtin.import_playbook: etcd_cluster.yml
-  when: dcs_type | default('etcd') == "etcd"
-  tags: etcd
-
-- name: vitabaks.autobase.add_node | Import Consul playbook
-  ansible.builtin.import_playbook: consul_cluster.yml
-  when: dcs_type | default('etcd') == "consul"
-  tags: consul
 
 - name: vitabaks.autobase.add_node | Add new PostgreSQL replica to the cluster
   hosts: new_replica
