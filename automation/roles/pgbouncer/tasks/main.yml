@@ -147,7 +147,7 @@
     index_var: idx
     label: "{{ 'pgbouncer' if idx == 0 else 'pgbouncer-%d' % (idx + 1) }}"
   notify: "reload pgbouncer"
-  when: existing_pgcluster is not defined or not existing_pgcluster|bool
+  when: cluster_scaling is not defined or not cluster_scaling | bool
   tags: pgbouncer_conf, pgbouncer
 
 - name: Create userlist.txt
@@ -158,12 +158,12 @@
     group: postgres
     mode: "0640"
   when:
-    - (existing_pgcluster is not defined or not existing_pgcluster|bool)
+    - (cluster_scaling is not defined or not cluster_scaling | bool)
     - not pgbouncer_auth_user|bool
   tags: pgbouncer
 
 - block:
-    # for add_pgnode.yml
+    # if cluster_scaling (add_node.yml)
     - name: Fetch pgbouncer.ini file from master
       run_once: true
       ansible.builtin.fetch:
@@ -241,5 +241,5 @@
         label: "{{ 'pgbouncer' if idx == 0 else 'pgbouncer-%d' % (idx + 1) }}"
       notify: "reload pgbouncer"
       when: pgbouncer_listen_addr != "0.0.0.0"
-  when: existing_pgcluster is defined and existing_pgcluster|bool
+  when: cluster_scaling is defined and cluster_scaling | bool
   tags: pgbouncer_conf, pgbouncer
