@@ -227,7 +227,15 @@
     cluster_scaling: true
 
   pre_tasks:
-    - name: Copy certificates
+    - name: Generate Postgres TLS certificate
+      ansible.builtin.include_role:
+        name: vitabaks.autobase.tls_certificate
+      vars:
+        tls_group_name: "postgres_cluster"
+        tls_cert_regenerate: true  # Regenerate when adding nodes
+      when: tls_cert_generate | default(true) | bool
+
+    - name: Copy Postgres TLS certificate, key and CA to all nodes
       ansible.builtin.include_role:
         name: vitabaks.autobase.tls_certificate
         tasks_from: copy

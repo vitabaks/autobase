@@ -42,7 +42,7 @@
           vars:
             variable_name: >-
               {{ 'etcd_tls_cert_regenerate' if tls_group_name | default('') == 'etcd_cluster'
-                 else 'patroni_tls_cert_regenerate' if tls_group_name | default('') == 'postgres_cluster'
+                 else 'postgres_tls_cert_regenerate' if tls_group_name | default('') == 'postgres_cluster'
                  else 'consul_tls_cert_regenerate' if tls_group_name | default('') == 'consul_instances'
                  else 'tls_cert_regenerate' }}
           when:
