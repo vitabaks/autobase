@@ -20,7 +20,8 @@
 
 - name: Make sure replica endpoint is unavailable
   ansible.builtin.uri:
-    url: http://{{ patroni_bind_address | default(bind_address, true) }}:{{ patroni_restapi_port }}/replica
+    url: "{{ patroni_restapi_protocol }}://{{ patroni_restapi_connect_addr | default(patroni_bind_address | default(bind_address, true), true) }}:\
+      {{ patroni_restapi_port }}/replica"
     status_code: 503
   register: patroni_replica_result
   until: patroni_replica_result.status == 503
