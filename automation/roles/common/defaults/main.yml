@@ -191,28 +191,32 @@ consul_services:
     tags: ["master", "primary"]
     port: "{{ pgbouncer_listen_port }}" # or "{{ postgresql_port }}" if pgbouncer_install: false
     checks:
-      - { http: "http://{{ bind_address }}:{{ patroni_restapi_port }}/primary", interval: "2s" }
+      - { http: "{{ patroni_restapi_protocol }}://{{ patroni_restapi_connect_addr | default(patroni_bind_address | default(bind_address, true), true) }}:\
+        {{ patroni_restapi_port }}/primary", interval: "2s" }
       - { args: ["systemctl", "status", "pgbouncer"], interval: "5s" } # comment out this check if pgbouncer_install: false
   - name: "{{ patroni_cluster_name }}"
     id: "{{ patroni_cluster_name }}-replica"
     tags: ["replica"]
     port: "{{ pgbouncer_listen_port }}"
     checks:
-      - { http: "http://{{ bind_address }}:{{ patroni_restapi_port }}/replica?lag={{ patroni_maximum_lag_on_replica }}", interval: "2s" }
+      - { http: "{{ patroni_restapi_protocol }}://{{ patroni_restapi_connect_addr | default(patroni_bind_address | default(bind_address, true), true) }}:\
+        {{ patroni_restapi_port }}/replica?lag={{ patroni_maximum_lag_on_replica }}", interval: "2s" }
       - { args: ["systemctl", "status", "pgbouncer"], interval: "5s" }
 #  - name: "{{ patroni_cluster_name }}"
 #    id: "{{ patroni_cluster_name }}-sync-replica"
 #    tags: ['sync-replica']
 #    port: "{{ pgbouncer_listen_port }}"
 #    checks:
-#      - { http: "http://{{ bind_address }}:{{ patroni_restapi_port }}/sync", interval: "2s" }
+#      - { http: "{{ patroni_restapi_protocol }}://{{ patroni_restapi_connect_addr | default(patroni_bind_address | default(bind_address, true), true) }}\
+#         ://{{ bind_address }}:{{ patroni_restapi_port }}/sync", interval: "2s" }
 #      - { args: ["systemctl", "status", "pgbouncer"], interval: "5s" }
 #  - name: "{{ patroni_cluster_name }}"
 #    id: "{{ patroni_cluster_name }}-async-replica"
 #    tags: ['async-replica']
 #    port: "{{ pgbouncer_listen_port }}"
 #    checks:
-#      - { http: "http://{{ bind_address }}:{{ patroni_restapi_port }}/async?lag={{ patroni_maximum_lag_on_replica }}", interval: "2s" }
+#      - { http: "{{ patroni_restapi_protocol }}://{{ patroni_restapi_connect_addr | default(patroni_bind_address | default(bind_address, true), true) }}:\
+#         {{ patroni_restapi_port }}/async?lag={{ patroni_maximum_lag_on_replica }}", interval: "2s" }
 #      - { args: ["systemctl", "status", "pgbouncer"], interval: "5s" }
 
 ############################################################
@@ -481,7 +485,11 @@ pgbouncer_pools:
 # Patroni parameters
 ############################################################
 
+patroni_restapi_protocol: http # if https, patroni_restapi_certfile, patroni_restapi_keyfile and patroni_restapi_connect_addr must be defined.
 # patroni_restapi_connect_addr: "{{ ansible_hostname }}" # or 'ansible_fqdn'. Set if you need connection to be established by domain name, not IP.
+# patroni_restapi_certfile:
+# patroni_restapi_keyfile:
+patroni_restapi_cafile: /etc/ssl/certs/ca-certificates.crt
 patroni_restapi_listen_addr: "0.0.0.0" # Listen on all interfaces. Or use "{{ bind_address }}" to listen on a specific IP address.
 patroni_restapi_port: 8008
 patroni_restapi_username: "patroni"
@@ -645,10 +653,12 @@ wal_g_prefetch_dir_path: "{{ postgresql_home_dir }}/wal-g-prefetch"
 # Define job_parts outside of wal_g_cron_jobs
 # ⚠️ Ensure there is a space at the beginning of each part to prevent commands from concatenating.
 wal_g_backup_command:
-  - "curl -I -s http://{{ bind_address }}:{{ patroni_restapi_port }} | grep 200"
+  - "curl -I -s {{ patroni_restapi_protocol }}://{{ patroni_restapi_connect_addr | default(patroni_bind_address | default(bind_address, true), true) }}:\
+    {{ patroni_restapi_port }} | grep 200"
   - " && {{ wal_g_path }} backup-push {{ postgresql_data_dir }} > {{ postgresql_log_dir }}/walg_backup.log 2>&1"
 wal_g_delete_command:
-  - "curl -I -s http://{{ bind_address }}:{{ patroni_restapi_port }} | grep 200"
+  - "curl -I -s {{ patroni_restapi_protocol }}://{{ patroni_restapi_connect_addr | default(patroni_bind_address | default(bind_address, true), true) }}:\
+    {{ patroni_restapi_port }} | grep 200"
   - " && {{ wal_g_path }} delete retain FULL 4 --confirm > {{ postgresql_log_dir }}/walg_delete.log 2>&1"
 
 wal_g_cron_jobs:
