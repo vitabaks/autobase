@@ -41,7 +41,8 @@
 - block:
     - name: Update postgresql parameters in DCS
       ansible.builtin.uri:
-        url: http://{{ patroni_bind_address | default(bind_address, true) }}:{{ patroni_restapi_port }}/config
+        url: "{{ patroni_restapi_protocol }}://{{ patroni_restapi_connect_addr | default(patroni_bind_address | default(bind_address, true), true) }}:\
+          {{ patroni_restapi_port }}/config"
         method: PATCH
         user: "{{ patroni_restapi_username | default(omit) }}"
         password: "{{ patroni_restapi_password | default(omit) }}"
@@ -52,7 +53,8 @@
 
     - name: Delete postgresql parameters from DCS
       ansible.builtin.uri:
-        url: http://{{ patroni_bind_address | default(bind_address, true) }}:{{ patroni_restapi_port }}/config
+        url: "{{ patroni_restapi_protocol }}://{{ patroni_restapi_connect_addr | default(patroni_bind_address | default(bind_address, true), true) }}:\
+          {{ patroni_restapi_port }}/config"
         method: PATCH
         user: "{{ patroni_restapi_username | default(omit) }}"
         password: "{{ patroni_restapi_password | default(omit) }}"
@@ -63,7 +65,8 @@
 
     - name: Update postgresql slots in DCS
       ansible.builtin.uri:
-        url: http://{{ patroni_bind_address | default(bind_address, true) }}:{{ patroni_restapi_port }}/config
+        url: "{{ patroni_restapi_protocol }}://{{ patroni_restapi_connect_addr | default(patroni_bind_address | default(bind_address, true), true) }}:\
+          {{ patroni_restapi_port }}/config"
         method: PATCH
         user: "{{ patroni_restapi_username | default(omit) }}"
         password: "{{ patroni_restapi_password | default(omit) }}"
@@ -86,7 +89,8 @@
 
     - name: Delete postgresql slots from DCS
       ansible.builtin.uri:
-        url: http://{{ patroni_bind_address | default(bind_address, true) }}:{{ patroni_restapi_port }}/config
+        url: "{{ patroni_restapi_protocol }}://{{ patroni_restapi_connect_addr | default(patroni_bind_address | default(bind_address, true), true) }}:\
+          {{ patroni_restapi_port }}/config"
         method: PATCH
         user: "{{ patroni_restapi_username | default(omit) }}"
         password: "{{ patroni_restapi_password | default(omit) }}"
