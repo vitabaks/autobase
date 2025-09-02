@@ -92,12 +92,11 @@
 {% endfor %}
 # Allow replication connections from localhost, by a user with the
 # replication privilege.
-{% if not patroni_use_unix_socket_repl | default(false) %}
+{% if patroni_use_unix_socket_repl | default(false) %}
+  local      replication               {{ patroni_replication_username }}                                          trust
+{% else %}
   {% if tls_cert_generate | default(false) | bool %}hostssl{% else %}host{% endif %}      replication              {{ patroni_replication_username }}               localhost                trust
 {% endif %}
 {% for host in groups['postgres_cluster'] %}
   {% if tls_cert_generate | default(false) | bool %}hostssl{% else %}host{% endif %}      replication              {{ patroni_replication_username }}               {{ hostvars[host]['patroni_bind_address'] | default(hostvars[host]['bind_address'], true) }}/32         {{ postgresql_password_encryption_algorithm }}
 {% endfor %}
-{% if patroni_use_unix_socket_repl | default(false) %}
-  local      replication               {{ patroni_replication_username }}                                          {{ postgresql_password_encryption_algorithm }}
-{% endif %}
