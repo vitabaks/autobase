@@ -146,12 +146,14 @@ bootstrap:
     - host replication {{ patroni_replication_username }} 127.0.0.1/32 {{ postgresql_password_encryption_algorithm }}
     - host all all 0.0.0.0/0 {{ postgresql_password_encryption_algorithm }}
 
-
 postgresql:
   listen: {{ postgresql_listen_addr }}:{{ postgresql_port }}
   connect_address: {{ postgresql_connect_addr | default(patroni_bind_address | default(bind_address, true), true) }}:{{ postgresql_port }}
-{% if patroni_superuser_username == 'postgres' %}
+{% if patroni_use_unix_socket | default(false) %}
   use_unix_socket: true
+{% endif %}
+{% if patroni_use_unix_socket_repl | default(false) %}
+  use_unix_socket_repl: true
 {% endif %}
   data_dir: {{ postgresql_data_dir }}
   bin_dir: {{ postgresql_bin_dir }}
