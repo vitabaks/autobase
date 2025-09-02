@@ -93,7 +93,7 @@
 # Allow replication connections from localhost, by a user with the
 # replication privilege.
 {% if patroni_use_unix_socket_repl | default(false) %}
-  local      replication               {{ patroni_replication_username }}                                          trust
+  local        replication              {{ patroni_replication_username }}                                      trust
 {% else %}
   {% if tls_cert_generate | default(false) | bool %}hostssl{% else %}host{% endif %}      replication              {{ patroni_replication_username }}               localhost                trust
 {% endif %}
