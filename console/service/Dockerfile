@@ -1,4 +1,4 @@
-FROM golang:1.24-bookworm as builder
+FROM golang:1.25-bookworm as builder
 WORKDIR /go/src/pg-console
 
 COPY console/service/ .
