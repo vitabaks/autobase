@@ -6,6 +6,10 @@
   become_method: sudo
   any_errors_fatal: true
   tasks:
+    - name: Set default variables
+      ansible.builtin.import_role:
+        name: vitabaks.autobase.common
+
     - name: Gather package facts
       ansible.builtin.package_facts:
         manager: auto
