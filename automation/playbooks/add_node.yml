@@ -61,99 +61,27 @@
           new_consul_nodes: "{{ new_consul_nodes | join(', ') if new_consul_nodes | length > 0 else omit }}"
       tags: always
 
-    - name: Gather package facts
-      ansible.builtin.package_facts:
-        manager: auto
-      check_mode: false
-      tags: always
-
-    - name: Define bind_address
-      ansible.builtin.include_role:
-        name: vitabaks.autobase.bind_address
-      tags: always
-
-    - name: Add a new node to pg_hba.conf on existing cluster nodes
-      ansible.builtin.include_role:
-        name: vitabaks.autobase.patroni
-        tasks_from: pg_hba
-      when: not new_node | default(false) | bool
-
-    - name: Update apt cache
-      ansible.builtin.apt:
-        update_cache: true
-        cache_valid_time: 3600
-      register: apt_status
-      until: apt_status is success
-      delay: 5
-      retries: 3
-      environment: "{{ proxy_env | default({}) }}"
-      when:
-        - new_node | default(false) | bool
-        - ansible_os_family == "Debian"
-        - installation_method | default('packages') == "packages"
-
-    - name: Make sure the gnupg and apt-transport-https packages are present
-      ansible.builtin.apt:
-        pkg:
-          - gnupg
-          - apt-transport-https
-        state: present
-      register: apt_status
-      until: apt_status is success
-      delay: 5
-      retries: 3
-      environment: "{{ proxy_env | default({}) }}"
-      when:
-        - new_node | default(false) | bool
-        - ansible_os_family == "Debian"
-        - installation_method | default('packages') == "packages"
-        - "'gnupg' not in ansible_facts.packages or 'apt-transport-https' not in ansible_facts.packages"
-
-    - name: Build a firewall_ports_dynamic_var
-      ansible.builtin.set_fact:
-        firewall_ports_dynamic_var: "{{ firewall_ports_dynamic_var | default([]) + (firewall_allowed_tcp_ports_for[item] | default([])) }}"
-      loop: "{{ hostvars[inventory_hostname].group_names }}"
-      when:
-        - new_node | default(false) | bool
-        - firewall_enabled_at_boot | default(false)| bool
-      tags: firewall
-
-    - name: Build a firewall_rules_dynamic_var
-      ansible.builtin.set_fact:
-        firewall_rules_dynamic_var: "{{ firewall_rules_dynamic_var | default([]) + (firewall_additional_rules_for[item] | default([])) }}"
-      loop: "{{ hostvars[inventory_hostname].group_names }}"
-      when:
-        - new_node | default(false) | bool
-        - firewall_enabled_at_boot | default(false)| bool
-      tags: firewall
-
   roles:
-    - role: vitabaks.autobase.firewall
-      environment: "{{ proxy_env | default({}) }}"
-      vars:
-        firewall_allowed_tcp_ports: "{{ firewall_ports_dynamic_var | default([]) | unique }}"
-        firewall_additional_rules: "{{ firewall_rules_dynamic_var | default([]) | unique }}"
-      when:
-        - new_node | default(false) | bool
-        - firewall_enabled_at_boot | default(false)| bool
-      tags: firewall
-
+    # Perform pre-checks
     - role: vitabaks.autobase.pre_checks
       vars:
         minimal_ansible_version: 2.17.0
         timescale_minimal_pg_version: 12 # if enable_timescale is defined
       tags: always
 
-    - role: vitabaks.autobase.sysctl
-      when:
-        - new_node | default(false) | bool
-
+    # Configure SSH Key-Based Authentication
     - role: vitabaks.autobase.ssh_keys
       when:
         - enable_ssh_key_based_authentication | default(false) | bool
 
   tasks:
-    - name: Add host to group new_replica (in-memory inventory)
+    - name: Add a new node to pg_hba.conf on existing cluster nodes
+      ansible.builtin.include_role:
+        name: vitabaks.autobase.patroni
+        tasks_from: pg_hba
+      when: not new_node | default(false) | bool
+
+    - name: Add a new node to new_replica group (in-memory inventory)
       ansible.builtin.add_host:
         name: "{{ item }}"
         groups: new_replica
@@ -184,13 +112,72 @@
   any_errors_fatal: true
 
   pre_tasks:
+    - name: Define bind_address
+      ansible.builtin.include_role:
+        name: vitabaks.autobase.bind_address
+      tags: always
+
+    - name: Gather package facts
+      ansible.builtin.package_facts:
+        manager: auto
+      check_mode: false
+      tags: always
+
+    - name: Update apt cache
+      ansible.builtin.apt:
+        update_cache: true
+        cache_valid_time: 3600
+      register: apt_status
+      until: apt_status is success
+      delay: 5
+      retries: 3
+      environment: "{{ proxy_env | default({}) }}"
+      when:
+        - ansible_os_family == "Debian"
+        - installation_method | default('packages') == "packages"
+
+    - name: Make sure the gnupg and apt-transport-https packages are present
+      ansible.builtin.apt:
+        pkg:
+          - gnupg
+          - apt-transport-https
+        state: present
+      register: apt_status
+      until: apt_status is success
+      delay: 5
+      retries: 3
+      environment: "{{ proxy_env | default({}) }}"
+      when:
+        - ansible_os_family == "Debian"
+        - installation_method | default('packages') == "packages"
+        - "'gnupg' not in ansible_facts.packages or 'apt-transport-https' not in ansible_facts.packages"
+
     # if 'dcs_type' is 'consul'
     - name: Add a nameserver entry poining to localhost for dnsmasq
       ansible.builtin.set_fact:
         nameservers: "{{ ['127.0.0.1'] + (nameservers | default([])) }}"
       when: dcs_type | default('etcd') == "consul" and consul_dnsmasq_enable | default(true) | bool and ('127.0.0.1' not in (nameservers | default([])))
 
+    - name: Build a firewall_ports_dynamic_var
+      ansible.builtin.set_fact:
+        firewall_ports_dynamic_var: "{{ firewall_ports_dynamic_var | default([]) + (firewall_allowed_tcp_ports_for[item] | default([])) }}"
+      loop: "{{ hostvars[inventory_hostname].group_names }}"
+      when: firewall_enabled_at_boot | default(false)| bool
+
+    - name: Build a firewall_rules_dynamic_var
+      ansible.builtin.set_fact:
+        firewall_rules_dynamic_var: "{{ firewall_rules_dynamic_var | default([]) + (firewall_additional_rules_for[item] | default([])) }}"
+      loop: "{{ hostvars[inventory_hostname].group_names }}"
+      when: firewall_enabled_at_boot | default(false)| bool
+
   roles:
+    - role: vitabaks.autobase.firewall
+      environment: "{{ proxy_env | default({}) }}"
+      vars:
+        firewall_allowed_tcp_ports: "{{ firewall_ports_dynamic_var | default([]) | unique }}"
+        firewall_additional_rules: "{{ firewall_rules_dynamic_var | default([]) | unique }}"
+      when: firewall_enabled_at_boot | default(false)| bool
+
     - role: vitabaks.autobase.hostname
     - role: vitabaks.autobase.resolv_conf
     - role: vitabaks.autobase.etc_hosts
@@ -198,6 +185,7 @@
     - role: vitabaks.autobase.packages
     - role: vitabaks.autobase.sudo
     - role: vitabaks.autobase.swap
+    - role: vitabaks.autobase.sysctl
     - role: vitabaks.autobase.transparent_huge_pages
     - role: vitabaks.autobase.pam_limits
     - role: vitabaks.autobase.io_scheduler
@@ -215,7 +203,7 @@
   any_errors_fatal: true
   roles:
     - role: vitabaks.autobase.pgbackrest
-      when: pgbackrest_install|bool
+      when: pgbackrest_install | bool
 
 - name: vitabaks.autobase.add_node | Add new PostgreSQL replica to the cluster
   hosts: new_replica
