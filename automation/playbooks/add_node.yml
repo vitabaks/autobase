@@ -7,6 +7,11 @@
   gather_facts: true
 
   pre_tasks:
+    - name: Define bind_address
+      ansible.builtin.include_role:
+        name: vitabaks.autobase.bind_address
+      tags: always
+
     - name: Set maintenance variable
       ansible.builtin.set_fact:
         postgresql_cluster_maintenance: true
@@ -113,11 +118,6 @@
   environment: "{{ proxy_env | default({}) }}"
 
   pre_tasks:
-    - name: Define bind_address
-      ansible.builtin.include_role:
-        name: vitabaks.autobase.bind_address
-      tags: always
-
     - name: Gather package facts
       ansible.builtin.package_facts:
         manager: auto
