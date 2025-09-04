@@ -110,6 +110,7 @@
   become_method: sudo
   gather_facts: true
   any_errors_fatal: true
+  environment: "{{ proxy_env | default({}) }}"
 
   pre_tasks:
     - name: Define bind_address
@@ -131,7 +132,6 @@
       until: apt_status is success
       delay: 5
       retries: 3
-      environment: "{{ proxy_env | default({}) }}"
       when:
         - ansible_os_family == "Debian"
         - installation_method | default('packages') == "packages"
@@ -146,7 +146,6 @@
       until: apt_status is success
       delay: 5
       retries: 3
-      environment: "{{ proxy_env | default({}) }}"
       when:
         - ansible_os_family == "Debian"
         - installation_method | default('packages') == "packages"
@@ -172,7 +171,6 @@
 
   roles:
     - role: vitabaks.autobase.firewall
-      environment: "{{ proxy_env | default({}) }}"
       vars:
         firewall_allowed_tcp_ports: "{{ firewall_ports_dynamic_var | default([]) | unique }}"
         firewall_additional_rules: "{{ firewall_rules_dynamic_var | default([]) | unique }}"
