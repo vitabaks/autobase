@@ -72,11 +72,13 @@
       vars:
         minimal_ansible_version: 2.17.0
         timescale_minimal_pg_version: 12 # if enable_timescale is defined
+      when: new_postgres_nodes | length > 0
       tags: always
 
     # Configure SSH Key-Based Authentication
     - role: vitabaks.autobase.ssh_keys
       when:
+        - new_postgres_nodes | length > 0
         - enable_ssh_key_based_authentication | default(false) | bool
 
   tasks:
@@ -84,7 +86,9 @@
       ansible.builtin.include_role:
         name: vitabaks.autobase.patroni
         tasks_from: pg_hba
-      when: not new_node | default(false) | bool
+      when:
+        - new_postgres_nodes | length > 0
+        - not new_node | default(false) | bool
 
     - name: Add a new node to new_replica group (in-memory inventory)
       ansible.builtin.add_host:
