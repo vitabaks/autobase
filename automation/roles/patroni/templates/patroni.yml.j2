@@ -27,7 +27,7 @@ restapi:
   certfile: {{ patroni_restapi_certfile }}
   keyfile: {{ patroni_restapi_keyfile }}
   {% endif %}
-  {% if patroni_restapi_cafile | default('') %}
+  {% if patroni_restapi_cafile | default('') | length > 0 %}
   cafile: {{ patroni_restapi_cafile }}
   {% endif %}
 {% if patroni_restapi_password | default('') | length > 0 %}
