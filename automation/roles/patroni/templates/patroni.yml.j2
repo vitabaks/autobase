@@ -23,13 +23,13 @@ log:
 restapi:
   listen: {{ patroni_restapi_listen_addr }}:{{ patroni_restapi_port }}
   connect_address: {{ patroni_restapi_connect_addr | default(patroni_bind_address | default(bind_address, true), true) }}:{{ patroni_restapi_port }}
-  {% if ((patroni_restapi_certfile | default('')) and (patroni_restapi_keyfile | default(''))) %}
-  certfile: patroni_restapi_certfile
-  keyfile: patroni_restapi_keyfile
+  {% if patroni_restapi_certfile | default('') | length > 0 and patroni_restapi_keyfile | default('') | length > 0 %}
+  certfile: {{ patroni_restapi_certfile }}
+  keyfile: {{ patroni_restapi_keyfile }}
   {% endif %}
   {% if patroni_restapi_cafile | default('') %}
   cafile: {{ patroni_restapi_cafile }}
-  {%endif %}
+  {% endif %}
 {% if patroni_restapi_password | default('') | length > 0 %}
   authentication:
       username: {{ patroni_restapi_username | default('patroni') }}
