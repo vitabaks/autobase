@@ -147,8 +147,6 @@ patroni_etcd_protocol: "{{ 'https' if etcd_tls_enable | bool else 'http' }}"
 patroni_etcd_cacert: "/etc/patroni/tls/etcd/ca.crt"
 patroni_etcd_cert: "/etc/patroni/tls/etcd/server.crt"
 patroni_etcd_key: "/etc/patroni/tls/etcd/server.key"
-patroni_use_unix_socket: false
-patroni_use_unix_socket_repl: false
 
 # if dcs_type: "consul"
 consul_version: "latest" # or a specific version (e.q., '1.18.2') if 'consul_install_from_repo' is 'false'
