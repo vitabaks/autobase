@@ -30,7 +30,6 @@ restapi:
   {% if patroni_restapi_cafile | default('') | length > 0 %}
   cafile: {{ patroni_restapi_cafile }}
   {% endif %}
-
 {% if patroni_restapi_password | default('') | length > 0 %}
   authentication:
       username: {{ patroni_restapi_username | default('patroni') }}
