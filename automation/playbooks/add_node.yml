@@ -1,6 +1,6 @@
 ---
 - name: vitabaks.autobase.add_node | PostgreSQL HA Cluster Scaling (add a new node)
-  hosts: postgres_cluster
+  hosts: postgres_cluster:etcd_cluster:consul_instances
   become: true
   become_method: sudo
   any_errors_fatal: true
