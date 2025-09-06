@@ -121,95 +121,21 @@
     dest: /etc/systemd/system/etcd.service
   tags: etcd, etcd_conf
 
-- block: # if cluster_scaling (add_node.yml)
-    - name: Build etcd endpoints for existing cluster members
-      ansible.builtin.set_fact:
-        etcd_existing_endpoints: >-
-          {% for host in groups['etcd_cluster'] | difference([inventory_hostname]) -%}
-          {{ patroni_etcd_protocol | default('http', true) }}://
-          {{- hostvars[host]['etcd_bind_address'] | default(hostvars[host]['bind_address'], true) }}:2379
-          {%- if not loop.last %},{% endif -%}
-          {% endfor %}
-
-    - name: Check if member already exists in etcd cluster
-      ansible.builtin.command: >
-        /usr/local/bin/etcdctl member list
-        --endpoints={{ etcd_existing_endpoints }}
-        {% if etcd_tls_enable | default(false) | bool %}
-        --cacert={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_ca_crt | default('ca.crt') }}
-        --cert={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_server_crt | default('server.crt') }}
-        --key={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_server_key | default('server.key') }}
-        {% endif %}
-      environment:
-        ETCDCTL_API: "3"
-      delegate_to: "{{ groups['etcd_cluster'] | difference([inventory_hostname]) | first }}"
-      register: etcd_member_list
-      changed_when: false
-
-    # Add new node to existing etcd cluster before starting
-    - name: Add new etcd member to existing cluster
-      ansible.builtin.command: >
-        /usr/local/bin/etcdctl member add {{ ansible_hostname }}
-        --peer-urls={{ patroni_etcd_protocol | default('http', true) }}://{{ etcd_bind_address | default(bind_address) }}:2380
-        --endpoints={{ etcd_existing_endpoints }}
-        {% if etcd_tls_enable | default(false) | bool %}
-        --cacert={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_ca_crt | default('ca.crt') }}
-        --cert={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_server_crt | default('server.crt') }}
-        --key={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_server_key | default('server.key') }}
-        {% endif %}
-      environment:
-        ETCDCTL_API: "3"
-      delegate_to: "{{ groups['etcd_cluster'] | difference([inventory_hostname]) | first }}"
-      when: ansible_hostname not in etcd_member_list.stdout
+- name: Start etcd service and check cluster health
+  ansible.builtin.include_tasks: start.yml
   when:
-    - cluster_scaling is defined and cluster_scaling | bool
-    - new_node | default(false) | bool
-  tags: etcd, etcd_member_add
-
-- name: Enable and start etcd service
-  ansible.builtin.systemd:
-    daemon_reload: true
-    name: etcd
-    enabled: true
-    state: started
-  tags: etcd, etcd_start
-
-- name: Wait for port 2379 to become open on the host
-  ansible.builtin.wait_for:
-    port: 2379
-    host: 127.0.0.1
-    state: started
-    timeout: 120
-    delay: 10
-  ignore_errors: false
-  tags: etcd, etcd_start
-
-- block:
-    - name: Wait until the etcd cluster is healthy
-      ansible.builtin.command: >
-        /usr/local/bin/etcdctl endpoint health
-        --endpoints={{ patroni_etcd_protocol | default('http', true) }}://{{ etcd_bind_address }}:2379
-        {% if etcd_tls_enable | default(false) | bool %}
-        --cacert={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_ca_crt | default('ca.crt') }}
-        --cert={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_server_crt | default('server.crt') }}
-        --key={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_server_key | default('server.key') }}
-        {% endif %}
-      environment:
-        ETCDCTL_API: "3"
-      register: etcd_health_result
-      until: >
-        'is healthy' in etcd_health_result.stdout or
-        'is healthy' in etcd_health_result.stderr
-      retries: 10
-      delay: 10
-      changed_when: false
-      ignore_errors: false
-
-    - name: cluster health
-      ansible.builtin.debug:
-        msg: >
-          {{ etcd_health_result.stdout
-          if etcd_health_result.stdout | length > 0
-          else etcd_health_result.stderr }}
-  when: not ansible_check_mode
+    - not ansible_check_mode
+    - inventory_hostname not in (new_etcd_nodes | default([]))
   tags: etcd, etcd_start, etcd_status
+
+# if cluster_scaling (add_node.yml)
+- name: Add new node(s) to existing etcd cluster
+  ansible.builtin.include_tasks: member_add.yml
+  run_once: true
+  loop: "{{ new_etcd_nodes | default([]) }}"
+  loop_control:
+    loop_var: etcd_node
+  when:
+    - cluster_scaling | default(false) | bool
+    - not ansible_check_mode
+  tags: etcd, etcd_member_add

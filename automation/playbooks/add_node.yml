@@ -73,7 +73,6 @@
         minimal_ansible_version: 2.17.0
         timescale_minimal_pg_version: 12 # if enable_timescale is defined
       when: new_postgres_nodes | default([]) | length > 0
-      tags: always
 
     # Configure SSH Key-Based Authentication
     - role: vitabaks.autobase.ssh_keys
@@ -97,7 +96,6 @@
       loop: "{{ new_postgres_nodes }}"
       changed_when: false
       when: new_postgres_nodes | default([]) | length > 0
-      tags: always
 
 - name: vitabaks.autobase.add_node | Import etcd cluster playbook
   ansible.builtin.import_playbook: etcd_cluster.yml
@@ -130,7 +128,6 @@
       ansible.builtin.package_facts:
         manager: auto
       check_mode: false
-      tags: always
 
     - name: Update apt cache
       ansible.builtin.apt:
@@ -169,20 +166,20 @@
       ansible.builtin.set_fact:
         firewall_ports_dynamic_var: "{{ firewall_ports_dynamic_var | default([]) + (firewall_allowed_tcp_ports_for[item] | default([])) }}"
       loop: "{{ hostvars[inventory_hostname].group_names }}"
-      when: firewall_enabled_at_boot | default(false)| bool
+      when: firewall_enabled_at_boot | default(false) | bool
 
     - name: Build a firewall_rules_dynamic_var
       ansible.builtin.set_fact:
         firewall_rules_dynamic_var: "{{ firewall_rules_dynamic_var | default([]) + (firewall_additional_rules_for[item] | default([])) }}"
       loop: "{{ hostvars[inventory_hostname].group_names }}"
-      when: firewall_enabled_at_boot | default(false)| bool
+      when: firewall_enabled_at_boot | default(false) | bool
 
   roles:
     - role: vitabaks.autobase.firewall
       vars:
         firewall_allowed_tcp_ports: "{{ firewall_ports_dynamic_var | default([]) | unique }}"
         firewall_additional_rules: "{{ firewall_rules_dynamic_var | default([]) | unique }}"
-      when: firewall_enabled_at_boot | default(false)| bool
+      when: firewall_enabled_at_boot | default(false) | bool
 
     - role: vitabaks.autobase.hostname
     - role: vitabaks.autobase.resolv_conf

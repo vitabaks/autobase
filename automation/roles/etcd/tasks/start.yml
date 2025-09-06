@@ -1,0 +1,46 @@
+---
+# Start etcd service and check cluster health
+- block:
+    - name: Enable and start etcd service
+      ansible.builtin.systemd:
+        daemon_reload: true
+        name: etcd
+        enabled: true
+        state: started
+
+    - name: Wait for port 2379 to become open on the host
+      ansible.builtin.wait_for:
+        port: 2379
+        host: 127.0.0.1
+        state: started
+        timeout: 120
+        delay: 10
+
+    - name: Wait until the etcd is healthy
+      ansible.builtin.command: >
+        /usr/local/bin/etcdctl endpoint health
+        --endpoints={{ patroni_etcd_protocol | default('http', true) }}://{{ etcd_bind_address }}:2379
+        {% if etcd_tls_enable | default(false) | bool %}
+        --cacert={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_ca_crt | default('ca.crt') }}
+        --cert={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_server_crt | default('server.crt') }}
+        --key={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_server_key | default('server.key') }}
+        {% endif %}
+      environment:
+        ETCDCTL_API: "3"
+      register: etcd_health_result
+      until: >
+        'is healthy' in etcd_health_result.stdout or
+        'is healthy' in etcd_health_result.stderr
+      retries: 10
+      delay: 10
+      changed_when: false
+      ignore_errors: false
+
+    - name: cluster health
+      ansible.builtin.debug:
+        msg: >
+          {{ etcd_health_result.stdout
+          if etcd_health_result.stdout | length > 0
+          else etcd_health_result.stderr }}
+  when: not ansible_check_mode
+  tags: etcd, etcd_start, etcd_status
