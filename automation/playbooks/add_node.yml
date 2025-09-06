@@ -103,14 +103,18 @@
   ansible.builtin.import_playbook: etcd_cluster.yml
   vars:
     cluster_scaling: true
-  when: dcs_type | default('etcd') == "etcd"
+  when:
+    - dcs_type | default('etcd') == "etcd"
+    - new_etcd_nodes | length > 0
   tags: etcd
 
 - name: vitabaks.autobase.add_node | Import Consul playbook
   ansible.builtin.import_playbook: consul_cluster.yml
   vars:
     cluster_scaling: true
-  when: dcs_type | default('etcd') == "consul"
+  when:
+    - dcs_type | default('etcd') == "consul"
+    - new_consul_nodes | length > 0
   tags: consul
 
 - name: vitabaks.autobase.add_node | Configure new PostgreSQL node
