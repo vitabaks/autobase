@@ -61,9 +61,9 @@
       run_once: true # noqa run-once
       ansible.builtin.debug:
         msg:
-          new_postgres_nodes: "{{ new_postgres_nodes | join(', ') if new_postgres_nodes | length > 0 else omit }}"
-          new_etcd_nodes: "{{ new_etcd_nodes | join(', ') if new_etcd_nodes | length > 0 else omit }}"
-          new_consul_nodes: "{{ new_consul_nodes | join(', ') if new_consul_nodes | length > 0 else omit }}"
+          new_postgres_nodes: "{{ new_postgres_nodes | join(', ') if new_postgres_nodes | default([]) | length > 0 else omit }}"
+          new_etcd_nodes: "{{ new_etcd_nodes | join(', ') if new_etcd_nodes | default([]) | length > 0 else omit }}"
+          new_consul_nodes: "{{ new_consul_nodes | join(', ') if new_consul_nodes | default([]) | length > 0 else omit }}"
       tags: always
 
   roles:
@@ -72,13 +72,13 @@
       vars:
         minimal_ansible_version: 2.17.0
         timescale_minimal_pg_version: 12 # if enable_timescale is defined
-      when: new_postgres_nodes | length > 0
+      when: new_postgres_nodes | default([]) | length > 0
       tags: always
 
     # Configure SSH Key-Based Authentication
     - role: vitabaks.autobase.ssh_keys
       when:
-        - new_postgres_nodes | length > 0
+        - new_postgres_nodes | default([]) | length > 0
         - enable_ssh_key_based_authentication | default(false) | bool
 
   tasks:
@@ -87,7 +87,7 @@
         name: vitabaks.autobase.patroni
         tasks_from: pg_hba
       when:
-        - new_postgres_nodes | length > 0
+        - new_postgres_nodes | default([]) | length > 0
         - not new_node | default(false) | bool
 
     - name: Add a new node to new_replica group (in-memory inventory)
@@ -96,7 +96,7 @@
         groups: new_replica
       loop: "{{ new_postgres_nodes }}"
       changed_when: false
-      when: new_postgres_nodes | length > 0
+      when: new_postgres_nodes | default([]) | length > 0
       tags: always
 
 - name: vitabaks.autobase.add_node | Import etcd cluster playbook
@@ -105,7 +105,7 @@
     cluster_scaling: true
   when:
     - dcs_type | default('etcd') == "etcd"
-    - new_etcd_nodes | length > 0
+    - new_etcd_nodes | default([]) | length > 0
   tags: etcd
 
 - name: vitabaks.autobase.add_node | Import Consul playbook
@@ -114,7 +114,7 @@
     cluster_scaling: true
   when:
     - dcs_type | default('etcd') == "consul"
-    - new_consul_nodes | length > 0
+    - new_consul_nodes | default([]) | length > 0
   tags: consul
 
 - name: vitabaks.autobase.add_node | Configure new PostgreSQL node
