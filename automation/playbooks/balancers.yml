@@ -19,6 +19,7 @@
     - name: Define bind_address
       ansible.builtin.include_role:
         name: vitabaks.autobase.bind_address
+      when: bind_address is not defined
       tags: always
 
     - name: Update apt cache

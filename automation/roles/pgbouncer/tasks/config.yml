@@ -20,7 +20,7 @@
     index_var: idx
     label: "{{ 'pgbouncer' if idx == 0 else 'pgbouncer-%d' % (idx + 1) }}"
   notify: "reload pgbouncer"
-  when: existing_pgcluster is not defined or not existing_pgcluster | bool
+  when: cluster_scaling is not defined or not cluster_scaling | bool
   tags: pgbouncer, pgbouncer_conf
 
 # if pgbouncer_auth_user is 'false'
