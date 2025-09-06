@@ -1,0 +1,80 @@
+---
+# Add new node to existing etcd cluster
+- block:
+    - name: Build etcd endpoints for existing cluster members
+      ansible.builtin.set_fact:
+        etcd_existing_endpoints: >-
+          {% for host in groups['etcd_cluster'] | difference(new_etcd_nodes | default([])) -%}
+          {{ patroni_etcd_protocol | default('http', true) }}://
+          {{- hostvars[host]['etcd_bind_address'] | default(hostvars[host]['bind_address'], true) }}:2379
+          {%- if not loop.last %},{% endif -%}
+          {% endfor %}
+
+    - name: Check if member already exists in etcd cluster
+      ansible.builtin.command: >
+        /usr/local/bin/etcdctl member list
+        --endpoints={{ etcd_existing_endpoints }}
+        {% if etcd_tls_enable | default(false) | bool %}
+        --cacert={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_ca_crt | default('ca.crt') }}
+        --cert={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_server_crt | default('server.crt') }}
+        --key={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_server_key | default('server.key') }}
+        {% endif %}
+      environment:
+        ETCDCTL_API: "3"
+      delegate_to: "{{ groups['etcd_cluster'] | difference(new_etcd_nodes | default([])) | first }}"
+      register: etcd_member_list
+      changed_when: false
+
+    - name: Add new etcd member to existing cluster
+      ansible.builtin.command: >
+        /usr/local/bin/etcdctl member add {{ hostvars[etcd_node].ansible_hostname }}
+        --peer-urls={{ patroni_etcd_protocol | default('http', true) }}://{{ etcd_node_bind_address }}:2380
+        --endpoints={{ etcd_existing_endpoints }}
+        {% if etcd_tls_enable | default(false) | bool %}
+        --cacert={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_ca_crt | default('ca.crt') }}
+        --cert={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_server_crt | default('server.crt') }}
+        --key={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_server_key | default('server.key') }}
+        {% endif %}
+      environment:
+        ETCDCTL_API: "3"
+      delegate_to: "{{ groups['etcd_cluster'] | difference(new_etcd_nodes | default([])) | first }}"
+      register: etcd_member_add_result
+      vars:
+        etcd_node_bind_address: "{{ hostvars[etcd_node].etcd_bind_address | default(hostvars[etcd_node].bind_address) }}"
+      when: hostvars[etcd_node].ansible_hostname not in etcd_member_list.stdout
+
+    - name: Apply member-add params to etcd.conf on the new node
+      ansible.builtin.lineinfile:
+        path: "{{ etcd_conf_dir | default('/etc/etcd') }}/etcd.conf"
+        regexp: '^{{ item.split("=", 1)[0] }}='
+        line: '{{ item }}'
+      loop: "{{ etcd_member_add_result.stdout_lines | select('match', '^ETCD_') | list }}"
+      loop_control:
+        label: "{{ item }}"
+      delegate_to: "{{ etcd_node }}"
+      when:
+        - etcd_member_add_result is defined
+        - etcd_member_add_result.stdout_lines is defined
+
+    - name: Make sure the etcd data directory is empty on the new node
+      ansible.builtin.file:
+        path: "{{ etcd_data_dir | default('/var/lib/etcd') }}"
+        state: "{{ item }}"
+        owner: etcd
+        mode: "0700"
+      loop:
+        - absent
+        - directory
+      delegate_to: "{{ etcd_node }}"
+      when:
+        - etcd_member_add_result is defined
+        - etcd_member_add_result is changed
+
+    - name: Start etcd service and check cluster health
+      ansible.builtin.include_tasks:
+        file: start.yml
+        apply:
+          delegate_to: "{{ etcd_node }}"
+      vars:
+        etcd_bind_address: "{{ hostvars[etcd_node].etcd_bind_address | default(hostvars[etcd_node].bind_address) }}"
+  tags: etcd, etcd_member_add
