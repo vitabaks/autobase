@@ -52,7 +52,9 @@
       loop_control:
         label: "{{ item }}"
       delegate_to: "{{ etcd_node }}"
-      when: etcd_member_add_result is defined
+      when:
+        - etcd_member_add_result is defined
+        - etcd_member_add_result.stdout_lines is defined
 
     - name: Make sure the etcd data directory is empty on the new node
       ansible.builtin.file:
@@ -64,7 +66,9 @@
         - absent
         - directory
       delegate_to: "{{ etcd_node }}"
-      when: etcd_member_add_result is defined
+      when:
+        - etcd_member_add_result is defined
+        - etcd_member_add_result is changed
 
     - name: Start etcd service and check cluster health
       ansible.builtin.include_tasks:
