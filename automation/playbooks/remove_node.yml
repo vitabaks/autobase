@@ -210,8 +210,7 @@
           ansible.builtin.command: >-
             /usr/local/bin/etcdctl member list
             --write-out=table
-            --endpoints={{ etcd_endpoints }}
-            {% if etcd_tls_enable | default(false) | bool %}
+            {% if etcd_tls_enable | default(true) | bool %}
             --cacert={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_ca_crt | default('ca.crt') }}
             --cert={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_server_crt | default('server.crt') }}
             --key={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_server_key | default('server.key') }}
@@ -238,8 +237,7 @@
           ansible.builtin.command: >-
             /usr/local/bin/etcdctl member list
             --write-out=table
-            --endpoints={{ etcd_endpoints }}
-            {% if etcd_tls_enable | default(false) | bool %}
+            {% if etcd_tls_enable | default(true) | bool %}
             --cacert={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_ca_crt | default('ca.crt') }}
             --cert={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_server_crt | default('server.crt') }}
             --key={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_server_key | default('server.key') }}
