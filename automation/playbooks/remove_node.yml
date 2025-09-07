@@ -246,8 +246,11 @@
             {% endif %}
           environment:
             ETCDCTL_API: "3"
-          register: etcd_members_list_after
           changed_when: false
+          register: etcd_members_list_after
+          until: etcd_members_list_after.rc == 0
+          retries: 3
+          delay: 5
           when: inventory_hostname != target_node
 
         - name: Show etcd cluster members list after removal
