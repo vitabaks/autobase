@@ -1,0 +1,55 @@
+---
+# Remove node from etcd cluster (remove_node.yml)
+- block:
+    - name: Build etcd endpoints for existing cluster members
+      run_once: true # noqa run-once
+      ansible.builtin.set_fact:
+        etcd_endpoints: >-
+          {% set exclude = [target_node] if (target_node is defined and target_node | length > 0) else [] %}
+          {% for host in (groups['etcd_cluster'] | difference(exclude)) -%}
+          {{ patroni_etcd_protocol | default('http', true) }}://
+          {{- hostvars[host]['etcd_bind_address'] | default(hostvars[host]['bind_address'], true) }}:2379
+          {%- if not loop.last %},{% endif -%}
+          {% endfor %}
+
+    - name: Get etcd cluster member list
+      run_once: true # noqa run-once
+      ansible.builtin.command: >-
+        /usr/local/bin/etcdctl member list
+        --endpoints={{ etcd_endpoints }}
+        {% if etcd_tls_enable | default(false) | bool %}
+        --cacert={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_ca_crt | default('ca.crt') }}
+        --cert={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_server_crt | default('server.crt') }}
+        --key={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_server_key | default('server.key') }}
+        {% endif %}
+      environment:
+        ETCDCTL_API: "3"
+      register: etcd_members_list
+      changed_when: false
+
+    - name: Find target node etcd member ID
+      run_once: true # noqa run-once
+      ansible.builtin.set_fact:
+        target_etcd_member_id: >-
+          {{
+            etcd_members_list.stdout_lines
+            | select('match', hostvars[target_node].ansible_hostname)
+            | map('regex_replace', '^([^,]+),.*', '\1')
+            | first | default('')
+          }}
+
+    - name: Remove node from etcd cluster
+      run_once: true # noqa run-once
+      ansible.builtin.command: >-
+        /usr/local/bin/etcdctl member remove {{ target_etcd_member_id | trim }}
+        --endpoints={{ etcd_endpoints }}
+        {% if etcd_tls_enable | default(false) | bool %}
+        --cacert={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_ca_crt | default('ca.crt') }}
+        --cert={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_server_crt | default('server.crt') }}
+        --key={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_server_key | default('server.key') }}
+        {% endif %}
+      environment:
+        ETCDCTL_API: "3"
+      when: target_etcd_member_id | default('') | trim | length > 0
+  when: inventory_hostname != target_node | default('')
+  tags: etcd, etcd_member_remove
