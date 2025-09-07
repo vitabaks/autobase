@@ -100,7 +100,7 @@ Autobase adheres to a modular design separating atomic logic (roles) and orchest
 
 ###### ⬆️ Scaling
 
-- `add_pgnode` – Add a new PostgreSQL replica node to an existing cluster.
+- `add_node` – Add a new PostgreSQL or etcd node to an existing cluster.
 - `add_balancer` – Add a new HAProxy load balancer node to the cluster (used if with_haproxy_load_balancing: true).
 
 ###### 🧹 Removal

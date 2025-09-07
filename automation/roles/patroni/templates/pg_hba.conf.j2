@@ -85,14 +85,18 @@
 
 # TYPE      DATABASE                 USER                     ADDRESS                  METHOD
 {% for client in postgresql_pg_hba %}
-  {{ client.type.ljust(10) |default('{% if tls_cert_generate | default(false) | bool %}hostssl{% else %}host{% endif %}') }}{{ client.database.ljust(25) |default('all') }}{{ client.user.ljust(25) |default('all') }}{{ client.address.ljust(25) |default('') }}{{ client.method |default('md5') }} {{ client.options |default(None) }}
+  {{ client.type.ljust(9) |default('{% if tls_cert_generate | default(false) | bool %}hostssl{% else %}host{% endif %}') }} {{ client.database.ljust(24) |default('all') }} {{ client.user.ljust(24) |default('all') }} {{ client.address.ljust(24) |default('') }} {{ client.method |default('md5') }} {{ client.options |default(None) }}
 {% endfor %}
 {% for host in groups['postgres_cluster'] %}
   {% if tls_cert_generate | default(false) | bool %}hostssl{% else %}host{% endif %}      all                      all                      {{ hostvars[host]['patroni_bind_address'] | default(hostvars[host]['bind_address'], true) }}/32         {{ postgresql_password_encryption_algorithm }}
 {% endfor %}
 # Allow replication connections from localhost, by a user with the
 # replication privilege.
+{% if patroni_use_unix_socket_repl | default(false) %}
+  local        replication              {{ patroni_replication_username }}                                      trust
+{% else %}
   {% if tls_cert_generate | default(false) | bool %}hostssl{% else %}host{% endif %}      replication              {{ patroni_replication_username }}               localhost                trust
+{% endif %}
 {% for host in groups['postgres_cluster'] %}
   {% if tls_cert_generate | default(false) | bool %}hostssl{% else %}host{% endif %}      replication              {{ patroni_replication_username }}               {{ hostvars[host]['patroni_bind_address'] | default(hostvars[host]['bind_address'], true) }}/32         {{ postgresql_password_encryption_algorithm }}
 {% endfor %}

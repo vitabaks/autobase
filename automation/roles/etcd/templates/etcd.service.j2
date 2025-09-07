@@ -12,6 +12,9 @@ User=etcd
 # set GOMAXPROCS to number of processors
 ExecStart=/bin/bash -c "GOMAXPROCS=$(nproc) /usr/local/bin/etcd"
 Restart=on-failure
+RestartSec=10
+StartLimitInterval=0
+TimeoutStartSec=180
 LimitNOFILE=65536
 
 {% if ansible_virtualization_type not in ['container', 'docker', 'lxc', 'podman'] %}
