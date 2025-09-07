@@ -7,6 +7,10 @@
     target_node: "{{ node_to_remove | default('') }}"
 
   pre_tasks:
+    - name: Define bind_address
+      ansible.builtin.include_role:
+        name: vitabaks.autobase.bind_address
+
     - name: Validate that node_to_remove is specified
       run_once: true # noqa run-once
       ansible.builtin.fail:
@@ -92,6 +96,40 @@
               {% endif %}"
           when: remove_postgres_data | default(true) | bool
       when: inventory_hostname == target_node
+
+    - block:
+        - name: Read postgres public SSH key from target node
+          ansible.builtin.slurp:
+            src: "~postgres/.ssh/id_rsa.pub"
+          delegate_to: "{{ target_node }}"
+          register: target_node_pubkey
+          changed_when: false
+          failed_when: false
+
+        - name: Remove target node pubkey from authorized_keys
+          ansible.posix.authorized_key:
+            user: postgres
+            state: absent
+            key: "{{ target_node_pubkey.content | default('') | b64decode }}"
+          when: target_node_pubkey.content | default('') | b64decode | length > 0
+
+        - name: Remove known_hosts entries for target node
+          become: true
+          become_user: postgres
+          ansible.builtin.known_hosts:
+            state: absent
+            path: "~postgres/.ssh/known_hosts"
+            name: "{{ item }}"
+          loop: >-
+              {{
+                [
+                  hostvars[target_node].get('bind_address',''),
+                  hostvars[target_node].get('ansible_hostname',''),
+                  target_node
+                ] | reject('equalto','') | unique | list
+              }}
+      ignore_errors: true
+      when: inventory_hostname != target_node
 
 - name: vitabaks.autobase.remove_node | Remove node from Consul cluster
   hosts: consul_instances
