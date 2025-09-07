@@ -30,7 +30,7 @@
             - target_node not in (groups['etcd_cluster'] | default([]))
             - target_node not in (groups['consul_instances'] | default([]))
 
-        - name: Fetch Patroni cluster members list before removal
+        - name: Fetch Patroni cluster members before removal
           run_once: true # noqa run-once
           ansible.builtin.command: >-
             patronictl -c {{ patroni_config_file | default('/etc/patroni/patroni.yml') }} list
@@ -40,7 +40,7 @@
           environment:
             PATH: "{{ ansible_env.PATH }}:/usr/bin:/usr/local/bin"
 
-        - name: Show Patroni cluster members list before removal
+        - name: Show Patroni cluster members before removal
           run_once: true # noqa run-once
           ansible.builtin.debug:
             msg: "{{ patronictl_list_before.stdout_lines }}"
@@ -131,7 +131,7 @@
       tags: postgres, postgresql, ssh_keys
 
     - block:
-        - name: Fetch Patroni cluster members list after removal
+        - name: Fetch Patroni cluster members after removal
           run_once: true # noqa run-once
           ansible.builtin.command: >-
             patronictl -c {{ patroni_config_file | default('/etc/patroni/patroni.yml') }} list
@@ -141,7 +141,7 @@
           environment:
             PATH: "{{ ansible_env.PATH }}:/usr/bin:/usr/local/bin"
 
-        - name: Show Patroni cluster members list after removal
+        - name: Show Patroni cluster members after removal
           run_once: true # noqa run-once
           ansible.builtin.debug:
             msg: "{{ patronictl_list_after.stdout_lines }}"
@@ -207,7 +207,7 @@
     target_node: "{{ node_to_remove | default('') }}"
   tasks:
     - block:
-        - name: Fetch etcd cluster members list before removal
+        - name: Fetch etcd cluster members before removal
           run_once: true # noqa run-once
           ansible.builtin.command: >-
             /usr/local/bin/etcdctl member list
@@ -223,7 +223,7 @@
           changed_when: false
           when: inventory_hostname != target_node
 
-        - name: Show etcd cluster members list before removal
+        - name: Show etcd cluster members before removal
           run_once: true # noqa run-once
           ansible.builtin.debug:
             msg: "{{ etcd_members_list_before.stdout_lines }}"
@@ -234,7 +234,7 @@
             name: vitabaks.autobase.etcd
             tasks_from: member_remove
 
-        - name: Fetch etcd cluster members list after removal
+        - name: Fetch etcd cluster members after removal
           run_once: true # noqa run-once
           ansible.builtin.command: >-
             /usr/local/bin/etcdctl member list
@@ -253,7 +253,7 @@
           delay: 5
           when: inventory_hostname != target_node
 
-        - name: Show etcd cluster members list after removal
+        - name: Show etcd cluster members after removal
           run_once: true # noqa run-once
           ansible.builtin.debug:
             msg: "{{ etcd_members_list_after.stdout_lines }}"
