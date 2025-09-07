@@ -32,16 +32,16 @@
       ansible.builtin.set_fact:
         target_etcd_member_id_dec: >-
           {{
-            (etcd_members_json.stdout | from_json).members
+            ((etcd_members_json.stdout | default('{}')) | from_json).members
             | selectattr('name', 'equalto', hostvars[target_node].ansible_hostname)
             | map(attribute='ID')
-            | first | default(0)
+            | first | default(0) | int
           }}
 
     - name: Convert member ID to hex
       run_once: true # noqa run-once
       ansible.builtin.set_fact:
-        target_etcd_member_id: "{{ '%x' % target_etcd_member_id_dec if (target_etcd_member_id_dec | int) > 0 else '' }}"
+        target_etcd_member_id: "{{ '%x' % (target_etcd_member_id_dec | int) if (target_etcd_member_id_dec | int) > 0 else '' }}"
 
     - name: Debug target member info
       run_once: true # noqa run-once
