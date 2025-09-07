@@ -30,26 +30,21 @@
             - target_node not in (groups['etcd_cluster'] | default([]))
             - target_node not in (groups['consul_instances'] | default([]))
 
-        - name: Check the Patroni cluster state
+        - name: Fetch Patroni cluster members list before removal
           run_once: true # noqa run-once
           ansible.builtin.command: >-
             patronictl -c {{ patroni_config_file | default('/etc/patroni/patroni.yml') }} list
-          register: patronictl_result
+          register: patronictl_list_before
           changed_when: false
           delegate_to: "{{ groups['postgres_cluster'] | difference([target_node]) | first }}"
           environment:
             PATH: "{{ ansible_env.PATH }}:/usr/bin:/usr/local/bin"
 
-        - name: List the Patroni cluster members
+        - name: Show Patroni cluster members list before removal
           run_once: true # noqa run-once
           ansible.builtin.debug:
-            msg: "{{ patronictl_result.stdout_lines }}"
+            msg: "{{ patronictl_list_before.stdout_lines }}"
           delegate_to: "{{ groups['postgres_cluster'] | difference([target_node]) | first }}"
-
-        - name: Check if target node is primary
-          run_once: true # noqa run-once
-          ansible.builtin.set_fact:
-            is_target_primary: "{{ patronictl_result.stdout is search(target_node + '.*Leader') }}"
 
         - name: Fail if trying to remove primary node
           run_once: true # noqa run-once
@@ -57,7 +52,7 @@
             msg: >-
               Cannot remove primary node '{{ target_node }}'. Please perform
               switchover first or specify a replica node.
-          when: is_target_primary | bool
+          when: patronictl_list_before.stdout is search(target_node + '.*Leader')
       tags: always
 
   tasks:
@@ -97,6 +92,22 @@
               {{ default_postgresql_data_dir }}\
               {% endif %}"
           when: remove_postgres_data | default(true) | bool
+
+        - name: Fetch Patroni cluster members list after removal
+          run_once: true # noqa run-once
+          ansible.builtin.command: >-
+            patronictl -c {{ patroni_config_file | default('/etc/patroni/patroni.yml') }} list
+          register: patronictl_list_after
+          changed_when: false
+          delegate_to: "{{ groups['postgres_cluster'] | difference([target_node]) | first }}"
+          environment:
+            PATH: "{{ ansible_env.PATH }}:/usr/bin:/usr/local/bin"
+
+        - name: Show Patroni cluster members list after removal
+          run_once: true # noqa run-once
+          ansible.builtin.debug:
+            msg: "{{ patronictl_list_after.stdout_lines }}"
+          delegate_to: "{{ groups['postgres_cluster'] | difference([target_node]) | first }}"
       when: inventory_hostname == target_node
       tags: postgres, postgresql
 
@@ -193,9 +204,56 @@
   vars:
     target_node: "{{ node_to_remove | default('') }}"
   tasks:
-    - name: Remove target node from etcd cluster
-      ansible.builtin.include_role:
-        name: vitabaks.autobase.etcd
-        tasks_from: member_remove
+    - block:
+        - name: Fetch etcd cluster members list before removal
+          run_once: true # noqa run-once
+          ansible.builtin.command: >-
+            /usr/local/bin/etcdctl member list
+            --write-out=table
+            --endpoints={{ etcd_endpoints }}
+            {% if etcd_tls_enable | default(false) | bool %}
+            --cacert={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_ca_crt | default('ca.crt') }}
+            --cert={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_server_crt | default('server.crt') }}
+            --key={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_server_key | default('server.key') }}
+            {% endif %}
+          environment:
+            ETCDCTL_API: "3"
+          register: etcd_members_list_before
+          changed_when: false
+          when: inventory_hostname != target_node
+
+        - name: Show etcd cluster members list before removal
+          run_once: true # noqa run-once
+          ansible.builtin.debug:
+            msg: "{{ etcd_members_list_before.stdout_lines }}"
+          when: inventory_hostname != target_node
+
+        - name: Remove target node from etcd cluster
+          ansible.builtin.include_role:
+            name: vitabaks.autobase.etcd
+            tasks_from: member_remove
+
+        - name: Fetch etcd cluster members list after removal
+          run_once: true # noqa run-once
+          ansible.builtin.command: >-
+            /usr/local/bin/etcdctl member list
+            --write-out=table
+            --endpoints={{ etcd_endpoints }}
+            {% if etcd_tls_enable | default(false) | bool %}
+            --cacert={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_ca_crt | default('ca.crt') }}
+            --cert={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_server_crt | default('server.crt') }}
+            --key={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_server_key | default('server.key') }}
+            {% endif %}
+          environment:
+            ETCDCTL_API: "3"
+          register: etcd_members_list_after
+          changed_when: false
+          when: inventory_hostname != target_node
+
+        - name: Show etcd cluster members list after removal
+          run_once: true # noqa run-once
+          ansible.builtin.debug:
+            msg: "{{ etcd_members_list_after.stdout_lines }}"
+          when: inventory_hostname != target_node
       when: dcs_type | default('etcd') == 'etcd'
       tags: etcd
