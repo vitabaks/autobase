@@ -74,14 +74,11 @@ dependencies:
 ```
 
 
-## Dependencies
-
-```yaml
-dependencies:
-  - role: vitabaks.autobase.common
-```
-
 ## Tags
+
+Use these tags to run specific parts of the role:
+
+- `firewall`: Configure firewall rules
 
 ## License
 

@@ -96,14 +96,20 @@ dependencies:
 ```
 
 
-## Dependencies
-
-```yaml
-dependencies:
-  - role: vitabaks.autobase.common
-```
-
 ## Tags
+
+Use these tags to run specific parts of the role:
+
+- `install_packages`: Install system packages
+- `install_postgres`: Install PostgreSQL packages
+- `install_extensions`: Install PostgreSQL extensions
+- `install_packages_from_file`: Install packages from file
+- `perf`: Install performance monitoring tools
+- `pgvector`: Install pgvector extension
+- `postgis`: Install PostGIS extension
+- `timescaledb`: Install TimescaleDB extension
+- `pg_cron`: Install pg_cron extension
+- `pgaudit`: Install pgAudit extension
 
 ## License
 

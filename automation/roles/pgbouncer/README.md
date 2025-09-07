@@ -85,6 +85,16 @@ dependencies:
 
 ## Tags
 
+Use these tags to run specific parts of the role:
+
+- `pgbouncer`: Run all PgBouncer tasks
+- `pgbouncer_install`: Install PgBouncer package only
+- `pgbouncer_conf`: Configure PgBouncer only
+- `pgbouncer_service`: Manage PgBouncer service only
+- `pgbouncer_auth_query`: Configure authentication query only
+- `pgbouncer_generate_userlist`: Generate user list only
+- `pgbouncer_logrotate`: Configure log rotation only
+
 ## License
 
 MIT

@@ -101,14 +101,12 @@ dependencies:
 ```
 
 
-## Dependencies
-
-```yaml
-dependencies:
-  - role: vitabaks.autobase.common
-```
-
 ## Tags
+
+Use these tags to run specific parts of the role:
+
+- `sysctl`: Configure system kernel parameters
+- `kernel`: Configure kernel parameters
 
 ## License
 

@@ -68,6 +68,10 @@ Use these tags to run specific parts of the role:
 - `pgbackrest_install`: Install pgBackRest only
 - `pgbackrest_conf`: Configure pgBackRest only
 - `pgbackrest_repo`: Set up repositories only
+- `pgbackrest_ssh_keys`: Configure SSH keys only
+- `pgbackrest_stanza_create`: Create stanza only
+- `pgbackrest_cron`: Configure backup cron jobs only
+- `pgbackrest_bootstrap_script`: Set up bootstrap scripts only
 
 ## License
 

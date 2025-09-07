@@ -51,6 +51,9 @@ Use these tags to run specific parts of the role:
 
 - `etcd`: Run all etcd tasks
 - `etcd_install`: Install etcd only
+- `etcd_conf`: Configure etcd only
+- `etcd_start`: Start etcd service only
+- `etcd_status`: Check etcd status only
 
 ## License
 

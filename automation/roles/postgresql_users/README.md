@@ -82,14 +82,11 @@ flags: "NOLOGIN,NOSUPERUSER"
 ```
 
 
-## Dependencies
-
-```yaml
-dependencies:
-  - role: vitabaks.autobase.common
-```
-
 ## Tags
+
+Use these tags to run specific parts of the role:
+
+- `postgresql_users`: Create/configure PostgreSQL users
 
 ## License
 

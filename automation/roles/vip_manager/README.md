@@ -93,14 +93,15 @@ dependencies:
 ```
 
 
-## Dependencies
-
-```yaml
-dependencies:
-  - role: vitabaks.autobase.common
-```
-
 ## Tags
+
+Use these tags to run specific parts of the role:
+
+- `vip_manager`: Run all VIP Manager tasks
+- `vip`: Run VIP-related configuration
+- `vip_manager_install`: Install VIP Manager only
+- `vip_manager_conf`: Configure VIP Manager only  
+- `vip_manager_service`: Manage VIP Manager service only
 
 ## License
 

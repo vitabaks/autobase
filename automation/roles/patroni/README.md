@@ -4,7 +4,7 @@ This role installs and configures [Patroni](https://github.com/patroni/patroni),
 
 ## Requirements
 
-### Dependencies
+### Prerequisites
 
 - PostgreSQL server must be installed
 - Python 3.6 or higher
@@ -33,6 +33,12 @@ This role installs and configures [Patroni](https://github.com/patroni/patroni),
 | `patroni_deb_package_repo` | `[]` | List of custom DEB package repository URLs |
 | `patroni_rpm_package_repo` | `[]` | List of custom RPM package repository URLs |
 | `patroni_latest_requirements` | `false` | Use latest requirements.txt from master branch |
+
+### Network Configuration
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `patroni_bind_address` | `"{{ bind_address }}"` | IP address for PostgreSQL connections (defaults to bind_address) |
 
 ### REST API Configuration
 

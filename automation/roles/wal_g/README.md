@@ -108,14 +108,15 @@ dependencies:
 ```
 
 
-## Dependencies
-
-```yaml
-dependencies:
-  - role: vitabaks.autobase.common
-```
-
 ## Tags
+
+Use these tags to run specific parts of the role:
+
+- `wal-g`: Run all WAL-G tasks
+- `wal_g`: Run all WAL-G configuration tasks
+- `wal_g_install`: Install WAL-G only
+- `wal_g_conf`: Configure WAL-G only
+- `wal_g_cron`: Configure backup cron jobs only
 
 ## License
 

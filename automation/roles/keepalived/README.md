@@ -87,14 +87,14 @@ dependencies:
 ```
 
 
-## Dependencies
-
-```yaml
-dependencies:
-  - role: vitabaks.autobase.common
-```
-
 ## Tags
+
+Use these tags to run specific parts of the role:
+
+- `keepalived`: Run all keepalived tasks
+- `keepalived_install`: Install keepalived package only
+- `keepalived_conf`: Configure keepalived only
+- `keepalived_selinux`: Configure SELinux policies only
 
 ## License
 
