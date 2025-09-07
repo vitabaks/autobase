@@ -92,22 +92,6 @@
               {{ default_postgresql_data_dir }}\
               {% endif %}"
           when: remove_postgres_data | default(true) | bool
-
-        - name: Fetch Patroni cluster members list after removal
-          run_once: true # noqa run-once
-          ansible.builtin.command: >-
-            patronictl -c {{ patroni_config_file | default('/etc/patroni/patroni.yml') }} list
-          register: patronictl_list_after
-          changed_when: false
-          delegate_to: "{{ groups['postgres_cluster'] | difference([target_node]) | first }}"
-          environment:
-            PATH: "{{ ansible_env.PATH }}:/usr/bin:/usr/local/bin"
-
-        - name: Show Patroni cluster members list after removal
-          run_once: true # noqa run-once
-          ansible.builtin.debug:
-            msg: "{{ patronictl_list_after.stdout_lines }}"
-          delegate_to: "{{ groups['postgres_cluster'] | difference([target_node]) | first }}"
       when: inventory_hostname == target_node
       tags: postgres, postgresql
 
@@ -145,6 +129,24 @@
       ignore_errors: true
       when: inventory_hostname != target_node
       tags: postgres, postgresql, ssh_keys
+
+    - block:
+        - name: Fetch Patroni cluster members list after removal
+          run_once: true # noqa run-once
+          ansible.builtin.command: >-
+            patronictl -c {{ patroni_config_file | default('/etc/patroni/patroni.yml') }} list
+          register: patronictl_list_after
+          changed_when: false
+          delegate_to: "{{ groups['postgres_cluster'] | difference([target_node]) | first }}"
+          environment:
+            PATH: "{{ ansible_env.PATH }}:/usr/bin:/usr/local/bin"
+
+        - name: Show Patroni cluster members list after removal
+          run_once: true # noqa run-once
+          ansible.builtin.debug:
+            msg: "{{ patronictl_list_after.stdout_lines }}"
+          delegate_to: "{{ groups['postgres_cluster'] | difference([target_node]) | first }}"
+      tags: postgres, postgresql
 
 - name: vitabaks.autobase.remove_node | Remove node from Consul cluster
   hosts: consul_instances
