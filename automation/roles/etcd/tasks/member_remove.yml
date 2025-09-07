@@ -5,8 +5,7 @@
       run_once: true # noqa run-once
       ansible.builtin.set_fact:
         etcd_endpoints: >-
-          {% set exclude = [target_node] if (target_node is defined and target_node | length > 0) else [] %}
-          {% for host in (groups['etcd_cluster'] | difference(exclude)) -%}
+          {% for host in (groups['etcd_cluster'] | difference([target_node])) -%}
           {{ patroni_etcd_protocol | default('http', true) }}://
           {{- hostvars[host]['etcd_bind_address'] | default(hostvars[host]['bind_address'], true) }}:2379
           {%- if not loop.last %},{% endif -%}
