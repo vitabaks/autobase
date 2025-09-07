@@ -37,8 +37,11 @@
             | map(attribute='ID')
             | first | default(0)
           }}
-        target_etcd_member_id: >-
-          {{ '%x' % (target_etcd_member_id_dec | int) if (target_etcd_member_id_dec | int) > 0 else '' }}
+
+    - name: Convert member ID to hex
+      run_once: true # noqa run-once
+      ansible.builtin.set_fact:
+        target_etcd_member_id: "{{ '%x' % target_etcd_member_id_dec if (target_etcd_member_id_dec | int) > 0 else '' }}"
 
     - name: Debug target member info
       run_once: true # noqa run-once
