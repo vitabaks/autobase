@@ -52,7 +52,7 @@
         ETCDCTL_API: "3"
       vars:
         target_etcd_member_id_hex: "{{ '%x' % (target_etcd_member_id | int) if (target_etcd_member_id | int) > 0 else '' }}"
-      when: target_etcd_member_id | length > 0
+      when: target_etcd_member_id | default(0) | int > 0
   when: inventory_hostname != target_node | default('')
   tags: etcd, etcd_member_remove
 
