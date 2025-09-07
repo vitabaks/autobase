@@ -67,3 +67,21 @@
       when: target_etcd_member_id | length > 0
   when: inventory_hostname != target_node | default('')
   tags: etcd, etcd_member_remove
+
+- block:
+    - name: Stop and disable etcd service on target node
+      ansible.builtin.service:
+        name: etcd
+        state: stopped
+        enabled: false
+
+    - name: Delete etcd content on target node
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - "{{ etcd_data_dir | default('/var/lib/etcd') }}"
+        - "{{ etcd_conf_dir | default('/etc/etcd') }}"
+      when: remove_etcd_data | default(true) | bool
+  when: inventory_hostname == target_node | default('')
+  tags: etcd, etcd_member_remove
