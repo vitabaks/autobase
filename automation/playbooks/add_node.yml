@@ -127,7 +127,7 @@
       loop: "{{ hostvars[inventory_hostname].group_names }}"
       when:
         - new_node | default(false) | bool
-        - firewall_enabled_at_boot | default(false)| bool
+        - firewall_enabled_at_boot | default(false) | bool
       tags: firewall
 
   roles:
