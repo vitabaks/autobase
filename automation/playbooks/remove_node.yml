@@ -7,56 +7,58 @@
     target_node: "{{ node_to_remove | default('') }}"
 
   pre_tasks:
-    - name: Define bind_address
-      ansible.builtin.include_role:
-        name: vitabaks.autobase.bind_address
+    - block:
+        - name: Define bind_address
+          ansible.builtin.include_role:
+            name: vitabaks.autobase.bind_address
 
-    - name: Validate that node_to_remove is specified
-      run_once: true # noqa run-once
-      ansible.builtin.fail:
-        msg: >-
-          Please specify the node_to_remove variable with the node
-          to remove from the cluster.
-      when: target_node | length == 0
+        - name: Validate that node_to_remove is specified
+          run_once: true # noqa run-once
+          ansible.builtin.fail:
+            msg: >-
+              Please specify the node_to_remove variable with the node
+              to remove from the cluster.
+          when: target_node | length == 0
 
-    - name: Validate that target node exists in inventory
-      run_once: true # noqa run-once
-      ansible.builtin.fail:
-        msg: >-
-          Node '{{ target_node }}' is not found in the inventory.
-      when:
-        - target_node not in (groups['postgres_cluster'] | default([]))
-        - target_node not in (groups['etcd_cluster'] | default([]))
-        - target_node not in (groups['consul_instances'] | default([]))
+        - name: Validate that target node exists in inventory
+          run_once: true # noqa run-once
+          ansible.builtin.fail:
+            msg: >-
+              Node '{{ target_node }}' is not found in the inventory.
+          when:
+            - target_node not in (groups['postgres_cluster'] | default([]))
+            - target_node not in (groups['etcd_cluster'] | default([]))
+            - target_node not in (groups['consul_instances'] | default([]))
 
-    - name: Check the Patroni cluster state
-      run_once: true # noqa run-once
-      ansible.builtin.command: >-
-        patronictl -c {{ patroni_config_file | default('/etc/patroni/patroni.yml') }} list
-      register: patronictl_result
-      changed_when: false
-      delegate_to: "{{ groups['postgres_cluster'] | difference([target_node]) | first }}"
-      environment:
-        PATH: "{{ ansible_env.PATH }}:/usr/bin:/usr/local/bin"
+        - name: Check the Patroni cluster state
+          run_once: true # noqa run-once
+          ansible.builtin.command: >-
+            patronictl -c {{ patroni_config_file | default('/etc/patroni/patroni.yml') }} list
+          register: patronictl_result
+          changed_when: false
+          delegate_to: "{{ groups['postgres_cluster'] | difference([target_node]) | first }}"
+          environment:
+            PATH: "{{ ansible_env.PATH }}:/usr/bin:/usr/local/bin"
 
-    - name: List the Patroni cluster members
-      run_once: true # noqa run-once
-      ansible.builtin.debug:
-        msg: "{{ patronictl_result.stdout_lines }}"
-      delegate_to: "{{ groups['postgres_cluster'] | difference([target_node]) | first }}"
+        - name: List the Patroni cluster members
+          run_once: true # noqa run-once
+          ansible.builtin.debug:
+            msg: "{{ patronictl_result.stdout_lines }}"
+          delegate_to: "{{ groups['postgres_cluster'] | difference([target_node]) | first }}"
 
-    - name: Check if target node is primary
-      run_once: true # noqa run-once
-      ansible.builtin.set_fact:
-        is_target_primary: "{{ patronictl_result.stdout is search(target_node + '.*Leader') }}"
+        - name: Check if target node is primary
+          run_once: true # noqa run-once
+          ansible.builtin.set_fact:
+            is_target_primary: "{{ patronictl_result.stdout is search(target_node + '.*Leader') }}"
 
-    - name: Fail if trying to remove primary node
-      run_once: true # noqa run-once
-      ansible.builtin.fail:
-        msg: >-
-          Cannot remove primary node '{{ target_node }}'. Please perform
-          switchover first or specify a replica node.
-      when: is_target_primary | bool
+        - name: Fail if trying to remove primary node
+          run_once: true # noqa run-once
+          ansible.builtin.fail:
+            msg: >-
+              Cannot remove primary node '{{ target_node }}'. Please perform
+              switchover first or specify a replica node.
+          when: is_target_primary | bool
+      tags: always
 
   tasks:
     - block:
@@ -96,6 +98,7 @@
               {% endif %}"
           when: remove_postgres_data | default(true) | bool
       when: inventory_hostname == target_node
+      tags: postgres, postgresql
 
     - block:
         - name: Read postgres public SSH key from target node
@@ -130,6 +133,7 @@
               }}
       ignore_errors: true
       when: inventory_hostname != target_node
+      tags: postgres, postgresql, ssh_keys
 
 - name: vitabaks.autobase.remove_node | Remove node from Consul cluster
   hosts: consul_instances
@@ -180,6 +184,7 @@
             - inventory_hostname == target_node
             - remove_consul_data | default(true) | bool
       when: dcs_type | default('etcd') == 'consul'
+      tags: consul
 
 - name: vitabaks.autobase.remove_node | Remove node from etcd cluster
   hosts: etcd_cluster
@@ -233,12 +238,11 @@
             member remove {{ target_etcd_member_id | trim }}
           environment:
             ETCDCTL_API: "3"
-          when:
-            - target_etcd_member_id is defined
-            - target_etcd_member_id | trim | length > 0
+          when: target_etcd_member_id | default('') | trim | length > 0
       when:
         - dcs_type | default('etcd') == 'etcd'
         - inventory_hostname != target_node
+      tags: etcd
 
     - block:
         - name: Stop and disable etcd service on target node
@@ -258,3 +262,4 @@
       when:
         - dcs_type | default('etcd') == 'etcd'
         - inventory_hostname == target_node
+      tags: etcd
