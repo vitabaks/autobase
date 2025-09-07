@@ -1,77 +1,108 @@
 ---
-# yamllint disable rule:line-length
-- name: vitabaks.autobase.remove_node | Remove PostgreSQL node from cluster
-  hosts: etcd_cluster
+- name: vitabaks.autobase.remove_node | Remove node from PostgreSQL cluster
+  hosts: postgres_cluster
   become: true
   gather_facts: true
-  strategy: linear
   vars:
     target_node: "{{ node_to_remove | default('') }}"
 
   pre_tasks:
     - name: Validate that node_to_remove is specified
+      run_once: true # noqa run-once
       ansible.builtin.fail:
         msg: >-
-          Please specify the node_to_remove variable with the hostname of
-          the node to remove from the cluster.
+          Please specify the node_to_remove variable with the node
+          to remove from the cluster.
       when: target_node | length == 0
-      run_once: true # noqa run-once
 
     - name: Validate that target node exists in inventory
+      run_once: true # noqa run-once
       ansible.builtin.fail:
         msg: >-
-          Node '{{ target_node }}' is not found in the postgres_cluster group.
-      when: target_node not in groups['postgres_cluster']
-      run_once: true # noqa run-once
+          Node '{{ target_node }}' is not found in the inventory.
+      when:
+        - target_node not in (groups['postgres_cluster'] | default([]))
+        - target_node not in (groups['etcd_cluster'] | default([]))
+        - target_node not in (groups['consul_instances'] | default([]))
 
-    - name: Get cluster status
-      ansible.builtin.command: >-
-        patronictl -c {{ patroni_config_file | default('/etc/patroni/patroni.yml') }}
-        list
-      register: cluster_status
-      failed_when: false
-      changed_when: false
-      delegate_to: >-
-        {{ groups['postgres_cluster'] | difference([target_node]) | first }}
+    - name: Check the Patroni cluster state
       run_once: true # noqa run-once
+      ansible.builtin.command: >-
+        patronictl -c {{ patroni_config_file | default('/etc/patroni/patroni.yml') }} list
+      register: patronictl_result
+      changed_when: false
+      delegate_to: "{{ groups['postgres_cluster'] | difference([target_node]) | first }}"
+      environment:
+        PATH: "{{ ansible_env.PATH }}:/usr/bin:/usr/local/bin"
+
+    - name: List the Patroni cluster members
+      run_once: true # noqa run-once
+      ansible.builtin.debug:
+        msg: "{{ patronictl_result.stdout_lines }}"
+      delegate_to: "{{ groups['postgres_cluster'] | difference([target_node]) | first }}"
 
     - name: Check if target node is primary
-      ansible.builtin.set_fact:
-        is_target_primary: >-
-          {{ cluster_status.stdout is search(target_node + '.*Leader') }}
       run_once: true # noqa run-once
+      ansible.builtin.set_fact:
+        is_target_primary: "{{ patronictl_result.stdout is search(target_node + '.*Leader') }}"
 
     - name: Fail if trying to remove primary node
+      run_once: true # noqa run-once
       ansible.builtin.fail:
         msg: >-
           Cannot remove primary node '{{ target_node }}'. Please perform
           switchover first or specify a replica node.
       when: is_target_primary | bool
-      run_once: true # noqa run-once
 
   tasks:
     - block:
-        - name: Stop patroni service on target node
+        - name: Stop and disable patroni service on target node
           ansible.builtin.service:
             name: patroni
             state: stopped
             enabled: false
-          when: inventory_hostname == target_node
 
-        - name: Remove node from Patroni cluster
-          ansible.builtin.command: >-
-            patronictl -c
-            {{ patroni_config_file | default('/etc/patroni/patroni.yml') }}
-            remove {{ target_node }}
-          register: patroni_remove_result
-          failed_when: false
-          changed_when: patroni_remove_result.rc == 0
-          delegate_to: >-
-            {{ groups['postgres_cluster'] | difference([target_node]) | first }}
-          when: inventory_hostname != target_node
-          run_once: true # noqa run-once
+        - name: Delete PostgreSQL content on target node
+          ansible.builtin.file:
+            path: "{{ item }}"
+            state: absent
+          loop: >-
+            {{
+              [
+                postgresql_data_dir | default(default_postgresql_data_dir),
+                postgresql_conf_dir | default(default_postgresql_conf_dir),
+                postgresql_wal_dir | default('')
+              ] | reject('equalto', '') | list
+            }}
+          vars:
+            default_postgresql_version: "{{ postgresql_version | default('17') }}"
+            default_postgresql_home_dir: "{{ '/var/lib/postgresql' if ansible_os_family == 'Debian' else '/var/lib/pgsql' }}"
+            default_postgresql_cluster_name: "{{ 'main' if ansible_os_family == 'Debian' else 'data' }}"
+            default_postgresql_data_dir: "\
+              {% if cloud_provider | default('') | length > 0 %}\
+              {{ pg_data_mount_path | default('/pgdata') }}/{{ default_postgresql_version }}/{{ default_postgresql_cluster_name }}\
+              {% else %}\
+              {{ default_postgresql_home_dir }}/{{ default_postgresql_version }}/{{ default_postgresql_cluster_name }}\
+              {% endif %}"
+            default_postgresql_conf_dir: "\
+              {% if ansible_os_family == 'Debian' %}\
+              /etc/postgresql/{{ default_postgresql_version }}/{{ default_postgresql_cluster_name }}\
+              {% else %}\
+              {{ default_postgresql_data_dir }}\
+              {% endif %}"
+          when: remove_postgres_data | default(true) | bool
+      when: inventory_hostname == target_node
 
+- name: vitabaks.autobase.remove_node | Remove node from Consul cluster
+  hosts: consul_instances
+  become: true
+  gather_facts: true
+  vars:
+    target_node: "{{ node_to_remove | default('') }}"
+  tasks:
+    - block:
         - name: Get Consul cluster members
+          run_once: true # noqa run-once
           ansible.builtin.uri:
             url: "http://{{ consul_host }}:8500/v1/agent/members"
             method: GET
@@ -80,14 +111,10 @@
           vars:
             consul_host: >-
               {{ hostvars[groups['consul_instances'][0]]['ansible_default_ipv4']['address'] }}
-          when:
-            - dcs_type | default('etcd') == 'consul'
-            - "'consul_instances' in groups"
-            - groups['consul_instances'] | length > 0
-            - inventory_hostname != target_node
-          run_once: true # noqa run-once
+          when: inventory_hostname != target_node
 
         - name: Force leave Consul cluster member
+          run_once: true # noqa run-once
           ansible.builtin.uri:
             url: "http://{{ consul_host }}:8500/v1/agent/force-leave/{{ target_node }}"
             method: PUT
@@ -95,159 +122,101 @@
           vars:
             consul_host: >-
               {{ hostvars[groups['consul_instances'][0]]['ansible_default_ipv4']['address'] }}
-          when:
-            - dcs_type | default('etcd') == 'consul'
-            - consul_members is defined
-            - >-
-              consul_members.json | selectattr('Name', 'equalto', target_node)
-              | list | length > 0
-            - inventory_hostname != target_node
-          run_once: true # noqa run-once
+          when: inventory_hostname != target_node
 
-        - name: Stop PostgreSQL service on target node
-          ansible.builtin.service:
-            name: postgresql
-            state: stopped
-            enabled: false
-          failed_when: false
-          when: inventory_hostname == target_node
-
-        - name: Remove PostgreSQL data directory on target node
-          ansible.builtin.file:
-            path: >-
-              {{ postgresql_data_dir | default(default_postgresql_data_dir) }}
-            state: absent
-          vars:
-            default_postgresql_version: "{{ postgresql_version | default('17') }}"
-            default_postgresql_home_dir: >-
-              {{ '/var/lib/postgresql' if ansible_os_family == 'Debian'
-              else '/var/lib/pgsql' }}
-            default_postgresql_cluster_name: >-
-              {{ 'main' if ansible_os_family == 'Debian' else 'data' }}
-            default_postgresql_data_dir: >-
-              {{ default_postgresql_home_dir }}/{{ default_postgresql_version }}/{{ default_postgresql_cluster_name }}
-          when:
-            - inventory_hostname == target_node
-            - remove_postgres_data | default(true) | bool
-
-        - name: Stop etcd service on target node
-          ansible.builtin.service:
-            name: etcd
-            state: stopped
-            enabled: false
-          failed_when: false
-          when:
-            - inventory_hostname == target_node
-            - dcs_type | default('etcd') == 'etcd'
-
-        - name: Remove etcd data directory on target node
-          ansible.builtin.file:
-            path: "{{ etcd_data_dir | default('/var/lib/etcd') }}"
-            state: absent
-          when:
-            - inventory_hostname == target_node
-            - dcs_type | default('etcd') == 'etcd'
-            - remove_etcd_data | default(true) | bool
-
-        - name: Stop consul service on target node
+        - name: Stop and disable consul service on target node
           ansible.builtin.service:
             name: consul
             state: stopped
             enabled: false
-          failed_when: false
-          when:
-            - inventory_hostname == target_node
-            - dcs_type | default('etcd') == 'consul'
+          when: inventory_hostname == target_node
 
-        - name: Remove consul data directory on target node
+        - name: Delete consul content on target node
           ansible.builtin.file:
-            path: "{{ consul_data_path | default('/var/lib/consul') }}"
+            path: "{{ item }}"
             state: absent
+          loop:
+            - "{{ consul_data_path | default('/var/lib/consul') }}"
+            - "{{ consul_config_path | default('/etc/consul') }}"
           when:
             - inventory_hostname == target_node
-            - dcs_type | default('etcd') == 'consul'
             - remove_consul_data | default(true) | bool
-
-        - name: Display removal summary
-          ansible.builtin.debug:
-            msg:
-              - >-
-                Node '{{ target_node }}' has been successfully removed
-                from the cluster
-              - "Patroni cluster: ✓ Removed"
-              - "DCS ({{ dcs_type | default('etcd') }}): ✓ Removed"
-              - >-
-                PostgreSQL data: {{ '✓ Removed'
-                if remove_postgres_data | default(true) | bool
-                else '✗ Preserved' }}
-          run_once: true # noqa run-once
-
-      rescue:
-        - name: Display error information
-          ansible.builtin.debug:
-            msg:
-              - "Error occurred while removing node '{{ target_node }}'"
-              - >-
-                Please check the logs and manually verify the cluster state
-              - >-
-                You may need to manually clean up remaining DCS entries
-          run_once: true # noqa run-once
-
-        - name: Fail the playbook
-          ansible.builtin.fail:
-            msg: "Failed to remove node '{{ target_node }}' from cluster"
+      when: dcs_type | default('etcd') == 'consul'
 
 - name: vitabaks.autobase.remove_node | Remove node from etcd cluster
-  hosts: etcd_cluster:!{{ node_to_remove | default('') }}
+  hosts: etcd_cluster
   become: true
   gather_facts: false
   vars:
     target_node: "{{ node_to_remove | default('') }}"
   tasks:
-    - name: Check if etcd TLS is enabled
-      ansible.builtin.stat:
-        path: "{{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_server_crt | default('server.crt') }}"
-      register: etcd_tls_cert_check
-      run_once: true # noqa run-once
+    - block:
+        - name: Check if etcd TLS is enabled
+          run_once: true # noqa run-once
+          ansible.builtin.stat:
+            path: "{{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_server_crt | default('server.crt') }}"
+          register: etcd_tls_cert_check
 
-    - name: Get etcd cluster member list
-      ansible.builtin.command: >-
-        /usr/local/bin/etcdctl
-        --endpoints={{ etcd_tls_cert_check.stat.exists | default(false) | bool | ternary('https', 'http') }}://127.0.0.1:2379
-        {% if etcd_tls_cert_check.stat.exists | default(false) | bool %}
-        --cacert={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_ca_crt | default('ca.crt') }}
-        --cert={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_server_crt | default('server.crt') }}
-        --key={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_server_key | default('server.key') }}
-        {% endif %}
-        member list
-      environment:
-        ETCDCTL_API: "3"
-      register: etcd_members_list
-      run_once: true # noqa run-once
-
-    - name: Find target node etcd member ID
-      ansible.builtin.set_fact:
-        target_etcd_member_id: >-
-          {% for line in etcd_members_list.stdout_lines | default([]) %}
-            {% if target_node in line %}
-              {{ line.split(',')[0] | trim }}
+        - name: Get etcd cluster member list
+          run_once: true # noqa run-once
+          ansible.builtin.command: >-
+            /usr/local/bin/etcdctl
+            --endpoints={{ etcd_tls_cert_check.stat.exists | default(false) | bool | ternary('https', 'http') }}://127.0.0.1:2379
+            {% if etcd_tls_cert_check.stat.exists | default(false) | bool %}
+            --cacert={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_ca_crt | default('ca.crt') }}
+            --cert={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_server_crt | default('server.crt') }}
+            --key={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_server_key | default('server.key') }}
             {% endif %}
-          {% endfor %}
-      run_once: true # noqa run-once
+            member list
+          environment:
+            ETCDCTL_API: "3"
+          register: etcd_members_list
 
-    - name: Remove node from etcd cluster
-      ansible.builtin.command: >-
-        /usr/local/bin/etcdctl
-        --endpoints={{ etcd_tls_cert_check.stat.exists | default(false) | bool | ternary('https', 'http') }}://127.0.0.1:2379
-        {% if etcd_tls_cert_check.stat.exists | default(false) | bool %}
-        --cacert={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_ca_crt | default('ca.crt') }}
-        --cert={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_server_crt | default('server.crt') }}
-        --key={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_server_key | default('server.key') }}
-        {% endif %}
-        member remove {{ target_etcd_member_id | trim }}
-      environment:
-        ETCDCTL_API: "3"
+        - name: Find target node etcd member ID
+          run_once: true # noqa run-once
+          ansible.builtin.set_fact:
+            target_etcd_member_id: >-
+              {% for line in etcd_members_list.stdout_lines | default([]) %}
+                {% if target_node in line %}
+                  {{ line.split(',')[0] | trim }}
+                {% endif %}
+              {% endfor %}
+
+        - name: Remove node from etcd cluster
+          run_once: true # noqa run-once
+          ansible.builtin.command: >-
+            /usr/local/bin/etcdctl
+            --endpoints={{ etcd_tls_cert_check.stat.exists | default(false) | bool | ternary('https', 'http') }}://127.0.0.1:2379
+            {% if etcd_tls_cert_check.stat.exists | default(false) | bool %}
+            --cacert={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_ca_crt | default('ca.crt') }}
+            --cert={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_server_crt | default('server.crt') }}
+            --key={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_server_key | default('server.key') }}
+            {% endif %}
+            member remove {{ target_etcd_member_id | trim }}
+          environment:
+            ETCDCTL_API: "3"
+          when:
+            - target_etcd_member_id is defined
+            - target_etcd_member_id | trim | length > 0
       when:
-        - target_etcd_member_id is defined
-        - target_etcd_member_id | trim | length > 0
-      run_once: true # noqa run-once
+        - dcs_type | default('etcd') == 'etcd'
+        - inventory_hostname != target_node
+
+    - block:
+        - name: Stop and disable etcd service on target node
+          ansible.builtin.service:
+            name: etcd
+            state: stopped
+            enabled: false
+
+        - name: Delete etcd content on target node
+          ansible.builtin.file:
+            path: "{{ item }}"
+            state: absent
+          loop:
+            - "{{ etcd_data_dir | default('/var/lib/etcd') }}"
+            - "{{ etcd_conf_dir | default('/etc/etcd') }}"
+          when: remove_etcd_data | default(true) | bool
+      when:
+        - dcs_type | default('etcd') == 'etcd'
+        - inventory_hostname == target_node
