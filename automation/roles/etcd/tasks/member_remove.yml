@@ -15,6 +15,7 @@
       run_once: true # noqa run-once
       ansible.builtin.command: >-
         /usr/local/bin/etcdctl member list
+        --write-out=json
         --endpoints={{ etcd_endpoints }}
         {% if etcd_tls_enable | default(false) | bool %}
         --cacert={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_ca_crt | default('ca.crt') }}
@@ -23,24 +24,35 @@
         {% endif %}
       environment:
         ETCDCTL_API: "3"
-      register: etcd_members_list
+      register: etcd_members_json
       changed_when: false
 
-    - name: Find target node etcd member ID
+    - name: Extract target node etcd member ID
       run_once: true # noqa run-once
       ansible.builtin.set_fact:
-        target_etcd_member_id: >-
+        target_etcd_member_id_dec: >-
           {{
-            etcd_members_list.stdout_lines
-            | select('match', hostvars[target_node].ansible_hostname)
-            | map('regex_replace', '^([^,]+),.*', '\1')
-            | first | default('')
+            (etcd_members_json.stdout | from_json).members
+            | selectattr('name', 'equalto', hostvars[target_node].ansible_hostname)
+            | map(attribute='ID')
+            | first | default(0)
           }}
+        target_etcd_member_id: >-
+          {{ '%x' % (target_etcd_member_id_dec | int) if (target_etcd_member_id_dec | int) > 0 else '' }}
+
+    - name: Debug target member info
+      run_once: true # noqa run-once
+      ansible.builtin.debug:
+        msg:
+          target_hostname: "{{ hostvars[target_node].ansible_hostname }}"
+          id_dec: "{{ target_etcd_member_id_dec }}"
+          id_hex: "{{ target_etcd_member_id }}"
+          members: "{{ (etcd_members_json.stdout | from_json).members | map(attribute='name') | list }}"
 
     - name: Remove node from etcd cluster
       run_once: true # noqa run-once
       ansible.builtin.command: >-
-        /usr/local/bin/etcdctl member remove {{ target_etcd_member_id | trim }}
+        /usr/local/bin/etcdctl member remove {{ target_etcd_member_id }}
         --endpoints={{ etcd_endpoints }}
         {% if etcd_tls_enable | default(false) | bool %}
         --cacert={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_ca_crt | default('ca.crt') }}
@@ -49,6 +61,6 @@
         {% endif %}
       environment:
         ETCDCTL_API: "3"
-      when: target_etcd_member_id | default('') | trim | length > 0
+      when: target_etcd_member_id | length > 0
   when: inventory_hostname != target_node | default('')
   tags: etcd, etcd_member_remove
