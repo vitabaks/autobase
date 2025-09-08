@@ -248,23 +248,12 @@
   vars:
     target_node: "{{ node_to_remove | default('') }}"
   tasks:
-    - block: # update etcd hosts
-        - name: Update patroni config file
-          ansible.builtin.template:
-            src: "{{ playbook_dir }}/../roles/patroni/templates/patroni.yml.j2"
-            dest: "{{ patroni_config_file | default('/etc/patroni/patroni.yml') }}"
-            owner: postgres
-            group: postgres
-            mode: "0640"
-          vars:
-            etcd_hosts: "{{ groups['etcd_cluster'] | default([]) | difference([target_node]) }}"
-
-        - name: Reload patroni service
-          ansible.builtin.systemd:
-            daemon_reload: true
-            name: patroni
-            enabled: true
-            state: reloaded
+    - name: Update patroni config file
+      ansible.builtin.include_role:
+        name: vitabaks.autobase.patroni
+        tasks_from: patroni # update etcd hosts
+      vars:
+        etcd_hosts: "{{ groups['etcd_cluster'] | default([]) | difference([target_node]) }}"
       when:
         - dcs_type | default('etcd') == 'etcd'
         - inventory_hostname != target_node
