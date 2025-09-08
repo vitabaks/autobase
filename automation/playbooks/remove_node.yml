@@ -251,7 +251,7 @@
     - block: # update etcd hosts
         - name: Update patroni config file
           ansible.builtin.template:
-            src: templates/patroni.yml.j2
+            src: "{{ playbook_dir }}/../roles/patroni/templates/patroni.yml.j2"
             dest: "{{ patroni_config_file | default('/etc/patroni/patroni.yml') }}"
             owner: postgres
             group: postgres
