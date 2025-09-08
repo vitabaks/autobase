@@ -35,6 +35,8 @@
     owner: postgres
     group: postgres
     mode: "0640"
+  vars:
+    etcd_hosts: "{{ groups['etcd_cluster'] | default([]) }}"
   notify: "reload patroni"
   tags: patroni, patroni_conf
 

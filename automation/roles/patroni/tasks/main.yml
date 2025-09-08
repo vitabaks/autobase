@@ -241,6 +241,8 @@
     owner: postgres
     group: postgres
     mode: "0640"
+  vars:
+    etcd_hosts: "{{ groups['etcd_cluster'] | default([]) }}"
   when: cluster_scaling is not defined or not cluster_scaling | bool
   tags: patroni, patroni_conf
 

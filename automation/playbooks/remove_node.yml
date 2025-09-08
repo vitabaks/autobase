@@ -36,15 +36,15 @@
             patronictl -c {{ patroni_config_file | default('/etc/patroni/patroni.yml') }} list
           register: patronictl_list_before
           changed_when: false
-          delegate_to: "{{ groups['postgres_cluster'] | difference([target_node]) | first }}"
           environment:
             PATH: "{{ ansible_env.PATH }}:/usr/bin:/usr/local/bin"
+          when: inventory_hostname != target_node
 
         - name: Show Patroni cluster members before removal
           run_once: true # noqa run-once
           ansible.builtin.debug:
             msg: "{{ patronictl_list_before.stdout_lines }}"
-          delegate_to: "{{ groups['postgres_cluster'] | difference([target_node]) | first }}"
+          when: inventory_hostname != target_node
 
         - name: Fail if trying to remove primary node
           run_once: true # noqa run-once
@@ -130,24 +130,6 @@
       when: inventory_hostname != target_node
       tags: postgres, postgresql, ssh_keys
 
-    - block:
-        - name: Fetch Patroni cluster members after removal
-          run_once: true # noqa run-once
-          ansible.builtin.command: >-
-            patronictl -c {{ patroni_config_file | default('/etc/patroni/patroni.yml') }} list
-          register: patronictl_list_after
-          changed_when: false
-          delegate_to: "{{ groups['postgres_cluster'] | difference([target_node]) | first }}"
-          environment:
-            PATH: "{{ ansible_env.PATH }}:/usr/bin:/usr/local/bin"
-
-        - name: Show Patroni cluster members after removal
-          run_once: true # noqa run-once
-          ansible.builtin.debug:
-            msg: "{{ patronictl_list_after.stdout_lines }}"
-          delegate_to: "{{ groups['postgres_cluster'] | difference([target_node]) | first }}"
-      tags: postgres, postgresql
-
 - name: vitabaks.autobase.remove_node | Remove node from Consul cluster
   hosts: consul_instances
   become: true
@@ -162,7 +144,6 @@
             url: "http://{{ consul_host }}:8500/v1/agent/members"
             method: GET
           register: consul_members
-          delegate_to: "{{ groups['consul_instances'][0] }}"
           vars:
             consul_host: >-
               {{ hostvars[groups['consul_instances'][0]]['ansible_default_ipv4']['address'] }}
@@ -173,7 +154,6 @@
           ansible.builtin.uri:
             url: "http://{{ consul_host }}:8500/v1/agent/force-leave/{{ target_node }}"
             method: PUT
-          delegate_to: "{{ groups['consul_instances'][0] }}"
           vars:
             consul_host: >-
               {{ hostvars[groups['consul_instances'][0]]['ansible_default_ipv4']['address'] }}
@@ -260,3 +240,49 @@
           when: inventory_hostname != target_node
       when: dcs_type | default('etcd') == 'etcd'
       tags: etcd
+
+- name: vitabaks.autobase.remove_node | Finalizing
+  hosts: postgres_cluster
+  become: true
+  gather_facts: true
+  vars:
+    target_node: "{{ node_to_remove | default('') }}"
+  tasks:
+    - block: # update etcd hosts
+        - name: Update patroni config file
+          ansible.builtin.template:
+            src: templates/patroni.yml.j2
+            dest: "{{ patroni_config_file | default('/etc/patroni/patroni.yml') }}"
+            owner: postgres
+            group: postgres
+            mode: "0640"
+          vars:
+            etcd_hosts: "{{ groups['etcd_cluster'] | default([]) | difference([target_node]) }}"
+
+        - name: Reload patroni service
+          ansible.builtin.systemd:
+            daemon_reload: true
+            name: patroni
+            enabled: true
+            state: reloaded
+      when:
+        - dcs_type | default('etcd') == 'etcd'
+        - inventory_hostname != target_node
+      tags: postgres, postgresql, etcd
+
+    - block:
+        - name: Fetch Patroni cluster members after removal
+          run_once: true # noqa run-once
+          ansible.builtin.command: >-
+            patronictl -c {{ patroni_config_file | default('/etc/patroni/patroni.yml') }} list
+          register: patronictl_list_after
+          changed_when: false
+          environment:
+            PATH: "{{ ansible_env.PATH }}:/usr/bin:/usr/local/bin"
+
+        - name: Show Patroni cluster members after removal
+          run_once: true # noqa run-once
+          ansible.builtin.debug:
+            msg: "{{ patronictl_list_after.stdout_lines }}"
+      when: inventory_hostname != target_node
+      tags: postgres, postgresql, etcd

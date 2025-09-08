@@ -140,6 +140,7 @@ patroni_etcd_hosts: [] # list of servers of an existing etcd cluster
 #  - { host: "10.128.64.140", port: "2379" }
 #  - { host: "10.128.64.142", port: "2379" }
 #  - { host: "10.128.64.143", port: "2379" }
+
 patroni_etcd_namespace: "service" # (optional) etcd namespace (prefix)
 patroni_etcd_username: "" # (optional) username for etcd authentication
 patroni_etcd_password: "" # (optional) password for etcd authentication
