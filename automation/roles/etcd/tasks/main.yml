@@ -79,18 +79,6 @@
 
 # TLS
 - block:
-    # if 'etcd_on_dedicated_nodes' is 'false'
-    - name: Copy etcd TLS certificate, key and CA from the master node
-      ansible.builtin.include_role:
-        name: vitabaks.autobase.tls_certificate
-        tasks_from: copy
-      vars:
-        tls_group_name: "postgres_cluster"
-        copy_tls_dir: "{{ etcd_tls_dir | default('/etc/etcd/tls') }}"
-        copy_tls_owner: "etcd"
-      when: not etcd_on_dedicated_nodes | default(false) | bool
-
-    # if 'etcd_on_dedicated_nodes' is 'true'
     - name: Generate etcd TLS certificate
       ansible.builtin.include_role:
         name: vitabaks.autobase.tls_certificate
@@ -99,10 +87,9 @@
         generate_tls_owner: "etcd"
         generate_tls_common_name: "etcd"
         generate_tls_dir: "{{ etcd_tls_dir | default('/etc/etcd/tls') }}"
-        tls_cert_regenerate: "{{ etcd_tls_cert_regenerate | default(false) }}" # Do not generate new certificates if they already exist.
-      when: etcd_on_dedicated_nodes | default(false) | bool
+        tls_cert_regenerate: "{{ etcd_tls_cert_regenerate | default(cluster_scaling | default(false)) }}"  # Regenerate when adding nodes
 
-    - name: Copy etcd TLS files to all etcd nodes
+    - name: Copy etcd TLS certificate, key and CA to all nodes
       ansible.builtin.include_role:
         name: vitabaks.autobase.tls_certificate
         tasks_from: copy
@@ -111,7 +98,6 @@
         fetch_tls_dir: "{{ etcd_tls_dir | default('/etc/etcd/tls') }}"
         copy_tls_dir: "{{ etcd_tls_dir | default('/etc/etcd/tls') }}"
         copy_tls_owner: "etcd"
-      when: etcd_on_dedicated_nodes | default(false) | bool
   when: tls_cert_generate | default(true) | bool
   tags: etcd, etcd_conf
 
@@ -135,50 +121,21 @@
     dest: /etc/systemd/system/etcd.service
   tags: etcd, etcd_conf
 
-- name: Enable and start etcd service
-  ansible.builtin.systemd:
-    daemon_reload: true
-    name: etcd
-    enabled: true
-    state: started
-  tags: etcd, etcd_start
-
-- name: Wait for port 2379 to become open on the host
-  ansible.builtin.wait_for:
-    port: 2379
-    host: 127.0.0.1
-    state: started
-    timeout: 120
-    delay: 10
-  ignore_errors: false
-  tags: etcd, etcd_start
-
-- block:
-    - name: Wait until the etcd cluster is healthy
-      ansible.builtin.command: >
-        /usr/local/bin/etcdctl endpoint health
-        --endpoints={{ patroni_etcd_protocol | default('http', true) }}://{{ etcd_bind_address }}:2379
-        {% if etcd_tls_enable | default(false) | bool %}
-        --cacert={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_ca_crt | default('ca.crt') }}
-        --cert={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_server_crt | default('server.crt') }}
-        --key={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_server_key | default('server.key') }}
-        {% endif %}
-      environment:
-        ETCDCTL_API: "3"
-      register: etcd_health_result
-      until: >
-        'is healthy' in etcd_health_result.stdout or
-        'is healthy' in etcd_health_result.stderr
-      retries: 10
-      delay: 10
-      changed_when: false
-      ignore_errors: false
-
-    - name: cluster health
-      ansible.builtin.debug:
-        msg: >
-          {{ etcd_health_result.stdout
-          if etcd_health_result.stdout | length > 0
-          else etcd_health_result.stderr }}
-  when: not ansible_check_mode
+- name: Start etcd service and check cluster health
+  ansible.builtin.include_tasks: start.yml
+  when:
+    - not ansible_check_mode
+    - inventory_hostname not in (new_etcd_nodes | default([]))
   tags: etcd, etcd_start, etcd_status
+
+# if cluster_scaling (add_node.yml)
+- name: Add new node(s) to existing etcd cluster
+  ansible.builtin.include_tasks: member_add.yml
+  run_once: true
+  loop: "{{ new_etcd_nodes | default([]) }}"
+  loop_control:
+    loop_var: etcd_node
+  when:
+    - cluster_scaling | default(false) | bool
+    - not ansible_check_mode
+  tags: etcd, etcd_member_add
