@@ -271,7 +271,7 @@
       tags: postgres, postgresql, etcd
 
     - block:
-        - name: Fetch Patroni cluster members after removal
+        - name: Fetch Patroni cluster members
           run_once: true # noqa run-once
           ansible.builtin.command: >-
             patronictl -c {{ patroni_config_file | default('/etc/patroni/patroni.yml') }} list
@@ -280,9 +280,9 @@
           environment:
             PATH: "{{ ansible_env.PATH }}:/usr/bin:/usr/local/bin"
 
-        - name: Show Patroni cluster members after removal
+        - name: Show Patroni cluster members
           run_once: true # noqa run-once
           ansible.builtin.debug:
             msg: "{{ patronictl_list_after.stdout_lines }}"
       when: inventory_hostname != target_node
-      tags: postgres, postgresql, etcd
+      tags: postgres, postgresql
