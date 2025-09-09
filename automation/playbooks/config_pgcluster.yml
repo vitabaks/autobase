@@ -117,6 +117,22 @@
   any_errors_fatal: true
   environment: "{{ proxy_env | default({}) }}"
   pre_tasks:
+    - block: # Regenerate certificate (optional)
+        - name: Generate Postgres TLS certificate
+          ansible.builtin.include_role:
+            name: vitabaks.autobase.tls_certificate
+          vars:
+            tls_group_name: "postgres_cluster"
+            tls_cert_regenerate: true
+
+        - name: Copy Postgres TLS certificate, key and CA to all nodes
+          ansible.builtin.include_role:
+            name: vitabaks.autobase.tls_certificate
+            tasks_from: copy
+      when:
+        - tls_cert_generate | default(true) | bool
+        - tls_cert_regenerate | default(false) | bool
+
     - name: Build a firewall_ports_dynamic_var
       ansible.builtin.set_fact:
         firewall_ports_dynamic_var: "{{ firewall_ports_dynamic_var | default([]) + (firewall_allowed_tcp_ports_for[item] | default([])) }}"
