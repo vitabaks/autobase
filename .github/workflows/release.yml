@@ -96,8 +96,8 @@ jobs:
           
           # Check if there are changes to commit
           if ! git diff --staged --quiet; then
-            git commit -m "chore: update version to ${TAG}"
-            git push origin HEAD:main
+            git commit -m "chore: release ${TAG}"
+            git push origin HEAD:${{ github.event.repository.default_branch }}
           fi
 
       - name: Build Ansible collection
