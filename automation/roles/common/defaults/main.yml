@@ -801,9 +801,9 @@ netdata_conf:
 ############################################################
 
 # DNS servers (/etc/resolv.conf)
-nameservers: []
-#  - "8.8.8.8"  # example (Google Public DNS)
-#  - "9.9.9.9"  # (Quad9 Public DNS)
+nameservers:
+  - "8.8.8.8"  # Google DNS
+  - "1.1.1.1"  # Cloudflare DNS
 
 # /etc/hosts (optional)
 etc_hosts: []
