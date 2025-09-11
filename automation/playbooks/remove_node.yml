@@ -130,6 +130,68 @@
       when: inventory_hostname != target_node
       tags: postgres, postgresql, ssh_keys
 
+- name: vitabaks.autobase.remove_node | Remove node from etcd cluster
+  hosts: etcd_cluster
+  become: true
+  gather_facts: false
+  vars:
+    target_node: "{{ node_to_remove | default('') }}"
+  tasks:
+    - block:
+        - name: Fetch etcd cluster members before removal
+          run_once: true # noqa run-once
+          ansible.builtin.command: >-
+            /usr/local/bin/etcdctl member list
+            --write-out=table
+            {% if etcd_tls_enable | default(true) | bool %}
+            --cacert={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_ca_crt | default('ca.crt') }}
+            --cert={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_server_crt | default('server.crt') }}
+            --key={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_server_key | default('server.key') }}
+            {% endif %}
+          environment:
+            ETCDCTL_API: "3"
+          register: etcd_members_list_before
+          changed_when: false
+          when: inventory_hostname != target_node
+
+        - name: Show etcd cluster members before removal
+          run_once: true # noqa run-once
+          ansible.builtin.debug:
+            msg: "{{ etcd_members_list_before.stdout_lines }}"
+          when: inventory_hostname != target_node
+
+        - name: Remove target node from etcd cluster
+          ansible.builtin.include_role:
+            name: vitabaks.autobase.etcd
+            tasks_from: member_remove
+
+        - name: Fetch etcd cluster members after removal
+          run_once: true # noqa run-once
+          ansible.builtin.command: >-
+            /usr/local/bin/etcdctl member list
+            --write-out=table
+            {% if etcd_tls_enable | default(true) | bool %}
+            --cacert={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_ca_crt | default('ca.crt') }}
+            --cert={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_server_crt | default('server.crt') }}
+            --key={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_server_key | default('server.key') }}
+            {% endif %}
+          environment:
+            ETCDCTL_API: "3"
+          changed_when: false
+          register: etcd_members_list_after
+          until: etcd_members_list_after.rc == 0
+          retries: 3
+          delay: 5
+          when: inventory_hostname != target_node
+
+        - name: Show etcd cluster members after removal
+          run_once: true # noqa run-once
+          ansible.builtin.debug:
+            msg: "{{ etcd_members_list_after.stdout_lines }}"
+          when: inventory_hostname != target_node
+      when: dcs_type | default('etcd') == 'etcd'
+      tags: etcd
+
 - name: vitabaks.autobase.remove_node | Remove node from Consul cluster
   hosts: consul_instances
   become: true
@@ -203,68 +265,6 @@
           when: inventory_hostname != target_node
       when: dcs_type | default('etcd') == 'consul'
       tags: consul
-
-- name: vitabaks.autobase.remove_node | Remove node from etcd cluster
-  hosts: etcd_cluster
-  become: true
-  gather_facts: false
-  vars:
-    target_node: "{{ node_to_remove | default('') }}"
-  tasks:
-    - block:
-        - name: Fetch etcd cluster members before removal
-          run_once: true # noqa run-once
-          ansible.builtin.command: >-
-            /usr/local/bin/etcdctl member list
-            --write-out=table
-            {% if etcd_tls_enable | default(true) | bool %}
-            --cacert={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_ca_crt | default('ca.crt') }}
-            --cert={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_server_crt | default('server.crt') }}
-            --key={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_server_key | default('server.key') }}
-            {% endif %}
-          environment:
-            ETCDCTL_API: "3"
-          register: etcd_members_list_before
-          changed_when: false
-          when: inventory_hostname != target_node
-
-        - name: Show etcd cluster members before removal
-          run_once: true # noqa run-once
-          ansible.builtin.debug:
-            msg: "{{ etcd_members_list_before.stdout_lines }}"
-          when: inventory_hostname != target_node
-
-        - name: Remove target node from etcd cluster
-          ansible.builtin.include_role:
-            name: vitabaks.autobase.etcd
-            tasks_from: member_remove
-
-        - name: Fetch etcd cluster members after removal
-          run_once: true # noqa run-once
-          ansible.builtin.command: >-
-            /usr/local/bin/etcdctl member list
-            --write-out=table
-            {% if etcd_tls_enable | default(true) | bool %}
-            --cacert={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_ca_crt | default('ca.crt') }}
-            --cert={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_server_crt | default('server.crt') }}
-            --key={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_server_key | default('server.key') }}
-            {% endif %}
-          environment:
-            ETCDCTL_API: "3"
-          changed_when: false
-          register: etcd_members_list_after
-          until: etcd_members_list_after.rc == 0
-          retries: 3
-          delay: 5
-          when: inventory_hostname != target_node
-
-        - name: Show etcd cluster members after removal
-          run_once: true # noqa run-once
-          ansible.builtin.debug:
-            msg: "{{ etcd_members_list_after.stdout_lines }}"
-          when: inventory_hostname != target_node
-      when: dcs_type | default('etcd') == 'etcd'
-      tags: etcd
 
 - name: vitabaks.autobase.remove_node | Finalizing
   hosts: postgres_cluster
