@@ -138,25 +138,23 @@
     target_node: "{{ node_to_remove | default('') }}"
   tasks:
     - block:
-        - name: Get Consul cluster members
+        - name: Fetch consul cluster members before removal
           run_once: true # noqa run-once
-          ansible.builtin.uri:
-            url: "http://{{ consul_host }}:8500/v1/agent/members"
-            method: GET
-          register: consul_members
-          vars:
-            consul_host: >-
-              {{ hostvars[groups['consul_instances'][0]]['ansible_default_ipv4']['address'] }}
+          ansible.builtin.command: >-
+            consul operator raft list-peers \
+              -http-addr=https://127.0.0.1:8500 \
+              -ca-file=/etc/consul/tls/ca.crt
+          changed_when: false
+          register: consul_members_list_before
+          until: consul_members_list_before.rc == 0
+          retries: 3
+          delay: 5
           when: inventory_hostname != target_node
 
-        - name: Force leave Consul cluster member
+        - name: Show consul cluster members before removal
           run_once: true # noqa run-once
-          ansible.builtin.uri:
-            url: "http://{{ consul_host }}:8500/v1/agent/force-leave/{{ target_node }}"
-            method: PUT
-          vars:
-            consul_host: >-
-              {{ hostvars[groups['consul_instances'][0]]['ansible_default_ipv4']['address'] }}
+          ansible.builtin.debug:
+            msg: "{{ consul_members_list_before.stdout_lines }}"
           when: inventory_hostname != target_node
 
         - name: Stop and disable consul service on target node
@@ -176,6 +174,25 @@
           when:
             - inventory_hostname == target_node
             - remove_consul_data | default(true) | bool
+
+        - name: Fetch consul cluster members after removal
+          run_once: true # noqa run-once
+          ansible.builtin.command: >-
+            consul operator raft list-peers \
+              -http-addr=https://127.0.0.1:8500 \
+              -ca-file=/etc/consul/tls/ca.crt
+          changed_when: false
+          register: consul_members_list_after
+          until: consul_members_list_after.rc == 0
+          retries: 3
+          delay: 5
+          when: inventory_hostname != target_node
+
+        - name: Show consul cluster members after removal
+          run_once: true # noqa run-once
+          ansible.builtin.debug:
+            msg: "{{ consul_members_list_after.stdout_lines }}"
+          when: inventory_hostname != target_node
       when: dcs_type | default('etcd') == 'consul'
       tags: consul
 
