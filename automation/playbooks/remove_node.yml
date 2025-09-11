@@ -221,10 +221,10 @@
 
         - name: Force-leave target node from consul cluster
           run_once: true # noqa run-once
-          ansible.builtin.command: >
-            consul force-leave {{ hostvars[target_node].ansible_hostname | default(target_node) }}
-            -http-addr=https://127.0.0.1:8500
-            -ca-file=/etc/consul/tls/ca.crt
+          ansible.builtin.command: >-
+            consul force-leave {{ hostvars[target_node].ansible_hostname | default(target_node) }} \
+              -http-addr=https://127.0.0.1:8500 \
+              -ca-file=/etc/consul/tls/ca.crt
           when: inventory_hostname != target_node
 
         - name: Stop and disable consul service on target node
