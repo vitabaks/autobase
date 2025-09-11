@@ -489,7 +489,7 @@ patroni_restapi_protocol: http # if https, patroni_restapi_certfile, patroni_res
 # patroni_restapi_connect_addr: "{{ ansible_hostname }}" # or 'ansible_fqdn'. Set if you need connection to be established by domain name, not IP.
 # patroni_restapi_certfile:
 # patroni_restapi_keyfile:
-patroni_restapi_cafile: /etc/ssl/certs/ca-certificates.crt
+patroni_restapi_cafile: "{{ '/etc/ssl/certs/ca-certificates.crt' if ansible_os_family == 'Debian' else '/etc/ssl/certs/ca-bundle.crt' }}"
 patroni_restapi_listen_addr: "0.0.0.0" # Listen on all interfaces. Or use "{{ bind_address }}" to listen on a specific IP address.
 patroni_restapi_port: 8008
 patroni_restapi_username: "patroni"
