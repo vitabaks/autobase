@@ -17,7 +17,8 @@
   ansible.builtin.import_role:
     name: vitabaks.autobase.add_repository
     allow_duplicates: false
-  tags: pgbackrest, pgbackrest_install
+  when: pgbackrest_install_from_pgdg_repo | bool
+  tags: pgbackrest, pgbackrest_repo, pgbackrest_install
 
 - name: Install pgbackrest
   ansible.builtin.package:
