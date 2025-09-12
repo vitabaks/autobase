@@ -13,76 +13,11 @@
   when: ansible_facts.packages is not defined
   check_mode: false
 
-- block:
-    # Debian pgdg repo
-    - name: Ensure required packages are present
-      ansible.builtin.apt:
-        name: "{{ item }}"
-        state: present
-      register: apt_status
-      until: apt_status is success
-      delay: 5
-      retries: 3
-      loop:
-        - gnupg
-        - apt-transport-https
-        - python3-debian
-      when: item not in ansible_facts.packages
-
-    - name: Add pgdg repository and signing key
-      ansible.builtin.deb822_repository:
-        name: "{{ pgbackrest_repo_name | default('apt-postgresql-org') }}"
-        types: [deb]
-        uris: "https://apt.postgresql.org/pub/repos/apt/"
-        signed_by: "https://apt.postgresql.org/pub/repos/apt/ACCC4CF8.asc"
-        suites: "{{ ansible_distribution_release }}-pgdg"
-        components: [main]
-        state: present
-        enabled: true
-      when: ansible_os_family == "Debian"
-
-    - name: Update apt cache
-      ansible.builtin.apt:
-        update_cache: true
-      register: apt_status
-      until: apt_status is success
-      delay: 5
-      retries: 3
-  environment: "{{ proxy_env | default({}) }}"
-  when:
-    - installation_method == "packages"
-    - ansible_os_family == "Debian"
-    - pgbackrest_install_from_pgdg_repo|bool
-  tags: pgbackrest, pgbackrest_repo, pgbackrest_install
-
-- block:
-    # RedHat pgdg repo
-    - name: Get pgdg-redhat-repo-latest.noarch.rpm
-      ansible.builtin.get_url:
-        url: "https://download.postgresql.org/pub/repos/yum/reporpms/EL-{{ ansible_distribution_major_version }}-{{ pgdg_architecture_map[ansible_architecture] }}/pgdg-redhat-repo-latest.noarch.rpm" # yamllint disable rule:line-length
-        dest: /tmp/
-        timeout: 30
-        validate_certs: false
-
-    - name: Make sure pgdg repository is installed
-      ansible.builtin.package:
-        name: /tmp/pgdg-redhat-repo-latest.noarch.rpm
-        state: present
-      register: package_status
-      until: package_status is success
-      delay: 5
-      retries: 3
-      when:
-        - not ansible_check_mode
-
-    - name: Clean dnf cache
-      ansible.builtin.command: dnf clean all
-  environment: "{{ proxy_env | default({}) }}"
-  when:
-    - installation_method == "packages"
-    - ansible_os_family == "RedHat"
-    - pgbackrest_install_from_pgdg_repo|bool
-  tags: pgbackrest, pgbackrest_repo, pgbackrest_install
+- name: Add repositories, if it wasn't done yet
+  ansible.builtin.import_role:
+    name: vitabaks.autobase.add_repository
+    allow_duplicates: false
+  tags: pgbackrest, pgbackrest_install, pgbackrest_repo
 
 - name: Install pgbackrest
   ansible.builtin.package:

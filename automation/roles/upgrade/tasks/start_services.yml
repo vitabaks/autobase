@@ -20,8 +20,10 @@
 
 - name: Check Patroni is healthy on the Leader
   ansible.builtin.uri:
-    url: http://{{ patroni_bind_address | default(bind_address, true) }}:{{ patroni_restapi_port }}/leader
+    url: "{{ patroni_restapi_protocol }}://{{ patroni_restapi_connect_addr | default(patroni_bind_address | default(bind_address, true), true) }}:\
+      {{ patroni_restapi_port }}/leader"
     status_code: 200
+    ca_path: "{{ patroni_restapi_cafile }}"
   register: patroni_leader_result
   until: patroni_leader_result.status == 200
   retries: "{{ (pg_start_stop_timeout | int) // 2 }}"
@@ -60,8 +62,10 @@
 
 - name: Check Patroni is healthy on the Replica
   ansible.builtin.uri:
-    url: http://{{ patroni_bind_address | default(bind_address, true) }}:{{ patroni_restapi_port }}/health
+    url: "{{ patroni_restapi_protocol }}://{{ patroni_restapi_connect_addr | default(patroni_bind_address | default(bind_address, true), true) }}:\
+      {{ patroni_restapi_port }}/health"
     status_code: 200
+    ca_path: "{{ patroni_restapi_cafile }}"
   register: patroni_replica_result
   until: patroni_replica_result.status == 200
   retries: "{{ (pg_start_stop_timeout | int) // 2 }}"

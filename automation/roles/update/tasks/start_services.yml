@@ -16,8 +16,10 @@
 
 - name: Check that the Patroni is healthy
   ansible.builtin.uri:
-    url: http://{{ patroni_bind_address | default(bind_address, true) }}:{{ patroni_restapi_port }}/health
+    url: "{{ patroni_restapi_protocol }}://{{ patroni_restapi_connect_addr | default(patroni_bind_address | default(bind_address, true), true) }}:\
+      {{ patroni_restapi_port }}/health"
     status_code: 200
+    ca_path: "{{ patroni_restapi_cafile }}"
   register: patroni_replica_result
   until: patroni_replica_result.status == 200
   retries: 300

@@ -2,8 +2,10 @@
 # Check if switchover is required
 - name: Check current Patroni node role
   ansible.builtin.uri:
-    url: http://{{ patroni_bind_address | default(bind_address, true) }}:{{ patroni_restapi_port | default('8008') }}/leader
+    url: "{{ patroni_restapi_protocol }}://{{ patroni_restapi_connect_addr | default(patroni_bind_address | default(bind_address, true), true) }}:\
+      {{ patroni_restapi_port | default('8008') }}/leader"
     status_code: 200
+    ca_path: "{{ patroni_restapi_cafile }}"
   register: patroni_leader_result
   environment:
     no_proxy: "{{ patroni_bind_address | default(bind_address, true) }}"
@@ -28,8 +30,10 @@
     # Recheck if the node is still the leader
     - name: Check Patroni node role
       ansible.builtin.uri:
-        url: http://{{ patroni_bind_address | default(bind_address, true) }}:{{ patroni_restapi_port | default('8008') }}/leader
+        url: "{{ patroni_restapi_protocol }}://{{ patroni_restapi_connect_addr | default(patroni_bind_address | default(bind_address, true), true) }}:\
+          {{ patroni_restapi_port | default('8008') }}/leader"
         status_code: 200
+        ca_path: "{{ patroni_restapi_cafile }}"
       register: patroni_leader_recheck
       changed_when: false
       environment:
@@ -52,8 +56,10 @@
 # If the switchover is performed, make sure that the node is now a replica
 - name: Make sure that the Patroni is healthy and is a replica
   ansible.builtin.uri:
-    url: http://{{ patroni_bind_address | default(bind_address, true) }}:{{ patroni_restapi_port | default('8008') }}/replica
+    url: "{{ patroni_restapi_protocol }}://{{ patroni_restapi_connect_addr | default(patroni_bind_address | default(bind_address, true), true) }}:\
+      {{ patroni_restapi_port | default('8008') }}/replica"
     status_code: 200
+    ca_path: "{{ patroni_restapi_cafile }}"
   register: patroni_replica_result
   until: patroni_replica_result.status == 200
   retries: 300
