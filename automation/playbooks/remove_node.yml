@@ -227,6 +227,49 @@
               -ca-file=/etc/consul/tls/ca.crt
           when: inventory_hostname != target_node
 
+        - name: Extract target node Consul Raft ID
+          run_once: true # noqa run-once
+          ansible.builtin.set_fact:
+            target_raft_id: >-
+              {{
+                (consul_members_list_before.stdout | default(''))
+                | regex_search(
+                    (hostvars[target_node].ansible_hostname | default(target_node)) ~
+                    '\s+([0-9a-f-]{36})',
+                    '\\1',
+                    multiline=True
+                  )
+                | default('')
+              }}
+          when:
+            - inventory_hostname != target_node
+            - hostvars[target_node].consul_node_role | default('client') == 'server'
+
+        - name: Debug target_raft_id
+          run_once: true # noqa run-once
+          ansible.builtin.debug:
+            msg: "Target node Consul Raft ID: '{{ target_raft_id }}'"
+          when:
+            - inventory_hostname != target_node
+            - hostvars[target_node].consul_node_role | default('client') == 'server'
+
+        - name: Remove target node from the Raft configuration
+          run_once: true # noqa run-once
+          ansible.builtin.command: >-
+            consul operator raft remove-peer -id="{{ target_raft_id }}" \
+              -http-addr=https://127.0.0.1:8500 \
+              -ca-file=/etc/consul/tls/ca.crt \
+              -client-cert=/etc/consul/tls/server.crt \
+              -client-key=/etc/consul/tls/server.key
+          register: raft_remove_result
+          until: raft_remove_result.rc == 0
+          retries: 3
+          delay: 2
+          when:
+            - inventory_hostname != target_node
+            - hostvars[target_node].consul_node_role | default('client') == 'server'
+            - (target_raft_id | default('')) | length > 0
+
         - name: Stop and disable consul service on target node
           ansible.builtin.service:
             name: consul
