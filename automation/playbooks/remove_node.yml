@@ -219,6 +219,16 @@
             msg: "{{ consul_members_list_before.stdout_lines }}"
           when: inventory_hostname != target_node
 
+        - name: No target node in Consul cluster, skipping removal
+          run_once: true # noqa run-once
+          ansible.builtin.debug:
+            msg: >-
+              Target node '{{ hostvars[target_node].ansible_hostname | default(target_node) }}' not found in Consul cluster members,
+              skipping removal.
+          when:
+            - inventory_hostname != target_node
+            - consul_members_list_before.stdout | default('') is not search(hostvars[target_node].ansible_hostname | default(target_node))
+
         - name: Force-leave target node from consul cluster
           run_once: true # noqa run-once
           ansible.builtin.command: >-
@@ -226,7 +236,9 @@
               -http-addr=https://127.0.0.1:8500 \
               -ca-file=/etc/consul/tls/ca.crt \
               {{ hostvars[target_node].ansible_hostname | default(target_node) }}
-          when: inventory_hostname != target_node
+          when:
+            - inventory_hostname != target_node
+            - consul_members_list_before.stdout | default('') is search(hostvars[target_node].ansible_hostname | default(target_node))
 
         - name: Extract target node Consul Raft ID
           run_once: true # noqa run-once
@@ -243,6 +255,7 @@
           when:
             - inventory_hostname != target_node
             - hostvars[target_node].consul_node_role | default('client') == 'server'
+            - consul_members_list_before.stdout | default('') is search(hostvars[target_node].ansible_hostname | default(target_node))
 
         - name: Remove target node from the Raft configuration
           run_once: true # noqa run-once
@@ -259,7 +272,7 @@
           when:
             - inventory_hostname != target_node
             - hostvars[target_node].consul_node_role | default('client') == 'server'
-            - (target_raft_id | default('')) | length > 0
+            - target_raft_id | default('') | length > 0
 
         - name: Stop and disable consul service on target node
           ansible.builtin.service:
@@ -290,13 +303,17 @@
           until: consul_members_list_after.rc == 0
           retries: 3
           delay: 5
-          when: inventory_hostname != target_node
+          when:
+            - inventory_hostname != target_node
+            - consul_members_list_before.stdout | default('') is search(hostvars[target_node].ansible_hostname | default(target_node))
 
         - name: Show consul cluster members after removal
           run_once: true # noqa run-once
           ansible.builtin.debug:
             msg: "{{ consul_members_list_after.stdout_lines }}"
-          when: inventory_hostname != target_node
+          when:
+            - inventory_hostname != target_node
+            - consul_members_list_after.stdout_lines is defined
       when: dcs_type | default('etcd') == 'consul'
       tags: consul
 
