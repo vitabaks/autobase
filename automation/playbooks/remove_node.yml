@@ -222,9 +222,10 @@
         - name: Force-leave target node from consul cluster
           run_once: true # noqa run-once
           ansible.builtin.command: >-
-            consul force-leave {{ hostvars[target_node].ansible_hostname | default(target_node) }} \
+            consul force-leave \
               -http-addr=https://127.0.0.1:8500 \
-              -ca-file=/etc/consul/tls/ca.crt
+              -ca-file=/etc/consul/tls/ca.crt \
+              {{ hostvars[target_node].ansible_hostname | default(target_node) }}
           when: inventory_hostname != target_node
 
         - name: Extract target node Consul Raft ID
