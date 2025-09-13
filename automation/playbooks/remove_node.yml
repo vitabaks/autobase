@@ -232,24 +232,14 @@
           run_once: true # noqa run-once
           ansible.builtin.set_fact:
             target_raft_id: >-
+              {{ target_line | regex_replace('^\S+\s+([0-9a-f-]{36}).*', '\1') if target_line | length > 0 else '' }}
+          vars:
+            target_line: >-
               {{
-                (consul_members_list_before.stdout | default(''))
-                | regex_search(
-                    (hostvars[target_node].ansible_hostname | default(target_node)) ~
-                    '\s+([0-9a-f-]{36})',
-                    '\\1',
-                    multiline=True
-                  )
-                | default('')
+                (consul_members_list_before.stdout_lines
+                  | select('match', '^' ~ (hostvars[target_node].ansible_hostname | default(target_node)) ~ '\s+')
+                  | list | first) | default('')
               }}
-          when:
-            - inventory_hostname != target_node
-            - hostvars[target_node].consul_node_role | default('client') == 'server'
-
-        - name: Debug target_raft_id
-          run_once: true # noqa run-once
-          ansible.builtin.debug:
-            msg: "Target node Consul Raft ID: '{{ target_raft_id }}'"
           when:
             - inventory_hostname != target_node
             - hostvars[target_node].consul_node_role | default('client') == 'server'
