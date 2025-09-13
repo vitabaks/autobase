@@ -32,11 +32,24 @@
       ansible.builtin.set_fact:
         target_etcd_member_id: >-
           {{
-            ((etcd_members_json.stdout | default('{}')) | from_json).members
-            | selectattr('name', 'equalto', hostvars[target_node].ansible_hostname)
-            | map(attribute='ID')
-            | first | default(0) | int
+            (
+              (
+                (members | selectattr('name', 'equalto', target_name))
+                +
+                (members | selectattr('peerURLs', 'contains', target_peer_url))
+              )
+              | map(attribute='ID') | list | unique | first | default(0)
+            ) | int
           }}
+      vars:
+        members: "{{ ((etcd_members_json.stdout | default('{}')) | from_json).get('members', []) }}"
+        target_name: >-
+          {{
+            hostvars.get(target_node, {}).get('ansible_hostname', target_node)
+              if target_node in (groups['etcd_cluster'] | default([]))
+              else target_node
+          }}
+        target_peer_url: "{{ patroni_etcd_protocol | default('http', true) }}://{{ target_node }}:2380"
 
     - name: Remove node from etcd cluster
       run_once: true # noqa run-once
