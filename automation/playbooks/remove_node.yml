@@ -20,16 +20,6 @@
               to remove from the cluster.
           when: target_node | length == 0
 
-        - name: Validate that target node exists in inventory
-          run_once: true # noqa run-once
-          ansible.builtin.fail:
-            msg: >-
-              Node '{{ target_node }}' is not found in the inventory.
-          when:
-            - target_node not in (groups['postgres_cluster'] | default([]))
-            - target_node not in (groups['etcd_cluster'] | default([]))
-            - target_node not in (groups['consul_instances'] | default([]))
-
         - name: Fetch Patroni cluster members before removal
           run_once: true # noqa run-once
           ansible.builtin.command: >-
@@ -102,7 +92,7 @@
           delegate_to: "{{ target_node }}"
           register: target_node_pubkey
           changed_when: false
-          failed_when: false
+          when: target_node in (groups['postgres_cluster'] | default([]))
 
         - name: Remove target node pubkey from authorized_keys
           ansible.posix.authorized_key:
@@ -119,6 +109,9 @@
             path: "~postgres/.ssh/known_hosts"
             name: "{{ item }}"
           loop: >-
+            {{ target_node_hostvars if target_node in (groups['postgres_cluster'] | default([])) else [target_node] }}
+          vars:
+            target_node_hostvars: >-
               {{
                 [
                   hostvars[target_node].get('bind_address',''),
