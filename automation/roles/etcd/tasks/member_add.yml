@@ -1,5 +1,5 @@
 ---
-# Add new node to existing etcd cluster
+# Add new node to existing etcd cluster (add_node.yml)
 - block:
     - name: Build etcd endpoints for existing cluster members
       ansible.builtin.set_fact:

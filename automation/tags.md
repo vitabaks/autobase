@@ -30,7 +30,6 @@
 - etcd
 - - etcd_install
 - - etcd_conf
-- - etcd_member_add
 - - etcd_start
 - - etcd_status
 - consul

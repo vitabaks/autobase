@@ -234,13 +234,8 @@
     - not dcs_exists | bool
   tags: patroni, patroni_conf
 
-- name: Generate conf file "/etc/patroni/patroni.yml"
-  ansible.builtin.template:
-    src: templates/patroni.yml.j2
-    dest: /etc/patroni/patroni.yml
-    owner: postgres
-    group: postgres
-    mode: "0640"
+- name: Create patroni config file
+  ansible.builtin.import_tasks: patroni.yml
   when: cluster_scaling is not defined or not cluster_scaling | bool
   tags: patroni, patroni_conf
 

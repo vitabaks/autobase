@@ -1,0 +1,14 @@
+---
+- name: "Generate {{ patroni_config_file | default('/etc/patroni/patroni.yml') }}"
+  ansible.builtin.template:
+    src: templates/patroni.yml.j2
+    dest: "{{ patroni_config_file | default('/etc/patroni/patroni.yml') }}"
+    owner: postgres
+    group: postgres
+    mode: "0640"
+  vars:
+    etcd_hosts: "{{ groups['etcd_cluster'] | default([]) }}"
+  notify: "reload patroni"
+
+- name: Flush handlers
+  ansible.builtin.meta: flush_handlers
