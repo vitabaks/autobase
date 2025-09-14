@@ -5,7 +5,7 @@
     url: "{{ patroni_restapi_protocol }}://{{ patroni_restapi_connect_addr | default(patroni_bind_address | default(bind_address, true), true) }}:\
       {{ patroni_restapi_port | default('8008') }}/leader"
     status_code: 200
-    ca_path: "{{ patroni_restapi_cafile }}"
+    ca_path: "{{ patroni_restapi_cafile | default(omit, true) }}"
   register: patroni_leader_result
   environment:
     no_proxy: "{{ patroni_bind_address | default(bind_address, true) }}"
@@ -33,7 +33,7 @@
         url: "{{ patroni_restapi_protocol }}://{{ patroni_restapi_connect_addr | default(patroni_bind_address | default(bind_address, true), true) }}:\
           {{ patroni_restapi_port | default('8008') }}/leader"
         status_code: 200
-        ca_path: "{{ patroni_restapi_cafile }}"
+        ca_path: "{{ patroni_restapi_cafile | default(omit, true) }}"
       register: patroni_leader_recheck
       changed_when: false
       environment:
@@ -59,7 +59,7 @@
     url: "{{ patroni_restapi_protocol }}://{{ patroni_restapi_connect_addr | default(patroni_bind_address | default(bind_address, true), true) }}:\
       {{ patroni_restapi_port | default('8008') }}/replica"
     status_code: 200
-    ca_path: "{{ patroni_restapi_cafile }}"
+    ca_path: "{{ patroni_restapi_cafile | default(omit, true) }}"
   register: patroni_replica_result
   until: patroni_replica_result.status == 200
   retries: 300

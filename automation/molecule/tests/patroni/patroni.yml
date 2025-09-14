@@ -5,7 +5,7 @@
       {{ patroni_restapi_port | default(8008) }}/patroni"
     method: GET
     return_content: true
-    ca_path: "{{ patroni_restapi_cafile }}"
+    ca_path: "{{ patroni_restapi_cafile | default(omit, true) }}"
   register: patroni_response
   failed_when: "'running' not in patroni_response.json.state"
 

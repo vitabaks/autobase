@@ -42,7 +42,7 @@
         password: "{{ patroni_restapi_password | default(omit) }}"
         body: '{"postgresql":{"parameters":{"{{ item.option }}":"{{ item.value }}"}}}'
         body_format: json
-        ca_path: "{{ patroni_restapi_cafile }}"
+        ca_path: "{{ patroni_restapi_cafile | default(omit, true) }}"
       loop: "{{ postgresql_parameters }}"
       when: item.value != "null"
 
@@ -55,7 +55,7 @@
         password: "{{ patroni_restapi_password | default(omit) }}"
         body: '{"postgresql":{"parameters":{"{{ item.option }}":null}}}'
         body_format: json
-        ca_path: "{{ patroni_restapi_cafile }}"
+        ca_path: "{{ patroni_restapi_cafile | default(omit, true) }}"
       loop: "{{ postgresql_parameters }}"
       when: item.value == "null"
 
@@ -81,7 +81,7 @@
             }
           }
         body_format: json
-        ca_path: "{{ patroni_restapi_cafile }}"
+        ca_path: "{{ patroni_restapi_cafile | default(omit, true) }}"
       when: patroni_slots is defined and patroni_slots | length > 0
 
     - name: Delete postgresql slots from DCS
@@ -93,7 +93,7 @@
         password: "{{ patroni_restapi_password | default(omit) }}"
         body: '{"postgresql":{"slots":null}}'
         body_format: json
-        ca_path: "{{ patroni_restapi_cafile }}"
+        ca_path: "{{ patroni_restapi_cafile | default(omit, true) }}"
       when: patroni_slots is not defined or patroni_slots | length < 1
   environment:
     no_proxy: "{{ patroni_bind_address | default(bind_address, true) }}"
