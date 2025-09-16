@@ -32,8 +32,8 @@ restapi:
   {% endif %}
 {% if patroni_restapi_password | default('') | length > 0 %}
   authentication:
-      username: {{ patroni_restapi_username | default('patroni') }}
-      password: {{ patroni_restapi_password }}
+    username: {{ patroni_restapi_username | default('patroni') }}
+    password: {{ patroni_restapi_password }}
 {% else %}
 #  authentication:
 #    username: username
