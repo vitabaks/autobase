@@ -852,7 +852,7 @@ swap_file_size_mb: "4096" # change this value for your system
 
 # Kernel parameters
 sysctl_set: true # or 'false'
-sysctl_file: /etc/sysctl.d/autobase.conf
+sysctl_file: /etc/sysctl.d/autobase.sysctl.conf
 sysctl_conf:
   etcd_cluster: []
   consul_instances: []

@@ -14,7 +14,7 @@
         value: "{{ item.value }}"
         sysctl_set: true
         state: present
-        sysctl_file: "{{ sysctl_file | default('/etc/sysctl.d/autobase.conf') }}"
+        sysctl_file: "{{ sysctl_file | default('/etc/sysctl.d/autobase.sysctl.conf') }}"
         reload: true
       loop: "{{ sysctl_conf_dynamic_var | default([]) | unique }}"
       when: sysctl_conf_dynamic_var | default([]) | length > 0
