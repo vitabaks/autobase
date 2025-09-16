@@ -14,9 +14,10 @@
         value: "{{ item.value }}"
         sysctl_set: true
         state: present
+        sysctl_file: "{{ sysctl_file | default('/etc/sysctl.d/autobase.conf') }}"
         reload: true
       loop: "{{ sysctl_conf_dynamic_var | default([]) | unique }}"
       when: sysctl_conf_dynamic_var | default([]) | length > 0
   ignore_errors: true
-  when: sysctl_set|bool
+  when: sysctl_set | bool
   tags: sysctl, kernel
