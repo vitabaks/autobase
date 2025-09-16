@@ -12,6 +12,9 @@ jobs:
       fail-fast: false
       matrix:
         config:
+          - distro: debian13
+            tag: latest
+            namespace: geerlingguy
           - distro: debian12
             tag: latest
             namespace: geerlingguy
@@ -24,22 +27,25 @@ jobs:
           - distro: ubuntu2204
             tag: latest
             namespace: geerlingguy
-          - distro: rockylinux8
+          - distro: rockylinux10
             tag: latest
             namespace: geerlingguy
           - distro: rockylinux9
             tag: latest
             namespace: geerlingguy
-          - distro: almalinux8
+          - distro: almalinux10
             tag: latest
             namespace: glillico
           - distro: almalinux9
             tag: latest
             namespace: glillico
-          - distro: oraclelinux8
+          - distro: oraclelinux10
             tag: latest
             namespace: glillico
           - distro: oraclelinux9
+            tag: latest
+            namespace: glillico
+          - distro: centosstream10
             tag: latest
             namespace: glillico
           - distro: centosstream9
@@ -54,7 +60,7 @@ jobs:
         uses: actions/checkout@v5
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.13"
 

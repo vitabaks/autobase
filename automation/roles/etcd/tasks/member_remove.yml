@@ -1,0 +1,88 @@
+---
+# Remove node from etcd cluster (remove_node.yml)
+- block:
+    - name: Build etcd endpoints for existing cluster members
+      run_once: true # noqa run-once
+      ansible.builtin.set_fact:
+        etcd_endpoints: >-
+          {% for host in (groups['etcd_cluster'] | difference([target_node])) -%}
+          {{ patroni_etcd_protocol | default('http', true) }}://
+          {{- hostvars[host]['etcd_bind_address'] | default(hostvars[host]['bind_address'], true) }}:2379
+          {%- if not loop.last %},{% endif -%}
+          {% endfor %}
+
+    - name: Get etcd cluster member list
+      run_once: true # noqa run-once
+      ansible.builtin.command: >-
+        /usr/local/bin/etcdctl member list
+        --write-out=json
+        --endpoints={{ etcd_endpoints }}
+        {% if etcd_tls_enable | default(false) | bool %}
+        --cacert={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_ca_crt | default('ca.crt') }}
+        --cert={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_server_crt | default('server.crt') }}
+        --key={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_server_key | default('server.key') }}
+        {% endif %}
+      environment:
+        ETCDCTL_API: "3"
+      register: etcd_members_json
+      changed_when: false
+
+    - name: Extract target node etcd member ID
+      run_once: true # noqa run-once
+      ansible.builtin.set_fact:
+        target_etcd_member_id: >-
+          {{
+            (
+              (
+                (members | selectattr('name', 'equalto', target_name))
+                +
+                (members | selectattr('peerURLs', 'contains', target_peer_url))
+              )
+              | map(attribute='ID') | list | unique | first | default(0)
+            ) | int
+          }}
+      vars:
+        members: "{{ ((etcd_members_json.stdout | default('{}')) | from_json).get('members', []) }}"
+        target_name: >-
+          {{
+            hostvars.get(target_node, {}).get('ansible_hostname', target_node)
+              if target_node in (groups['etcd_cluster'] | default([]))
+              else target_node
+          }}
+        target_peer_url: "{{ patroni_etcd_protocol | default('http', true) }}://{{ target_node }}:2380"
+
+    - name: Remove node from etcd cluster
+      run_once: true # noqa run-once
+      ansible.builtin.command: >-
+        /usr/local/bin/etcdctl member remove {{ target_etcd_member_id_hex }}
+        --endpoints={{ etcd_endpoints }}
+        {% if etcd_tls_enable | default(false) | bool %}
+        --cacert={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_ca_crt | default('ca.crt') }}
+        --cert={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_server_crt | default('server.crt') }}
+        --key={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_server_key | default('server.key') }}
+        {% endif %}
+      environment:
+        ETCDCTL_API: "3"
+      vars:
+        target_etcd_member_id_hex: "{{ '%x' % (target_etcd_member_id | int) if (target_etcd_member_id | int) > 0 else '' }}"
+      when: target_etcd_member_id | default(0) | int > 0
+  when: inventory_hostname != target_node | default('')
+  tags: etcd, etcd_member_remove
+
+- block:
+    - name: Stop and disable etcd service on target node
+      ansible.builtin.service:
+        name: etcd
+        state: stopped
+        enabled: false
+
+    - name: Delete etcd content on target node
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - "{{ etcd_data_dir | default('/var/lib/etcd') }}"
+        - "{{ etcd_conf_dir | default('/etc/etcd') }}"
+      when: remove_etcd_data | default(true) | bool
+  when: inventory_hostname == target_node | default('')
+  tags: etcd, etcd_member_remove

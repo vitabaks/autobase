@@ -28,14 +28,8 @@
     mode: "0700"
   tags: patroni
 
-- name: Update conf file "/etc/patroni/patroni.yml"
-  ansible.builtin.template:
-    src: templates/patroni.yml.j2
-    dest: /etc/patroni/patroni.yml
-    owner: postgres
-    group: postgres
-    mode: "0640"
-  notify: "reload patroni"
+- name: Update patroni config file
+  ansible.builtin.import_tasks: patroni.yml
   tags: patroni, patroni_conf
 
 - block:
