@@ -192,33 +192,54 @@ consul_services:
     tags: ["master", "primary"]
     port: "{{ pgbouncer_listen_port }}" # or "{{ postgresql_port }}" if pgbouncer_install: false
     checks:
-      - { http: "{{ patroni_restapi_protocol }}://{{ patroni_restapi_connect_addr | default(patroni_bind_address | default(bind_address, true), true) }}:\
-        {{ patroni_restapi_port }}/primary", interval: "2s" }
-      - { args: ["systemctl", "status", "pgbouncer"], interval: "5s" } # comment out this check if pgbouncer_install: false
+      - http: >-
+          {{ patroni_restapi_protocol }}://{{ patroni_restapi_connect_addr
+          | default(patroni_bind_address
+          | default(bind_address, true), true) }}:{{ patroni_restapi_port }}/primary
+        tls_skip_verify: true
+        interval: "2s"
+      # comment out this check if pgbouncer_install: false
+      - args: ["systemctl", "status", "pgbouncer"]
+        interval: "5s"
   - name: "{{ patroni_cluster_name }}"
     id: "{{ patroni_cluster_name }}-replica"
     tags: ["replica"]
     port: "{{ pgbouncer_listen_port }}"
     checks:
-      - { http: "{{ patroni_restapi_protocol }}://{{ patroni_restapi_connect_addr | default(patroni_bind_address | default(bind_address, true), true) }}:\
-        {{ patroni_restapi_port }}/replica?lag={{ patroni_maximum_lag_on_replica }}", interval: "2s" }
-      - { args: ["systemctl", "status", "pgbouncer"], interval: "5s" }
+      - http: >-
+          {{ patroni_restapi_protocol }}://{{ patroni_restapi_connect_addr
+          | default(patroni_bind_address
+          | default(bind_address, true), true) }}:{{ patroni_restapi_port }}/replica?lag={{ patroni_maximum_lag_on_replica }}
+        tls_skip_verify: true
+        interval: "2s"
+      - args: ["systemctl", "status", "pgbouncer"]
+        interval: "5s"
 #  - name: "{{ patroni_cluster_name }}"
 #    id: "{{ patroni_cluster_name }}-sync-replica"
 #    tags: ['sync-replica']
 #    port: "{{ pgbouncer_listen_port }}"
 #    checks:
-#      - { http: "{{ patroni_restapi_protocol }}://{{ patroni_restapi_connect_addr | default(patroni_bind_address | default(bind_address, true), true) }}:\
-#        {{ patroni_restapi_port }}/sync, interval: "2s" }
-#      - { args: ["systemctl", "status", "pgbouncer"], interval: "5s" }
+#      - http: >-
+#          {{ patroni_restapi_protocol }}://{{ patroni_restapi_connect_addr
+#          | default(patroni_bind_address
+#          | default(bind_address, true), true) }}:{{ patroni_restapi_port }}/sync
+#        tls_skip_verify: true
+#        interval: "2s"
+#      - args: ["systemctl", "status", "pgbouncer"]
+#        interval: "5s"
 #  - name: "{{ patroni_cluster_name }}"
 #    id: "{{ patroni_cluster_name }}-async-replica"
 #    tags: ['async-replica']
 #    port: "{{ pgbouncer_listen_port }}"
 #    checks:
-#      - { http: "{{ patroni_restapi_protocol }}://{{ patroni_restapi_connect_addr | default(patroni_bind_address | default(bind_address, true), true) }}:\
-#         {{ patroni_restapi_port }}/async?lag={{ patroni_maximum_lag_on_replica }}", interval: "2s" }
-#      - { args: ["systemctl", "status", "pgbouncer"], interval: "5s" }
+#      - http: >-
+#          {{ patroni_restapi_protocol }}://{{ patroni_restapi_connect_addr
+#          | default(patroni_bind_address 
+#          | default(bind_address, true), true) }}:{{ patroni_restapi_port }}/async?lag={{ patroni_maximum_lag_on_replica }}
+#        tls_skip_verify: true
+#        interval: "2s"
+#      - args: ["systemctl", "status", "pgbouncer"]
+#        interval: "5s"
 
 ############################################################
 # PostgreSQL parameters
