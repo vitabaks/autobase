@@ -35,29 +35,34 @@
 - block:
     - name: Update postgresql parameters in DCS
       ansible.builtin.uri:
-        url: http://{{ patroni_bind_address | default(bind_address, true) }}:{{ patroni_restapi_port }}/config
+        url: "{{ patroni_restapi_protocol }}://{{ patroni_restapi_connect_addr | default(patroni_bind_address | default(bind_address, true), true) }}:\
+          {{ patroni_restapi_port }}/config"
         method: PATCH
         user: "{{ patroni_restapi_username | default(omit) }}"
         password: "{{ patroni_restapi_password | default(omit) }}"
         body: '{"postgresql":{"parameters":{"{{ item.option }}":"{{ item.value }}"}}}'
         body_format: json
+        ca_path: "{{ patroni_restapi_cafile | default(omit, true) }}"
       loop: "{{ postgresql_parameters }}"
       when: item.value != "null"
 
     - name: Delete postgresql parameters from DCS
       ansible.builtin.uri:
-        url: http://{{ patroni_bind_address | default(bind_address, true) }}:{{ patroni_restapi_port }}/config
+        url: "{{ patroni_restapi_protocol }}://{{ patroni_restapi_connect_addr | default(patroni_bind_address | default(bind_address, true), true) }}:\
+          {{ patroni_restapi_port }}/config"
         method: PATCH
         user: "{{ patroni_restapi_username | default(omit) }}"
         password: "{{ patroni_restapi_password | default(omit) }}"
         body: '{"postgresql":{"parameters":{"{{ item.option }}":null}}}'
         body_format: json
+        ca_path: "{{ patroni_restapi_cafile | default(omit, true) }}"
       loop: "{{ postgresql_parameters }}"
       when: item.value == "null"
 
     - name: Update postgresql slots in DCS
       ansible.builtin.uri:
-        url: http://{{ patroni_bind_address | default(bind_address, true) }}:{{ patroni_restapi_port }}/config
+        url: "{{ patroni_restapi_protocol }}://{{ patroni_restapi_connect_addr | default(patroni_bind_address | default(bind_address, true), true) }}:\
+          {{ patroni_restapi_port }}/config"
         method: PATCH
         user: "{{ patroni_restapi_username | default(omit) }}"
         password: "{{ patroni_restapi_password | default(omit) }}"
@@ -76,16 +81,19 @@
             }
           }
         body_format: json
+        ca_path: "{{ patroni_restapi_cafile | default(omit, true) }}"
       when: patroni_slots is defined and patroni_slots | length > 0
 
     - name: Delete postgresql slots from DCS
       ansible.builtin.uri:
-        url: http://{{ patroni_bind_address | default(bind_address, true) }}:{{ patroni_restapi_port }}/config
+        url: "{{ patroni_restapi_protocol }}://{{ patroni_restapi_connect_addr | default(patroni_bind_address | default(bind_address, true), true) }}:\
+          {{ patroni_restapi_port }}/config"
         method: PATCH
         user: "{{ patroni_restapi_username | default(omit) }}"
         password: "{{ patroni_restapi_password | default(omit) }}"
         body: '{"postgresql":{"slots":null}}'
         body_format: json
+        ca_path: "{{ patroni_restapi_cafile | default(omit, true) }}"
       when: patroni_slots is not defined or patroni_slots | length < 1
   environment:
     no_proxy: "{{ patroni_bind_address | default(bind_address, true) }}"
