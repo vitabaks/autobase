@@ -208,8 +208,8 @@ consul_services:
 #    tags: ['sync-replica']
 #    port: "{{ pgbouncer_listen_port }}"
 #    checks:
-#      - { http: "{{ patroni_restapi_protocol }}://{{ patroni_restapi_connect_addr | default(patroni_bind_address | default(bind_address, true), true) }}\
-#         ://{{ bind_address }}:{{ patroni_restapi_port }}/sync", interval: "2s" }
+#      - { http: "{{ patroni_restapi_protocol }}://{{ patroni_restapi_connect_addr | default(patroni_bind_address | default(bind_address, true), true) }}:\
+#        {{ patroni_restapi_port }}/sync, interval: "2s" }
 #      - { args: ["systemctl", "status", "pgbouncer"], interval: "5s" }
 #  - name: "{{ patroni_cluster_name }}"
 #    id: "{{ patroni_cluster_name }}-async-replica"
