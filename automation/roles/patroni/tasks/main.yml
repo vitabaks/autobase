@@ -234,14 +234,9 @@
     - not dcs_exists | bool
   tags: patroni, patroni_conf
 
-- name: Generate conf file "/etc/patroni/patroni.yml"
-  ansible.builtin.template:
-    src: templates/patroni.yml.j2
-    dest: /etc/patroni/patroni.yml
-    owner: postgres
-    group: postgres
-    mode: "0640"
-  when: existing_pgcluster is not defined or not existing_pgcluster|bool
+- name: Create patroni config file
+  ansible.builtin.import_tasks: patroni.yml
+  when: cluster_scaling is not defined or not cluster_scaling | bool
   tags: patroni, patroni_conf
 
 - name: Create patroni log directory
@@ -254,7 +249,7 @@
   when: patroni_log_destination == 'logfile'
   tags: patroni, patroni_conf
 
-- block: # for add_pgnode.yml
+- block: # if cluster_scaling (add_node.yml)
     - name: Fetch patroni.yml conf file from master
       run_once: true
       ansible.builtin.fetch:
@@ -323,7 +318,7 @@
         loop_var: patroni_config_with_cluster_vip_item
         label: "{{ patroni_config_with_cluster_vip_item.line }}"
       when: not with_haproxy_load_balancing|bool and not pgbouncer_install|bool and (cluster_vip is defined and cluster_vip | length > 0)
-  when: existing_pgcluster is defined and existing_pgcluster|bool
+  when: cluster_scaling is defined and cluster_scaling | bool
   tags: patroni, patroni_conf
 
 - name: Copy systemd service file "/etc/systemd/system/patroni.service"
@@ -775,7 +770,7 @@
       when: disable_archive_command | bool
   when: patroni_cluster_bootstrap_method != "initdb" and
     (pgbackrest_install | bool or wal_g_install | bool) and
-    (existing_pgcluster is not defined or not existing_pgcluster | bool)
+    (cluster_scaling is not defined or not cluster_scaling | bool)
   become: true
   become_user: postgres
   tags: patroni, point_in_time_recovery
@@ -790,7 +785,7 @@
         mode: "0640"
   when: patroni_cluster_bootstrap_method != "initdb" and
     postgresql_conf_dir != postgresql_data_dir and
-    (existing_pgcluster is not defined or not existing_pgcluster|bool)
+    (cluster_scaling is not defined or not cluster_scaling | bool)
   tags: patroni
 
 - block: # start patroni on master
@@ -829,8 +824,10 @@
 
     - name: Wait for the Standby cluster initialization to complete
       ansible.builtin.uri:
-        url: "http://{{ patroni_bind_address | default(bind_address, true) }}:{{ patroni_restapi_port }}/standby-leader"
+        url: "{{ patroni_restapi_protocol }}://{{ patroni_restapi_connect_addr | default(patroni_bind_address | default(bind_address, true), true) }}:\
+          {{ patroni_restapi_port }}/standby-leader"
         status_code: 200
+        ca_path: "{{ patroni_restapi_cafile | default(omit, true) }}"
       register: standby_leader_result
       until: standby_leader_result.status == 200
       retries: "{{ (cluster_restore_timeout | default(86400)) | int // 30 }}" # timeout 24 hours
@@ -853,8 +850,10 @@
 
     - name: Wait for the cluster to initialize (master is the leader with the lock)
       ansible.builtin.uri:
-        url: "http://{{ patroni_bind_address | default(bind_address, true) }}:{{ patroni_restapi_port }}/leader"
+        url: "{{ patroni_restapi_protocol }}://{{ patroni_restapi_connect_addr | default(patroni_bind_address | default(bind_address, true), true) }}:\
+          {{ patroni_restapi_port }}/leader"
         status_code: 200
+        ca_path: "{{ patroni_restapi_cafile | default(omit, true) }}"
       register: result
       until: result.status == 200
       retries: 10
@@ -888,7 +887,7 @@
       changed_when: pg_ctl_reload_result.rc == 0
       failed_when: false # exec 'reload' on all running postgres (to re-run with --tag pg_hba).
       when: generate_pg_hba is changed
-  when: existing_pgcluster is not defined or not existing_pgcluster|bool
+  when: cluster_scaling is not defined or not cluster_scaling | bool
   tags: patroni, pg_hba, pg_hba_generate
 
 - block: # PITR (custom bootstrap) - password reset for PostgreSQL users
@@ -959,13 +958,13 @@
   when:
     - patroni_cluster_bootstrap_method != "initdb"
     - (pgbackrest_install | bool or wal_g_install | bool)
-    - (existing_pgcluster is not defined or not existing_pgcluster | bool)
+    - (cluster_scaling is not defined or not cluster_scaling | bool)
     - patroni_standby_cluster.host | default('') | length < 1 # do not perform on the Standby Cluster
   become: true
   become_user: postgres
   tags: patroni, point_in_time_recovery
 
-- block: # for add_pgnode.yml
+- block: # if cluster_scaling (add_node.yml)
     - name: Prepare PostgreSQL | fetch pg_hba.conf file from master
       run_once: true
       ansible.builtin.fetch:
@@ -982,7 +981,7 @@
         owner: postgres
         group: postgres
         mode: "0640"
-  when: existing_pgcluster is defined and existing_pgcluster|bool
+  when: cluster_scaling is defined and cluster_scaling | bool
     and postgresql_conf_dir != postgresql_data_dir
   tags: patroni, pg_hba, pg_hba_generate
 
@@ -1005,8 +1004,10 @@
 
     - name: Check that the patroni is healthy on the replica server
       ansible.builtin.uri:
-        url: "http://{{ patroni_bind_address | default(bind_address, true) }}:{{ patroni_restapi_port }}/health"
+        url: "{{ patroni_restapi_protocol }}://{{ patroni_restapi_connect_addr | default(patroni_bind_address | default(bind_address, true), true) }}:\
+          {{ patroni_restapi_port }}/health"
         status_code: 200
+        ca_path: "{{ patroni_restapi_cafile | default(omit, true) }}"
       register: replica_result
       until: replica_result.status == 200
       retries: "{{ (cluster_restore_timeout | default(86400)) | int // 30 }}" # timeout 24 hours
@@ -1070,5 +1071,17 @@
     owner: root
     group: root
     mode: "0644"
-  ignore_errors: true
+    create: true
+  register: patronictl_env_result
+  tags: patroni, patroni_env
+
+- name: Add PATRONICTL_CONFIG_FILE to /etc/profile.d/patroni.sh
+  ansible.builtin.copy:
+    content: |
+      #!/bin/bash
+      export PATRONICTL_CONFIG_FILE=/etc/patroni/patroni.yml
+    dest: /etc/profile.d/patroni.sh
+    owner: root
+    group: root
+    mode: "0644"
   tags: patroni, patroni_env

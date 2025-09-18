@@ -5,30 +5,35 @@ scope: {{ patroni_cluster_name }}
 name: {{ ansible_hostname }}
 namespace: /{{ patroni_etcd_namespace | default('service') }}
 
-{% if patroni_log_destination == 'logfile' %}
 log:
   level: {{ patroni_log_level |upper }}
   traceback_level: {{ patroni_log_traceback_level |upper }}
   format: {{ patroni_log_format |quote }}
   dateformat: {{ patroni_log_dateformat |quote }}
   max_queue_size: {{ patroni_log_max_queue_size |int }}
+  {% if patroni_log_destination == 'logfile' %}
   dir: {{ patroni_log_dir }}
   file_num: {{ patroni_log_file_num |int }}
   file_size: {{ patroni_log_file_size |int }}
+  {% endif %}
   loggers:
     patroni.postmaster: {{ patroni_log_loggers_patroni_postmaster |upper }}
     urllib3: {{ patroni_log_loggers_urllib3 |upper }}
-{% endif %}
 
 restapi:
   listen: {{ patroni_restapi_listen_addr }}:{{ patroni_restapi_port }}
-  connect_address: {{ patroni_bind_address | default(bind_address, true) }}:{{ patroni_restapi_port }}
-#  certfile: /etc/ssl/certs/ssl-cert-snakeoil.pem
-#  keyfile: /etc/ssl/private/ssl-cert-snakeoil.key
+  connect_address: {{ patroni_restapi_connect_addr | default(patroni_bind_address | default(bind_address, true), true) }}:{{ patroni_restapi_port }}
+  {% if patroni_restapi_protocol | default('http') == 'https' and (patroni_restapi_certfile | default('') | length > 0 and patroni_restapi_keyfile | default('') | length > 0) %}
+  certfile: {{ patroni_restapi_certfile }}
+  keyfile: {{ patroni_restapi_keyfile }}
+  {% endif %}
+  {% if patroni_restapi_protocol | default('http') == 'https' and patroni_restapi_cafile | default('') | length > 0 %}
+  cafile: {{ patroni_restapi_cafile }}
+  {% endif %}
 {% if patroni_restapi_password | default('') | length > 0 %}
   authentication:
-      username: {{ patroni_restapi_username | default('patroni') }}
-      password: {{ patroni_restapi_password }}
+    username: {{ patroni_restapi_username | default('patroni') }}
+    password: {{ patroni_restapi_password }}
 {% else %}
 #  authentication:
 #    username: username
@@ -41,7 +46,7 @@ restapi:
 {% if dcs_type == 'etcd' %}
 etcd3:
   {% if not dcs_exists|bool %}
-  hosts: {% for host in groups['etcd_cluster'] %}{{ hostvars[host]['etcd_bind_address'] | default(hostvars[host]['bind_address'], true) }}:2379{% if not loop.last %},{% endif %}{% endfor %}
+  hosts: {% for host in etcd_hosts %}{{ hostvars[host]['etcd_bind_address'] | default(hostvars[host]['bind_address'], true) }}:2379{% if not loop.last %},{% endif %}{% endfor %}
   {% endif %}
   {% if dcs_exists|bool %}
   hosts: {% for etcd_hosts in patroni_etcd_hosts %}{{etcd_hosts.host}}:{{etcd_hosts.port}}{% if not loop.last %},{% endif %}{% endfor %}
@@ -146,12 +151,14 @@ bootstrap:
     - host replication {{ patroni_replication_username }} 127.0.0.1/32 {{ postgresql_password_encryption_algorithm }}
     - host all all 0.0.0.0/0 {{ postgresql_password_encryption_algorithm }}
 
-
 postgresql:
   listen: {{ postgresql_listen_addr }}:{{ postgresql_port }}
-  connect_address: {{ patroni_bind_address | default(bind_address, true) }}:{{ postgresql_port }}
-{% if patroni_superuser_username == 'postgres' %}
+  connect_address: {{ postgresql_connect_addr | default(patroni_bind_address | default(bind_address, true), true) }}:{{ postgresql_port }}
+{% if patroni_use_unix_socket | default(false) %}
   use_unix_socket: true
+{% endif %}
+{% if patroni_use_unix_socket_repl | default(false) %}
+  use_unix_socket_repl: true
 {% endif %}
   data_dir: {{ postgresql_data_dir }}
   bin_dir: {{ postgresql_bin_dir }}
@@ -161,9 +168,15 @@ postgresql:
     replication:
       username: {{ patroni_replication_username }}
       password: {{ patroni_replication_password }}
+{% for parameter in patroni_replication_auth_options %}
+      {{ parameter.option }}: {{ parameter.value }}
+{% endfor %}
     superuser:
       username: {{ patroni_superuser_username }}
       password: {{ patroni_superuser_password }}
+{% for parameter in patroni_superuser_auth_options %}
+      {{ parameter.option }}: {{ parameter.value }}
+{% endfor %}
 #    rewind:  # Has no effect on postgres 10 and lower
 #      username: rewind_user
 #      password: rewind_password

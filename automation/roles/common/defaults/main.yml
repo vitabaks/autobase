@@ -14,8 +14,16 @@ patroni_cluster_name: "postgres-cluster" # the cluster name (must be unique for 
 
 patroni_superuser_username: "postgres"
 patroni_superuser_password: "" # Please specify a password. If not defined, will be generated automatically during deployment.
+patroni_superuser_auth_options:
+  - { option: "sslmode", value: "{{ 'require' if tls_cert_generate | bool else 'disable' }}" } # or 'verify-ca', 'verify-full'
+  - { option: "sslrootcert", value: "{{ tls_dir }}/{{ tls_ca_cert }}" } # or 'system'
 patroni_replication_username: "replicator"
 patroni_replication_password: "" # Please specify a password. If not defined, will be generated automatically during deployment.
+patroni_replication_auth_options:
+  - { option: "sslmode", value: "{{ 'require' if tls_cert_generate | bool else 'disable' }}" } # or 'verify-ca', 'verify-full'
+  - { option: "sslrootcert", value: "{{ tls_dir }}/{{ tls_ca_cert }}" } # or 'system'
+# Note: if sslmode: verify-full, and your certificate doesn't have IP address in the SAN,
+# set also the option postgresql_connect_addr to ensure TLS certificate validation is successful.
 
 synchronous_mode: false # or 'true' for enable synchronous database replication
 synchronous_mode_strict: false # if 'true' then block all client writes to the master, when a synchronous replica is not available
@@ -132,6 +140,7 @@ patroni_etcd_hosts: [] # list of servers of an existing etcd cluster
 #  - { host: "10.128.64.140", port: "2379" }
 #  - { host: "10.128.64.142", port: "2379" }
 #  - { host: "10.128.64.143", port: "2379" }
+
 patroni_etcd_namespace: "service" # (optional) etcd namespace (prefix)
 patroni_etcd_username: "" # (optional) username for etcd authentication
 patroni_etcd_password: "" # (optional) password for etcd authentication
@@ -183,29 +192,54 @@ consul_services:
     tags: ["master", "primary"]
     port: "{{ pgbouncer_listen_port }}" # or "{{ postgresql_port }}" if pgbouncer_install: false
     checks:
-      - { http: "http://{{ bind_address }}:{{ patroni_restapi_port }}/primary", interval: "2s" }
-      - { args: ["systemctl", "status", "pgbouncer"], interval: "5s" } # comment out this check if pgbouncer_install: false
+      - http: >-
+          {{ patroni_restapi_protocol }}://{{ patroni_restapi_connect_addr
+          | default(patroni_bind_address
+          | default(bind_address, true), true) }}:{{ patroni_restapi_port }}/primary
+        tls_skip_verify: true
+        interval: "2s"
+      # comment out this check if pgbouncer_install: false
+      - args: ["systemctl", "status", "pgbouncer"]
+        interval: "5s"
   - name: "{{ patroni_cluster_name }}"
     id: "{{ patroni_cluster_name }}-replica"
     tags: ["replica"]
     port: "{{ pgbouncer_listen_port }}"
     checks:
-      - { http: "http://{{ bind_address }}:{{ patroni_restapi_port }}/replica?lag={{ patroni_maximum_lag_on_replica }}", interval: "2s" }
-      - { args: ["systemctl", "status", "pgbouncer"], interval: "5s" }
+      - http: >-
+          {{ patroni_restapi_protocol }}://{{ patroni_restapi_connect_addr
+          | default(patroni_bind_address
+          | default(bind_address, true), true) }}:{{ patroni_restapi_port }}/replica?lag={{ patroni_maximum_lag_on_replica }}
+        tls_skip_verify: true
+        interval: "2s"
+      - args: ["systemctl", "status", "pgbouncer"]
+        interval: "5s"
 #  - name: "{{ patroni_cluster_name }}"
 #    id: "{{ patroni_cluster_name }}-sync-replica"
 #    tags: ['sync-replica']
 #    port: "{{ pgbouncer_listen_port }}"
 #    checks:
-#      - { http: "http://{{ bind_address }}:{{ patroni_restapi_port }}/sync", interval: "2s" }
-#      - { args: ["systemctl", "status", "pgbouncer"], interval: "5s" }
+#      - http: >-
+#          {{ patroni_restapi_protocol }}://{{ patroni_restapi_connect_addr
+#          | default(patroni_bind_address
+#          | default(bind_address, true), true) }}:{{ patroni_restapi_port }}/sync
+#        tls_skip_verify: true
+#        interval: "2s"
+#      - args: ["systemctl", "status", "pgbouncer"]
+#        interval: "5s"
 #  - name: "{{ patroni_cluster_name }}"
 #    id: "{{ patroni_cluster_name }}-async-replica"
 #    tags: ['async-replica']
 #    port: "{{ pgbouncer_listen_port }}"
 #    checks:
-#      - { http: "http://{{ bind_address }}:{{ patroni_restapi_port }}/async?lag={{ patroni_maximum_lag_on_replica }}", interval: "2s" }
-#      - { args: ["systemctl", "status", "pgbouncer"], interval: "5s" }
+#      - http: >-
+#          {{ patroni_restapi_protocol }}://{{ patroni_restapi_connect_addr
+#          | default(patroni_bind_address
+#          | default(bind_address, true), true) }}:{{ patroni_restapi_port }}/async?lag={{ patroni_maximum_lag_on_replica }}
+#        tls_skip_verify: true
+#        interval: "2s"
+#      - args: ["systemctl", "status", "pgbouncer"]
+#        interval: "5s"
 
 ############################################################
 # PostgreSQL parameters
@@ -213,6 +247,7 @@ consul_services:
 
 postgresql_version: 17 # Postgres major version
 postgresql_version_minor: "latest" # Postgres minor version (e.g. '5' for 17.5, or 'latest' for newest). Applicable only on RedHat-based distros.
+# postgresql_connect_addr: "{{ ansible_hostname }}" # or 'ansible_fqdn'. Set in case you would like connections to be established by domain name, not IP.
 postgresql_listen_addr: "0.0.0.0" # Listen on all interfaces. Or use "{{ bind_address }},127.0.0.1" to listen on a specific IP address.
 postgresql_port: 5432
 postgresql_encoding: "UTF8" # for bootstrap only (initdb)
@@ -403,7 +438,6 @@ pending_restart: false
 postgresql_pg_hba:
   - { type: "local", database: "all", user: "{{ patroni_superuser_username }}", address: "", method: "trust" }
   - { type: "local", database: "all", user: "{{ pgbouncer_auth_username }}", address: "", method: "trust" } # required for pgbouncer auth_user
-  - { type: "local", database: "replication", user: "{{ patroni_replication_username }}", address: "", method: "trust" }
   - { type: "local", database: "all", user: "all", address: "", method: "{{ postgresql_password_encryption_algorithm }}" }
   - { type: "host", database: "all", user: "all", address: "127.0.0.1/32", method: "{{ postgresql_password_encryption_algorithm }}" }
   - { type: "host", database: "all", user: "all", address: "::1/128", method: "{{ postgresql_password_encryption_algorithm }}" }
@@ -473,6 +507,11 @@ pgbouncer_pools:
 # Patroni parameters
 ############################################################
 
+patroni_restapi_protocol: "{{ 'https' if tls_cert_generate | bool else 'http' }}"
+patroni_restapi_certfile: "{{ tls_dir }}/{{ tls_cert }}"
+patroni_restapi_keyfile: "{{ tls_dir }}/{{ tls_privatekey }}"
+patroni_restapi_cafile: "{{ tls_dir }}/{{ tls_ca_cert }}"
+# patroni_restapi_connect_addr: "{{ ansible_hostname }}" # or 'ansible_fqdn'. Set if you need connection to be established by domain name, not IP.
 patroni_restapi_listen_addr: "0.0.0.0" # Listen on all interfaces. Or use "{{ bind_address }}" to listen on a specific IP address.
 patroni_restapi_port: 8008
 patroni_restapi_username: "patroni"
@@ -484,6 +523,9 @@ patroni_retry_timeout: 10
 patroni_master_start_timeout: 300
 patroni_maximum_lag_on_failover: 1048576 # (1MB) the maximum bytes a follower may lag to be able to participate in leader election.
 patroni_maximum_lag_on_replica: "100MB" # the maximum of lag that replica can be in order to be available for read-only queries.
+
+patroni_use_unix_socket: true # specifies that Patroni should prefer to use unix sockets to connect to the cluster.
+patroni_use_unix_socket_repl: true # specifies that Patroni should prefer to use unix sockets for replication user cluster connection.
 
 # https://patroni.readthedocs.io/en/latest/yaml_configuration.html#postgresql
 patroni_callbacks: []
@@ -633,10 +675,16 @@ wal_g_prefetch_dir_path: "{{ postgresql_home_dir }}/wal-g-prefetch"
 # Define job_parts outside of wal_g_cron_jobs
 # ⚠️ Ensure there is a space at the beginning of each part to prevent commands from concatenating.
 wal_g_backup_command:
-  - "curl -I -s http://{{ bind_address }}:{{ patroni_restapi_port }} | grep 200"
+  - "curl -I -s --cacert '{{ patroni_restapi_cafile }}'"
+  - " {{ patroni_restapi_protocol }}://{{ patroni_restapi_connect_addr | default(patroni_bind_address | default(bind_address, true), true) }}"
+  - ":{{ patroni_restapi_port }}"
+  - " | grep 200"
   - " && {{ wal_g_path }} backup-push {{ postgresql_data_dir }} > {{ postgresql_log_dir }}/walg_backup.log 2>&1"
 wal_g_delete_command:
-  - "curl -I -s http://{{ bind_address }}:{{ patroni_restapi_port }} | grep 200"
+  - "curl -I -s --cacert '{{ patroni_restapi_cafile }}'"
+  - " {{ patroni_restapi_protocol }}://{{ patroni_restapi_connect_addr | default(patroni_bind_address | default(bind_address, true), true) }}"
+  - ":{{ patroni_restapi_port }}"
+  - " | grep 200"
   - " && {{ wal_g_path }} delete retain FULL 4 --confirm > {{ postgresql_log_dir }}/walg_delete.log 2>&1"
 
 wal_g_cron_jobs:
@@ -788,9 +836,9 @@ netdata_conf:
 ############################################################
 
 # DNS servers (/etc/resolv.conf)
-nameservers: []
-#  - "8.8.8.8"  # example (Google Public DNS)
-#  - "9.9.9.9"  # (Quad9 Public DNS)
+nameservers:
+  - "1.1.1.1" # Cloudflare DNS (primary)
+  - "8.8.8.8" # Google DNS (secondary)
 
 # /etc/hosts (optional)
 etc_hosts: []
@@ -830,7 +878,7 @@ locale_gen:
 #  - { language_country: "", encoding: "" }
 
 # Set system locale (LANG,LC_ALL)
-locale: "en_US.utf-8"
+locale: "en_US.UTF-8"
 
 # Configure swap space
 swap_file_create: true # or 'false'
@@ -839,7 +887,7 @@ swap_file_size_mb: "4096" # change this value for your system
 
 # Kernel parameters
 sysctl_set: true # or 'false'
-# these parameters for example! Specify kernel options for your system
+sysctl_file: /etc/sysctl.d/autobase.sysctl.conf
 sysctl_conf:
   etcd_cluster: []
   consul_instances: []

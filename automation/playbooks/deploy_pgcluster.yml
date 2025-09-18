@@ -180,12 +180,6 @@
 
     - role: vitabaks.autobase.hostname
 
-    - role: vitabaks.autobase.tls_certificate
-      vars:
-        tls_group_name: "postgres_cluster"
-        tls_cert_regenerate: "{{ patroni_tls_cert_regenerate | default(false) }}" # Do not generate new certificates if they already exist.
-      when: tls_cert_generate | default(true) | bool
-
 - name: vitabaks.autobase.deploy_pgcluster | Deploy etcd cluster
   ansible.builtin.import_playbook: etcd_cluster.yml
   when: not dcs_exists | default(false) | bool and dcs_type | default('etcd') == "etcd"
@@ -296,7 +290,15 @@
         - pgbackrest_auto_conf | default(true) | bool # to be able to disable auto backup settings
       tags: always
 
-    - name: Copy certificates
+    - name: Generate Postgres TLS certificate
+      ansible.builtin.include_role:
+        name: vitabaks.autobase.tls_certificate
+      vars:
+        tls_group_name: "postgres_cluster"
+        tls_cert_regenerate: "{{ postgres_tls_cert_regenerate | default(false) }}" # Do not generate new certificates if they already exist.
+      when: tls_cert_generate | default(true) | bool
+
+    - name: Copy Postgres TLS certificate, key and CA to all nodes
       ansible.builtin.include_role:
         name: vitabaks.autobase.tls_certificate
         tasks_from: copy
