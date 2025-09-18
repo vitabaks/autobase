@@ -878,7 +878,7 @@ locale_gen:
 #  - { language_country: "", encoding: "" }
 
 # Set system locale (LANG,LC_ALL)
-locale: "en_US.utf-8"
+locale: "en_US.UTF-8"
 
 # Configure swap space
 swap_file_create: true # or 'false'
