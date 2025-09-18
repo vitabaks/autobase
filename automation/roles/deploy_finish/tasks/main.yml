@@ -178,7 +178,7 @@
       }}
     superuser_username: "{{ patroni_superuser_username }}"
     superuser_password: "{{ '********' if mask_password | default(false) | bool else patroni_superuser_password }}"
-    libpq_postgres_host_port: "{{ postgres_ip_addresses.split(',') | map('regex_replace', '$', ':' + postgresql_port | string) | join(',') }}"
+    libpq_postgres_host_port: "{{ postgres_ip_addresses.split(',') | map('trim') | map('regex_replace', '$', ':' + postgresql_port | string) | join(',') }}"
     libpq_load_balance: "{{ '&load_balance_hosts=random' if postgresql_version | int >= 16 else '' }}"
   when:
     - (cluster_vip is not defined or cluster_vip | length < 1)
