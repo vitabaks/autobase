@@ -23,8 +23,8 @@
         postgresql_cluster_maintenance: true
       tags: always
 
-- name: vitabaks.autobase.config_pgcluster | Check the PostgreSQL cluster state and perform pre-checks
-  hosts: postgres_cluster
+- name: vitabaks.autobase.config_pgcluster | Check the cluster state and perform pre-checks
+  hosts: postgres_cluster:etcd_cluster
   become: true
   become_method: sudo
   gather_facts: true
@@ -57,19 +57,23 @@
       check_mode: false
       environment:
         no_proxy: "{{ patroni_bind_address | default(bind_address, true) }}"
+      when: inventory_hostname in groups['postgres_cluster']
 
     # Stop, if Patroni is unavailable
     - name: The Patroni cluster is unhealthy
       ansible.builtin.fail:
         msg: "Patroni is unavailable on {{ ansible_hostname }}. Please check the cluster status."
       changed_when: false
-      when: patroni_leader_result is undefined or patroni_leader_result.status == -1
+      when:
+        - inventory_hostname in groups['postgres_cluster']
+        - (patroni_leader_result is undefined or patroni_leader_result.status == -1)
 
   roles:
     - role: vitabaks.autobase.pre_checks
       vars:
         minimal_ansible_version: 2.17.0
         timescale_minimal_pg_version: 12 # if enable_timescale is defined
+      when: inventory_hostname in groups['postgres_cluster']
 
   tasks:
     - name: '[Prepare] Add host to group "primary" (in-memory inventory)'
