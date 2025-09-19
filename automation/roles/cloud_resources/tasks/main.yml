@@ -35,6 +35,7 @@
     - ssh_key_name | length < 1
     - ssh_key_content | length < 1
     - not (postgresql_cluster_maintenance|default(false)|bool) # exclude for config_pgcluster.yml
+    - not (cluster_scaling | default(false) | bool) # exclude for cluster scaling
 
 # if ssh_key_name and ssh_key_content is not specified (for cluster scaling)
 - block:
