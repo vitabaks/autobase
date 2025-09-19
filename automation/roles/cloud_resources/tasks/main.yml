@@ -37,12 +37,12 @@
     - not (postgresql_cluster_maintenance|default(false)|bool) # exclude for config_pgcluster.yml
     - not (cluster_scaling | default(false) | bool) # exclude for cluster scaling
 
-# if ssh_key_name and ssh_key_content is not specified (for cluster scaling)
+# if ssh_key_name or ssh_key_content is not specified (for cluster scaling)
 - block:
     - name: Generate a unique temporary SSH key name
       ansible.builtin.set_fact:
         tmp_ssh_key_name: "ssh_key_tmp_{{ lookup('password', '/dev/null chars=ascii_lowercase length=7') }}"
-      when: (ssh_key_name | default('')) | length < 1
+      when: ssh_key_name | length < 1
 
     - name: "Set variable: ssh_key_name"
       ansible.builtin.set_fact:
@@ -72,7 +72,9 @@
 
     - name: Fail if ansible_ssh_private_key_file is not defined
       ansible.builtin.fail:
-        msg: "Variable 'ansible_ssh_private_key_file' is not defined. Provide --private-key or set ssh_key_content with your SSH public key."
+        msg: >-
+          Variable 'ansible_ssh_private_key_file' is not defined.
+          Provide --private-key or set ssh_key_content with your SSH public key.
       when:
         - ssh_key_content | length < 1
         - ansible_ssh_private_key_file | default('') | length < 1
