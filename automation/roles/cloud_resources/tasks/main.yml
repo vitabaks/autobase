@@ -72,9 +72,7 @@
 
     - name: Fail if ansible_ssh_private_key_file is not defined
       ansible.builtin.fail:
-        msg: >-
-          Variable 'ansible_ssh_private_key_file' is not defined.
-          Provide --private-key or set ssh_key_content with your SSH public key.
+        msg: "Variable 'ansible_ssh_private_key_file' is not defined. Please provide path to your SSH private key."
       when:
         - ssh_key_content | length < 1
         - ansible_ssh_private_key_file | default('') | length < 1
