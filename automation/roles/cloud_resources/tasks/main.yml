@@ -80,7 +80,7 @@
         ssh_key_content: >-
           {{
             (pub_slurp.content | default('') | b64decode | trim)
-              if (pub_slurp is defined)
+              if (pub_slurp.content | default('') | length > 0)
               else (pub_from_priv.stdout | trim)
           }}
       when:
