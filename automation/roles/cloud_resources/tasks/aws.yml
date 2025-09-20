@@ -561,7 +561,7 @@
             [{
               'public_ip': item.instances[0].public_ip_address | default(''),
               'private_ip': item.instances[0].private_ip_address | default(''),
-              'new_node': (instance_info.results[idx].instances | length == 0)
+              'new_node': (cluster_scaling | default(false) | bool and instance_info.results[idx].instances | length == 0)
             }]
           }}
       vars:
