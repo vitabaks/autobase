@@ -288,8 +288,8 @@
             label: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}"
           register: server_result
           until:
-            - server_result.instances[0][ip_address_type] is defined
-            - server_result.instances[0][ip_address_type] | length > 0
+            - (server_result.instances[0][ip_address_type] | default('')) | length > 0
+            - (server_result.instances[0].state.name | default('')) == 'running'
           retries: 3
           delay: 10
           when: ec2_instance_info.results[idx].instances | length == 0 # only if instance does not exist
