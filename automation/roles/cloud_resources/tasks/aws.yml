@@ -286,10 +286,10 @@
           loop_control:
             index_var: idx
             label: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}"
-          register: server_result
+          register: ec2_instance_result
           until:
-            - (server_result.instances[0][ip_address_type] | default('')) | length > 0
-            - (server_result.instances[0].state.name | default('')) == 'running'
+            - (ec2_instance_result.instances[0][ip_address_type] | default('')) | length > 0
+            - (ec2_instance_result.instances[0].state.name | default('')) == 'running'
           retries: 3
           delay: 10
           when: ec2_instance_info.results[idx].instances | length == 0 # only if instance does not exist
@@ -369,19 +369,24 @@
           retries: 3
           delay: 10
           when: item.spot_request.spot_instance_request_id is defined
-
-        # if spot instances are created now
-        - name: "Set variable: server_result"
-          ansible.builtin.set_fact:
-            server_result: "{{ ec2_spot_instance_result }}"
-          when: ec2_spot_instance_result.changed | default(false)
-
-        # if spot instances have already been created
-        - name: "Set variable: server_result"
-          ansible.builtin.set_fact:
-            server_result: "{{ ec2_spot_instance_info }}"
-          when: not ec2_spot_instance_result.changed | default(false)
       when: server_spot | default(aws_ec2_spot_instance | default(false)) | bool
+
+    # Combine existing and newly created instances
+    - name: "Set variable: server_result"
+      ansible.builtin.set_fact:
+        server_result:
+          results: >-
+            {{
+              (
+                (ec2_instance_info.results | default([]))
+                + (ec2_instance_result.results | default([]))
+                + (ec2_spot_instance_info.results | default([]))
+                + (ec2_spot_instance_result.results | default([]))
+              )
+              | selectattr('instances', 'defined')
+              | selectattr('instances', '!=', [])
+              | list
+            }}
 
     # Classic Load Balancer (CLB) - previous generation
     - name: "AWS: Create Classic Load Balancer (CLB)"
@@ -430,10 +435,7 @@
         nlb_targets: "{{ (nlb_targets | default([])) + [ {'Id': item, 'Port': target_port | int} ] }}"
       loop: "{{ instance_ids | default([]) }}"
       vars:
-        existing_ids: "{{ (ec2_instance_info | default({'results': []})) | json_query('results[].instances[].instance_id') }}"
-        existing_spot_ids: "{{ (ec2_spot_instance_info | default({'results': []})) | json_query('results[].instances[].instance_id') }}"
-        created_ids: "{{ (server_result | default({'results': []})) | json_query('results[].instances[].instance_id') }}"
-        instance_ids: "{{ (existing_ids + existing_spot_ids + created_ids) | unique | list }}"
+        instance_ids: "{{ (server_result | default({'results': []})) | json_query('results[].instances[].instance_id') }}"
         target_port: "{{ pgbouncer_listen_port | default('6432') if pgbouncer_install | bool else postgresql_port | default('5432') }}"
       when: cloud_load_balancer | bool and aws_load_balancer_type | lower == 'nlb'
 
