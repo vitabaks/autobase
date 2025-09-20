@@ -256,7 +256,7 @@
             label: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}"
           register: ec2_instance_info
 
-        - name: "AWS: Create or modify EC2 instance"
+        - name: "AWS: Create EC2 instance"
           amazon.aws.ec2_instance:
             access_key: "{{ lookup('ansible.builtin.env', 'AWS_ACCESS_KEY_ID') }}"
             secret_key: "{{ lookup('ansible.builtin.env', 'AWS_SECRET_ACCESS_KEY') }}"
@@ -292,6 +292,7 @@
             - server_result.instances[0][ip_address_type] | length > 0
           retries: 3
           delay: 10
+          when: ec2_instance_info.results[idx].instances | length == 0 # only if instance does not exist
       when: not server_spot | default(aws_ec2_spot_instance | default(false)) | bool
 
     # Spot instance (if 'server_spot' is 'true')
@@ -417,13 +418,26 @@
       loop_control:
         label: "{{ patroni_cluster_name }}-{{ item }}"
       register: aws_elb_classic_lb
-      when: cloud_load_balancer | bool and aws_load_balancer_type | lower == 'clb' and
+      when: server_result.results | default([]) | length > 0 and
+        cloud_load_balancer | bool and aws_load_balancer_type | lower == 'clb' and
         (item == 'primary' or
         (item == 'replica' and server_count | int > 1) or
         (item in ['sync', 'async'] and server_count | int > 1 and synchronous_mode | bool))
 
     # Network Load Balancer (NLB)
-    - name: "AWS: Create NLB Target Group"
+    - name: Build NLB targets
+      ansible.builtin.set_fact:
+        nlb_targets: "{{ (nlb_targets | default([])) + [ {'Id': item, 'Port': target_port | int} ] }}"
+      loop: "{{ instance_ids | default([]) }}"
+      vars:
+        existing_ids: "{{ (ec2_instance_info | default({'results': []})) | json_query('results[].instances[].instance_id') }}"
+        existing_spot_ids: "{{ (ec2_spot_instance_info | default({'results': []})) | json_query('results[].instances[].instance_id') }}"
+        created_ids: "{{ (server_result | default({'results': []})) | json_query('results[].instances[].instance_id') }}"
+        instance_ids: "{{ (existing_ids + existing_spot_ids + created_ids) | unique | list }}"
+        target_port: "{{ pgbouncer_listen_port | default('6432') if pgbouncer_install | bool else postgresql_port | default('5432') }}"
+      when: cloud_load_balancer | bool and aws_load_balancer_type | lower == 'nlb'
+
+    - name: "AWS: Create or modify NLB Target Group"
       community.aws.elb_target_group:
         access_key: "{{ lookup('ansible.builtin.env', 'AWS_ACCESS_KEY_ID') }}"
         secret_key: "{{ lookup('ansible.builtin.env', 'AWS_SECRET_ACCESS_KEY') }}"
@@ -442,16 +456,7 @@
         healthy_threshold_count: 3
         successful_response_codes: "200"
         target_type: instance
-        targets: >-
-          {{
-            server_result.results
-            | map(attribute='instances')
-            | map('first')
-            | map(attribute='instance_id')
-            | map('community.general.dict_kv', 'Id')
-            | map('combine', {'Port': target_port | int})
-            | list
-          }}
+        targets: "{{ nlb_targets | default([]) }}"
         modify_targets: true
         wait: false
         state: present
@@ -529,7 +534,7 @@
       volume_size: "{{ volume_size }} GB"
       public_ip: "{{ item.instances[0].public_ip_address | default('N/A', true) }}"
       private_ip: "{{ item.instances[0].private_ip_address | default('N/A', true) }}"
-  loop: "{{ server_result.results }}"
+  loop: "{{ server_result.results | default([]) }}"
   loop_control:
     index_var: idx
     label: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}"
@@ -544,7 +549,7 @@
     port: 22
     delay: 5
     timeout: 300
-  loop: "{{ server_result.results }}"
+  loop: "{{ server_result.results | default([]) }}"
   loop_control:
     index_var: idx
     label: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}"
