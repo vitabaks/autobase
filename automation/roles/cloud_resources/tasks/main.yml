@@ -79,7 +79,7 @@
       ansible.builtin.set_fact:
         ssh_key_content: >-
           {{
-            (pub_slurp.content | b64decode | trim)
+            (pub_slurp.content | default('') | b64decode | trim)
               if (pub_slurp is defined)
               else (pub_from_priv.stdout | trim)
           }}
