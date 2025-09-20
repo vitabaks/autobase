@@ -6,7 +6,6 @@
     enabled: true
     state: reloaded
   register: patroni_reload_result
-  changed_when: patroni_reload_result.rc == 0
   failed_when: false # ignore 'Could not find the requested service' for initial deployment.
   listen: "reload patroni"
 
