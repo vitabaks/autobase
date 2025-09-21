@@ -35,6 +35,12 @@ jobs:
           - distro: almalinux10
             tag: latest
             namespace: glillico
+          - distro: oraclelinux9
+            tag: latest
+            namespace: glillico
+          - distro: oraclelinux10
+            tag: latest
+            namespace: glillico
 
     steps:
       - name: Set TERM environment variable

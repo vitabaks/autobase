@@ -129,7 +129,6 @@
             name: vitabaks.autobase.tls_certificate
           vars:
             tls_group_name: "postgres_cluster"
-            tls_cert_regenerate: true
 
         - name: Copy Postgres TLS certificate, key and CA to all nodes
           ansible.builtin.include_role:
