@@ -282,6 +282,9 @@
                   volume_type: "{{ volume_type | default('gp3', true) }}"
                   volume_size: "{{ volume_size | int }}"
                   delete_on_termination: true
+            tags:
+              Name: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}"
+              Cluster: "{{ patroni_cluster_name }}"
           loop: "{{ range(0, server_count | int) | list }}"
           loop_control:
             index_var: idx
@@ -340,6 +343,7 @@
                     delete_on_termination: true
             tags:
               Name: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}"
+              Cluster: "{{ patroni_cluster_name }}"
           loop: "{{ ec2_spot_instance_info.results }}"
           loop_control:
             index_var: idx
