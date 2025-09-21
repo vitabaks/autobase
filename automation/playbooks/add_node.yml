@@ -289,22 +289,21 @@
     - role: vitabaks.autobase.pgbackrest
       when: pgbackrest_install | bool
 
-- name: vitabaks.autobase.add_node | Add new PostgreSQL replica to the cluster
-  hosts: new_replica
+- name: vitabaks.autobase.add_node | Regenerate Postgres TLS certificates
+  hosts: postgres_cluster
   become: true
   become_method: sudo
   gather_facts: true
   any_errors_fatal: true
   vars:
     cluster_scaling: true
-
-  pre_tasks:
+  tasks:
     - name: Generate Postgres TLS certificate
       ansible.builtin.include_role:
         name: vitabaks.autobase.tls_certificate
       vars:
         tls_group_name: "postgres_cluster"
-        tls_cert_regenerate: true  # Regenerate when adding nodes
+        tls_cert_regenerate: true
       when: tls_cert_generate | default(true) | bool
 
     - name: Copy Postgres TLS certificate, key and CA to all nodes
@@ -313,6 +312,14 @@
         tasks_from: copy
       when: tls_cert_generate | default(true) | bool
 
+- name: vitabaks.autobase.add_node | Add new PostgreSQL replica to the cluster
+  hosts: new_replica
+  become: true
+  become_method: sudo
+  gather_facts: true
+  any_errors_fatal: true
+  vars:
+    cluster_scaling: true
   roles:
     - role: vitabaks.autobase.wal_g
       when: wal_g_install | default(false) | bool
