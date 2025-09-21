@@ -261,7 +261,7 @@
             access_key: "{{ lookup('ansible.builtin.env', 'AWS_ACCESS_KEY_ID') }}"
             secret_key: "{{ lookup('ansible.builtin.env', 'AWS_SECRET_ACCESS_KEY') }}"
             name: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}"
-            state: present
+            state: running
             instance_type: "{{ server_type }}"
             image_id: "{{ server_image }}"
             key_name: "{{ ssh_key_name }}"
@@ -287,9 +287,6 @@
             index_var: idx
             label: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}"
           register: ec2_instance_result
-          until:
-            - (ec2_instance_result.instances[0][ip_address_type] | default('')) | length > 0
-            - (ec2_instance_result.instances[0].state.name | default('')) == 'running'
           retries: 3
           delay: 10
           when: ec2_instance_info.results[idx].instances | length == 0 # only if instance does not exist
