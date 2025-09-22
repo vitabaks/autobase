@@ -255,7 +255,21 @@
       when: cloud_load_balancer | bool
 
     # Server and volume
-    - name: "GCP: Create or modify VM instance"
+    - name: "GCP: Gather information about VM instances"
+      google.cloud.gcp_compute_instance_info:
+        auth_kind: "serviceaccount"
+        service_account_contents: "{{ gcp_service_account_contents }}"
+        project: "{{ gcp_project | default(project_info.resources[0].projectNumber) }}"
+        zone: "{{ server_location + '-b' if not server_location is match('.*-[a-z]$') else server_location }}" # add "-b" if the zone is not defined
+        filters:
+          - "name = {{ server_name | lower }}{{ '%02d' % (idx + 1) }}"
+      loop: "{{ range(0, server_count | int) | list }}"
+      loop_control:
+        index_var: idx
+        label: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}"
+      register: gcp_compute_instance_info
+
+    - name: "GCP: Create VM instance"
       google.cloud.gcp_compute_instance:
         auth_kind: "serviceaccount"
         service_account_contents: "{{ gcp_service_account_contents }}"
@@ -298,10 +312,26 @@
       loop_control:
         index_var: idx
         label: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}"
-      register: server_result
-      until: server_result is success
+      register: gcp_compute_instance_result
+      until: gcp_compute_instance_result is success
       delay: 10
       retries: 3
+      when: gcp_compute_instance_info.results[idx].id | length == 0 # only if instance does not exist
+
+    # Combine existing and newly created instances
+    - name: "Set variable: server_result"
+      ansible.builtin.set_fact:
+        server_result:
+          results: >-
+            {{
+              (
+                (gcp_compute_instance_info.results | default([]))
+                + (gcp_compute_instance_result.results | default([]))
+              )
+              | selectattr('instances', 'defined')
+              | selectattr('instances', '!=', [])
+              | list
+            }}
 
     # Load Balancer
     # This block creates Global External classic proxy Network Load Balancer.
@@ -532,7 +562,8 @@
           {{ ip_addresses | default([]) +
             [{
               'public_ip': item.networkInterfaces[0].accessConfigs[0].natIP | default(''),
-              'private_ip': item.networkInterfaces[0].networkIP | default('')
+              'private_ip': item.networkInterfaces[0].networkIP | default(''),
+              'new_node': (cluster_scaling | default(false) | bool and gcp_compute_instance_info.results[idx].id | length == 0)
             }]
           }}
       loop: "{{ server_result.results | selectattr('networkInterfaces', 'defined') }}"
