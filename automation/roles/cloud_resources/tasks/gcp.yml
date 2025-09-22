@@ -316,7 +316,7 @@
       until: gcp_compute_instance_result is success
       delay: 10
       retries: 3
-      when: gcp_compute_instance_info.results[idx].id | length == 0 # only if instance does not exist
+      when: gcp_compute_instance_info.results[idx].resources | length == 0 # only if instance does not exist
 
     # Combine existing and newly created instances
     - name: "Set variable: server_result"
@@ -325,7 +325,7 @@
           results: >-
             {{
               (
-                (gcp_compute_instance_info.results | default([]))
+                (gcp_compute_instance_info.results.resources | default([]))
                 + (gcp_compute_instance_result.results | default([]))
               )
               | selectattr('instances', 'defined')
@@ -563,7 +563,7 @@
             [{
               'public_ip': item.networkInterfaces[0].accessConfigs[0].natIP | default(''),
               'private_ip': item.networkInterfaces[0].networkIP | default(''),
-              'new_node': (cluster_scaling | default(false) | bool and gcp_compute_instance_info.results[idx].id | length == 0)
+              'new_node': (cluster_scaling | default(false) | bool and gcp_compute_instance_info.results[idx].resources | length == 0)
             }]
           }}
       loop: "{{ server_result.results | selectattr('networkInterfaces', 'defined') }}"
