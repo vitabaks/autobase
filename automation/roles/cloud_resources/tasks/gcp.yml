@@ -564,12 +564,18 @@
             [{
               'public_ip': item.networkInterfaces[0].accessConfigs[0].natIP | default(''),
               'private_ip': item.networkInterfaces[0].networkIP | default(''),
-              'new_node': (cluster_scaling | default(false) | bool and gcp_compute_instance_info.results[idx].resources | length == 0)
+              'new_node': (cluster_scaling | default(false) | bool and item.id not in existing_instance_ids)
             }]
+          }}
+      vars:
+        existing_instance_ids: >-
+          {{
+            gcp_compute_instance_info.results | default([])
+            | map(attribute='resources') | map('default', []) | list | flatten
+            | selectattr('id','defined') | map(attribute='id') | list
           }}
       loop: "{{ server_result.results | selectattr('networkInterfaces', 'defined') }}"
       loop_control:
-        index_var: idx
         label: >-
           public_ip: {{ item.networkInterfaces[0].accessConfigs[0].natIP | default('') }},
           private_ip: {{ item.networkInterfaces[0].networkIP | default('') }}
