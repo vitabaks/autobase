@@ -381,7 +381,7 @@
             project: "{{ gcp_project | default(project_info.resources[0].projectNumber) }}"
             name: "{{ patroni_cluster_name }}-{{ item }}-hc"
             description: "{{ patroni_cluster_name }} {{ item }} health check"
-            type: "HTTP"
+            type: "{{ patroni_restapi_protocol | upper }}"
             http_health_check:
               port: "{{ patroni_restapi_port }}"
               request_path: "/{{ item }}"
