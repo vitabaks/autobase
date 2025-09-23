@@ -569,6 +569,7 @@
           }}
       loop: "{{ server_result.results | selectattr('networkInterfaces', 'defined') }}"
       loop_control:
+        index_var: idx
         label: >-
           public_ip: {{ item.networkInterfaces[0].accessConfigs[0].natIP | default('') }},
           private_ip: {{ item.networkInterfaces[0].networkIP | default('') }}
