@@ -325,11 +325,10 @@
           results: >-
             {{
               (
-                (gcp_compute_instance_info.results.resources | default([]))
+                (gcp_compute_instance_info.results | default([]) | map(attribute='resources') | select('defined') | list | flatten)
                 + (gcp_compute_instance_result.results | default([]))
               )
-              | selectattr('instances', 'defined')
-              | selectattr('instances', '!=', [])
+              | selectattr('id', 'defined')
               | list
             }}
 
