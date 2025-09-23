@@ -569,18 +569,21 @@
             [{
               'public_ip': item.instances[0].public_ip_address | default(''),
               'private_ip': item.instances[0].private_ip_address | default(''),
-              'new_node': (cluster_scaling | default(false) | bool and instance_info.results[idx].instances | length == 0)
+              'new_node': (cluster_scaling | default(false) | bool and item.instances[0].instance_id not in existing_instance_ids)
             }]
           }}
       vars:
-        instance_info: >-
+        existing_instance_ids: >-
           {{
-            (server_spot | default(aws_ec2_spot_instance | default(false)) | bool)
-            | ternary(ec2_spot_instance_info, ec2_instance_info)
+            (
+              (ec2_instance_info.results | default([])) +
+              (ec2_spot_instance_info.results | default([]))
+            )
+            | selectattr('instances','defined') | map(attribute='instances') | list | flatten
+            | selectattr('instance_id','defined') | map(attribute='instance_id') | list
           }}
       loop: "{{ server_result.results | selectattr('instances', 'defined') }}"
       loop_control:
-        index_var: idx
         label: >-
           public_ip: {{ item.instances[0].public_ip_address | default('') }},
           private_ip: {{ item.instances[0].private_ip_address | default('') }}
