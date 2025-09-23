@@ -325,8 +325,10 @@
           results: >-
             {{
               (
-                (gcp_compute_instance_info.results | default([]) | map(attribute='resources') | select('defined') | list | flatten)
-                + (gcp_compute_instance_result.results | default([]))
+                (gcp_compute_instance_info.results | default([])
+                | map(attribute='resources') | map('default', []) | list | flatten)
+                +
+                (gcp_compute_instance_result.results | default([]))
               )
               | selectattr('id', 'defined')
               | list
