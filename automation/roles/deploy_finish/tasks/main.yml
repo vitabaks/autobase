@@ -18,9 +18,9 @@
   environment:
     PGPASSWORD: "{{ patroni_superuser_password }}"
   register: users_result
-  delegate_to: "{{ groups.master[0] }}"
   changed_when: false
   ignore_errors: true
+  when: "'master' in group_names"
   tags: users, users_list, cluster_info, cluster_status, point_in_time_recovery
 
 - name: Get Postgres databases
@@ -37,9 +37,9 @@
   environment:
     PGPASSWORD: "{{ patroni_superuser_password }}"
   register: dbs_result
-  delegate_to: "{{ groups.master[0] }}"
   changed_when: false
   ignore_errors: true
+  when: "'master' in group_names"
   tags: databases, db_list, cluster_info, cluster_status, point_in_time_recovery
 
 - name: Get Postgres cluster info
