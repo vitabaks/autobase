@@ -269,6 +269,17 @@
         label: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}-network-interface"
 
     # Server and volume
+    - name: "Azure: Gather information about virtual machines"
+      azure.azcollection.azure_rm_virtualmachine_info:
+        resource_group: "{{ azure_resource_group | default('postgres-cluster-resource-group' ~ '-' ~ server_location) }}"
+        name: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}"
+      loop: "{{ range(0, server_count | int) | list }}"
+      loop_control:
+        index_var: idx
+        label: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}"
+      register: azure_rm_virtualmachine_info
+      failed_when: false
+
     - name: "Azure: Create virtual machine"
       azure.azcollection.azure_rm_virtualmachine:
         resource_group: "{{ azure_resource_group | default('postgres-cluster-resource-group' ~ '-' ~ server_location) }}"
@@ -505,8 +516,16 @@
           {{ ip_addresses | default([]) +
             [{
               'public_ip': (public_ip_address.results if public_ip_address is defined else []) | selectattr('idx', 'equalto', item.idx) | map(attribute='state.ip_address') | first | default(''),
-              'private_ip': item.ansible_facts.azure_vm.network_profile.network_interfaces[0].properties.ip_configurations[0].private_ip_address | default('')
+              'private_ip': item.ansible_facts.azure_vm.network_profile.network_interfaces[0].properties.ip_configurations[0].private_ip_address | default(''),
+              'new_node': (cluster_scaling | default(false) | bool and item.ansible_facts.azure_vm.id not in existing_vm_ids)
             }]
+          }}
+      vars:
+        existing_vm_ids: >-
+          {{
+            azure_rm_virtualmachine_info.results | default([])
+            | map(attribute='vms') | map('default', []) | list | flatten
+            | selectattr('id','defined') | map(attribute='id') | list
           }}
       loop: "{{ server_result.results | selectattr('ansible_facts.azure_vm', 'defined') }}"
       loop_control:
