@@ -94,13 +94,13 @@
         - name: Install Azure CLI
           ansible.builtin.shell: >
             set -o pipefail;
-            curl -sL https://aka.ms/InstallAzureCli | bash
+            curl -sL https://aka.ms/InstallAzureCLIDeb | bash
           args:
             executable: /bin/bash
           ignore_errors: true
           when:
             - az_version_result.rc != 0
-            - ansible_distribution != "MacOSX"
+            - ansible_os_family == "Debian"
 
         # login
         - name: Login to Azure using Service Principal
@@ -111,6 +111,7 @@
             --tenant "{{ lookup('env', 'AZURE_TENANT') }}"
           args:
             executable: /bin/bash
+          changed_when: false
       when: cloud_load_balancer | bool
   delegate_to: 127.0.0.1
   become: false
