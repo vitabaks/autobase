@@ -348,7 +348,7 @@
           - name: "{{ patroni_cluster_name }}-{{ item }}-backend"
         probes:
           - name: "{{ patroni_cluster_name }}-{{ item }}-health-probe"
-            protocol: "Http"
+            protocol: "{{ patroni_restapi_protocol | capitalize }}"
             port: "{{ patroni_restapi_port }}"
             request_path: "/{{ item }}"
             interval: 5
