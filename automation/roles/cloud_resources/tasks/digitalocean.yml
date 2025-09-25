@@ -215,6 +215,8 @@
         state: present
 
     # Firewall
+    # Note: digital_ocean_droplet module doesn't support disabling public IP,
+    # but we do not open public SSH in Firewall and use private IP if server_public_ip: false
     - name: "DigitalOcean: Create or modify public firewall"
       community.digitalocean.digital_ocean_firewall:
         oauth_token: "{{ lookup('ansible.builtin.env', 'DO_API_TOKEN') }}"
@@ -479,8 +481,16 @@
       when: cloud_firewall | bool
 
     # Server and volume
-    # Note: module doesn't support disabling public IP,
-    # but we do not open public SSH in Firewall and use private IP if server_public_ip: false
+    - name: "DigitalOcean: Gather information about Droplets"
+      community.digitalocean.digital_ocean_droplet_info:
+        oauth_token: "{{ lookup('ansible.builtin.env', 'DO_API_TOKEN') }}"
+        name: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}"
+      loop: "{{ range(0, server_count | int) | list }}"
+      loop_control:
+        index_var: idx
+        label: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}"
+      register: digital_ocean_droplet_info
+
     - name: "DigitalOcean: Create or modify Droplet"
       community.digitalocean.digital_ocean_droplet:
         oauth_token: "{{ lookup('ansible.builtin.env', 'DO_API_TOKEN') }}"
@@ -665,8 +675,16 @@
           {{ ip_addresses | default([]) +
             [{
               'public_ip': (item.data.droplet.networks.v4 | selectattr('type', 'equalto', 'public')).0.ip_address | default(''),
-              'private_ip': (item.data.droplet.networks.v4 | selectattr('type', 'equalto', 'private')).0.ip_address | default('')
+              'private_ip': (item.data.droplet.networks.v4 | selectattr('type', 'equalto', 'private')).0.ip_address | default(''),
+              'new_node': (cluster_scaling | default(false) | bool and item.data.droplet.id not in existing_droplet_ids)
             }]
+          }}
+      vars:
+        existing_droplet_ids: >-
+          {{
+            digital_ocean_droplet_info.results | default([])
+            | map(attribute='data') | map('default', []) | list | flatten
+            | selectattr('id','defined') | map(attribute='id') | list
           }}
       loop: "{{ droplet_result.results | selectattr('data', 'defined') }}"
       loop_control:
