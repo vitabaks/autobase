@@ -310,6 +310,8 @@
             managed_disk_type: "{{ volume_type | default('StandardSSD_LRS', true) }}"
         network_interface_names:
           - "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}-network-interface"
+        tags:
+          Cluster: "{{ patroni_cluster_name }}"
       loop: "{{ range(0, server_count | int) | list }}"
       loop_control:
         index_var: idx
