@@ -586,7 +586,7 @@
             target_protocol: tcp
             target_port: "{{ digital_ocean_load_balancer_target_port }}"
         health_check:
-          protocol: http
+          protocol: "{{ patroni_restapi_protocol }}"
           port: "{{ patroni_restapi_port }}"
           path: "/{{ item }}"
           check_interval_seconds: 5
