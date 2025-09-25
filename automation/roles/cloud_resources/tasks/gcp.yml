@@ -305,7 +305,7 @@
           items:
             - "{{ patroni_cluster_name }}"
         labels:
-          cluster: "{{ patroni_cluster_name }}"
+          Cluster: "{{ patroni_cluster_name }}"
         status: "{{ gcp_instance_status | default('RUNNING') }}"
         state: present
       loop: "{{ range(0, server_count | int) | list }}"
