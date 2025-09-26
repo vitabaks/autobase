@@ -5,7 +5,7 @@ collections:
   - name: community.aws
     version: ">=10.0.0"
   - name: google.cloud
-    version: ">=1.7.0"
+    version: ">=1.8.0"
   - name: azure.azcollection
     version: ">=3.8.0"
   - name: community.digitalocean
