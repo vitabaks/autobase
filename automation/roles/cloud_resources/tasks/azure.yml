@@ -94,13 +94,13 @@
         - name: Install Azure CLI
           ansible.builtin.shell: >
             set -o pipefail;
-            curl -sL https://aka.ms/InstallAzureCli | bash
+            curl -sL https://aka.ms/InstallAzureCLIDeb | bash
           args:
             executable: /bin/bash
           ignore_errors: true
           when:
             - az_version_result.rc != 0
-            - ansible_distribution != "MacOSX"
+            - ansible_os_family == "Debian"
 
         # login
         - name: Login to Azure using Service Principal
@@ -111,6 +111,7 @@
             --tenant "{{ lookup('env', 'AZURE_TENANT') }}"
           args:
             executable: /bin/bash
+          changed_when: false
       when: cloud_load_balancer | bool
   delegate_to: 127.0.0.1
   become: false
@@ -269,6 +270,17 @@
         label: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}-network-interface"
 
     # Server and volume
+    - name: "Azure: Gather information about virtual machines"
+      azure.azcollection.azure_rm_virtualmachine_info:
+        resource_group: "{{ azure_resource_group | default('postgres-cluster-resource-group' ~ '-' ~ server_location) }}"
+        name: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}"
+      loop: "{{ range(0, server_count | int) | list }}"
+      loop_control:
+        index_var: idx
+        label: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}"
+      register: azure_rm_virtualmachine_info
+      failed_when: false
+
     - name: "Azure: Create virtual machine"
       azure.azcollection.azure_rm_virtualmachine:
         resource_group: "{{ azure_resource_group | default('postgres-cluster-resource-group' ~ '-' ~ server_location) }}"
@@ -298,6 +310,8 @@
             managed_disk_type: "{{ volume_type | default('StandardSSD_LRS', true) }}"
         network_interface_names:
           - "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}-network-interface"
+        tags:
+          Cluster: "{{ patroni_cluster_name }}"
       loop: "{{ range(0, server_count | int) | list }}"
       loop_control:
         index_var: idx
@@ -336,7 +350,7 @@
           - name: "{{ patroni_cluster_name }}-{{ item }}-backend"
         probes:
           - name: "{{ patroni_cluster_name }}-{{ item }}-health-probe"
-            protocol: "Http"
+            protocol: "{{ patroni_restapi_protocol | capitalize }}"
             port: "{{ patroni_restapi_port }}"
             request_path: "/{{ item }}"
             interval: 5
@@ -505,8 +519,16 @@
           {{ ip_addresses | default([]) +
             [{
               'public_ip': (public_ip_address.results if public_ip_address is defined else []) | selectattr('idx', 'equalto', item.idx) | map(attribute='state.ip_address') | first | default(''),
-              'private_ip': item.ansible_facts.azure_vm.network_profile.network_interfaces[0].properties.ip_configurations[0].private_ip_address | default('')
+              'private_ip': item.ansible_facts.azure_vm.network_profile.network_interfaces[0].properties.ip_configurations[0].private_ip_address | default(''),
+              'new_node': (cluster_scaling | default(false) | bool and item.ansible_facts.azure_vm.id not in existing_vm_ids)
             }]
+          }}
+      vars:
+        existing_vm_ids: >-
+          {{
+            azure_rm_virtualmachine_info.results | default([])
+            | map(attribute='vms') | map('default', []) | list | flatten
+            | selectattr('id','defined') | map(attribute='id') | list
           }}
       loop: "{{ server_result.results | selectattr('ansible_facts.azure_vm', 'defined') }}"
       loop_control:

@@ -255,6 +255,20 @@
       when: cloud_load_balancer | bool
 
     # Server and volume
+    - name: "GCP: Gather information about VM instances"
+      google.cloud.gcp_compute_instance_info:
+        auth_kind: "serviceaccount"
+        service_account_contents: "{{ gcp_service_account_contents }}"
+        project: "{{ gcp_project | default(project_info.resources[0].projectNumber) }}"
+        zone: "{{ server_location + '-b' if not server_location is match('.*-[a-z]$') else server_location }}" # add "-b" if the zone is not defined
+        filters:
+          - "name = {{ server_name | lower }}{{ '%02d' % (idx + 1) }}"
+      loop: "{{ range(0, server_count | int) | list }}"
+      loop_control:
+        index_var: idx
+        label: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}"
+      register: gcp_compute_instance_info
+
     - name: "GCP: Create or modify VM instance"
       google.cloud.gcp_compute_instance:
         auth_kind: "serviceaccount"
@@ -350,10 +364,11 @@
             project: "{{ gcp_project | default(project_info.resources[0].projectNumber) }}"
             name: "{{ patroni_cluster_name }}-{{ item }}-hc"
             description: "{{ patroni_cluster_name }} {{ item }} health check"
-            type: "HTTP"
-            http_health_check:
-              port: "{{ patroni_restapi_port }}"
-              request_path: "/{{ item }}"
+            type: "{{ patroni_restapi_protocol | upper }}"
+            http_health_check: "{{ ({'port': patroni_restapi_port|int, 'request_path': '/' ~ item})
+              if (patroni_restapi_protocol | lower) == 'http' else omit }}"
+            https_health_check: "{{ ({'port': patroni_restapi_port|int, 'request_path': '/' ~ item})
+              if (patroni_restapi_protocol | lower) == 'https' else omit }}"
             check_interval_sec: "{{ gcp_compute_health_check_interval_sec | default(3) }}"
             timeout_sec: "{{ gcp_compute_health_check_check_timeout_sec | default(2) }}"
             unhealthy_threshold: "{{ gcp_compute_health_check_unhealthy_threshold | default(2) }}"
@@ -532,8 +547,16 @@
           {{ ip_addresses | default([]) +
             [{
               'public_ip': item.networkInterfaces[0].accessConfigs[0].natIP | default(''),
-              'private_ip': item.networkInterfaces[0].networkIP | default('')
+              'private_ip': item.networkInterfaces[0].networkIP | default(''),
+              'new_node': (cluster_scaling | default(false) | bool and item.id not in existing_instance_ids)
             }]
+          }}
+      vars:
+        existing_instance_ids: >-
+          {{
+            gcp_compute_instance_info.results | default([])
+            | map(attribute='resources') | map('default', []) | list | flatten
+            | selectattr('id','defined') | map(attribute='id') | list
           }}
       loop: "{{ server_result.results | selectattr('networkInterfaces', 'defined') }}"
       loop_control:

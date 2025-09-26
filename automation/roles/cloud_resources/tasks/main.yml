@@ -9,7 +9,7 @@
     (server_image | length < 1 and cloud_provider != 'azure') or
     server_location | length < 1)
 
-# if ssh_key_name is not specified
+# if ssh_key_name and ssh_key_content is not specified (for initial deployment)
 # with each new execution of the playbook, a new temporary ssh key is created
 - block:
     - name: Generate a unique temporary SSH key name
@@ -25,20 +25,70 @@
         ssh_key_comment: "{{ tmp_ssh_key_name }}"
         force: true
       register: tmp_ssh_key_result
+
+    - name: "Set variable: ssh_key_name and ssh_key_content"
+      ansible.builtin.set_fact:
+        ssh_key_name: "{{ tmp_ssh_key_name }}"
+        ssh_key_content: "{{ tmp_ssh_key_result.ssh_public_key }}"
   when:
     - state == 'present'
     - ssh_key_name | length < 1
     - ssh_key_content | length < 1
     - not (postgresql_cluster_maintenance|default(false)|bool) # exclude for config_pgcluster.yml
+    - not (cluster_scaling | default(false) | bool) # exclude for cluster scaling
 
-# set_fact: ssh_key_name and ssh_key_content
-- name: "Set variable: ssh_key_name and ssh_key_content"
-  ansible.builtin.set_fact:
-    ssh_key_name: "{{ tmp_ssh_key_name }}"
-    ssh_key_content: "{{ tmp_ssh_key_result.ssh_public_key }}"
+# if ssh_key_name or ssh_key_content is not specified (for cluster scaling)
+- block:
+    - name: Generate a unique temporary SSH key name
+      ansible.builtin.set_fact:
+        tmp_ssh_key_name: "ssh_key_tmp_{{ lookup('password', '/dev/null chars=ascii_lowercase length=7') }}"
+      when: ssh_key_name | length < 1
+
+    - name: "Set variable: ssh_key_name"
+      ansible.builtin.set_fact:
+        ssh_key_name: "{{ tmp_ssh_key_name }}"
+      when: tmp_ssh_key_name is defined
+
+    # 1) if there is a .pub nearby, we read it.
+    - name: Read existing SSH public key content
+      ansible.builtin.slurp:
+        src: "{{ (ansible_ssh_private_key_file | default('')) + '.pub' }}"
+      register: pub_slurp
+      when:
+        - ssh_key_content | length < 1
+        - ansible_ssh_private_key_file | default('') | length > 0
+        - lookup('ansible.builtin.fileglob', (ansible_ssh_private_key_file | default('')) + '.pub', errors='ignore') | length > 0
+      changed_when: false
+
+    # 2) otherwise, we extract the pub from the private key.
+    - name: Derive SSH public key from private key
+      ansible.builtin.command: "ssh-keygen -y -f {{ ansible_ssh_private_key_file }}"
+      register: pub_from_priv
+      when:
+        - ssh_key_content | length < 1
+        - ansible_ssh_private_key_file | default('') | length > 0
+        - lookup('ansible.builtin.fileglob', (ansible_ssh_private_key_file | default('')) + '.pub', errors='ignore') | length < 1
+      changed_when: false
+
+    - name: Fail if ansible_ssh_private_key_file is not defined
+      ansible.builtin.fail:
+        msg: "Variable 'ansible_ssh_private_key_file' is not defined. Please provide path to your SSH private key."
+      when: ansible_ssh_private_key_file | default('') | length < 1
+
+    - name: "Set variable: ssh_key_content"
+      ansible.builtin.set_fact:
+        ssh_key_content: >-
+          {{
+            (pub_slurp.content | default('') | b64decode | trim)
+              if (pub_slurp.content | default('') | length > 0)
+              else (pub_from_priv.stdout | trim)
+          }}
+      when:
+        - ssh_key_content | length < 1
+        - (pub_slurp is defined or pub_from_priv is defined)
   when:
-    - tmp_ssh_key_result.ssh_public_key is defined
-    - tmp_ssh_key_result.ssh_public_key | length > 0
+    - state == 'present'
+    - cluster_scaling | default(false) | bool
 
 - name: Import tasks for AWS
   ansible.builtin.import_tasks: aws.yml
