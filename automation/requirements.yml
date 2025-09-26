@@ -7,7 +7,7 @@ collections:
   - name: google.cloud
     version: ">=1.7.0"
   - name: azure.azcollection
-    version: ">=3.7.0"
+    version: ">=3.8.0"
   - name: community.digitalocean
     version: ">=1.27.0"
   - name: hetzner.hcloud
