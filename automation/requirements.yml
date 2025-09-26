@@ -1,7 +1,7 @@
 ---
 collections:
   - name: amazon.aws
-    version: ">=10.1.0"
+    version: ">=10.1.1"
   - name: community.aws
     version: ">=10.0.0"
   - name: google.cloud
