@@ -464,6 +464,17 @@
         - hetzner_object_storage_secret_key | length > 0
 
     # Server and volume
+    - name: "Hetzner Cloud: Gather information about servers"
+      hetzner.hcloud.server_info:
+        api_token: "{{ lookup('ansible.builtin.env', 'HCLOUD_API_TOKEN') }}"
+        name: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}"
+      loop: "{{ range(0, server_count | int) | list }}"
+      loop_control:
+        index_var: idx
+        label: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}"
+      register: server_info
+      failed_when: false
+
     - name: "Hetzner Cloud: Create or modify server"
       hetzner.hcloud.server:
         api_token: "{{ lookup('ansible.builtin.env', 'HCLOUD_API_TOKEN') }}"
@@ -700,8 +711,16 @@
           {{ ip_addresses | default([]) +
             [{
               'public_ip': item.hcloud_server.ipv4_address | default(''),
-              'private_ip': item.hcloud_server.private_networks_info[0].ip | default('')
+              'private_ip': item.hcloud_server.private_networks_info[0].ip | default(''),
+              'new_node': (cluster_scaling | default(false) | bool and item.hcloud_server.id not in existing_server_ids)
             }]
+          }}
+      vars:
+        existing_server_ids: >-
+          {{
+            server_info.results | default([])
+            | map(attribute='hcloud_server_info') | map('default', []) | list | flatten
+            | selectattr('id','defined') | map(attribute='id') | list
           }}
       loop: "{{ server_result.results | selectattr('hcloud_server', 'defined') }}"
       loop_control:
