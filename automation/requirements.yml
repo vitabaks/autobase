@@ -11,7 +11,7 @@ collections:
   - name: community.digitalocean
     version: ">=1.27.0"
   - name: hetzner.hcloud
-    version: ">=5.1.0"
+    version: ">=5.2.0"
   - name: community.postgresql
     version: ">=3.14.2"
   - name: community.docker
