@@ -365,9 +365,10 @@
             name: "{{ patroni_cluster_name }}-{{ item }}-hc"
             description: "{{ patroni_cluster_name }} {{ item }} health check"
             type: "{{ patroni_restapi_protocol | upper }}"
-            http_health_check:
-              port: "{{ patroni_restapi_port }}"
-              request_path: "/{{ item }}"
+            http_health_check: "{{ ({'port': patroni_restapi_port|int, 'request_path': '/' ~ item})
+              if (patroni_restapi_protocol | lower) == 'http' else omit }}"
+            https_health_check: "{{ ({'port': patroni_restapi_port|int, 'request_path': '/' ~ item})
+              if (patroni_restapi_protocol | lower) == 'https' else omit }}"
             check_interval_sec: "{{ gcp_compute_health_check_interval_sec | default(3) }}"
             timeout_sec: "{{ gcp_compute_health_check_check_timeout_sec | default(2) }}"
             unhealthy_threshold: "{{ gcp_compute_health_check_unhealthy_threshold | default(2) }}"
