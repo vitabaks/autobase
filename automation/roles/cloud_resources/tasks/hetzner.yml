@@ -559,7 +559,7 @@
         destination_port: "{{ pgbouncer_listen_port | default(6432) if pgbouncer_install | bool else postgresql_port | default(5432) }}"
         protocol: tcp
         health_check:
-          protocol: "{{ patroni_restapi_protocol }}"
+          protocol: http
           port: "{{ patroni_restapi_port }}"
           interval: 5
           timeout: 2
