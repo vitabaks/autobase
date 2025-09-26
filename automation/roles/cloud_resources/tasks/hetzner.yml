@@ -566,6 +566,7 @@
           retries: 3
           http:
             path: "/{{ item }}"
+            tls: "true if patroni_restapi_protocol | lower == 'https' else false"
             status_codes:
               - "200"
         state: present
