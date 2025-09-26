@@ -269,7 +269,7 @@
         label: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}"
       register: gcp_compute_instance_info
 
-    - name: "GCP: Create VM instance"
+    - name: "GCP: Create or modify VM instance"
       google.cloud.gcp_compute_instance:
         auth_kind: "serviceaccount"
         service_account_contents: "{{ gcp_service_account_contents }}"
