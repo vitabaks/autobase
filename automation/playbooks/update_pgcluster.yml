@@ -28,7 +28,7 @@
           {{ patroni_restapi_connect_addr | default(patroni_bind_address | default(bind_address, true), true) }}:
           {{ patroni_restapi_port | default('8008') }}/leader
         status_code: 200
-        ca_path: "{{ patroni_restapi_cafile | default(omit, true) }}"
+        ca_path: "{{ patroni_restapi_cafile | default('/etc/tls/ca.crt') }}"
       register: patroni_leader_result
       changed_when: false
       failed_when: false

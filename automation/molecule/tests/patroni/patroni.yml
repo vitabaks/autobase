@@ -7,7 +7,7 @@
       {{ patroni_restapi_port | default('8008') }}/leader
     method: GET
     return_content: true
-    ca_path: "{{ patroni_restapi_cafile | default(omit, true) }}"
+    ca_path: "{{ patroni_restapi_cafile | default('/etc/tls/ca.crt') }}"
   register: patroni_response
   failed_when: "'running' not in patroni_response.json.state"
 
