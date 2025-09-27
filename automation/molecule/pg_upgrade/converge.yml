@@ -18,7 +18,7 @@
           else (['etcd', 'consul'] | random) }}" # TODO: Consul support for RHEL 10, Debian 13
         consul_node_role: server # if dcs_type: "consul"
         consul_bootstrap_expect: true # if dcs_type: "consul"
-        postgresql_version: 16 # redefine the version to install for the upgrade test
+        postgresql_version: 17 # redefine the version to install for the upgrade test
         pgbouncer_processes: 4 # Test multiple pgbouncer processes (so_reuseport)
         cacheable: true
       delegate_to: localhost
@@ -64,8 +64,8 @@
 
     - name: Set variables for PostgreSQL upgrade test
       ansible.builtin.set_fact:
-        pg_old_version: 16
-        pg_new_version: 17
+        pg_old_version: 17
+        pg_new_version: 18
 
     - name: Add repository GPG key
       ansible.builtin.command: "rpm --import https://repo.almalinux.org/almalinux/RPM-GPG-KEY-AlmaLinux-{{ ansible_distribution_major_version }}"
