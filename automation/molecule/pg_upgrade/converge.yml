@@ -27,9 +27,9 @@
     # Extension Auto-Setup
     - name: Set variables for Extensions test
       ansible.builtin.set_fact:
-        # TODO: timescaledb packages are not available for RHEL 10, Debian 13
+        # TODO: timescaledb packages are not available for RHEL 10 and PostgreSQL 18
         # Citus packages are not available for Ubuntu 24.04 and Debian 13
-        enable_timescale: "{{ 'false' if ansible_distribution_major_version in ['10'] or ansible_distribution_release in ['trixie'] else 'true' }}"
+        enable_timescale: "{{ 'false' if ansible_distribution_major_version in ['10'] or postgresql_version == '18' else 'true' }}"
         enable_pg_repack: true
         enable_pg_cron: true
         enable_pgaudit: true
