@@ -34,9 +34,9 @@
         enable_pgvector: true
         enable_postgis: true
         enable_pgrouting: true
-        enable_pg_stat_kcache: false # TODO: not available for PostgreSQL 18
         enable_pg_wait_sampling: true
-        enable_pg_partman: true
+        enable_pg_stat_kcache: false # TODO: not available for PostgreSQL 18
+        enable_pg_partman: false # TODO: not available for PostgreSQL 18
         enable_pgvectorscale: false # TODO: not available for PostgreSQL 18
         # create extension
         postgresql_extensions:
