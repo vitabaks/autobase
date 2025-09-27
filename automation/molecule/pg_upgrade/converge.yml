@@ -27,23 +27,21 @@
     # Extension Auto-Setup
     - name: Set variables for Extensions test
       ansible.builtin.set_fact:
-        # TODO: timescaledb packages are not available for RHEL 10 and PostgreSQL 18
-        enable_timescale: false # TODO: timescaledb packages are not available for PostgreSQL 18
+        enable_timescale: false # TODO: not available for PostgreSQL 18
         enable_pg_repack: true
         enable_pg_cron: true
         enable_pgaudit: true
         enable_pgvector: true
         enable_postgis: true
         enable_pgrouting: true
-        enable_pg_stat_kcache: true
+        enable_pg_stat_kcache: false # TODO: not available for PostgreSQL 18
         enable_pg_wait_sampling: true
         enable_pg_partman: true
-        enable_pgvectorscale: "{{ 'true' if ansible_distribution_release in ['bookworm', 'jammy', 'noble'] else 'false' }}" # only deb packages are available
+        enable_pgvectorscale: false # TODO: not available for PostgreSQL 18
         # create extension
         postgresql_extensions:
           - { ext: "vector", db: "postgres" }
-          - { ext: "vectorscale", db: "postgres" }
-        #  - { ext: "", db: "" }
+        #  - { ext: "vectorscale", db: "postgres" }
 
     # Consul package for OracleLinux missing in HashiCorp repository
     # Only the installation of a binary file is supported
