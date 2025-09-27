@@ -247,7 +247,24 @@
   when:
     - pg_old_version|int <= 16 and pg_new_version|int >= 17
 
-# TODO: Prepare the parameters for PostgreSQL 18 and etc.
+- block: # ssl_ecdh_curve (removed in the PG 18)
+    # check if the ssl_ecdh_curve parameter is specified in the patroni.yml
+    - name: "Edit patroni.yml | check if the 'ssl_ecdh_curve' parameter is specified"
+      ansible.builtin.command: grep ssl_ecdh_curve {{ patroni_config_file }}
+      register: ssl_ecdh_curve_output
+      changed_when: false
+      failed_when: false
+
+    # if defined, remove the ssl_ecdh_curve parameter from the patroni.yml
+    - name: "Edit patroni.yml | remove parameter: 'ssl_ecdh_curve'"
+      ansible.builtin.lineinfile:
+        path: "{{ patroni_config_file }}"
+        regexp: '^(\s*)ssl_ecdh_curve:.*'
+        state: absent
+      when: ssl_ecdh_curve_output.stdout | length > 0
+  when: pg_old_version|int <= 16 and pg_new_version|int >= 17
+
+# TODO: Prepare the parameters for PostgreSQL 19 and etc.
 
 # To support upgrades in the Patroni Standby Cluster.
 - name: "Edit patroni.yml | remove parameter: standby_cluster (if exists)"
