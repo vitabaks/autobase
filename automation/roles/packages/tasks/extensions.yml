@@ -132,10 +132,10 @@
     postgis_package: >-
       {% if ansible_os_family == 'Debian' %}
       postgresql-{{ pg_version | default(postgresql_version) }}-postgis-3
-      {% elif ansible_os_family == 'RedHat' and pg_version | default(postgresql_version) | int == 16 %}
+      {% elif ansible_os_family == 'RedHat' and pg_version | default(postgresql_version) | int == 12 %}
       postgis34_{{ pg_version | default(postgresql_version) }}
       {% else %}
-      postgis33_{{ pg_version | default(postgresql_version) }}
+      postgis{{ postgis_version | default('36') }}_{{ pg_version | default(postgresql_version) }}
       {% endif %}
   register: package_status
   until: package_status is success

@@ -18,7 +18,7 @@
           else (['etcd', 'consul'] | random) }}" # TODO: Consul support for RHEL 10, Debian 13
         consul_node_role: server # if dcs_type: "consul"
         consul_bootstrap_expect: true # if dcs_type: "consul"
-        postgresql_version: 17 # to test custom WAL dir
+        postgresql_version: 18
         pgbouncer_processes: 2 # Test multiple pgbouncer processes (so_reuseport)
         patroni_tags: "datacenter=dc1,key1=value1"
         balancer_tags: "datacenter=dc1"
@@ -61,25 +61,21 @@
 
     - name: Set variables for Extensions test
       ansible.builtin.set_fact:
-        # TODO: timescaledb packages are not available for RHEL 10, Debian 13
-        # Citus packages are not available for Ubuntu 24.04 and Debian 13
-        enable_timescale: "{{ 'false' if ansible_distribution_major_version in ['10'] or ansible_distribution_release in ['trixie'] else 'true' }}"
+        enable_timescale: false # TODO: not available for PostgreSQL 18
         enable_pg_repack: true
         enable_pg_cron: true
         enable_pgaudit: true
         enable_pgvector: true
         enable_postgis: true
         enable_pgrouting: true
-        enable_pg_stat_kcache: true
         enable_pg_wait_sampling: true
-        enable_pg_partman: true
-        enable_citus: "{{ 'false' if ansible_distribution_release in ['noble', 'trixie'] else 'true' }}"
-        enable_pgvectorscale: "{{ 'true' if ansible_distribution_release in ['bookworm', 'jammy', 'noble'] else 'false' }}" # only deb packages are available
+        enable_pg_stat_kcache: false # TODO: not available for PostgreSQL 18
+        enable_pg_partman: false # TODO: not available for PostgreSQL 18
+        enable_pgvectorscale: false # TODO: not available for PostgreSQL 18
         # create extension
         postgresql_extensions:
           - { ext: "vector", db: "postgres" }
-          - { ext: "vectorscale", db: "postgres" }
-        #  - { ext: "", db: "" }
+        #  - { ext: "vectorscale", db: "postgres" }
 
     - name: Set variables for PostgreSQL Cluster update test
       ansible.builtin.set_fact:
