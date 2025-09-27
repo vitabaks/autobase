@@ -43,7 +43,7 @@ type Config struct {
 	Docker        struct {
 		Host   string `default:"unix:///var/run/docker.sock" desc:"Docker host"`
 		LogDir string `default:"/tmp/ansible" desc:"Directory inside docker container for ansible json log"`
-		Image  string `default:"autobase/automation:2.3.2" desc:"Docker image for autobase automation"`
+		Image  string `default:"autobase/automation:2.4.0" desc:"Docker image for autobase automation"`
 	}
 	LogWatcher struct {
 		RunEvery    time.Duration `default:"1m" desc:"LogWatcher run interval"`

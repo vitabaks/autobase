@@ -1,7 +1,7 @@
 ---
 services:
   autobase-console-api:
-    image: autobase/console_api:2.3.2
+    image: autobase/console_api:2.4.0
     container_name: autobase-console-api
     healthcheck:
       test: ["CMD", "curl", "-fsS",
@@ -26,7 +26,7 @@ services:
       - autobase
 
   autobase-console-ui:
-    image: autobase/console_ui:2.3.2
+    image: autobase/console_ui:2.4.0
     container_name: autobase-console-ui
     ports:
       - 80:80
@@ -46,7 +46,7 @@ services:
       - autobase
 
   autobase-console-db:
-    image: autobase/console_db:2.3.2
+    image: autobase/console_db:2.4.0
     container_name: autobase-console-db
     healthcheck:
       test: pg_isready -U postgres -h 127.0.0.1
