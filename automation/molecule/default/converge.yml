@@ -18,7 +18,7 @@
           else (['etcd', 'consul'] | random) }}" # TODO: Consul support for RHEL 10, Debian 13
         consul_node_role: server # if dcs_type: "consul"
         consul_bootstrap_expect: true # if dcs_type: "consul"
-        postgresql_version: 17 # to test custom WAL dir
+        postgresql_version: 18
         pgbouncer_processes: 2 # Test multiple pgbouncer processes (so_reuseport)
         patroni_tags: "datacenter=dc1,key1=value1"
         balancer_tags: "datacenter=dc1"
