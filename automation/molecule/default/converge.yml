@@ -62,7 +62,6 @@
     - name: Set variables for Extensions test
       ansible.builtin.set_fact:
         # TODO: timescaledb packages are not available for RHEL 10 and PostgreSQL 18
-        # Citus packages are not available for Ubuntu 24.04 and Debian 13
         enable_timescale: "{{ 'false' if ansible_distribution_major_version in ['10'] or postgresql_version == '18' else 'true' }}"
         enable_pg_repack: true
         enable_pg_cron: true
@@ -73,7 +72,6 @@
         enable_pg_stat_kcache: true
         enable_pg_wait_sampling: true
         enable_pg_partman: true
-        enable_citus: "{{ 'false' if ansible_distribution_release in ['noble', 'trixie'] else 'true' }}"
         enable_pgvectorscale: "{{ 'true' if ansible_distribution_release in ['bookworm', 'jammy', 'noble'] else 'false' }}" # only deb packages are available
         # create extension
         postgresql_extensions:
