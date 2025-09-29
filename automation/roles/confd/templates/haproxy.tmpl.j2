@@ -38,7 +38,8 @@ listen master
     maxconn {{ haproxy_maxconn.master }}
     option httpchk OPTIONS /primary
     http-check expect status 200
-    default-server inter 3s fastinter 1s fall 3 rise 4 on-marked-down shutdown-sessions
+    default-server inter 3s fastinter 1s fall 3 rise 4 on-marked-down shutdown-sessions{% if patroni_restapi_protocol == 'https' %} check-ssl verify none{% endif %}
+
 {% if pgbouncer_install|bool %}
 {% raw %}{{range gets "/members/*"}} server {{base .Key}} {{$data := json .Value}}{{base (replace (index (split (index (split $data.conn_url ":") 1) "/") 2) "@" "/" -1)}}:{% endraw %}{{ pgbouncer_listen_port }}{% raw %} check port {{index (split (index (split $data.api_url "/") 2) ":") 1}}
 {{end}}{% endraw %}
@@ -58,7 +59,8 @@ listen master_direct
     maxconn {{ haproxy_maxconn.master }}
     option httpchk OPTIONS /primary
     http-check expect status 200
-    default-server inter 3s fastinter 1s fall 3 rise 4 on-marked-down shutdown-sessions
+    default-server inter 3s fastinter 1s fall 3 rise 4 on-marked-down shutdown-sessions{% if patroni_restapi_protocol == 'https' %} check-ssl verify none{% endif %}
+
 {% raw %}{{range gets "/members/*"}} server {{base .Key}} {{$data := json .Value}}{{base (replace (index (split $data.conn_url "/") 2) "@" "/" -1)}} check port {{index (split (index (split $data.api_url "/") 2) ":") 1}}
 {{end}}{% endraw %}
 {% endif %}
@@ -77,7 +79,8 @@ listen replicas
     {% endif %}
     balance roundrobin
     http-check expect status 200
-    default-server inter 3s fastinter 1s fall 3 rise 2 on-marked-down shutdown-sessions
+    default-server inter 3s fastinter 1s fall 3 rise 2 on-marked-down shutdown-sessions{% if patroni_restapi_protocol == 'https' %} check-ssl verify none{% endif %}
+
 {% if pgbouncer_install|bool %}
 {% raw %}{{range gets "/members/*"}} server {{base .Key}} {{$data := json .Value}}{{base (replace (index (split (index (split $data.conn_url ":") 1) "/") 2) "@" "/" -1)}}:{% endraw %}{{ pgbouncer_listen_port }}{% raw %} check port {{index (split (index (split $data.api_url "/") 2) ":") 1}}
 {{end}}{% endraw %}
@@ -102,7 +105,8 @@ listen replicas_direct
     {% endif %}
     balance roundrobin
     http-check expect status 200
-    default-server inter 3s fastinter 1s fall 3 rise 2 on-marked-down shutdown-sessions
+    default-server inter 3s fastinter 1s fall 3 rise 2 on-marked-down shutdown-sessions{% if patroni_restapi_protocol == 'https' %} check-ssl verify none{% endif %}
+
 {% raw %}{{range gets "/members/*"}} server {{base .Key}} {{$data := json .Value}}{{base (replace (index (split $data.conn_url "/") 2) "@" "/" -1)}} check port {{index (split (index (split $data.api_url "/") 2) ":") 1}}
 {{end}}{% endraw %}
 {% endif %}
@@ -121,7 +125,8 @@ listen replicas_sync
     {% endif %}
     balance roundrobin
     http-check expect status 200
-    default-server inter 3s fastinter 1s fall 3 rise 2 on-marked-down shutdown-sessions
+    default-server inter 3s fastinter 1s fall 3 rise 2 on-marked-down shutdown-sessions{% if patroni_restapi_protocol == 'https' %} check-ssl verify none{% endif %}
+
 {% if pgbouncer_install|bool %}
 {% raw %}{{range gets "/members/*"}} server {{base .Key}} {{$data := json .Value}}{{base (replace (index (split (index (split $data.conn_url ":") 1) "/") 2) "@" "/" -1)}}:{% endraw %}{{ pgbouncer_listen_port }}{% raw %} check port {{index (split (index (split $data.api_url "/") 2) ":") 1}}
 {{end}}{% endraw %}
@@ -146,7 +151,8 @@ listen replicas_sync_direct
     {% endif %}
     balance roundrobin
     http-check expect status 200
-    default-server inter 3s fastinter 1s fall 3 rise 2 on-marked-down shutdown-sessions
+    default-server inter 3s fastinter 1s fall 3 rise 2 on-marked-down shutdown-sessions{% if patroni_restapi_protocol == 'https' %} check-ssl verify none{% endif %}
+
 {% raw %}{{range gets "/members/*"}} server {{base .Key}} {{$data := json .Value}}{{base (replace (index (split $data.conn_url "/") 2) "@" "/" -1)}} check port {{index (split (index (split $data.api_url "/") 2) ":") 1}}
 {{end}}{% endraw %}
 {% endif %}
@@ -165,7 +171,8 @@ listen replicas_async
     {% endif %}
     balance roundrobin
     http-check expect status 200
-    default-server inter 3s fastinter 1s fall 3 rise 2 on-marked-down shutdown-sessions
+    default-server inter 3s fastinter 1s fall 3 rise 2 on-marked-down shutdown-sessions{% if patroni_restapi_protocol == 'https' %} check-ssl verify none{% endif %}
+
 {% if pgbouncer_install|bool %}
 {% raw %}{{range gets "/members/*"}} server {{base .Key}} {{$data := json .Value}}{{base (replace (index (split (index (split $data.conn_url ":") 1) "/") 2) "@" "/" -1)}}:{% endraw %}{{ pgbouncer_listen_port }}{% raw %} check port {{index (split (index (split $data.api_url "/") 2) ":") 1}}
 {{end}}{% endraw %}
@@ -190,7 +197,8 @@ listen replicas_async_direct
     {% endif %}
     balance roundrobin
     http-check expect status 200
-    default-server inter 3s fastinter 1s fall 3 rise 2 on-marked-down shutdown-sessions
+    default-server inter 3s fastinter 1s fall 3 rise 2 on-marked-down shutdown-sessions{% if patroni_restapi_protocol == 'https' %} check-ssl verify none{% endif %}
+
 {% raw %}{{range gets "/members/*"}} server {{base .Key}} {{$data := json .Value}}{{base (replace (index (split $data.conn_url "/") 2) "@" "/" -1)}} check port {{index (split (index (split $data.api_url "/") 2) ":") 1}}
 {{end}}{% endraw %}
 {% endif %}
