@@ -15,7 +15,7 @@
     owner: postgres
     group: postgres
     state: directory
-    mode: "0750"
+    mode: "u+rwx,g+rx"
   when: patroni_log_destination == 'logfile'
   tags: patroni
 
@@ -23,9 +23,8 @@
   ansible.builtin.file:
     path: "{{ postgresql_log_dir }}"
     owner: postgres
-    group: postgres
     state: directory
-    mode: "0700"
+    mode: "u+rwx"
   tags: patroni
 
 - name: Update patroni config file
