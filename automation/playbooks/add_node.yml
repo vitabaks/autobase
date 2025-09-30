@@ -182,6 +182,7 @@
       when:
         - new_postgres_nodes | default([]) | length > 0
         - not new_node | default(false) | bool
+        - inventory_hostname in groups['postgres_cluster']
 
     - name: Add a new node to new_replica group (in-memory inventory)
       ansible.builtin.add_host:
