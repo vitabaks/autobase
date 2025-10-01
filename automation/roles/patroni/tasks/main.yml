@@ -382,6 +382,22 @@
         state: directory
         mode: "0700"
 
+    - name: Prepare PostgreSQL | make sure PostgreSQL unix socket directory "{{ postgresql_unix_socket_dir }}" exists
+      ansible.builtin.file:
+        path: "{{ postgresql_unix_socket_dir }}"
+        owner: postgres
+        group: postgres
+        state: directory
+        mode: "02775"
+
+    - name: Prepare PostgreSQL | make sure PostgreSQL log directory "{{ postgresql_log_dir }}" exists
+      ansible.builtin.file:
+        path: "{{ postgresql_log_dir }}"
+        owner: postgres
+        group: postgres
+        state: directory
+        mode: "0700"
+
     # for Debian based distros only
     # patroni bootstrap failure is possible if the PostgreSQL config files are missing
     - name: Prepare PostgreSQL | make sure PostgreSQL config directory exists
