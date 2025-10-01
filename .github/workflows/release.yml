@@ -111,3 +111,17 @@ jobs:
             --token $ANSIBLE_GALAXY_TOKEN
         env:
           ANSIBLE_GALAXY_TOKEN: ${{ secrets.ANSIBLE_GALAXY_TOKEN }}
+
+      - name: Build release image
+        run: make docker-build
+        env:
+          TAG: ${{ env.TAG }}
+
+      - name: Push release image
+        if: ${{ env.DOCKER_REGISTRY_USER != '' && env.DOCKER_REGISTRY_PASSWORD != '' && github.event_name != 'pull_request' }}
+        run: make docker-push
+        env:
+          TAG: ${{ env.TAG }}
+          DOCKER_REGISTRY_USER: ${{ secrets.DOCKER_USERNAME }}
+          DOCKER_REGISTRY_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+
