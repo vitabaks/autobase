@@ -249,6 +249,15 @@
   when: wal_g_prefetch_dir_create | default(true) | bool
   tags: wal-g, wal_g, wal_g_install
 
+- name: "Create postgres home directory ({{ postgresql_home_dir }})"
+  ansible.builtin.file:
+    path: "{{ postgresql_home_dir }}"
+    state: directory
+    owner: postgres
+    group: postgres
+    mode: "0755"
+  tags: wal-g, wal_g, wal_g_conf
+
 # Configure walg.json
 - name: "Generate conf file {{ postgresql_home_dir }}/.walg.json"
   ansible.builtin.template:
