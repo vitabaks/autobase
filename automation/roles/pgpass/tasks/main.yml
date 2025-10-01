@@ -1,5 +1,4 @@
 ---
----
 - name: "Create postgres home directory ({{ postgresql_home_dir }})"
   become: true
   become_user: root
