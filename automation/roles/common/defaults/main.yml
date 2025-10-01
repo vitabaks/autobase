@@ -508,9 +508,9 @@ pgbouncer_pools:
 ############################################################
 
 patroni_restapi_protocol: "{{ 'https' if tls_cert_generate | bool else 'http' }}"
-patroni_restapi_certfile: "{{ tls_dir }}/{{ tls_cert }}"
-patroni_restapi_keyfile: "{{ tls_dir }}/{{ tls_privatekey }}"
-patroni_restapi_cafile: "{{ tls_dir }}/{{ tls_ca_cert }}"
+patroni_restapi_certfile: "{{ tls_dir ~ '/' ~ tls_cert if patroni_restapi_protocol == 'https' else omit }}"
+patroni_restapi_keyfile: "{{ tls_dir ~ '/' ~ tls_privatekey if patroni_restapi_protocol == 'https' else omit }}"
+patroni_restapi_cafile: "{{ tls_dir ~ '/' ~ tls_ca_cert if patroni_restapi_protocol == 'https' else omit }}"
 # patroni_restapi_connect_addr: "{{ ansible_hostname }}" # or 'ansible_fqdn'. Set if you need connection to be established by domain name, not IP.
 patroni_restapi_listen_addr: "0.0.0.0" # Listen on all interfaces. Or use "{{ bind_address }}" to listen on a specific IP address.
 patroni_restapi_port: 8008

@@ -169,13 +169,21 @@ postgresql:
       username: {{ patroni_replication_username }}
       password: {{ patroni_replication_password }}
 {% for parameter in patroni_replication_auth_options %}
+{%   if parameter.option == 'sslrootcert' and tls_cert_generate | bool %}
       {{ parameter.option }}: {{ parameter.value }}
+{%   elif parameter.option != 'sslrootcert' %}
+      {{ parameter.option }}: {{ parameter.value }}
+{%   endif %}
 {% endfor %}
     superuser:
       username: {{ patroni_superuser_username }}
       password: {{ patroni_superuser_password }}
 {% for parameter in patroni_superuser_auth_options %}
+{%   if parameter.option == 'sslrootcert' and tls_cert_generate | bool %}
       {{ parameter.option }}: {{ parameter.value }}
+{%   elif parameter.option != 'sslrootcert' %}
+      {{ parameter.option }}: {{ parameter.value }}
+{%   endif %}
 {% endfor %}
 #    rewind:  # Has no effect on postgres 10 and lower
 #      username: rewind_user
