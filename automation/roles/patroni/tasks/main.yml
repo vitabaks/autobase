@@ -448,6 +448,14 @@
             name: patroni
             state: stopped
 
+        - name: Prepare PostgreSQL | make sure the postgres home directory "{{ postgresql_home_dir }}"
+          ansible.builtin.file:
+            path: "{{ postgresql_home_dir }}"
+            state: directory
+            owner: postgres
+            group: postgres
+            mode: "0755"
+
         - name: Prepare PostgreSQL | make sure the data directory "{{ postgresql_data_dir }}" is empty
           ansible.builtin.file:
             path: "{{ postgresql_data_dir }}"
@@ -458,6 +466,22 @@
           loop:
             - absent
             - directory
+
+        - name: Prepare PostgreSQL | make sure PostgreSQL unix socket directory "{{ postgresql_unix_socket_dir }}" exists
+          ansible.builtin.file:
+            path: "{{ postgresql_unix_socket_dir }}"
+            owner: postgres
+            group: postgres
+            state: directory
+            mode: "02775"
+
+        - name: Prepare PostgreSQL | make sure PostgreSQL log directory "{{ postgresql_log_dir }}" exists
+          ansible.builtin.file:
+            path: "{{ postgresql_log_dir }}"
+            owner: postgres
+            group: postgres
+            state: directory
+            mode: "0700"
 
         - name: Prepare PostgreSQL | make sure the custom WAL directory "{{ postgresql_wal_dir }}" is empty
           ansible.builtin.file:
