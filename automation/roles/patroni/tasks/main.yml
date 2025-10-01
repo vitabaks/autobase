@@ -374,6 +374,14 @@
   tags: patroni, custom_wal_dir
 
 - block: # when postgresql NOT exists or PITR
+    - name: Prepare PostgreSQL | make sure PostgreSQL home directory "{{ postgresql_home_dir }}"
+      ansible.builtin.file:
+        path: "{{ postgresql_home_dir }}"
+        state: directory
+        owner: postgres
+        group: postgres
+        mode: "0755"
+
     - name: Prepare PostgreSQL | make sure PostgreSQL data directory "{{ postgresql_data_dir }}" exists
       ansible.builtin.file:
         path: "{{ postgresql_data_dir }}"
