@@ -329,7 +329,7 @@
       when: pg_probackup_install | default(false) | bool
 
     - role: vitabaks.autobase.pgbouncer
-      when: pgbouncer_install | default(false) | bool
+      when: pgbouncer_install | default(true) | bool
 
     - role: vitabaks.autobase.pgpass
 

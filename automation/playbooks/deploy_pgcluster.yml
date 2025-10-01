@@ -314,7 +314,7 @@
     - role: vitabaks.autobase.cron
 
     - role: vitabaks.autobase.pgbouncer
-      when: pgbouncer_install | default(false) | bool
+      when: pgbouncer_install | default(true) | bool
 
     - role: vitabaks.autobase.pgpass
 
