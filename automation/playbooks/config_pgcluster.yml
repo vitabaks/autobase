@@ -40,6 +40,11 @@
         name: vitabaks.autobase.bind_address
       tags: always
 
+    - name: Set default variables
+      ansible.builtin.import_role:
+        name: vitabaks.autobase.common
+      tags: always
+
     - name: "[Prepare] Set maintenance variable"
       ansible.builtin.set_fact:
         postgresql_cluster_maintenance: true

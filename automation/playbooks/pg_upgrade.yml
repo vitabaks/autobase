@@ -15,6 +15,10 @@
       ansible.builtin.include_role:
         name: vitabaks.autobase.bind_address
 
+    - name: Set default variables
+      ansible.builtin.import_role:
+        name: vitabaks.autobase.common
+
     - name: "[Prepare] Get Patroni Cluster Leader Node"
       ansible.builtin.uri:
         url: >-
