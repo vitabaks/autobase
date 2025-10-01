@@ -2,11 +2,11 @@
 # File: config.yml - Consul configuration tasks
 
 - name: Create configuration hcl
-  ansible.builtin.copy:
+  ansible.builtin.template:
+    src: "{{ consul_config_template_path }}"
     dest: "{{ config_item.dest }}"
     owner: "{{ consul_user }}"
     group: "{{ consul_group }}"
-    content: "{{ lookup('template', consul_config_template_path, convert_data=True) }}"
     mode: "0600"
   loop:
     - dest: "{{ consul_config_path }}/config.hcl"
@@ -34,8 +34,10 @@
     dest: "{{ config_item.dest }}"
     owner: "{{ consul_user }}"
     group: "{{ consul_group }}"
-    content: "{{ lookup('template', consul_config_template_path, convert_data=True) | to_nice_json }}"
+    content: "{{ _consul_json_config | to_nice_json }}"
     mode: "0600"
+  vars:
+    _consul_json_config: "{{ lookup('template', consul_config_template_path, convert_data=False) | from_json }}"
   loop:
     - dest: "{{ consul_config_path }}/config.json"
       config_version: "{{ consul_node_role }}"
@@ -62,8 +64,10 @@
     dest: "{{ consul_configd_path }}/50custom.json"
     owner: "{{ consul_user }}"
     group: "{{ consul_group }}"
-    content: "{{ lookup('template', 'templates/configd_50custom.json.j2', convert_data=True) | to_nice_json }}"
+    content: "{{ _consul_custom_config | to_nice_json }}"
     mode: "0600"
+  vars:
+    _consul_custom_config: "{{ lookup('template', 'templates/configd_50custom.json.j2', convert_data=False) | from_json }}"
   when:
     - consul_config_custom is defined
   notify:

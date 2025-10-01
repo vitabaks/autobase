@@ -13,7 +13,7 @@
 - name: Checking version of OS Linux
   ansible.builtin.fail:
     msg: "{{ ansible_distribution_version }} of {{ ansible_distribution }} is not supported"
-  when: ansible_distribution_version is version_compare(os_minimum_versions[ansible_distribution], '<')
+  when: ansible_distribution_version is version(os_minimum_versions[ansible_distribution], '<')
 
 - name: Perform pre-checks for system
   ansible.builtin.import_tasks: system.yml

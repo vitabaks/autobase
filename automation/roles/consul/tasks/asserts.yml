@@ -33,35 +33,35 @@
     msg: "{{ ansible_distribution_version }} is not a supported version."
   when:
     - ansible_distribution in ['VMware Photon OS']
-    - ansible_distribution_version is version_compare(4, '<')
+    - ansible_distribution_version is version(4, '<')
 
 - name: Check CentOS, Red Hat or Oracle Linux version
   ansible.builtin.fail:
     msg: "{{ ansible_distribution_version }} is not a supported version."
   when:
     - ansible_distribution in ['RedHat', 'CentOS', 'OracleLinux', 'Rocky', 'AlmaLinux']
-    - ansible_distribution_version is version_compare(6, '<')
+    - ansible_distribution_version is version(6, '<')
 
 - name: Check Debian version
   ansible.builtin.fail:
     msg: "{{ ansible_distribution_version }} is not a supported version."
   when:
     - ansible_distribution == "Debian"
-    - (ansible_distribution_version != 'buster/sid') and (ansible_distribution_version is version_compare(8, '<'))
+    - (ansible_distribution_version != 'buster/sid') and (ansible_distribution_version is version(8, '<'))
 
 - name: Check FreeBSD version
   ansible.builtin.fail:
     msg: "{{ ansible_distribution_version }} is not a supported version."
   when:
     - ansible_distribution == "FreeBSD"
-    - ansible_distribution_version is version_compare(10, '<')
+    - ansible_distribution_version is version(10, '<')
 
 - name: Check Ubuntu version
   ansible.builtin.fail:
     msg: "{{ ansible_distribution_version }} is not a supported version."
   when:
     - ansible_distribution == "Ubuntu"
-    - ansible_distribution_version is version_compare(13.04, '<')
+    - ansible_distribution_version is version(13.04, '<')
 
 - name: Check iptables on Red Hat, CentOS or Oracle Linux
   ansible.builtin.fail:
@@ -69,7 +69,7 @@
   when:
     - consul_iptables_enable | bool
     - ansible_distribution in ['RedHat', 'CentOS', 'OracleLinux', 'Rocky', 'AlmaLinux']
-    - ansible_distribution_version is version_compare(6, '>=')
+    - ansible_distribution_version is version(6, '>=')
 
 - name: Check for both Dnsmasq and iptables enabled
   ansible.builtin.fail:
