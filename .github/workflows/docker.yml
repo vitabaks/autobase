@@ -57,7 +57,7 @@ jobs:
           TAG: ${{ env.TAG }}
 
       - name: Run Docker push
-        if: ${{ env.DOCKER_REGISTRY_USER != '' && env.DOCKER_REGISTRY_PASSWORD != '' && github.event_name != 'pull_request' }}
+        if: ${{ env.DOCKER_REGISTRY_USER != '' && env.DOCKER_REGISTRY_PASSWORD != '' }}
         run: make docker-push
         env:
           TAG: ${{ env.TAG }}
