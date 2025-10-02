@@ -117,7 +117,7 @@
             src: "~postgres/.ssh/id_rsa.pub"
           delegate_to: "{{ target_node }}"
           register: target_node_pubkey
-          when: 
+          when:
             - target_node in (groups['postgres_cluster'] | default([]))
             - postgres_ssh_dir.stat.exists and postgres_ssh_dir.stat.isdir
 
