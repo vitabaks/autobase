@@ -8,6 +8,7 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    if: ${{ github.repository_owner == 'vitabaks' || github.event_name == 'workflow_dispatch' }}
     strategy:
       fail-fast: false
       matrix:
