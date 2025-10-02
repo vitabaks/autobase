@@ -356,7 +356,7 @@
     - block:
         - name: Waiting for 10 seconds after Patroni cluster reload
           ansible.builtin.pause:
-            seconds: 10
+            seconds: 20
 
         - name: Fetch Patroni cluster members
           run_once: true # noqa run-once
