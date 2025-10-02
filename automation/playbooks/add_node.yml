@@ -159,7 +159,9 @@
       vars:
         minimal_ansible_version: 2.17.0
         timescale_minimal_pg_version: 12 # if enable_timescale is defined
-      when: new_postgres_nodes | default([]) | length > 0
+      when:
+        - new_postgres_nodes | default([]) | length > 0 or
+        - new_etcd_nodes | default([]) | length > 0
 
     - role: vitabaks.autobase.ssh_keys
       when:
