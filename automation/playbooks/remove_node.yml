@@ -96,13 +96,21 @@
       tags: postgres, postgresql
 
     - block:
+        - name: Check if ~postgres/.ssh exists
+          ansible.builtin.stat:
+            path: "~postgres/.ssh"
+          register: postgres_ssh_dir
+          changed_when: false
+
         - name: Read postgres public SSH key from target node
           ansible.builtin.slurp:
             src: "~postgres/.ssh/id_rsa.pub"
           delegate_to: "{{ target_node }}"
           register: target_node_pubkey
           changed_when: false
-          when: target_node in (groups['postgres_cluster'] | default([]))
+          when: 
+            - target_node in (groups['postgres_cluster'] | default([]))
+            - postgres_ssh_dir.stat.exists and postgres_ssh_dir.stat.isdir
 
         - name: Remove target node pubkey from authorized_keys
           ansible.posix.authorized_key:
