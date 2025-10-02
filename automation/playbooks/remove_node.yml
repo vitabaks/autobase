@@ -364,6 +364,15 @@
         - inventory_hostname != target_node
       tags: postgres, postgresql, etcd
 
+    - name: Remove a node from pg_hba.conf on existing cluster nodes
+      ansible.builtin.include_role:
+        name: vitabaks.autobase.patroni
+        tasks_from: pg_hba
+      when:
+        - inventory_hostname != target_node
+        - inventory_hostname in groups['postgres_cluster']
+      tags: postgres, postgresql, pg_hba, pg_hba_generate
+
     - block:
         - name: Waiting for 20 seconds after Patroni cluster reload
           ansible.builtin.pause:
