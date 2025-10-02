@@ -1,4 +1,18 @@
 ---
+- name: vitabaks.autobase.remove_node | Prepare and perform pre-checks
+  hosts: postgres_cluster:etcd_cluster:consul_instances
+  become: true
+  become_method: sudo
+  any_errors_fatal: true
+  gather_facts: true
+  environment: "{{ proxy_env | default({}) }}"
+
+  pre_tasks:
+    - name: Define bind_address
+      ansible.builtin.include_role:
+        name: vitabaks.autobase.bind_address
+      tags: always
+
 - name: vitabaks.autobase.remove_node | Remove node from PostgreSQL cluster
   hosts: postgres_cluster
   become: true
@@ -8,10 +22,6 @@
 
   pre_tasks:
     - block:
-        - name: Define bind_address
-          ansible.builtin.include_role:
-            name: vitabaks.autobase.bind_address
-
         - name: Validate that node_to_remove is specified
           run_once: true # noqa run-once
           ansible.builtin.fail:
@@ -132,10 +142,6 @@
 
   pre_tasks:
     - block:
-        - name: Define bind_address
-          ansible.builtin.include_role:
-            name: vitabaks.autobase.bind_address
-
         - name: Expose etcd_bind_address as facts
           ansible.builtin.set_fact:
             etcd_bind_address: "{{ etcd_bind_address | default(bind_address, true) }}"
