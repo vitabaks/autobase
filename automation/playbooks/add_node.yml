@@ -359,4 +359,5 @@
       when:
         - dcs_type | default('etcd') == 'etcd'
         - new_etcd_nodes | default([]) | length > 0
-      tags: postgres, postgresql, etcd
+        - not new_postgres_nodes | default([]) | length > 0
+      tags: etcd
