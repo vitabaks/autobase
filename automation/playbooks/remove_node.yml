@@ -354,9 +354,9 @@
       tags: postgres, postgresql, etcd
 
     - block:
-        - name: Waiting for 3 seconds after Patroni cluster reload
+        - name: Waiting for 10 seconds after Patroni cluster reload
           ansible.builtin.pause:
-            seconds: 3
+            seconds: 10
 
         - name: Fetch Patroni cluster members
           run_once: true # noqa run-once
