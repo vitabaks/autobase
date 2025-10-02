@@ -368,6 +368,8 @@
       ansible.builtin.include_role:
         name: vitabaks.autobase.patroni
         tasks_from: pg_hba
+      vars:
+        pg_hba_hosts: "{{ groups['postgres_cluster'] | default([]) | difference([target_node]) }}"
       when:
         - inventory_hostname != target_node
         - inventory_hostname in groups['postgres_cluster']
