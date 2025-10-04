@@ -1,5 +1,11 @@
 ---
 # Remove node from etcd cluster (remove_node.yml)
+- name: Expose etcd_bind_address as facts
+  ansible.builtin.set_fact:
+    etcd_bind_address: "{{ etcd_bind_address | default(bind_address, true) }}"
+  when: etcd_bind_address is not defined
+  tags: etcd, etcd_member_remove
+
 - block:
     - name: Build etcd endpoints for existing cluster members
       run_once: true # noqa run-once
