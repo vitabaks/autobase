@@ -6,8 +6,6 @@
     owner: postgres
     group: postgres
     mode: "0640"
-  vars:
-    pg_hba_hosts: "{{ groups['postgres_cluster'] | default([]) }}"
   notify: "reload postgres"
   tags: pg_hba, pg_hba_generate
 

@@ -533,8 +533,6 @@
             owner: postgres
             group: postgres
             mode: "0640"
-          vars:
-            pg_hba_hosts: "{{ groups['postgres_cluster'] | default([]) }}"
 
         - name: Prepare PostgreSQL | reload for apply the pg_hba.conf
           become: true
@@ -833,8 +831,6 @@
         owner: postgres
         group: postgres
         mode: "0640"
-      vars:
-        pg_hba_hosts: "{{ groups['postgres_cluster'] | default([]) }}"
   when: patroni_cluster_bootstrap_method != "initdb" and
     postgresql_conf_dir != postgresql_data_dir and
     (cluster_scaling is not defined or not cluster_scaling | bool)
@@ -926,8 +922,6 @@
         owner: postgres
         group: postgres
         mode: "0640"
-      vars:
-        pg_hba_hosts: "{{ groups['postgres_cluster'] | default([]) }}"
       register: generate_pg_hba
       when: inventory_hostname == groups['master'][0] or
         (('replica' in groups and groups['replica'] | length > 0 and inventory_hostname in groups['replica'] and postgresql_conf_dir != postgresql_data_dir)
