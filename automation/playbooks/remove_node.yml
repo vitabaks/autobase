@@ -13,16 +13,16 @@
         name: vitabaks.autobase.bind_address
       tags: always
 
+    - name: Define passwords
+      ansible.builtin.include_role:
+        name: vitabaks.autobase.pre_checks
+        tasks_from: passwords
+      tags: always
+
     - name: Set maintenance variable
       ansible.builtin.set_fact:
         postgresql_cluster_maintenance: true
       tags: always
-
-  roles:
-    - role: vitabaks.autobase.pre_checks
-      vars:
-        minimal_ansible_version: 2.17.0
-        timescale_minimal_pg_version: 12 # if enable_timescale is defined
 
 - name: vitabaks.autobase.remove_node | Remove node from PostgreSQL cluster
   hosts: postgres_cluster
