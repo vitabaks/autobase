@@ -155,11 +155,10 @@
     target_node: "{{ node_to_remove | default('') }}"
 
   pre_tasks:
-    - block:
-        - name: Expose etcd_bind_address as facts
-          ansible.builtin.set_fact:
-            etcd_bind_address: "{{ etcd_bind_address | default(bind_address, true) }}"
-          when: dcs_type | default('etcd') == 'etcd'
+    - name: Expose etcd_bind_address as facts
+      ansible.builtin.set_fact:
+        etcd_bind_address: "{{ etcd_bind_address | default(bind_address, true) }}"
+      when: dcs_type | default('etcd') == 'etcd'
       tags: always
 
   tasks:
