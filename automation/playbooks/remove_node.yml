@@ -367,9 +367,7 @@
         tasks_from: pg_hba
       vars:
         pg_hba_hosts: "{{ groups['postgres_cluster'] | default([]) | difference([target_node]) }}"
-      when:
-        - inventory_hostname != target_node
-        - inventory_hostname in groups['postgres_cluster']
+      when: inventory_hostname != target_node
       tags: postgres, postgresql, pg_hba, pg_hba_generate
 
     - block:
