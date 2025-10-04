@@ -3,6 +3,8 @@
   hosts: postgres_cluster:etcd_cluster:consul_instances
   become: true
   gather_facts: true
+  vars:
+    target_node: "{{ node_to_remove | default('') }}"
 
   pre_tasks:
     - name: Validate that node_to_remove is specified
