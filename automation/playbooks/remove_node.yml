@@ -17,10 +17,7 @@
       ansible.builtin.include_role:
         name: vitabaks.autobase.pre_checks
         tasks_from: passwords
-      tags: always
-
-    - name: Set maintenance variable
-      ansible.builtin.set_fact:
+      vars:
         postgresql_cluster_maintenance: true
       tags: always
 
