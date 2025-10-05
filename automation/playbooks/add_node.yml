@@ -342,9 +342,6 @@
 
     - role: vitabaks.autobase.netdata
 
-    # finish (info)
-    - role: vitabaks.autobase.deploy_finish
-
 - name: vitabaks.autobase.add_node | Finalizing
   hosts: postgres_cluster
   become: true
@@ -360,3 +357,7 @@
         - dcs_type | default('etcd') == 'etcd'
         - new_etcd_nodes | default([]) | length > 0
       tags: etcd
+  roles:
+    # finish (info)
+    - role: vitabaks.autobase.deploy_finish
+      tags: always
