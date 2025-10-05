@@ -159,7 +159,8 @@
       vars:
         minimal_ansible_version: 2.17.0
         timescale_minimal_pg_version: 12 # if enable_timescale is defined
-      when: new_postgres_nodes | default([]) | length > 0
+      when: new_postgres_nodes | default([]) | length > 0 or
+        (dcs_type | default('etcd') == "etcd" and new_etcd_nodes | default([]) | length > 0)
 
     - role: vitabaks.autobase.ssh_keys
       when:
@@ -341,5 +342,22 @@
 
     - role: vitabaks.autobase.netdata
 
+- name: vitabaks.autobase.add_node | Finalizing
+  hosts: postgres_cluster
+  become: true
+  gather_facts: true
+  tasks:
+    - name: Update patroni config file
+      ansible.builtin.include_role:
+        name: vitabaks.autobase.patroni
+        tasks_from: patroni # update etcd hosts
+      vars:
+        etcd_hosts: "{{ groups['etcd_cluster'] | default([]) }}"
+      when:
+        - dcs_type | default('etcd') == 'etcd'
+        - new_etcd_nodes | default([]) | length > 0
+      tags: etcd
+  roles:
     # finish (info)
     - role: vitabaks.autobase.deploy_finish
+      tags: always
