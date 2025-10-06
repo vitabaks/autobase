@@ -534,6 +534,18 @@
             group: postgres
             mode: "0640"
 
+        - name: Prepare PostgreSQL | validate generated pg_hba.conf
+          become: true
+          become_user: postgres
+          community.postgresql.postgresql_query:
+            login_unix_socket: "{{ postgresql_unix_socket_dir }}"
+            login_port: "{{ postgresql_port }}"
+            login_user: "{{ patroni_superuser_username }}"
+            login_db: postgres
+            query: "SELECT * FROM pg_hba_file_rules WHERE error IS NOT NULL"
+          register: pg_hba_validate_result
+          failed_when: pg_hba_validate_result.query_result | length > 0
+
         - name: Prepare PostgreSQL | reload for apply the pg_hba.conf
           become: true
           become_user: postgres
@@ -926,6 +938,19 @@
       when: inventory_hostname == groups['master'][0] or
         (('replica' in groups and groups['replica'] | length > 0 and inventory_hostname in groups['replica'] and postgresql_conf_dir != postgresql_data_dir)
         or postgresql_exists | default(false) | bool)
+
+    - name: Prepare PostgreSQL | validate generated pg_hba.conf
+      become: true
+      become_user: postgres
+      community.postgresql.postgresql_query:
+        login_unix_socket: "{{ postgresql_unix_socket_dir }}"
+        login_port: "{{ postgresql_port }}"
+        login_user: "{{ patroni_superuser_username }}"
+        login_db: postgres
+        query: "SELECT * FROM pg_hba_file_rules WHERE error IS NOT NULL"
+      register: pg_hba_validate_result
+      failed_when: pg_hba_validate_result.query_result | length > 0
+      when: inventory_hostname == groups['master'][0]
 
     - name: Prepare PostgreSQL | reload for apply the pg_hba.conf
       become: true
