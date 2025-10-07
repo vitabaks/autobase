@@ -1,5 +1,5 @@
 ---
-- name: "vitabaks.autobase.pg_upgrade | Upgrade PostgreSQL {{ pg_old_version }} to the new version {{ pg_new_version }}"
+- name: "vitabaks.autobase.pg_upgrade | Upgrade PostgreSQL to the new major version"
   hosts: postgres_cluster
   gather_facts: true
   become: true
