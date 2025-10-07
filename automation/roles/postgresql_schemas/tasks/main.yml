@@ -6,8 +6,10 @@
     name: "{{ item.schema }}"
     owner: "{{ item.owner }}"
     login_db: "{{ item.db }}"
-    login_unix_socket: "{{ postgresql_unix_socket_dir }}"
+    login_host: "127.0.0.1"
     login_port: "{{ postgresql_port }}"
+    login_user: "{{ patroni_superuser_username }}"
+    login_password: "{{ patroni_superuser_password }}"
     state: present
   ignore_errors: true
   loop: "{{ postgresql_schemas | flatten(1) }}"
