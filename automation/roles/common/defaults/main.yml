@@ -685,7 +685,7 @@ wal_g_delete_command:
   - " {{ patroni_restapi_protocol }}://{{ patroni_restapi_connect_addr | default(patroni_bind_address | default(bind_address, true), true) }}"
   - ":{{ patroni_restapi_port }}"
   - " | grep 200"
-  - " && {{ wal_g_path }} delete retain FULL 4 --confirm > {{ postgresql_log_dir }}/walg_delete.log 2>&1"
+  - " && {{ wal_g_path }} delete retain FULL {{ WAL_G_RETENTION_FULL | default (4) }} --confirm > {{ postgresql_log_dir }}/walg_delete.log 2>&1"
 
 wal_g_cron_jobs:
   - name: "WAL-G: Create daily backup"
