@@ -1,4 +1,4 @@
-#jinja2:lstrip_blocks: True
+#jinja2:lstrip_blocks: True
 {# Common Settings #}
 
 {## Node ##}
@@ -11,7 +11,7 @@ domain = "{{ consul_domain }}"
 alt_domain = "{{ consul_alt_domain }}"
 {% endif %}
 {% if consul_version is version('0.7.3', '>=') and consul_node_meta | length > 0 %}
-node_meta = {{ consul_node_meta | default({})| to_json }}
+node_meta = {{ consul_node_meta | default({}) | to_json }}
 {% endif %}
 {# Performance Settings #}
 performance {
@@ -271,7 +271,7 @@ retry_max_wan = {{ consul_retry_max_wan | int }}
 {% for server in _consul_wan_servers %}
 {%   set _ = consul_join_wan.append(hostvars[server]['consul_advertise_address_wan'] | default(hostvars[server]['consul_bind_address'])) %}
 {% endfor %}
-retry_join_wan = {{ consul_join_wan | map('ansible.utils.ipwrap') | list | to_json }}
+retry_join_wan = {{ consul_join_wan | map('ansible.utils.ipwrap') | list | to_json }}
 {% endif %}
 
 {## ACLs ##}
@@ -343,7 +343,7 @@ retry_join_wan = {{ consul_join_wan | map('ansible.utils.ipwrap') | list | to_j
 
 {## Limits ##}
 {% if consul_version is version('0.9.3', '>=') and consul_limits | length > 0 %}
-limits = {{ consul_limits | default({})| to_json }}
+limits = {{ consul_limits | default({}) | to_json }}
 {% endif %}
 
 {## UI ##}
