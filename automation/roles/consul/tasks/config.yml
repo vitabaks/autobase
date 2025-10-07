@@ -34,7 +34,7 @@
     dest: "{{ config_item.dest }}"
     owner: "{{ consul_user }}"
     group: "{{ consul_group }}"
-    content: "{{ lookup('template', consul_config_template_path, convert_data=False) | from_json | to_nice_json }}"
+    content: "{{ lookup('template', consul_config_template_path) | from_json | to_nice_json }}"
     mode: "0600"
   loop:
     - dest: "{{ consul_config_path }}/config.json"
