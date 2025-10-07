@@ -559,7 +559,7 @@
             encrypted: true
             role_attr_flags: "SUPERUSER"
             login_db: postgres
-            login_host: "127.0.0.1"
+            login_unix_socket: "{{ postgresql_unix_socket_dir }}"
             login_port: "{{ postgresql_port }}"
             state: present
           become: true
