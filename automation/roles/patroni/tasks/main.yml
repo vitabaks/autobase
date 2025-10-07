@@ -538,10 +538,11 @@
           become: true
           become_user: postgres
           community.postgresql.postgresql_query:
-            login_unix_socket: "{{ postgresql_unix_socket_dir }}"
+            login_host: "127.0.0.1"
             login_port: "{{ postgresql_port }}"
             login_user: "{{ patroni_superuser_username }}"
-            login_db: postgres
+            login_password: "{{ patroni_superuser_password }}"
+            login_db: "postgres"
             query: "SELECT * FROM pg_hba_file_rules WHERE error IS NOT NULL"
           register: pg_hba_validate_result
           failed_when: pg_hba_validate_result.query_result | length > 0
@@ -558,7 +559,7 @@
             encrypted: true
             role_attr_flags: "SUPERUSER"
             login_db: postgres
-            login_unix_socket: "{{ postgresql_unix_socket_dir }}"
+            login_host: "127.0.0.1"
             login_port: "{{ postgresql_port }}"
             state: present
           become: true
@@ -943,10 +944,11 @@
       become: true
       become_user: postgres
       community.postgresql.postgresql_query:
-        login_unix_socket: "{{ postgresql_unix_socket_dir }}"
+        login_host: "127.0.0.1"
         login_port: "{{ postgresql_port }}"
         login_user: "{{ patroni_superuser_username }}"
-        login_db: postgres
+        login_password: "{{ patroni_superuser_password }}"
+        login_db: "postgres"
         query: "SELECT * FROM pg_hba_file_rules WHERE error IS NOT NULL"
       register: pg_hba_validate_result
       failed_when: pg_hba_validate_result.query_result | length > 0
