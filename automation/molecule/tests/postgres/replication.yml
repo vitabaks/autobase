@@ -1,11 +1,10 @@
 ---
 - name: Check PostgreSQL replication status
-  community.postgresql.postgresql_query:
-    login_host: "127.0.0.1"
+  postgresql_query:
+    query: "SELECT pg_is_in_recovery(), count(*) FROM pg_stat_wal_receiver;"
+    login_unix_socket: "{{ postgresql_unix_socket_dir }}"
     login_port: "{{ postgresql_port }}"
     login_user: "{{ patroni_superuser_username }}"
-    login_password: "{{ patroni_superuser_password }}"
-    login_db: "postgres"
-    query: "SELECT pg_is_in_recovery(), count(*) FROM pg_stat_wal_receiver;"
+    login_db: template1
   register: pg_replication_status
   failed_when: "pg_replication_status.query_result[0].pg_is_in_recovery and pg_replication_status.query_result[0].count == 0"
