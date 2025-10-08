@@ -6,7 +6,7 @@
       register: system_user
       changed_when: false
 
-    - name: "Add public keys to ~{{ system_user.stdout }}/.ssh/authorized_keys"
+    - name: "Add public keys to ~{{ system_user.stdout | default('') }}/.ssh/authorized_keys"
       ansible.posix.authorized_key:
         user: "{{ system_user.stdout }}"
         key: "{{ item }}"
