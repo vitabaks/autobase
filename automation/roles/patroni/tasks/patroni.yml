@@ -3,6 +3,7 @@
   ansible.builtin.template:
     src: templates/patroni.yml.j2
     dest: "{{ patroni_config_file | default('/etc/patroni/patroni.yml') }}"
+    validate: patroni --validate-config %s
     owner: postgres
     group: postgres
     mode: "0640"

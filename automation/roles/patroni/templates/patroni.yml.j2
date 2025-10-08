@@ -69,7 +69,6 @@ etcd3:
 {% if dcs_type == 'consul' %}
 consul:
   host: 127.0.0.1:8500
-  checks: []
   {% if consul_tls_enable | default(false) | bool %}
   scheme: https
   cacert: {{ patroni_consul_cacert | default('/etc/patroni/tls/consul/ca.crt') }}
