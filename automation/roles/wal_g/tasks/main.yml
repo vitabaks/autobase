@@ -139,7 +139,7 @@
       register: go_latest_version
 
     - block: # Install latest Go compiler
-        - name: "Download Go v{{ go_latest_version.stdout }}"
+        - name: "Download Go v{{ go_latest_version.stdout | default('') }}"
           ansible.builtin.get_url:
             url: "https://go.dev/dl/go{{ go_latest_version.stdout }}.linux-{{ go_architecture_map[ansible_architecture] }}.tar.gz"
             dest: /tmp/
