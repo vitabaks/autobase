@@ -110,7 +110,7 @@
           - name = "{{ gcp_network_name }}"
       register: subnetwork_info
 
-    - name: "GCP: Extract ip_range for network '{{ gcp_network_name }}'"
+    - name: "GCP: Extract ip_range for network '{{ gcp_network_name | default('default') }}'"
       ansible.builtin.set_fact:
         gcp_network_ip_range: "{{ subnetwork_info.resources[0].ipCidrRange }}"
 
