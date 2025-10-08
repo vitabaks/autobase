@@ -194,14 +194,14 @@
 
     # if server_network is not specified, create a network and subnet
     - block:
-        - name: "Hetzner Cloud: Create a network '{{ hcloud_network_name | default('postgres-cluster-network-' + target_network_zone) }}'"
+        - name: "Hetzner Cloud: Create a postgres cluster network"
           hetzner.hcloud.network:
             api_token: "{{ lookup('ansible.builtin.env', 'HCLOUD_API_TOKEN') }}"
             name: "{{ hcloud_network_name | default('postgres-cluster-network-' + target_network_zone) }}"
             ip_range: "{{ hcloud_network_ip_range | default('10.0.0.0/16') }}"
             state: present
 
-        - name: "Hetzner Cloud: Create a subnetwork in network '{{ hcloud_network_name | default('postgres-cluster-network-' + target_network_zone) }}'"
+        - name: "Hetzner Cloud: Create a subnetwork in postgres cluster network"
           hetzner.hcloud.subnetwork:
             api_token: "{{ lookup('ansible.builtin.env', 'HCLOUD_API_TOKEN') }}"
             network: "{{ hcloud_network_name | default('postgres-cluster-network-' + target_network_zone) }}"
