@@ -103,7 +103,7 @@
         name: "{{ item }}"
         groups: secondary
         postgresql_exists: true
-      when: hostvars[item]['patroni_leader_result']['status'] != 200
+      when: hostvars[item]['patroni_leader_result']['status'] == 503
       loop: "{{ groups['postgres_cluster'] }}"
       changed_when: false
       check_mode: false
@@ -113,7 +113,7 @@
         msg:
           - "Cluster Name: {{ patroni_cluster_name | default('postgres-cluster') }}"
           - "Cluster Leader: {{ ansible_hostname }}"
-      when: inventory_hostname in groups['primary']
+      when: inventory_hostname in groups['primary'] | default([])
 
     # if 'cloud_provider' is 'aws', 'gcp', or 'azure'
     # set_fact: 'pgbackrest_install' to configure Postgres backups (TODO: Add the ability to configure backups in the UI)

@@ -60,7 +60,7 @@
       ansible.builtin.add_host:
         name: "{{ item }}"
         groups: secondary
-      when: hostvars[item]['patroni_leader_result']['status'] != 200
+      when: hostvars[item]['patroni_leader_result']['status'] == 503
       loop: "{{ groups['postgres_cluster'] }}"
       changed_when: false
 
@@ -69,7 +69,7 @@
         msg:
           - "Cluster Name: {{ patroni_cluster_name | default('postgres-cluster') }}"
           - "Cluster Leader: {{ ansible_hostname }}"
-      when: inventory_hostname in groups['primary']
+      when: inventory_hostname in groups['primary'] | default([])
   tags:
     - always
 
