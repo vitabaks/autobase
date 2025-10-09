@@ -121,8 +121,8 @@
 
     - name: "Display Certificate subjectAltName future value"
       ansible.builtin.debug:
-        msg: "SubjectAltName = {{ tls_subject_alt_name | default(generated_subject_alt_name) }}"
-      when: tls_subject_alt_name | default(generated_subject_alt_name) | length > 0
+        msg: "SubjectAltName = {{ tls_subject_alt_name | default(generated_subject_alt_name | default('')) }}"
+      when: tls_subject_alt_name | default(generated_subject_alt_name | default('')) | length > 0
 
     ######## Generate CA ########
     - name: "Generate CA private key"
@@ -177,7 +177,7 @@
           - serverAuth
         subject:
           O: "Autobase"
-        subject_alt_name: "{{ tls_subject_alt_name | default(generated_subject_alt_name) }}"
+        subject_alt_name: "{{ tls_subject_alt_name | default(generated_subject_alt_name | default('')) }}"
       register: csr
       when: need_srv_cert
 
