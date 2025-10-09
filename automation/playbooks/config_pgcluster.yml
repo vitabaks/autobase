@@ -66,14 +66,19 @@
         no_proxy: "{{ patroni_bind_address | default(bind_address, true) }}"
       when: inventory_hostname in groups['postgres_cluster']
 
-    # Stop, if Patroni is unavailable
+    # Stop, if no healthy Patroni leader node
     - name: The Patroni cluster is unhealthy
       ansible.builtin.fail:
-        msg: "Patroni is unavailable on {{ ansible_hostname }}. Please check the cluster status."
-      changed_when: false
+        msg: >
+          No healthy leader node detected in cluster '{{ patroni_cluster_name | default('postgres-cluster') }}'.
+          Please ensure the cluster is up and node responds on REST API port ({{ patroni_restapi_port | default('8008') }}).
       when:
-        - inventory_hostname in groups['postgres_cluster']
-        - (patroni_leader_result is undefined or patroni_leader_result.status == -1)
+        - inventory_hostname == groups['postgres_cluster'][0]
+        - (hostvars
+            | dict2items
+            | selectattr('value.patroni_leader_result.status', 'defined')
+            | selectattr('value.patroni_leader_result.status', 'equalto', 200)
+            | list | length) == 0
 
   roles:
     - role: vitabaks.autobase.pre_checks
