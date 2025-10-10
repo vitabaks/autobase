@@ -539,7 +539,7 @@
           become_user: postgres
           ansible.builtin.command: "{{ postgresql_bin_dir }}/pg_ctl reload -D {{ postgresql_data_dir }}"
 
-        - name: Prepare PostgreSQL | make sure the user "{{ patroni_superuser_username | default('') }}" are present, and password does not differ from the specified
+        - name: Prepare PostgreSQL | ensure user "{{ patroni_superuser_username | default('') }}" exists and password matches the specified
           community.postgresql.postgresql_user:
             name: "{{ patroni_superuser_username }}"
             password: "{{ patroni_superuser_password }}"
@@ -552,7 +552,7 @@
           become: true
           become_user: postgres
 
-        - name: Prepare PostgreSQL | make sure the user "{{ patroni_replication_username | default('') }}" are present, and password does not differ from the specified
+        - name: Prepare PostgreSQL | ensure user "{{ patroni_replication_username | default('') }}" exists and password matches the specified
           community.postgresql.postgresql_user:
             name: "{{ patroni_replication_username }}"
             password: "{{ patroni_replication_password }}"
