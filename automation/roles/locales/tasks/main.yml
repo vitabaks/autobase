@@ -28,7 +28,7 @@
   tags: locales, locale_gen
 
 - block:
-    - name: Set locale "{{ locale }}" into /etc/default/locale
+    - name: Set locale "{{ locale | default('') }}" into /etc/default/locale
       ansible.builtin.lineinfile:
         dest: "/etc/default/locale"
         regexp: "{{ item.regexp }}"
@@ -50,7 +50,7 @@
       register: locale_conf
       when: ansible_os_family == "RedHat"
 
-    - name: Set locale "{{ locale }}" into /etc/locale.conf
+    - name: Set locale "{{ locale | default('') }}" into /etc/locale.conf
       ansible.builtin.lineinfile:
         dest: "/etc/locale.conf"
         regexp: "{{ item.regexp }}"
@@ -65,7 +65,7 @@
         label: "{{ item.line }}"
       when: ansible_os_family == "RedHat" and locale_conf.stat.exists
 
-    - name: Set locale "{{ locale }}" into /etc/environment
+    - name: Set locale "{{ locale | default('') }}" into /etc/environment
       ansible.builtin.lineinfile:
         dest: "/etc/environment"
         regexp: "{{ item.regexp }}"

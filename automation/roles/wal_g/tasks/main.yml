@@ -17,7 +17,7 @@
 - name: Check if WAL-G is already installed
   ansible.builtin.shell: |
     set -o pipefail;
-    "{{ wal_g_path.split(' ')[0] }}" --version | awk {'print $3'} | tr -d 'v'
+    "{{ (wal_g_path | default('/usr/local/bin/wal-g')) | split(' ') | first }}" --version | awk {'print $3'} | tr -d 'v'
   args:
     executable: /bin/bash
   changed_when: false
@@ -39,7 +39,7 @@
 # (if 'wal_g_installation_method' is 'binary')
 # Note: excluding RHEL 8 as GLIBC version 2.29 or higher is required.
 - block:
-    - name: "Download WAL-G v{{ wal_g_version | string | replace('v', '') }} binary"
+    - name: "Download WAL-G v{{ wal_g_version | default('') | string | replace('v', '') }} binary"
       ansible.builtin.get_url:
         url: "{{ wal_g_repo }}/{{ wal_g_archive }}"
         dest: /tmp/
@@ -63,10 +63,10 @@
         remote_src: true
       check_mode: false
 
-    - name: Copy WAL-G binary file to "{{ wal_g_path.split(' ')[0] }}"
+    - name: Copy WAL-G binary file to "{{ (wal_g_path | default('/usr/local/bin/wal-g')) | split(' ') | first }}"
       ansible.builtin.copy:
         src: "/tmp/wal-g-pg-ubuntu-20.04-{{ wal_g_architecture_map[ansible_architecture] }}"
-        dest: "{{ wal_g_path.split(' ')[0] }}"
+        dest: "{{ (wal_g_path | default('/usr/local/bin/wal-g')) | split(' ') | first }}"
         mode: u+x,g+x,o+x
         remote_src: true
   when:
@@ -156,7 +156,7 @@
       when: go_installed_version.stderr is search("command not found") or
         go_installed_version.stdout is version(go_latest_version.stdout, '<')
 
-    - name: "Download WAL-G v{{ wal_g_version | string | replace('v', '') }} source code"
+    - name: "Download WAL-G v{{ wal_g_version | default('') | string | replace('v', '') }} source code"
       ansible.builtin.git:
         repo: https://github.com/wal-g/wal-g.git
         version: v{{ wal_g_version | string | replace('v', '') }}
@@ -207,7 +207,7 @@
 
 # older versions of WAL-G (for compatibility)
 - block:
-    - name: "Download WAL-G v{{ wal_g_version | string | replace('v', '') }} binary"
+    - name: "Download WAL-G v{{ wal_g_version | default('') | string | replace('v', '') }} binary"
       ansible.builtin.get_url:
         url: "https://github.com/wal-g/wal-g/releases/download/v{{ wal_g_version | string | replace('v', '') }}/wal-g.linux-amd64.tar.gz"
         dest: /tmp/
@@ -225,10 +225,10 @@
         remote_src: true
       check_mode: false
 
-    - name: Copy WAL-G binary file to "{{ wal_g_path.split(' ')[0] }}"
+    - name: Copy WAL-G binary file to "{{ (wal_g_path | default('/usr/local/bin/wal-g')) | split(' ') | first }}"
       ansible.builtin.copy:
         src: "/tmp/wal-g"
-        dest: "{{ wal_g_path.split(' ')[0] }}"
+        dest: "{{ (wal_g_path | default('/usr/local/bin/wal-g')) | split(' ') | first }}"
         mode: u+x,g+x,o+x
         remote_src: true
   when:
@@ -239,7 +239,7 @@
   tags: wal-g, wal_g, wal_g_install
 
 # Ensure the WAL_G_PREFETCH directory is created if configured
-- name: "Create WAL-G prefetch directory {{ wal_g_prefetch_dir_path }}"
+- name: "Create WAL-G prefetch directory {{ wal_g_prefetch_dir_path | default('') }}"
   ansible.builtin.file:
     path: "{{ wal_g_prefetch_dir_path }}"
     state: directory
@@ -249,7 +249,7 @@
   when: wal_g_prefetch_dir_create | default(true) | bool
   tags: wal-g, wal_g, wal_g_install
 
-- name: "Create postgres home directory ({{ postgresql_home_dir }})"
+- name: "Create postgres home directory ({{ postgresql_home_dir | default('') }})"
   ansible.builtin.file:
     path: "{{ postgresql_home_dir }}"
     state: directory
@@ -259,7 +259,7 @@
   tags: wal-g, wal_g, wal_g_conf
 
 # Configure walg.json
-- name: "Generate conf file {{ postgresql_home_dir }}/.walg.json"
+- name: "Generate conf file {{ postgresql_home_dir | default('') }}/.walg.json"
   ansible.builtin.template:
     src: templates/walg.json.j2
     dest: "{{ postgresql_home_dir }}/.walg.json"

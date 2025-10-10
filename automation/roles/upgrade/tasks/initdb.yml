@@ -1,5 +1,5 @@
 ---
-- name: Make sure new PostgreSQL data directory "{{ pg_new_datadir }}" exists
+- name: Make sure new PostgreSQL data directory "{{ pg_new_datadir | default('') }}" exists
   become: true
   become_user: root
   ansible.builtin.file:
@@ -9,7 +9,7 @@
     group: postgres
     owner: postgres
 
-- name: Make sure new PostgreSQL data directory "{{ pg_new_datadir }}" is not initialized
+- name: Make sure new PostgreSQL data directory "{{ pg_new_datadir | default('') }}" is not initialized
   ansible.builtin.stat:
     path: "{{ pg_new_datadir }}/PG_VERSION"
   register: pgdata_initialized
@@ -23,7 +23,7 @@
         - ansible_os_family == "Debian"
         - pg_new_confdir != pg_new_datadir
 
-    - name: Clear the new PostgreSQL data directory "{{ pg_new_datadir }}"
+    - name: Clear the new PostgreSQL data directory "{{ pg_new_datadir | default('') }}"
       ansible.builtin.file:
         path: "{{ pg_new_datadir }}"
         state: "{{ item }}"

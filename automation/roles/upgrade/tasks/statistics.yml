@@ -44,7 +44,7 @@
       when: pg_new_version | string is version('9.6', '>=')
 
     # Monitor long-running transactions and terminate them (for more than 'vacuumdb_analyze_terminate_treshold')
-    - name: "pg_terminator: Monitor and terminate the long-running transactions (more than {{ max_tx_sec }} seconds) during collecting statistics"
+    - name: "pg_terminator: Monitor and terminate the long-running transactions (more than {{ max_tx_sec | default('') }} sec) during collecting statistics"
       ansible.builtin.shell: |
         echo $$ >> /tmp/pg_terminator.pid
         for i in {1..{{ vacuumdb_analyze_timeout // 10 }}}; do

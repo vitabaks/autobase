@@ -6,7 +6,7 @@
         repo1_path: "{{ pgbackrest_conf['global'] | selectattr('option', 'equalto', 'repo1-path') | map(attribute='value') | list | first }}"
         repo1_type: "{{ pgbackrest_conf['global'] | selectattr('option', 'equalto', 'repo1-type') | map(attribute='value') | list | first }}"
 
-    - name: "Make sure the {{ repo1_path }} directory exists"
+    - name: "Make sure the {{ repo1_path | default('') }} directory exists"
       ansible.builtin.file:
         path: "{{ repo1_path }}"
         state: directory
@@ -15,7 +15,7 @@
         mode: "0750"
       when: repo1_type | lower == 'posix'
 
-    - name: Create stanza "{{ pgbackrest_stanza }}"
+    - name: Create stanza "{{ pgbackrest_stanza | default('') }}"
       become: true
       become_user: postgres
       ansible.builtin.command: "pgbackrest --stanza={{ pgbackrest_stanza }} --no-online stanza-create"
@@ -42,7 +42,7 @@
         repo1_path: "{{ pgbackrest_server_conf['global'] | selectattr('option', 'equalto', 'repo1-path') | map(attribute='value') | list | first }}"
       when: pgbackrest_repo_type | lower == 'posix'
 
-    - name: "Make sure the {{ repo1_path }} directory exists"
+    - name: "Make sure the {{ repo1_path | default('') }} directory exists"
       delegate_to: "{{ groups['pgbackrest'][0] }}"
       run_once: true
       ansible.builtin.file:
@@ -53,7 +53,7 @@
         mode: "0750"
       when: repo1_path | default('') | length > 0
 
-    - name: Create stanza "{{ pgbackrest_stanza }}"
+    - name: Create stanza "{{ pgbackrest_stanza | default('') }}"
       become: true
       become_user: "{{ pgbackrest_repo_user }}"
       delegate_to: "{{ groups['pgbackrest'][0] }}"

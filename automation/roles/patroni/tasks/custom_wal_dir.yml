@@ -10,14 +10,14 @@
   ansible.builtin.set_fact:
     pg_wal_dir: "{{ 'pg_wal' if postgresql_version | int >= 10 else 'pg_xlog' }}"
 
-- name: "Make sure {{ postgresql_data_dir }}/{{ pg_wal_dir }} is symlink"
+- name: "Make sure {{ postgresql_data_dir | default('') }}/{{ pg_wal_dir | default('') }} is symlink"
   ansible.builtin.stat:
     path: "{{ postgresql_data_dir }}/{{ pg_wal_dir }}"
   register: sym
 
 # Synchronize WAL`s (if wal dir is not symlink)
 - block:
-    - name: Make sure the custom WAL directory "{{ postgresql_wal_dir }}" exists and is empty
+    - name: Make sure the custom WAL directory "{{ postgresql_wal_dir | default('') }}" exists and is empty
       ansible.builtin.file:
         path: "{{ postgresql_wal_dir }}"
         state: "{{ item }}"
@@ -76,7 +76,7 @@
       retries: 100
       delay: 6
 
-    - name: "Synchronize {{ postgresql_data_dir }}/{{ pg_wal_dir }} to {{ postgresql_wal_dir }}"
+    - name: "Synchronize {{ postgresql_data_dir | default('') }}/{{ pg_wal_dir | default('') }} to {{ postgresql_wal_dir | default('') }}"
       become: true
       become_user: postgres
       ansible.posix.synchronize:
@@ -84,10 +84,10 @@
         dest: "{{ postgresql_wal_dir }}/"
       delegate_to: "{{ inventory_hostname }}"
 
-    - name: "Rename {{ pg_wal_dir }} to {{ pg_wal_dir }}_old"
+    - name: "Rename {{ pg_wal_dir | default('') }} to {{ pg_wal_dir | default('') }}_old"
       ansible.builtin.command: mv {{ postgresql_data_dir }}/{{ pg_wal_dir }} {{ postgresql_data_dir }}/{{ pg_wal_dir }}_old
 
-    - name: "Create symlink {{ postgresql_data_dir }}/{{ pg_wal_dir }} -> {{ postgresql_wal_dir }}"
+    - name: "Create symlink {{ postgresql_data_dir | default('') }}/{{ pg_wal_dir | default('') }} -> {{ postgresql_wal_dir | default('') }}"
       become: true
       become_user: postgres
       ansible.builtin.file:
@@ -103,7 +103,7 @@
         state: started
       when: inventory_hostname == groups['master'][0]
 
-    - name: "Wait for port {{ patroni_restapi_port }} to become open on the host"
+    - name: "Wait for port {{ patroni_restapi_port | default('8008') }} to become open on the host"
       ansible.builtin.wait_for:
         port: "{{ patroni_restapi_port }}"
         host: "{{ patroni_bind_address | default(bind_address, true) }}"
@@ -135,7 +135,7 @@
         state: started
       when: "'replica' in groups and groups['replica'] | length > 0 and inventory_hostname in groups['replica']"
 
-    - name: "Wait for port {{ patroni_restapi_port }} to become open on the host"
+    - name: "Wait for port {{ patroni_restapi_port | default('8008') }} to become open on the host"
       ansible.builtin.wait_for:
         port: "{{ patroni_restapi_port }}"
         host: "{{ patroni_bind_address | default(bind_address, true) }}"
@@ -159,7 +159,7 @@
         no_proxy: "{{ patroni_bind_address | default(bind_address, true) }}"
       when: "'replica' in groups and groups['replica'] | length > 0 and inventory_hostname in groups['replica'] and not ansible_check_mode"
 
-    - name: "Remove {{ pg_wal_dir }}_old directory"
+    - name: "Remove {{ pg_wal_dir | default('') }}_old directory"
       ansible.builtin.file:
         path: "{{ postgresql_data_dir }}/{{ pg_wal_dir }}_old"
         state: absent

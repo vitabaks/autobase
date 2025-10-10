@@ -315,7 +315,7 @@
 # pg_analytics (if 'enable_paradedb' or 'enable_pg_analytics' is 'true')
 # Note: This repository was archived by the owner on Mar 20, 2025. Latest release: v0.3.7
 - block:
-    - name: "Install pg_analytics v{{ version }} package"
+    - name: "Install pg_analytics v{{ version | default('') }} package"
       ansible.builtin.apt:
         deb: "{{ pg_analytics_repo }}/postgresql-{{ pg_version | default(postgresql_version) }}-pg-analytics_{{ version }}-1PARADEDB-{{ ansible_distribution_release }}_{{ pg_analytics_architecture_map_deb[ansible_architecture] }}.deb"
       register: apt_status
@@ -326,7 +326,7 @@
         - ansible_os_family == "Debian"
         - ansible_distribution_release in ['bookworm', 'jammy', 'noble']
 
-    - name: "Install pg_analytics v{{ version }} package"
+    - name: "Install pg_analytics v{{ version | default('') }} package"
       ansible.builtin.dnf:
         name: "{{ pg_analytics_repo }}/pg_analytics_{{ pg_version | default(postgresql_version) }}-{{ version }}-1PARADEDB.el{{ ansible_distribution_major_version }}.{{ pg_analytics_architecture_map_rpm[ansible_architecture] }}.rpm"
         disable_gpg_check: true

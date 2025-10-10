@@ -55,7 +55,7 @@
 # SSH key
 - block:
     # Delete the temporary ssh key from the cloud (if exists)
-    - name: "AWS: Remove temporary SSH key '{{ ssh_key_name }}' from cloud (if any)"
+    - name: "AWS: Remove temporary SSH key '{{ ssh_key_name | default('') }}' from cloud (if any)"
       amazon.aws.ec2_key:
         access_key: "{{ lookup('ansible.builtin.env', 'AWS_ACCESS_KEY_ID') }}"
         secret_key: "{{ lookup('ansible.builtin.env', 'AWS_SECRET_ACCESS_KEY') }}"
@@ -68,7 +68,7 @@
         - ssh_key_name == tmp_ssh_key_name
 
     # if ssh_key_name and ssh_key_content is specified, add this ssh key to the cloud
-    - name: "AWS: Add SSH key '{{ ssh_key_name }}' to cloud"
+    - name: "AWS: Add SSH key '{{ ssh_key_name | default('') }}' to cloud"
       amazon.aws.ec2_key:
         access_key: "{{ lookup('ansible.builtin.env', 'AWS_ACCESS_KEY_ID') }}"
         secret_key: "{{ lookup('ansible.builtin.env', 'AWS_SECRET_ACCESS_KEY') }}"
@@ -86,7 +86,7 @@
 - block:
     # if server_network is specified, get vpc id for this subnet
     - block:
-        - name: "AWS: Gather information about VPC for '{{ server_network }}'"
+        - name: "AWS: Gather information about VPC for '{{ server_network | default('') }}'"
           amazon.aws.ec2_vpc_subnet_info:
             region: "{{ server_location }}"
             subnet_ids: "{{ server_network }}"
@@ -509,7 +509,7 @@
         (item in ['sync', 'async'] and server_count | int > 1 and synchronous_mode | bool))
 
     # S3 bucket (Backups)
-    - name: "AWS: Create S3 bucket '{{ aws_s3_bucket_name }}'"
+    - name: "AWS: Create S3 bucket '{{ aws_s3_bucket_name | default('') }}'"
       amazon.aws.s3_bucket:
         access_key: "{{ lookup('ansible.builtin.env', 'AWS_ACCESS_KEY_ID') }}"
         secret_key: "{{ lookup('ansible.builtin.env', 'AWS_SECRET_ACCESS_KEY') }}"
@@ -595,7 +595,7 @@
     - server_result.results | selectattr('instances', 'defined')
 
 # Delete the temporary ssh key from the cloud after creating the EC2 instance
-- name: "AWS: Remove temporary SSH key '{{ ssh_key_name }}' from cloud"
+- name: "AWS: Remove temporary SSH key '{{ ssh_key_name | default('') }}' from cloud"
   amazon.aws.ec2_key:
     access_key: "{{ lookup('ansible.builtin.env', 'AWS_ACCESS_KEY_ID') }}"
     secret_key: "{{ lookup('ansible.builtin.env', 'AWS_SECRET_ACCESS_KEY') }}"
@@ -686,7 +686,7 @@
       delay: 10
       retries: 3
 
-    - name: "AWS: Delete S3 bucket '{{ aws_s3_bucket_name }}'"
+    - name: "AWS: Delete S3 bucket '{{ aws_s3_bucket_name | default('') }}'"
       amazon.aws.s3_bucket:
         access_key: "{{ lookup('ansible.builtin.env', 'AWS_ACCESS_KEY_ID') }}"
         secret_key: "{{ lookup('ansible.builtin.env', 'AWS_SECRET_ACCESS_KEY') }}"

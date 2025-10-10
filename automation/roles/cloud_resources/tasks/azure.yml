@@ -417,7 +417,7 @@
 
     # Azure Blob Storage (Backups)
     - block:
-        - name: "Azure: Create Storage Account '{{ azure_blob_storage_account_name }}'"
+        - name: "Azure: Create Storage Account '{{ azure_blob_storage_account_name | default('') }}'"
           azure.azcollection.azure_rm_storageaccount:
             resource_group: "{{ azure_resource_group | default('postgres-cluster-resource-group' ~ '-' ~ server_location) }}"
             name: "{{ azure_blob_storage_account_name }}"
@@ -441,7 +441,7 @@
             azure_storage_account_key: "{{ azure_storage_account_info.storageaccounts[0].primary_endpoints.key }}"
           no_log: true # do not output storage account contents to the ansible log
 
-        - name: "Azure: Create Blob Storage container '{{ azure_blob_storage_name }}'"
+        - name: "Azure: Create Blob Storage container '{{ azure_blob_storage_name | default('') }}'"
           azure.azcollection.azure_rm_storageblob:
             resource_group: "{{ azure_resource_group | default('postgres-cluster-resource-group' ~ '-' ~ server_location) }}"
             account_name: "{{ azure_blob_storage_account_name }}"
@@ -615,14 +615,14 @@
         state: absent
 
     - block:
-        - name: "Azure: Delete Blob Storage '{{ azure_blob_storage_name }}'"
+        - name: "Azure: Delete Blob Storage '{{ azure_blob_storage_name | default('') }}'"
           azure.azcollection.azure_rm_storageblob:
             resource_group: "{{ azure_resource_group | default('postgres-cluster-resource-group' ~ '-' ~ server_location) }}"
             storage_account_name: "{{ azure_blob_storage_account_name }}"
             container: "{{ azure_blob_storage_name }}"
             state: absent
 
-        - name: "Azure: Delete Storage Account '{{ azure_blob_storage_account_name }}'"
+        - name: "Azure: Delete Storage Account '{{ azure_blob_storage_account_name | default('') }}'"
           azure.azcollection.azure_rm_storageaccount:
             resource_group: "{{ azure_resource_group | default('postgres-cluster-resource-group' ~ '-' ~ server_location) }}"
             name: "{{ azure_blob_storage_account_name }}"

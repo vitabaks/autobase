@@ -71,7 +71,7 @@
 # SSH key
 - block:
     # Delete the temporary ssh key from the cloud (if exists)
-    - name: "Hetzner Cloud: Remove temporary SSH key '{{ ssh_key_name }}' from cloud (if any)"
+    - name: "Hetzner Cloud: Remove temporary SSH key '{{ ssh_key_name | default('') }}' from cloud (if any)"
       hetzner.hcloud.ssh_key:
         api_token: "{{ lookup('ansible.builtin.env', 'HCLOUD_API_TOKEN') }}"
         name: "{{ ssh_key_name }}"
@@ -82,7 +82,7 @@
         - ssh_key_name == tmp_ssh_key_name
 
     # if ssh_key_name and ssh_key_content is specified, add this ssh key to the cloud
-    - name: "Hetzner Cloud: Add SSH key '{{ ssh_key_name }}' to cloud"
+    - name: "Hetzner Cloud: Add SSH key '{{ ssh_key_name | default('') }}' to cloud"
       hetzner.hcloud.ssh_key:
         api_token: "{{ lookup('ansible.builtin.env', 'HCLOUD_API_TOKEN') }}"
         name: "{{ ssh_key_name }}"
@@ -93,7 +93,7 @@
         - ssh_key_content | length > 0
 
     # if ssh_key_name is specified
-    - name: "Hetzner Cloud: Gather information about SSH key '{{ ssh_key_name }}'"
+    - name: "Hetzner Cloud: Gather information about SSH key '{{ ssh_key_name | default('') }}'"
       hetzner.hcloud.ssh_key_info:
         api_token: "{{ lookup('ansible.builtin.env', 'HCLOUD_API_TOKEN') }}"
         name: "{{ ssh_key_name }}"
@@ -169,7 +169,7 @@
       retries: 3
 
     # if server_network is specified
-    - name: "Hetzner Cloud: Check if network '{{ server_network }}' exists for given location"
+    - name: "Hetzner Cloud: Check if network '{{ server_network | default('') }}' exists for given location"
       ansible.builtin.fail:
         msg: "No network with name '{{ server_network }}' in location '{{ target_network_zone }}'"
       when:
@@ -182,7 +182,7 @@
           | selectattr("network_zone", "equalto", target_network_zone)
           | list | length > 0)
 
-    - name: "Hetzner Cloud: Extract ip_range for network '{{ server_network }}'"
+    - name: "Hetzner Cloud: Extract ip_range for network '{{ server_network | default('') }}'"
       ansible.builtin.set_fact:
         server_network_ip_range: "{{ item.ip_range }}"
       loop: "{{ network_info.hcloud_network_info }}"
@@ -444,7 +444,7 @@
         - cloud_firewall | bool
 
     # Object Storage (S3 bucket for backups)
-    - name: "Hetzner Cloud: Create Object Storage (S3 bucket) '{{ hetzner_object_storage_name }}'"
+    - name: "Hetzner Cloud: Create Object Storage (S3 bucket) '{{ hetzner_object_storage_name | default('') }}'"
       amazon.aws.s3_bucket:
         endpoint_url: "{{ hetzner_object_storage_endpoint }}"
         ceph: true
@@ -504,7 +504,7 @@
             ([patroni_cluster_name + '-firewall'] if cloud_firewall | bool else [])
           }}
 
-    - name: "Hetzner Cloud: Add server to network '{{ server_network }}'"
+    - name: "Hetzner Cloud: Add server to network '{{ server_network | default('') }}'"
       hetzner.hcloud.server_network:
         api_token: "{{ lookup('ansible.builtin.env', 'HCLOUD_API_TOKEN') }}"
         network: "{{ server_network }}"
@@ -583,7 +583,7 @@
         (item == 'replica' and server_count | int > 1) or
         (item in ['sync', 'async'] and server_count | int > 1 and synchronous_mode | bool))
 
-    - name: "Hetzner Cloud: Add Load Balancer to network '{{ server_network }}'"
+    - name: "Hetzner Cloud: Add Load Balancer to network '{{ server_network | default('') }}'"
       hetzner.hcloud.load_balancer_network:
         api_token: "{{ lookup('ansible.builtin.env', 'HCLOUD_API_TOKEN') }}"
         load_balancer: "{{ patroni_cluster_name }}-{{ item }}"
@@ -642,7 +642,7 @@
         (item == 'replica' and server_count | int > 1) or
         (item in ['sync', 'async'] and server_count | int > 1 and synchronous_mode | bool))
 
-    - name: "Hetzner Cloud: Add servers to Load Balancer (use label_selector 'cluster={{ patroni_cluster_name }}')"
+    - name: "Hetzner Cloud: Add servers to Load Balancer (use label_selector 'cluster={{ patroni_cluster_name | default('postgres-cluster') }}')"
       hetzner.hcloud.load_balancer_target:
         api_token: "{{ lookup('ansible.builtin.env', 'HCLOUD_API_TOKEN') }}"
         load_balancer: "{{ patroni_cluster_name }}-{{ item }}"
@@ -736,7 +736,7 @@
     - server_result.results | selectattr('hcloud_server', 'defined')
 
 # Delete the temporary ssh key from the cloud after creating the server
-- name: "Hetzner Cloud: Remove temporary SSH key {{ ssh_key_name }} from cloud"
+- name: "Hetzner Cloud: Remove temporary SSH key {{ ssh_key_name | default('') }} from cloud"
   hetzner.hcloud.ssh_key:
     api_token: "{{ lookup('ansible.builtin.env', 'HCLOUD_API_TOKEN') }}"
     name: "{{ ssh_key_name }}"
@@ -817,7 +817,7 @@
         state: "absent"
         name: "{{ patroni_cluster_name }}-firewall"
 
-    - name: "Hetzner Cloud: Delete Object Storage (S3 bucket) '{{ hetzner_object_storage_name }}'"
+    - name: "Hetzner Cloud: Delete Object Storage (S3 bucket) '{{ hetzner_object_storage_name | default('') }}'"
       amazon.aws.s3_bucket:
         endpoint_url: "{{ hetzner_object_storage_endpoint }}"
         ceph: true

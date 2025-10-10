@@ -1,5 +1,5 @@
 ---
-- name: "pgBackRest | Ensure 'archive_command' is set to '{{ pgbackrest_archive_command }}'"
+- name: "pgBackRest | Ensure 'archive_command' is set to '{{ pgbackrest_archive_command | default('') }}'"
   ansible.builtin.set_fact:
     # Create a new list from postgresql_parameters, excluding 'archive_command' option if it exists
     # Then, append a new 'archive_command' item with the value of 'pgbackrest_archive_command'

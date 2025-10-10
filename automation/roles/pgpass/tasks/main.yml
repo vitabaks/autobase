@@ -1,5 +1,5 @@
 ---
-- name: "Create postgres home directory ({{ postgresql_home_dir }})"
+- name: "Create postgres home directory ({{ postgresql_home_dir | default('') }})"
   become: true
   become_user: root
   ansible.builtin.file:
@@ -13,7 +13,7 @@
     - postgresql_pgpass | length > 0
   tags: pgpass
 
-- name: "Configure a password file ({{ postgresql_home_dir }}/.pgpass)"
+- name: "Configure a password file ({{ postgresql_home_dir | default('') }}/.pgpass)"
   become: true
   become_user: root
   ansible.builtin.copy:

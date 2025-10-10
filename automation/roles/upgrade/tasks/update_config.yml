@@ -268,7 +268,7 @@
   when: inventory_hostname in groups['primary']
 
 # Copy the pg_hba.conf file to a new PostgreSQL to save pg_hba rules.
-- name: "Copy pg_hba.conf to {{ pg_new_confdir }}"
+- name: "Copy pg_hba.conf to {{ pg_new_confdir | default('') }}"
   ansible.builtin.copy:
     src: "{{ pg_old_confdir }}/pg_hba.conf"
     dest: "{{ pg_new_confdir }}"
