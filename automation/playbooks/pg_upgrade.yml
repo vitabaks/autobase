@@ -30,15 +30,23 @@
       register: patroni_leader_result
       changed_when: false
       failed_when: false
+      check_mode: false
       environment:
         no_proxy: "{{ patroni_bind_address | default(bind_address, true) }}"
 
-    # Stop, if Patroni is unavailable
+    # Stop, if no healthy Patroni leader node
     - name: The Patroni cluster is unhealthy
       ansible.builtin.fail:
-        msg: "Patroni is unavailable on {{ ansible_hostname }}. Please check the cluster status."
-      changed_when: false
-      when: patroni_leader_result is undefined or patroni_leader_result.status == -1
+        msg: >
+          No healthy leader node detected in cluster '{{ patroni_cluster_name | default('postgres-cluster') }}'.
+          Please ensure the cluster is up and node responds on REST API port ({{ patroni_restapi_port | default('8008') }}).
+      when:
+        - inventory_hostname == groups['postgres_cluster'][0]
+        - (hostvars
+            | dict2items
+            | selectattr('value.patroni_leader_result.status', 'defined')
+            | selectattr('value.patroni_leader_result.status', 'equalto', 200)
+            | list | length) == 0
 
     - name: '[Prepare] Add host to group "primary" (in-memory inventory)'
       ansible.builtin.add_host:
@@ -52,7 +60,7 @@
       ansible.builtin.add_host:
         name: "{{ item }}"
         groups: secondary
-      when: hostvars[item]['patroni_leader_result']['status'] != 200
+      when: hostvars[item]['patroni_leader_result']['status'] == 503
       loop: "{{ groups['postgres_cluster'] }}"
       changed_when: false
 
@@ -61,7 +69,7 @@
         msg:
           - "Cluster Name: {{ patroni_cluster_name | default('postgres-cluster') }}"
           - "Cluster Leader: {{ ansible_hostname }}"
-      when: inventory_hostname in groups['primary']
+      when: inventory_hostname in groups['primary'] | default([])
   tags:
     - always
 
