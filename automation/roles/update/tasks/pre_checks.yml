@@ -29,7 +29,7 @@
     - pg_replication_state.stdout | int == 0
     - not ansible_check_mode
 
-- name: "[Pre-Check] Make sure there is no high replication lag (more than {{ max_replication_lag_bytes | human_readable }})"
+- name: "[Pre-Check] Make sure there is no high replication lag (more than {{ max_replication_lag_bytes | default('') | human_readable }})"
   ansible.builtin.command: >-
     {{ postgresql_bin_dir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc
     "select pg_wal_lsn_diff(pg_current_wal_lsn(),replay_lsn) pg_lag_bytes
@@ -62,7 +62,7 @@
     - pg_lag_bytes.stdout|int >= max_replication_lag_bytes|int
     - not ansible_check_mode
 
-- name: "[Pre-Check] Make sure there are no long-running transactions (more than {{ max_transaction_sec }} seconds)"
+- name: "[Pre-Check] Make sure there are no long-running transactions (more than {{ max_transaction_sec | default('') }} seconds)"
   ansible.builtin.command: >-
     {{ postgresql_bin_dir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc
     "select pid, usename, client_addr, clock_timestamp() - xact_start as xact_age,
@@ -84,7 +84,7 @@
 
 # Stop, if long-running transactions detected
 - block:
-    - name: "Print long-running (>{{ max_transaction_sec }}s) transactions"
+    - name: "Print long-running (>{{ max_transaction_sec | default('') }}s) transactions"
       ansible.builtin.debug:
         msg: "{{ pg_long_transactions.stdout_lines }}"
 

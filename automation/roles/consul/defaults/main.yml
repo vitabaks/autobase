@@ -91,7 +91,7 @@ consul_ui_legacy: "{{ lookup('env', 'CONSUL_UI_LEGACY') | default(false, false) 
 # consul_enable_script_checks: false
 # consul_enable_local_script_checks: false
 consul_raft_protocol: "\
-  {% if consul_version is version_compare('0.7.0', '<=') %}\
+  {% if consul_version is version('0.7.0', '<=') %}\
   1\
   {% else %}\
   3\

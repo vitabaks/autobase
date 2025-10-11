@@ -3,7 +3,7 @@
 
 # In the --new-options argument, an inline if condition checks if 'timescaledb' is present in the pg_shared_preload_libraries_value.
 # If it is, it appends '-c timescaledb.restoring='on'' to the --new-options argument.
-- name: "Upgrade the PostgreSQL to version {{ pg_new_version }} on the Primary (using pg_upgrade --link)"
+- name: "Upgrade the PostgreSQL to version {{ pg_new_version | default('') }} on the Primary (using pg_upgrade --link)"
   ansible.builtin.command: >
     {{ pg_new_bindir }}/pg_upgrade
     --username={{ pg_install_user.stdout }}

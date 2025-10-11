@@ -1,11 +1,19 @@
 ---
+# Generate in-memory inventory
+
+# Note: for cluster scaling ansible_ssh_private_key_file is used to access existing servers.
+# For new cluster deployment a temporary ssh key is generated if ssh_key_name and ssh_key_content are not provided.
 - name: "Inventory | Set variable: ssh_private_key_file"
   ansible.builtin.set_fact:
-    ssh_private_key_file: "~{{ lookup('env', 'USER') }}/.ssh/{{ tmp_ssh_key_name }}"
+    ssh_private_key_file: >-
+      {{
+        (ansible_ssh_private_key_file | default(''))
+        if (ansible_ssh_private_key_file | default('') | length > 0)
+        else (lookup('env','HOME') ~ '/.ssh/' ~ (tmp_ssh_key_name | default('')))
+      }}
   when:
-    - ssh_key_name is defined
-    - tmp_ssh_key_name is defined
-    - ssh_key_name == tmp_ssh_key_name
+    - (ssh_key_name is defined and tmp_ssh_key_name is defined and ssh_key_name == tmp_ssh_key_name)
+      or (ansible_ssh_private_key_file | default('') | length > 0)
 
 - name: "Inventory | Add host to 'postgres_cluster', 'master' groups"
   ansible.builtin.add_host:
@@ -15,6 +23,8 @@
       - master
     ansible_ssh_host: "{{ item[server_public_ip | bool | ternary('public_ip', 'private_ip')] }}"
     ansible_ssh_private_key_file: "{{ ssh_private_key_file | default(None) }}"
+    new_node: "{{ item.new_node | default(omit) }}"
+    bind_address: "{{ item.private_ip }}"
   loop: "{{ [ip_addresses[0]] }}" # add the first item in the list
   loop_control:
     label: "{{ item[server_public_ip | bool | ternary('public_ip', 'private_ip')] }}"
@@ -28,6 +38,8 @@
       - replica
     ansible_ssh_host: "{{ item[server_public_ip | bool | ternary('public_ip', 'private_ip')] }}"
     ansible_ssh_private_key_file: "{{ ssh_private_key_file | default(None) }}"
+    new_node: "{{ item.new_node | default(omit) }}"
+    bind_address: "{{ item.private_ip }}"
   loop: "{{ ip_addresses[1:] }}" # start with the 2nd item of the list
   loop_control:
     label: "{{ item[server_public_ip | bool | ternary('public_ip', 'private_ip')] }}"
@@ -40,6 +52,8 @@
     group: balancers
     ansible_ssh_host: "{{ item[server_public_ip | bool | ternary('public_ip', 'private_ip')] }}"
     ansible_ssh_private_key_file: "{{ ssh_private_key_file | default(None) }}"
+    new_node: "{{ item.new_node | default(omit) }}"
+    bind_address: "{{ item.private_ip }}"
   loop: "{{ ip_addresses }}"
   loop_control:
     label: "{{ item[server_public_ip | bool | ternary('public_ip', 'private_ip')] }}"
@@ -52,6 +66,8 @@
     group: etcd_cluster
     ansible_ssh_host: "{{ item[server_public_ip | bool | ternary('public_ip', 'private_ip')] }}"
     ansible_ssh_private_key_file: "{{ ssh_private_key_file | default(None) }}"
+    new_node: "{{ item.new_node | default(omit) }}"
+    bind_address: "{{ item.private_ip }}"
   loop: "{{ ip_addresses[:7] }}" # no more than 7 servers for the etcd cluster
   loop_control:
     label: "{{ item[server_public_ip | bool | ternary('public_ip', 'private_ip')] }}"
@@ -64,6 +80,8 @@
     group: consul_instances
     ansible_ssh_host: "{{ item[server_public_ip | bool | ternary('public_ip', 'private_ip')] }}"
     ansible_ssh_private_key_file: "{{ ssh_private_key_file | default(None) }}"
+    new_node: "{{ item.new_node | default(omit) }}"
+    bind_address: "{{ item.private_ip }}"
   loop: "{{ ip_addresses }}"
   loop_control:
     label: "{{ item[server_public_ip | bool | ternary('public_ip', 'private_ip')] }}"

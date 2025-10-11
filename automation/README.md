@@ -25,7 +25,7 @@ You can also include it in a `requirements.yml` file and install it via `ansible
 ```yaml
 collections:
   - name: vitabaks.autobase
-    version: 2.3.2
+    version: 2.4.1
 ```
 
 #### Use Autobase playbook

@@ -8,6 +8,7 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    if: ${{ github.repository_owner == 'vitabaks' || github.event_name == 'workflow_dispatch' }}
     strategy:
       fail-fast: false
       matrix:
@@ -16,9 +17,6 @@ jobs:
             tag: latest
             namespace: geerlingguy
           - distro: debian12
-            tag: latest
-            namespace: geerlingguy
-          - distro: debian11
             tag: latest
             namespace: geerlingguy
           - distro: ubuntu2404

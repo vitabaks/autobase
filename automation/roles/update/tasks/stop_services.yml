@@ -20,7 +20,7 @@
       environment:
         PGPASSWORD: "{{ patroni_superuser_password }}"
 
-    - name: "Stop Patroni service on the Cluster Replica ({{ ansible_hostname }})"
+    - name: "Stop Patroni service on the Cluster Replica ({{ ansible_hostname | default('') }})"
       become: true
       become_user: root
       ansible.builtin.service:
@@ -38,7 +38,7 @@
       environment:
         PGPASSWORD: "{{ patroni_superuser_password }}"
 
-    - name: "Stop Patroni service on the old Cluster Leader ({{ ansible_hostname }})"
+    - name: "Stop Patroni service on the old Cluster Leader ({{ ansible_hostname | default('') }})"
       become: true
       become_user: root
       ansible.builtin.service:

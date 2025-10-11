@@ -75,7 +75,7 @@
         daemon_reload: true
         state: stopped
 
-    - name: Make sure that the cluster ip address (VIP) "{{ cluster_vip }}" is running
+    - name: Make sure that the cluster ip address (VIP) "{{ cluster_vip | default('') }}" is running
       ansible.builtin.wait_for:
         host: "{{ cluster_vip }}"
         port: "{{ pgbouncer_listen_port }}"

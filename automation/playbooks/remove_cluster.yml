@@ -24,7 +24,7 @@
               ] | reject('equalto', '') | list
             }}
           vars:
-            default_postgresql_version: "{{ postgresql_version | default('17') }}"
+            default_postgresql_version: "{{ postgresql_version | default('18') }}"
             default_postgresql_home_dir: "{{ '/var/lib/postgresql' if ansible_os_family == 'Debian' else '/var/lib/pgsql' }}"
             default_postgresql_cluster_name: "{{ 'main' if ansible_os_family == 'Debian' else 'data' }}"
             default_postgresql_data_dir: "\

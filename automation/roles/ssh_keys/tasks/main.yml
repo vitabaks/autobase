@@ -28,14 +28,14 @@
     - "'openssh-clients' not in ansible_facts.packages"
 
 - block:
-    - name: Check user "{{ ssh_key_user }}" exists
+    - name: Check user "{{ ssh_key_user | default('') }}" exists
       ansible.builtin.user:
         name: "{{ ssh_key_user }}"
         shell: /bin/bash
         state: present
         system: true
 
-    - name: Create a 2048-bit SSH key for user "{{ ssh_key_user }}" in ~/.ssh/id_rsa (if not already exist)
+    - name: Create a 2048-bit SSH key for user "{{ ssh_key_user | default('') }}" in ~/.ssh/id_rsa (if not already exist)
       ansible.builtin.user:
         name: "{{ ssh_key_user }}"
         generate_ssh_key: true
@@ -65,7 +65,7 @@
       register: ssh_known_host_results
       changed_when: false
 
-    - name: known_hosts | for each host, add/update the public key in the "~{{ ssh_key_user }}/.ssh/known_hosts"
+    - name: known_hosts | for each host, add/update the public key in the "~{{ ssh_key_user | default('') }}/.ssh/known_hosts"
       become: true
       become_user: "{{ ssh_key_user }}"
       ansible.builtin.known_hosts:

@@ -1,7 +1,7 @@
 ---
 # when postgresql NOT exists
 - block:
-    - name: PostgreSQL | check that data directory "{{ postgresql_data_dir }}" is not initialized
+    - name: PostgreSQL | check that data directory "{{ postgresql_data_dir | default('') }}" is not initialized
       ansible.builtin.stat:
         path: "{{ postgresql_data_dir }}/PG_VERSION"
       register: pgdata_initialized
@@ -19,7 +19,7 @@
 
 # when postgresql exists
 - block:
-    - name: PostgreSQL | check that data directory "{{ postgresql_data_dir }}" is initialized
+    - name: PostgreSQL | check that data directory "{{ postgresql_data_dir | default('') }}" is initialized
       ansible.builtin.stat:
         path: "{{ postgresql_data_dir }}/PG_VERSION"
       register: pgdata_initialized

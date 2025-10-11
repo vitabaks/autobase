@@ -42,8 +42,7 @@
         regexp: '^(\s*)replacement_sort_tuples:.*'
         state: absent
       when: replacement_sort_tuples_output.stdout | length > 0
-  when:
-    - pg_old_version|int <= 10 and pg_new_version|int >= 11
+  when: pg_old_version|int <= 10 and pg_new_version|int >= 11
 
 - block: # default_with_oids (removed in the PG 12)
     # check if the default_with_oids parameter is specified in the patroni.yml
@@ -60,8 +59,7 @@
         regexp: '^(\s*)default_with_oids:.*'
         state: absent
       when: default_with_oids_output.stdout | length > 0
-  when:
-    - pg_old_version|int <= 11 and pg_new_version|int >= 12
+  when: pg_old_version|int <= 11 and pg_new_version|int >= 12
 
 - block: # wal_keep_segments (removed in the PG 13)
     # check if the wal_keep_segments parameter is specified in the patroni.yml
@@ -82,8 +80,7 @@
         regexp: "wal_keep_segments: ([0-9]+)"
         replace: "wal_keep_size: {{ (wal_keep_segments_output.stdout | int * 16) | string + 'MB' }}"
       when: wal_keep_segments_output.stdout|int > 0
-  when:
-    - pg_old_version|int <= 12 and pg_new_version|int >= 13
+  when: pg_old_version|int <= 12 and pg_new_version|int >= 13
 
 - block: # operator_precedence_warning (removed in the PG 14)
     # check if the operator_precedence_warning parameter is specified in the patroni.yml
@@ -100,8 +97,7 @@
         regexp: '^(\s*)operator_precedence_warning:.*'
         state: absent
       when: operator_precedence_warning_output.stdout | length > 0
-  when:
-    - pg_old_version|int <= 13 and pg_new_version|int >= 14
+  when: pg_old_version|int <= 13 and pg_new_version|int >= 14
 
 - block: # vacuum_cleanup_index_scale_factor (removed in the PG 14)
     # check if the vacuum_cleanup_index_scale_factor parameter is specified in the patroni.yml
@@ -118,8 +114,7 @@
         regexp: '^(\s*)vacuum_cleanup_index_scale_factor:.*'
         state: absent
       when: vacuum_cleanup_index_scale_factor_output.stdout | length > 0
-  when:
-    - pg_old_version|int <= 13 and pg_new_version|int >= 14
+  when: pg_old_version|int <= 13 and pg_new_version|int >= 14
 
 - block: # stats_temp_directory (removed in the PG 15)
     # check if the stats_temp_directory parameter is specified in the patroni.yml
@@ -136,8 +131,7 @@
         regexp: '^(\s*)stats_temp_directory:.*'
         state: absent
       when: stats_temp_directory_output.stdout | length > 0
-  when:
-    - pg_old_version|int <= 14 and pg_new_version|int >= 15
+  when: pg_old_version|int <= 14 and pg_new_version|int >= 15
 
 - block: # force_parallel_mode (removed in the PG 16)
     # check if the force_parallel_mode parameter is specified in the patroni.yml
@@ -154,8 +148,7 @@
         regexp: '^(\s*)force_parallel_mode:.*'
         state: absent
       when: force_parallel_mode_output.stdout | length > 0
-  when:
-    - pg_old_version|int <= 15 and pg_new_version|int >= 16
+  when: pg_old_version|int <= 15 and pg_new_version|int >= 16
 
 - block: # promote_trigger_file (removed in the PG 16)
     # check if the promote_trigger_file parameter is specified in the patroni.yml
@@ -172,8 +165,7 @@
         regexp: '^(\s*)promote_trigger_file:.*'
         state: absent
       when: promote_trigger_file_output.stdout | length > 0
-  when:
-    - pg_old_version|int <= 15 and pg_new_version|int >= 16
+  when: pg_old_version|int <= 15 and pg_new_version|int >= 16
 
 - block: # vacuum_defer_cleanup_age (removed in the PG 16)
     # check if the vacuum_defer_cleanup_age parameter is specified in the patroni.yml
@@ -190,8 +182,7 @@
         regexp: '^(\s*)vacuum_defer_cleanup_age:.*'
         state: absent
       when: vacuum_defer_cleanup_age_output.stdout | length > 0
-  when:
-    - pg_old_version|int <= 15 and pg_new_version|int >= 16
+  when: pg_old_version|int <= 15 and pg_new_version|int >= 16
 
 - block: # db_user_namespace (removed in the PG 17)
     # check if the db_user_namespace parameter is specified in the patroni.yml
@@ -208,8 +199,7 @@
         regexp: '^(\s*)db_user_namespace:.*'
         state: absent
       when: db_user_namespace_output.stdout | length > 0
-  when:
-    - pg_old_version|int <= 16 and pg_new_version|int >= 17
+  when: pg_old_version|int <= 16 and pg_new_version|int >= 17
 
 - block: # old_snapshot_threshold (removed in the PG 17)
     # check if the old_snapshot_threshold parameter is specified in the patroni.yml
@@ -226,8 +216,7 @@
         regexp: '^(\s*)old_snapshot_threshold:.*'
         state: absent
       when: old_snapshot_threshold_output.stdout | length > 0
-  when:
-    - pg_old_version|int <= 16 and pg_new_version|int >= 17
+  when: pg_old_version|int <= 16 and pg_new_version|int >= 17
 
 - block: # trace_recovery_messages (removed in the PG 17)
     # check if the trace_recovery_messages parameter is specified in the patroni.yml
@@ -244,10 +233,26 @@
         regexp: '^(\s*)trace_recovery_messages:.*'
         state: absent
       when: trace_recovery_messages_output.stdout | length > 0
-  when:
-    - pg_old_version|int <= 16 and pg_new_version|int >= 17
+  when: pg_old_version|int <= 16 and pg_new_version|int >= 17
 
-# TODO: Prepare the parameters for PostgreSQL 18 and etc.
+- block: # ssl_ecdh_curve (removed in the PG 18)
+    # check if the ssl_ecdh_curve parameter is specified in the patroni.yml
+    - name: "Edit patroni.yml | check if the 'ssl_ecdh_curve' parameter is specified"
+      ansible.builtin.command: grep ssl_ecdh_curve {{ patroni_config_file }}
+      register: ssl_ecdh_curve_output
+      changed_when: false
+      failed_when: false
+
+    # if defined, remove the ssl_ecdh_curve parameter from the patroni.yml
+    - name: "Edit patroni.yml | remove parameter: 'ssl_ecdh_curve'"
+      ansible.builtin.lineinfile:
+        path: "{{ patroni_config_file }}"
+        regexp: '^(\s*)ssl_ecdh_curve:.*'
+        state: absent
+      when: ssl_ecdh_curve_output.stdout | length > 0
+  when: pg_old_version|int <= 17 and pg_new_version|int >= 18
+
+# TODO: Prepare the parameters for PostgreSQL 19 and etc.
 
 # To support upgrades in the Patroni Standby Cluster.
 - name: "Edit patroni.yml | remove parameter: standby_cluster (if exists)"
@@ -263,7 +268,7 @@
   when: inventory_hostname in groups['primary']
 
 # Copy the pg_hba.conf file to a new PostgreSQL to save pg_hba rules.
-- name: "Copy pg_hba.conf to {{ pg_new_confdir }}"
+- name: "Copy pg_hba.conf to {{ pg_new_confdir | default('') }}"
   ansible.builtin.copy:
     src: "{{ pg_old_confdir }}/pg_hba.conf"
     dest: "{{ pg_new_confdir }}"

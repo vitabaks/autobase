@@ -25,14 +25,14 @@
     - ansible_os_family == "RedHat"
     - "'openssh-clients' not in ansible_facts.packages"
 
-- name: Ensure "{{ pgbackrest_repo_user }}" exists on pgbackrest server
+- name: Ensure "{{ pgbackrest_repo_user | default('') }}" exists on pgbackrest server
   ansible.builtin.user:
     name: "{{ pgbackrest_repo_user }}"
     state: present
     system: true
   when: "'pgbackrest' in group_names"
 
-- name: ssh_keys | Ensure ssh key are created for "{{ pgbackrest_repo_user }}" user on pgbackrest server
+- name: ssh_keys | Ensure ssh key are created for "{{ pgbackrest_repo_user | default('') }}" user on pgbackrest server
   ansible.builtin.user:
     name: "{{ pgbackrest_repo_user }}"
     generate_ssh_key: true
@@ -80,7 +80,7 @@
     - hostvars[item].get('pgbackrest_server_sshkey') is not none
     - hostvars[item].get('pgbackrest_server_sshkey', {}).get('content', '') | length > 0
 
-- name: ssh_keys | Add database ssh keys in "~{{ pgbackrest_repo_user }}/.ssh/authorized_keys" on pgbackrest server
+- name: ssh_keys | Add database ssh keys in "~{{ pgbackrest_repo_user | default('') }}/.ssh/authorized_keys" on pgbackrest server
   ansible.posix.authorized_key:
     user: "{{ pgbackrest_repo_user }}"
     state: present
@@ -126,7 +126,7 @@
     - "'postgres_cluster' in group_names"
     - item.stdout_lines | select('match', '^[^#].*') | list | length > 0
 
-- name: known_hosts | Add ssh host keys in "~{{ pgbackrest_repo_user }}/.ssh/known_hosts" on pgbackrest server
+- name: known_hosts | Add ssh host keys in "~{{ pgbackrest_repo_user | default('') }}/.ssh/known_hosts" on pgbackrest server
   become: true
   become_user: "{{ pgbackrest_repo_user }}"
   ansible.builtin.known_hosts:

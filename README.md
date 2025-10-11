@@ -101,7 +101,7 @@ It requires the installation of a consul in client mode on each application serv
 
 ## Compatibility
 
-RedHat and Debian based distros (x86_64)
+RedHat and Debian based distros.
 
 ###### Supported Linux Distributions:
 
@@ -112,11 +112,13 @@ RedHat and Debian based distros (x86_64)
 - **Rocky Linux**: 8, 9, 10
 - **AlmaLinux**: 8, 9, 10
 
+Architecture: x86_64 (amd64), aarch64 (arm64).
+
 ###### PostgreSQL versions:
 
 all supported PostgreSQL versions
 
-:white_check_mark: tested, works fine: PostgreSQL 10, 11, 12, 13, 14, 15, 16, 17
+:white_check_mark: tested, works fine: PostgreSQL 10, 11, 12, 13, 14, 15, 16, 17, 18
 
 _Table of results of daily automated testing of cluster deployment:_
 | Distribution | Test result |

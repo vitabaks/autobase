@@ -7,16 +7,15 @@
 # TimescaleDB (if 'enable_timescale' is 'true')
 - name: Install TimescaleDB package
   ansible.builtin.package:
-    name: "{{ item }}"
+    name: "{{ timescaledb_package }}"
     state: present
-  loop: "{{ timescaledb_package }}"
   vars:
     timescaledb_package: >-
-      [{% if pg_version | default(postgresql_version) | int >= 11 %}
-      "timescaledb-2-postgresql-{{ pg_version | default(postgresql_version) }}"
+      {% if pg_version | default(postgresql_version) | int >= 11 %}
+      timescaledb-2-postgresql-{{ pg_version | default(postgresql_version) }}
       {% else %}
-      "timescaledb-postgresql-{{ pg_version | default(postgresql_version) }}"
-      {% endif %}]
+      timescaledb-postgresql-{{ pg_version | default(postgresql_version) }}
+      {% endif %}
   register: package_status
   until: package_status is success
   delay: 5
@@ -27,24 +26,23 @@
 # Citus (if 'enable_citus' is 'true')
 - name: Install Citus package
   ansible.builtin.package:
-    name: "{{ item }}"
+    name: "{{ citus_package }}"
     state: present
-  loop: "{{ citus_package }}"
   vars:
     citus_package: >-
-      [{% if ansible_os_family == 'Debian' and pg_version | default(postgresql_version) | int >= 15 %}
-      "postgresql-{{ pg_version | default(postgresql_version) }}-citus-{{ citus_version | default('13.1') }}"
+      {% if ansible_os_family == 'Debian' and pg_version | default(postgresql_version) | int >= 15 %}
+      postgresql-{{ pg_version | default(postgresql_version) }}-citus-{{ citus_version | default('13.1') }}
       {% elif ansible_os_family == 'Debian' and pg_version | default(postgresql_version) | int == 14 %}
-      "postgresql-{{ pg_version | default(postgresql_version) }}-citus-12.1"
+      postgresql-{{ pg_version | default(postgresql_version) }}-citus-12.1
       {% elif ansible_os_family == 'Debian' and pg_version | default(postgresql_version) | int == 13 %}
-      "postgresql-{{ pg_version | default(postgresql_version) }}-citus-11.3"
+      postgresql-{{ pg_version | default(postgresql_version) }}-citus-11.3
       {% elif ansible_os_family == 'Debian' and pg_version | default(postgresql_version) | int == 12 %}
-      "postgresql-{{ pg_version | default(postgresql_version) }}-citus-10.2"
+      postgresql-{{ pg_version | default(postgresql_version) }}-citus-10.2
       {% elif ansible_os_family == 'Debian' and pg_version | default(postgresql_version) | int == 11 %}
-      "postgresql-{{ pg_version | default(postgresql_version) }}-citus-10.0"
+      postgresql-{{ pg_version | default(postgresql_version) }}-citus-10.0
       {% else %}
-      "citus_{{ pg_version | default(postgresql_version) }}"
-      {% endif %}]
+      citus_{{ pg_version | default(postgresql_version) }}
+      {% endif %}
   register: package_status
   until: package_status is success
   delay: 5
@@ -132,10 +130,10 @@
     postgis_package: >-
       {% if ansible_os_family == 'Debian' %}
       postgresql-{{ pg_version | default(postgresql_version) }}-postgis-3
-      {% elif ansible_os_family == 'RedHat' and pg_version | default(postgresql_version) | int == 16 %}
+      {% elif ansible_os_family == 'RedHat' and pg_version | default(postgresql_version) | int == 12 %}
       postgis34_{{ pg_version | default(postgresql_version) }}
       {% else %}
-      postgis33_{{ pg_version | default(postgresql_version) }}
+      postgis{{ postgis_version | default('36') }}_{{ pg_version | default(postgresql_version) }}
       {% endif %}
   register: package_status
   until: package_status is success
@@ -317,7 +315,7 @@
 # pg_analytics (if 'enable_paradedb' or 'enable_pg_analytics' is 'true')
 # Note: This repository was archived by the owner on Mar 20, 2025. Latest release: v0.3.7
 - block:
-    - name: "Install pg_analytics v{{ version }} package"
+    - name: "Install pg_analytics v{{ version | default('') }} package"
       ansible.builtin.apt:
         deb: "{{ pg_analytics_repo }}/postgresql-{{ pg_version | default(postgresql_version) }}-pg-analytics_{{ version }}-1PARADEDB-{{ ansible_distribution_release }}_{{ pg_analytics_architecture_map_deb[ansible_architecture] }}.deb"
       register: apt_status
@@ -328,7 +326,7 @@
         - ansible_os_family == "Debian"
         - ansible_distribution_release in ['bookworm', 'jammy', 'noble']
 
-    - name: "Install pg_analytics v{{ version }} package"
+    - name: "Install pg_analytics v{{ version | default('') }} package"
       ansible.builtin.dnf:
         name: "{{ pg_analytics_repo }}/pg_analytics_{{ pg_version | default(postgresql_version) }}-{{ version }}-1PARADEDB.el{{ ansible_distribution_major_version }}.{{ pg_analytics_architecture_map_rpm[ansible_architecture] }}.rpm"
         disable_gpg_check: true

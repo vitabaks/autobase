@@ -152,7 +152,7 @@
           when: ansible_architecture in ["x86_64", "amd64"]
 
         # Check if the repository entry exists in the file
-        - name: Check if pgdg{{ postgresql_version }}-debuginfo exists in repo file
+        - name: Check if pgdg{{ postgresql_version | default('') }}-debuginfo exists in repo file
           ansible.builtin.lineinfile:
             path: "{{ pgdg_redhat_repo_path }}"
             regexp: '^\[pgdg{{ postgresql_version }}-debuginfo\]'
@@ -164,7 +164,7 @@
             pgdg_redhat_repo_path: "/etc/yum.repos.d/pgdg-redhat-all.repo"
 
         # If the entry does not exist, try to add the repository
-        - name: Add pgdg{{ postgresql_version }}-debuginfo repo if not present
+        - name: Add pgdg{{ postgresql_version | default('') }}-debuginfo repo if not present
           ansible.builtin.yum_repository: # yamllint disable rule:line-length
             name: "pgdg{{ postgresql_version }}-debuginfo"
             description: "PostgreSQL {{ postgresql_version }} for RHEL {{ ansible_distribution_major_version }} - {{ pgdg_architecture_map[ansible_architecture] }} - Debuginfo"

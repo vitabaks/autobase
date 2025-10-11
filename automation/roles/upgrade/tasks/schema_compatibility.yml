@@ -30,7 +30,7 @@
   when:
     - inventory_hostname in groups['primary']
 
-- name: "Start new PostgreSQL on port {{ schema_compatibility_check_port }} to check the schema compatibility"
+- name: "Start new PostgreSQL on port {{ schema_compatibility_check_port | default('5433') }} to check the schema compatibility"
   ansible.builtin.command: >
     {{ pg_new_bindir }}/pg_ctl -D {{ pg_new_datadir }}
     -o "-p {{ schema_compatibility_check_port }}
@@ -59,7 +59,7 @@
     - pg_ctl_start_result.ansible_job_id is defined
     - inventory_hostname in groups['primary']
 
-- name: "Check the compatibility of the database schema with the PostgreSQL {{ pg_new_version }}"
+- name: "Check the compatibility of the database schema with the PostgreSQL {{ pg_new_version | default('') }}"
   ansible.builtin.shell: |
     set -o pipefail;
     {{ pg_new_bindir }}/pg_dumpall \

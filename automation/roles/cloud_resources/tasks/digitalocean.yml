@@ -70,7 +70,7 @@
 # SSH key
 - block:
     # Delete the temporary ssh key from the cloud (if exists)
-    - name: "DigitalOcean: Remove temporary SSH key '{{ ssh_key_name }}' from cloud (if any)"
+    - name: "DigitalOcean: Remove temporary SSH key '{{ ssh_key_name | default('') }}' from cloud (if any)"
       community.digitalocean.digital_ocean_sshkey:
         oauth_token: "{{ lookup('ansible.builtin.env', 'DO_API_TOKEN') }}"
         name: "{{ ssh_key_name }}"
@@ -82,7 +82,7 @@
         - ssh_key_name == tmp_ssh_key_name
 
     # if ssh_key_name and ssh_key_content is specified, add this ssh key to the cloud
-    - name: "DigitalOcean: Add SSH key '{{ ssh_key_name }}' to cloud"
+    - name: "DigitalOcean: Add SSH key '{{ ssh_key_name | default('') }}' to cloud"
       community.digitalocean.digital_ocean_sshkey:
         oauth_token: "{{ lookup('ansible.builtin.env', 'DO_API_TOKEN') }}"
         name: "{{ ssh_key_name }}"
@@ -99,7 +99,7 @@
 
     # if ssh_key_name is specified, get the fingerprint of one ssh key
     # or if tmp_ssh_key_name is used and ssh_public_keys is difined
-    - name: "DigitalOcean: Get fingerprint for SSH key '{{ ssh_key_name }}'"
+    - name: "DigitalOcean: Get fingerprint for SSH key '{{ ssh_key_name | default('') }}'"
       ansible.builtin.set_fact:
         ssh_key_fingerprint: "{{ [item.fingerprint] }}"
       loop: "{{ ssh_keys.data | lower }}"
@@ -111,7 +111,7 @@
         - item.name == ssh_key_name | lower
 
     # Stop, if the ssh key is not found
-    - name: "DigitalOcean: Fail if SSH key '{{ ssh_key_name }}' is not found"
+    - name: "DigitalOcean: Fail if SSH key '{{ ssh_key_name | default('') }}' is not found"
       ansible.builtin.fail:
         msg: "SSH key {{ ssh_key_name }} not found. Ensure that key has been added to DigitalOcean."
       when:
@@ -154,7 +154,7 @@
         - vpc_info.data | selectattr('region', 'equalto', server_location) | selectattr('default', 'equalto', true) | list | length > 0
 
     # if server_network is not specified and there is no default VPC, create a network
-    - name: "DigitalOcean: Create a VPC '{{ digital_ocean_vpc_name | default('network-' + server_location) }}'"
+    - name: "DigitalOcean: Create a VPC '{{ digital_ocean_vpc_name | default('network-' + server_location | default('')) }}'"
       community.digitalocean.digital_ocean_vpc:
         oauth_token: "{{ lookup('ansible.builtin.env', 'DO_API_TOKEN') }}"
         name: "{{ digital_ocean_vpc_name | default('network-' + server_location) }}"
@@ -184,7 +184,7 @@
         - server_network | length > 0
         - vpc_info.data | selectattr('region', 'equalto', server_location) | selectattr('name', 'equalto', server_network) | list | length == 0
 
-    - name: Extract ip_range from VPC "{{ server_network }}"
+    - name: Extract ip_range from VPC "{{ server_network | default('') }}"
       ansible.builtin.set_fact:
         vpc_ip_range: >-
           {{
@@ -196,7 +196,7 @@
           }}
       when: server_network | length > 0
 
-    - name: Extract id from VPC "{{ server_network }}"
+    - name: Extract id from VPC "{{ server_network | default('') }}"
       ansible.builtin.set_fact:
         vpc_id: >-
           {{
@@ -208,13 +208,15 @@
           }}
       when: server_network | length > 0
 
-    - name: "DigitalOcean: Create a tag '{{ patroni_cluster_name }}'"
+    - name: "DigitalOcean: Create a tag '{{ patroni_cluster_name | default('') }}'"
       community.digitalocean.digital_ocean_tag:
         oauth_token: "{{ lookup('ansible.builtin.env', 'DO_API_TOKEN') }}"
         name: "{{ patroni_cluster_name }}"
         state: present
 
     # Firewall
+    # Note: digital_ocean_droplet module doesn't support disabling public IP,
+    # but we do not open public SSH in Firewall and use private IP if server_public_ip: false
     - name: "DigitalOcean: Create or modify public firewall"
       community.digitalocean.digital_ocean_firewall:
         oauth_token: "{{ lookup('ansible.builtin.env', 'DO_API_TOKEN') }}"
@@ -479,8 +481,17 @@
       when: cloud_firewall | bool
 
     # Server and volume
-    # Note: module doesn't support disabling public IP,
-    # but we do not open public SSH in Firewall and use private IP if server_public_ip: false
+    - name: "DigitalOcean: Gather information about Droplets"
+      community.digitalocean.digital_ocean_droplet_info:
+        oauth_token: "{{ lookup('ansible.builtin.env', 'DO_API_TOKEN') }}"
+        name: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}"
+      loop: "{{ range(0, server_count | int) | list }}"
+      loop_control:
+        index_var: idx
+        label: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}"
+      register: digital_ocean_droplet_info
+      failed_when: false
+
     - name: "DigitalOcean: Create or modify Droplet"
       community.digitalocean.digital_ocean_droplet:
         oauth_token: "{{ lookup('ansible.builtin.env', 'DO_API_TOKEN') }}"
@@ -575,7 +586,7 @@
             target_protocol: tcp
             target_port: "{{ digital_ocean_load_balancer_target_port }}"
         health_check:
-          protocol: http
+          protocol: "{{ patroni_restapi_protocol }}"
           port: "{{ patroni_restapi_port }}"
           path: "/{{ item }}"
           check_interval_seconds: 5
@@ -604,7 +615,7 @@
       when: cloud_load_balancer | bool
 
     # Spaces Object Storage (Backups)
-    - name: "DigitalOcean: Create Spaces Bucket '{{ digital_ocean_spaces_name }}'"
+    - name: "DigitalOcean: Create Spaces Bucket '{{ digital_ocean_spaces_name | default('') }}'"
       community.digitalocean.digital_ocean_spaces:
         oauth_token: "{{ lookup('ansible.builtin.env', 'DO_API_TOKEN') }}"
         name: "{{ digital_ocean_spaces_name }}"
@@ -665,8 +676,16 @@
           {{ ip_addresses | default([]) +
             [{
               'public_ip': (item.data.droplet.networks.v4 | selectattr('type', 'equalto', 'public')).0.ip_address | default(''),
-              'private_ip': (item.data.droplet.networks.v4 | selectattr('type', 'equalto', 'private')).0.ip_address | default('')
+              'private_ip': (item.data.droplet.networks.v4 | selectattr('type', 'equalto', 'private')).0.ip_address | default(''),
+              'new_node': (cluster_scaling | default(false) | bool and item.data.droplet.id not in existing_droplet_ids)
             }]
+          }}
+      vars:
+        existing_droplet_ids: >-
+          {{
+            digital_ocean_droplet_info.results | default([])
+            | map(attribute='data') | map('default', []) | list | flatten
+            | selectattr('id','defined') | map(attribute='id') | list
           }}
       loop: "{{ droplet_result.results | selectattr('data', 'defined') }}"
       loop_control:
@@ -681,7 +700,7 @@
     - droplet_result.results | selectattr('data', 'defined')
 
 # Delete the temporary SSH key from the cloud after creating the droplet
-- name: "DigitalOcean: Remove temporary SSH key '{{ ssh_key_name }}' from cloud"
+- name: "DigitalOcean: Remove temporary SSH key '{{ ssh_key_name | default('') }}' from cloud"
   community.digitalocean.digital_ocean_sshkey:
     oauth_token: "{{ lookup('ansible.builtin.env', 'DO_API_TOKEN') }}"
     name: "{{ ssh_key_name }}"
@@ -755,7 +774,7 @@
         state: "absent"
         name: "{{ patroni_cluster_name }}-private-firewall"
 
-    - name: "DigitalOcean: Delete Spaces Bucket '{{ digital_ocean_spaces_name }}'"
+    - name: "DigitalOcean: Delete Spaces Bucket '{{ digital_ocean_spaces_name | default('') }}'"
       community.digitalocean.digital_ocean_spaces:
         oauth_token: "{{ lookup('ansible.builtin.env', 'DO_API_TOKEN') }}"
         name: "{{ digital_ocean_spaces_name }}"

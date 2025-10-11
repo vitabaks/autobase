@@ -51,7 +51,7 @@
           run_once: true # noqa run-once
           no_log: true # do not output GCP service account contents to the ansible log
 
-        - name: "Copy GCP service account contents to {{ WALG_GS_KEY | default(postgresql_home_dir + '/gcs-key.json') }}"
+        - name: "Copy GCP service account contents to {{ WALG_GS_KEY | default((postgresql_home_dir | default('')) ~ '/gcs-key.json') }}"
           ansible.builtin.copy:
             content: "{{ gcp_service_account_contents }}"
             dest: "{{ WALG_GS_KEY | default(postgresql_home_dir + '/gcs-key.json') }}"
@@ -62,7 +62,7 @@
       when: gcs_key_file is not defined
 
     # if 'gcs_key_file' is defined, copy this GCS key file.
-    - name: "Copy GCS key file to {{ WALG_GS_KEY | default(postgresql_home_dir + '/gcs-key.json') }}"
+    - name: "Copy GCS key file to {{ WALG_GS_KEY | default((postgresql_home_dir | default('')) ~ '/gcs-key.json') }}"
       ansible.builtin.copy:
         src: "{{ gcs_key_file }}"
         dest: "{{ WALG_GS_KEY | default(postgresql_home_dir + '/gcs-key.json') }}"

@@ -61,7 +61,7 @@
         PIP_BREAK_SYSTEM_PACKAGES: "1"
       when: patroni_pip_package_repo | length < 1 and patroni_install_version == "latest"
 
-    - name: "Install patroni {{ patroni_install_version }}"
+    - name: "Install patroni {{ patroni_install_version | default('') }}"
       ansible.builtin.pip:
         name: "patroni=={{ patroni_install_version }}"
         executable: pip3
@@ -354,7 +354,7 @@
     - postgresql_version | int <= 14
   tags: patroni, pgsql_stats_tmp
 
-- name: Prepare PostgreSQL | make sure the postgresql log directory "{{ postgresql_log_dir }}" exists
+- name: Prepare PostgreSQL | make sure the postgresql log directory "{{ postgresql_log_dir | default('') }}" exists
   ansible.builtin.file:
     path: "{{ postgresql_log_dir }}"
     owner: postgres
@@ -363,7 +363,7 @@
     mode: "0700"
   tags: patroni
 
-- name: Prepare PostgreSQL | make sure the custom WAL directory "{{ postgresql_wal_dir }}" exists
+- name: Prepare PostgreSQL | make sure the custom WAL directory "{{ postgresql_wal_dir | default('') }}" exists
   ansible.builtin.file:
     path: "{{ postgresql_wal_dir }}"
     owner: postgres
@@ -374,9 +374,33 @@
   tags: patroni, custom_wal_dir
 
 - block: # when postgresql NOT exists or PITR
-    - name: Prepare PostgreSQL | make sure PostgreSQL data directory "{{ postgresql_data_dir }}" exists
+    - name: Prepare PostgreSQL | make sure PostgreSQL home directory "{{ postgresql_home_dir | default('') }}"
+      ansible.builtin.file:
+        path: "{{ postgresql_home_dir }}"
+        state: directory
+        owner: postgres
+        group: postgres
+        mode: "0755"
+
+    - name: Prepare PostgreSQL | make sure PostgreSQL data directory "{{ postgresql_data_dir | default('') }}" exists
       ansible.builtin.file:
         path: "{{ postgresql_data_dir }}"
+        owner: postgres
+        group: postgres
+        state: directory
+        mode: "0700"
+
+    - name: Prepare PostgreSQL | make sure PostgreSQL unix socket directory "{{ postgresql_unix_socket_dir | default('') }}" exists
+      ansible.builtin.file:
+        path: "{{ postgresql_unix_socket_dir }}"
+        owner: postgres
+        group: postgres
+        state: directory
+        mode: "02775"
+
+    - name: Prepare PostgreSQL | make sure PostgreSQL log directory "{{ postgresql_log_dir | default('') }}" exists
+      ansible.builtin.file:
+        path: "{{ postgresql_log_dir }}"
         owner: postgres
         group: postgres
         state: directory
@@ -424,7 +448,15 @@
             name: patroni
             state: stopped
 
-        - name: Prepare PostgreSQL | make sure the data directory "{{ postgresql_data_dir }}" is empty
+        - name: Prepare PostgreSQL | make sure the postgres home directory "{{ postgresql_home_dir | default('') }}"
+          ansible.builtin.file:
+            path: "{{ postgresql_home_dir }}"
+            state: directory
+            owner: postgres
+            group: postgres
+            mode: "0755"
+
+        - name: Prepare PostgreSQL | make sure the data directory "{{ postgresql_data_dir | default('') }}" is empty
           ansible.builtin.file:
             path: "{{ postgresql_data_dir }}"
             state: "{{ item }}"
@@ -435,7 +467,23 @@
             - absent
             - directory
 
-        - name: Prepare PostgreSQL | make sure the custom WAL directory "{{ postgresql_wal_dir }}" is empty
+        - name: Prepare PostgreSQL | make sure PostgreSQL unix socket directory "{{ postgresql_unix_socket_dir | default('') }}" exists
+          ansible.builtin.file:
+            path: "{{ postgresql_unix_socket_dir }}"
+            owner: postgres
+            group: postgres
+            state: directory
+            mode: "02775"
+
+        - name: Prepare PostgreSQL | make sure PostgreSQL log directory "{{ postgresql_log_dir | default('') }}" exists
+          ansible.builtin.file:
+            path: "{{ postgresql_log_dir }}"
+            owner: postgres
+            group: postgres
+            state: directory
+            mode: "0700"
+
+        - name: Prepare PostgreSQL | make sure the custom WAL directory "{{ postgresql_wal_dir | default('') }}" is empty
           ansible.builtin.file:
             path: "{{ postgresql_wal_dir }}"
             state: "{{ item }}"
@@ -486,12 +534,25 @@
             group: postgres
             mode: "0640"
 
+        - name: Prepare PostgreSQL | validate generated pg_hba.conf
+          become: true
+          become_user: postgres
+          community.postgresql.postgresql_query:
+            login_host: "127.0.0.1"
+            login_port: "{{ postgresql_port }}"
+            login_user: "{{ patroni_superuser_username }}"
+            login_password: "{{ patroni_superuser_password }}"
+            login_db: "postgres"
+            query: "SELECT * FROM pg_hba_file_rules WHERE error IS NOT NULL"
+          register: pg_hba_validate_result
+          failed_when: pg_hba_validate_result.query_result | length > 0
+
         - name: Prepare PostgreSQL | reload for apply the pg_hba.conf
           become: true
           become_user: postgres
           ansible.builtin.command: "{{ postgresql_bin_dir }}/pg_ctl reload -D {{ postgresql_data_dir }}"
 
-        - name: Prepare PostgreSQL | make sure the user "{{ patroni_superuser_username }}" are present, and password does not differ from the specified
+        - name: Prepare PostgreSQL | ensure user "{{ patroni_superuser_username | default('') }}" exists and password matches the specified
           community.postgresql.postgresql_user:
             name: "{{ patroni_superuser_username }}"
             password: "{{ patroni_superuser_password }}"
@@ -504,7 +565,7 @@
           become: true
           become_user: postgres
 
-        - name: Prepare PostgreSQL | make sure the user "{{ patroni_replication_username }}" are present, and password does not differ from the specified
+        - name: Prepare PostgreSQL | ensure user "{{ patroni_replication_username | default('') }}" exists and password matches the specified
           community.postgresql.postgresql_user:
             name: "{{ patroni_replication_username }}"
             password: "{{ patroni_replication_password }}"
@@ -603,7 +664,7 @@
         {{ postgresql_bin_dir }}/pg_ctl stop -D {{ postgresql_data_dir }} -m fast -w -t {{ pg_ctl_timeout | default(3600) }}
       when: pg_ctl_status_result.rc is defined and (pg_ctl_status_result.rc != 3 and pg_ctl_status_result.rc != 4)
 
-    - name: Remove patroni cluster "{{ patroni_cluster_name }}" from DCS (if exist)
+    - name: Remove patroni cluster "{{ patroni_cluster_name | default('') }}" from DCS (if exist)
       become: true
       become_user: postgres
       ansible.builtin.expect:
@@ -620,7 +681,7 @@
       when: inventory_hostname == groups['master'][0]
 
     - block: # for pgbackrest only (for use --delta restore)
-        - name: Run "{{ pgbackrest_patroni_cluster_restore_command }}" on Master
+        - name: Run "{{ pgbackrest_patroni_cluster_restore_command | default('') }}" on Master
           ansible.builtin.command: >
             {{ pgbackrest_patroni_cluster_restore_command }}
             {{ '--target-action=promote' if pgbackrest_patroni_cluster_restore_command is search('--type=') else '' }}
@@ -630,7 +691,7 @@
           when: inventory_hostname == groups['master'][0]
 
           # if patroni_create_replica_methods: "pgbackrest"
-        - name: Run "{{ pgbackrest_patroni_cluster_restore_command }}" on Replica
+        - name: Run "{{ pgbackrest_patroni_cluster_restore_command | default('') }}" on Replica
           ansible.builtin.command: >
             {{ pgbackrest_patroni_cluster_restore_command }}
             {{ '--target-action=pause' if pgbackrest_patroni_cluster_restore_command is search('--type=') else '' }}
@@ -796,7 +857,7 @@
         state: restarted
         enabled: true
 
-    - name: "Wait for port {{ patroni_restapi_port }} to become open on the host"
+    - name: "Wait for port {{ patroni_restapi_port | default('8008') }} to become open on the host"
       ansible.builtin.wait_for:
         port: "{{ patroni_restapi_port }}"
         host: "{{ patroni_bind_address | default(bind_address, true) }}"
@@ -878,6 +939,20 @@
       when: inventory_hostname == groups['master'][0] or
         (('replica' in groups and groups['replica'] | length > 0 and inventory_hostname in groups['replica'] and postgresql_conf_dir != postgresql_data_dir)
         or postgresql_exists | default(false) | bool)
+
+    - name: Prepare PostgreSQL | validate generated pg_hba.conf
+      become: true
+      become_user: postgres
+      community.postgresql.postgresql_query:
+        login_host: "127.0.0.1"
+        login_port: "{{ postgresql_port }}"
+        login_user: "{{ patroni_superuser_username }}"
+        login_password: "{{ patroni_superuser_password }}"
+        login_db: "postgres"
+        query: "SELECT * FROM pg_hba_file_rules WHERE error IS NOT NULL"
+      register: pg_hba_validate_result
+      failed_when: pg_hba_validate_result.query_result | length > 0
+      when: inventory_hostname == groups['master'][0]
 
     - name: Prepare PostgreSQL | reload for apply the pg_hba.conf
       become: true
@@ -993,7 +1068,7 @@
         state: restarted
         enabled: true
 
-    - name: "Wait for port {{ patroni_restapi_port }} to become open on the host"
+    - name: "Wait for port {{ patroni_restapi_port | default('8008') }} to become open on the host"
       ansible.builtin.wait_for:
         port: "{{ patroni_restapi_port }}"
         host: "{{ patroni_bind_address | default(bind_address, true) }}"
@@ -1033,7 +1108,7 @@
         group: postgres
         mode: "0644"
 
-    - name: Disable "postgresql@{{ postgresql_version }}-{{ postgresql_cluster_name }}" service
+    - name: Disable "postgresql@{{ postgresql_version | default('') }}-{{ postgresql_cluster_name | default('') }}" service
       ansible.builtin.systemd:
         name: "postgresql@{{ postgresql_version }}-{{ postgresql_cluster_name }}"
         enabled: false
@@ -1043,7 +1118,7 @@
   tags: patroni, postgresql_disable
 
 # "RedHat"
-- name: Disable "postgresql-{{ postgresql_version }}" service (will be managed by patroni)
+- name: Disable "postgresql-{{ postgresql_version | default('') }}" service (will be managed by patroni)
   ansible.builtin.systemd:
     name: "postgresql-{{ postgresql_version }}"
     enabled: false
@@ -1053,7 +1128,7 @@
   tags: patroni, postgresql_disable
 
 # PostgresPro
-- name: Disable "postgrespro-std-{{ postgresql_version }}" service (will be managed by patroni)
+- name: Disable "postgrespro-std-{{ postgresql_version | default('') }}" service (will be managed by patroni)
   ansible.builtin.systemd:
     name: "postgrespro-std-{{ postgresql_version }}"
     enabled: false

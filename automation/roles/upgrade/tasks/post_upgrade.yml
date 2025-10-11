@@ -112,7 +112,7 @@
         label: "pg{{ idx + 1 }}-path={{ pg_new_datadir }}"
       when: pg_path_count.stdout | int > 0
 
-    - name: pgbackrest | Upgrade stanza "{{ pgbackrest_stanza }}"
+    - name: pgbackrest | Upgrade stanza "{{ pgbackrest_stanza | default('') }}"
       ansible.builtin.command: "pgbackrest --stanza={{ pgbackrest_stanza }} --no-online stanza-upgrade"
       when: pg_path_count.stdout | int > 0 and pgbackrest_stanza_upgrade | bool and pgbackrest_repo_host | length < 1
   become: true
@@ -143,7 +143,7 @@
         label: "pg{{ idx + 1 }}-path={{ pg_new_datadir }}"
       when: pg_path_count.stdout | int > 0
 
-    - name: pgbackrest | Upgrade stanza "{{ pgbackrest_stanza }}"
+    - name: pgbackrest | Upgrade stanza "{{ pgbackrest_stanza | default('') }}"
       delegate_to: "{{ groups['pgbackrest'][0] }}"
       run_once: true
       ansible.builtin.command: "pgbackrest --stanza={{ pgbackrest_stanza }} --no-online stanza-upgrade"
