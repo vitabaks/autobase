@@ -80,7 +80,7 @@
         group: postgres
         mode: "0750"
 
-    - name: "Generate conf file {{ pgbackrest_conf_file }}"
+    - name: "Generate conf file {{ pgbackrest_conf_file | default('') }}"
       ansible.builtin.template:
         src: pgbackrest.conf.j2
         dest: "{{ pgbackrest_conf_file }}"
@@ -134,7 +134,7 @@
         group: "{{ pgbackrest_repo_user }}"
         mode: "0750"
 
-    - name: "Generate global conf file {{ pgbackrest_conf_file }}"
+    - name: "Generate global conf file {{ pgbackrest_conf_file | default('') }}"
       ansible.builtin.template:
         src: pgbackrest.server.conf.j2
         dest: "{{ pgbackrest_conf_file }}"
@@ -142,7 +142,7 @@
         group: "{{ pgbackrest_repo_user }}"
         mode: "0644"
 
-    - name: "Generate stanza conf file {{ pgbackrest_conf_file | dirname }}/conf.d/{{ pgbackrest_stanza }}.conf"
+    - name: "Generate stanza conf file {{ pgbackrest_conf_file | default('') | dirname }}/conf.d/{{ pgbackrest_stanza | default('') }}.conf"
       ansible.builtin.template:
         src: pgbackrest.server.stanza.conf.j2
         dest: "{{ pgbackrest_conf_file | dirname }}/conf.d/{{ pgbackrest_stanza }}.conf"

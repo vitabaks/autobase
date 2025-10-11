@@ -119,7 +119,7 @@
   when:
     - inventory_hostname in groups['primary']
 
-- name: '[Rollback] Wait for port "{{ patroni_restapi_port }}" to become open on the host'
+- name: "[Rollback] Wait for port {{ patroni_restapi_port | default('8008') }} to become open on the host"
   ansible.builtin.wait_for:
     port: "{{ patroni_restapi_port }}"
     host: "{{ patroni_bind_address | default(bind_address, true) }}"
@@ -160,7 +160,7 @@
   when:
     - inventory_hostname in groups['secondary']
 
-- name: '[Rollback] Wait for port "{{ patroni_restapi_port }}" to become open on the host'
+- name: "[Rollback] Wait for port {{ patroni_restapi_port | default('8008') }} to become open on the host"
   ansible.builtin.wait_for:
     port: "{{ patroni_restapi_port }}"
     host: "{{ patroni_bind_address | default(bind_address, true) }}"

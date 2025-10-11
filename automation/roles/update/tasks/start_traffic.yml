@@ -32,7 +32,7 @@
     no_proxy: "{{ patroni_bind_address | default(bind_address, true) }}"
 
 # Warming up caches after reboot (is 'reboot_host_post_delay' is defined)
-- name: "Wait {{ reboot_host_post_delay }} minutes for caches to warm up after reboot"
+- name: "Wait {{ reboot_host_post_delay | default('') }} minutes for caches to warm up after reboot"
   ansible.builtin.pause:
     minutes: "{{ reboot_host_post_delay }}"
   when:

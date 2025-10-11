@@ -38,7 +38,7 @@
     - not postgresql_cluster_maintenance | default(false) | bool
   tags: vip, vip_manager, vip_manager_install
 
-- name: Make sure the conf directory "{{ vip_manager_conf | dirname }}" exist
+- name: Make sure the conf directory "{{ vip_manager_conf | default('') | dirname }}" exist
   ansible.builtin.file:
     dest: "{{ vip_manager_conf | dirname }}"
     state: directory
@@ -46,7 +46,7 @@
     group: postgres
   tags: vip, vip_manager, vip_manager_conf
 
-- name: Generate conf file "{{ vip_manager_conf }}"
+- name: Generate conf file "{{ vip_manager_conf | default('') }}"
   ansible.builtin.template:
     src: templates/vip-manager.yml.j2
     dest: "{{ vip_manager_conf }}"
@@ -58,7 +58,7 @@
   tags: vip, vip_manager, vip_manager_conf
 
 - block: # if cluster_scaling (add_node.yml)
-    - name: Fetch "{{ vip_manager_conf | basename }}" conf file from master
+    - name: Fetch "{{ vip_manager_conf | default('') | basename }}" conf file from master
       run_once: true
       ansible.builtin.fetch:
         src: "{{ vip_manager_conf }}"
@@ -67,13 +67,13 @@
         flat: true
       delegate_to: "{{ groups.master[0] }}"
 
-    - name: Copy "{{ vip_manager_conf | basename }}" conf file to replica
+    - name: Copy "{{ vip_manager_conf | default('') | basename }}" conf file to replica
       ansible.builtin.copy:
         src: "{{ files_dir | default(playbook_dir ~ '/files') }}/{{ vip_manager_conf | basename }}"
         dest: "{{ vip_manager_conf | dirname }}"
       notify: "restart vip-manager"
 
-    - name: Prepare "{{ vip_manager_conf | basename }}" conf file (replace "nodename","iface")
+    - name: Prepare "{{ vip_manager_conf | default('') | basename }}" conf file (replace "nodename","iface")
       ansible.builtin.lineinfile:
         path: "{{ vip_manager_conf }}"
         regexp: "{{ item.regexp }}"

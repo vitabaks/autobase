@@ -6,7 +6,7 @@
     name: patroni
     state: started
 
-- name: "Wait for port {{ patroni_restapi_port }} to become open on the host"
+- name: "Wait for port {{ patroni_restapi_port | default('') }} to become open on the host"
   ansible.builtin.wait_for:
     port: "{{ patroni_restapi_port }}"
     host: "{{ patroni_bind_address | default(bind_address, true) }}"

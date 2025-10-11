@@ -36,7 +36,7 @@
     - "'pgbouncer' not in ansible_facts.packages"
   tags: pgbouncer_install, pgbouncer
 
-- name: Ensure config directory "{{ pgbouncer_conf_dir }}" exist
+- name: Ensure config directory "{{ pgbouncer_conf_dir | default('') }}" exist
   ansible.builtin.file:
     path: "{{ pgbouncer_conf_dir }}"
     state: directory
@@ -45,7 +45,7 @@
     mode: "0750"
   tags: pgbouncer_conf, pgbouncer
 
-- name: Ensure log directory "{{ pgbouncer_log_dir }}" exist
+- name: Ensure log directory "{{ pgbouncer_log_dir | default('') }}" exist
   ansible.builtin.file:
     path: "{{ pgbouncer_log_dir }}"
     state: directory

@@ -1,5 +1,5 @@
 ---
-- name: Ensure config directory "{{ pgbouncer_conf_dir }}" exist
+- name: Ensure config directory "{{ pgbouncer_conf_dir | default('') }}" exist
   ansible.builtin.file:
     path: "{{ pgbouncer_conf_dir }}"
     state: directory
@@ -38,7 +38,7 @@
       changed_when: false
       delegate_to: "{{ groups.master[0] }}"
 
-    - name: "Generate {{ pgbouncer_conf_dir }}/userlist.txt"
+    - name: "Generate {{ pgbouncer_conf_dir | default('') }}/userlist.txt"
       become: true
       become_user: postgres
       ansible.builtin.copy:
@@ -66,7 +66,7 @@
       register: exists_func_user
       changed_when: false
 
-    - name: "Check if {{ pgbouncer_auth_username }} user exists"
+    - name: "Check if {{ pgbouncer_auth_username | default('') }} user exists"
       become: true
       become_user: postgres
       community.postgresql.postgresql_user:

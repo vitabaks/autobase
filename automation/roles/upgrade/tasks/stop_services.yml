@@ -17,7 +17,7 @@
   delay: 10
 
 # Wait for the window to appear without high replication lag before stopping PostgreSQL
-- name: "Wait until replication lag is less than {{ max_replication_lag_bytes | human_readable }}"
+- name: "Wait until replication lag is less than {{ max_replication_lag_bytes | default('') | human_readable }}"
   ansible.builtin.command: >-
     {{ pg_old_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc
     "select coalesce(max(pg_wal_lsn_diff(pg_current_wal_lsn(),replay_lsn)),1) as pg_lag_bytes
@@ -52,7 +52,7 @@
     - pg_lag_bytes.stdout|int >= max_replication_lag_bytes|int
 
 # for compatibility with Postgres 9.x
-- name: "Wait until replication lag is less than {{ max_replication_lag_bytes | human_readable }}"
+- name: "Wait until replication lag is less than {{ max_replication_lag_bytes | default('') | human_readable }}"
   ansible.builtin.command: >-
     {{ pg_old_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc
     "select coalesce(max(pg_xlog_location_diff(pg_current_xlog_location(),replay_location)),1) as pg_lag_bytes
@@ -107,26 +107,26 @@
     - inventory_hostname in groups['secondary']
 
 # additional checks using pg_ctl
-- name: "Check if PostgreSQL {{ pg_old_version }} is stopped"
+- name: "Check if PostgreSQL {{ pg_old_version | default('') }} is stopped"
   ansible.builtin.command: "{{ pg_old_bindir }}/pg_ctl status -D {{ pg_old_datadir }}"
   register: pg_ctl_status_old_result
   failed_when: false
   changed_when: false
 
-- name: "Check if PostgreSQL {{ pg_new_version }} is stopped"
+- name: "Check if PostgreSQL {{ pg_new_version | default('') }} is stopped"
   ansible.builtin.command: "{{ pg_new_bindir }}/pg_ctl status -D {{ pg_new_datadir }}"
   register: pg_ctl_status_new_result
   failed_when: false
   changed_when: false
 
-- name: "Stop PostgreSQL {{ pg_old_version }}"
+- name: "Stop PostgreSQL {{ pg_old_version | default('') }}"
   ansible.builtin.command: >
     {{ pg_old_bindir }}/pg_ctl -D {{ pg_old_datadir }} stop -w -t {{ pg_start_stop_timeout }}
   when:
     - pg_ctl_status_old_result is defined
     - pg_ctl_status_old_result.rc == 0
 
-- name: "Stop PostgreSQL {{ pg_new_version }}"
+- name: "Stop PostgreSQL {{ pg_new_version | default('') }}"
   ansible.builtin.command: >
     {{ pg_new_bindir }}/pg_ctl -D {{ pg_new_datadir }} stop -w -t {{ pg_start_stop_timeout }}
   when:

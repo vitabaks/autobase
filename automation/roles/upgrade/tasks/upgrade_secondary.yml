@@ -7,7 +7,7 @@
 # 2. Count the number of target secondary servers to determine the parallel execution limit.
 # 3. Use xargs to execute the RSync command in parallel for each target secondary server.
 
-- name: Make sure that the new data directory "{{ pg_new_datadir }}" are empty on the Replica
+- name: Make sure that the new data directory "{{ pg_new_datadir | default('') }}" are empty on the Replica
   ansible.builtin.file:
     path: "{{ pg_new_datadir }}"
     state: "{{ item }}"
