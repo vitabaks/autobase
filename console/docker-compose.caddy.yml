@@ -21,7 +21,7 @@ services:
       caddy.email: ${EMAIL}
 
   autobase-console-api:
-    image: autobase/console_api:2.3.2
+    image: autobase/console_api:2.4.1
     container_name: autobase-console-api
     healthcheck:
       test: ["CMD", "curl", "-fsS",
@@ -47,7 +47,7 @@ services:
       - caddy
 
   autobase-console-ui:
-    image: autobase/console_ui:2.3.2
+    image: autobase/console_ui:2.4.1
     container_name: autobase-console-ui
     healthcheck:
       test: [ "CMD", "curl", "http://localhost:80/" ]
@@ -69,7 +69,7 @@ services:
       - caddy
 
   autobase-console-db:
-    image: autobase/console_db:2.3.2
+    image: autobase/console_db:2.4.1
     container_name: autobase-console-db
     healthcheck:
       test: pg_isready -U postgres -h 127.0.0.1
