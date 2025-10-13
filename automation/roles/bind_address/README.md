@@ -5,5 +5,6 @@ This role automatically detects and sets the available private IPv4 address for 
 #### How it works
 
 - Finds the first available private IPv4 address on the host (excluding the docker0 interface, if present).
-- Sets this address as the Ansible fact bind_address using set_fact.
-- If bind_address is already defined in inventory or variables, it will not be executed.
+- Sets this address as the Ansible fact `bind_address` using `set_fact`.
+- If `bind_address` is already defined in inventory or variables, it will not be executed.
+- If no suitable private IP is found, the role fails with a clear message.
