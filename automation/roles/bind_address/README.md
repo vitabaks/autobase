@@ -8,3 +8,7 @@ This role automatically detects and sets the available private IPv4 address for 
 - Sets this address as the Ansible fact `bind_address` using `set_fact`.
 - If `bind_address` is already defined in inventory or variables, it will not be executed.
 - If no suitable private IP is found, the role fails with a clear message.
+
+#### Recommendation
+
+If a host has multiple IP addresses (e.g., multiple interfaces/VLANs), explicitly set `bind_address` in inventory for each host instead of relying on auto-detection.
