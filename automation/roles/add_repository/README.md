@@ -1,6 +1,6 @@
 # Ansible Role: add_repository
 
-This role manages repository configuration for PostgreSQL and other packages on both Debian/Ubuntu and RedHat/CentOS systems. It handles the installation and configuration of various repositories including PostgreSQL PGDG repository, EPEL repository, and extension repositories like TimescaleDB and Citus.
+This role manages repository configuration for PostgreSQL and other packages. It handles the installation and configuration of various repositories including PostgreSQL PGDG repository, EPEL repository, and extension repositories like TimescaleDB and Citus.
 
 ## Description
 
@@ -37,13 +37,12 @@ The `add_repository` role is responsible for:
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `enable_timescale` | `false` | Enable TimescaleDB repository |
-| `enable_timescaledb` | `false` | Enable TimescaleDB repository (alternative name) |
+| `enable_timescale` / `enable_timescaledb` | `false` | Enable TimescaleDB repository |
 | `enable_citus` | `false` | Enable Citus repository |
 
 ## Repository Definitions
 
-### APT Repository Format (Debian/Ubuntu)
+### APT Repository Format
 
 ```yaml
 apt_repository:
@@ -56,7 +55,7 @@ apt_repository:
     enabled: true                        # Whether repository is enabled (default: true)
 ```
 
-### YUM Repository Format (RedHat/CentOS)
+### YUM Repository Format
 
 ```yaml
 yum_repository:
@@ -68,79 +67,10 @@ yum_repository:
     enabled: true                        # Optional (default: true)
 ```
 
-## Usage Examples
-
-### Basic PostgreSQL Repository Setup
-
-```yaml
-install_postgresql_repo: true
-install_postgresql_repo_extras: true  # Enables pgdg-rhel<version>-extras for HAProxy, etc.
-install_epel_repo: true
-```
-
-### Custom Repository Configuration
-
-```yaml
-# For Debian/Ubuntu
-apt_repository:
-  - name: "custom-repo"
-    uris: "https://apt.example.com"
-    signed_by: "https://apt.example.com/gpg"
-    suites: "{{ ansible_distribution_release }}"
-    components: ["main"]
-
-# For RedHat/CentOS
-yum_repository:
-  - name: "custom-repo"
-    description: "Custom Repository"
-    baseurl: "https://yum.example.com/repo"
-    gpgkey: "https://yum.example.com/gpg"
-```
-
-### Extension Repositories
-
-```yaml
-# Enable TimescaleDB repository
-enable_timescale: true
-
-# Enable Citus repository (PostgreSQL 11+ only)
-enable_citus: true
-postgresql_version: 15
-```
-
 ## Dependencies
 
 This role depends on:
 - `vitabaks.autobase.common` - Provides common variables and configurations
-
-## Platform Support
-
-### Supported Operating Systems
-
-- **Debian/Ubuntu**: Uses `deb822_repository` for modern repository management
-- **RedHat/CentOS/AlmaLinux/Oracle Linux**: Uses `yum_repository` and `dnf config-manager`
-
-### Supported Architectures
-
-- **x86_64/amd64**: Full support for all repositories
-- **arm64**: Limited support (TimescaleDB and Citus have x86_64-only repositories)
-
-## Special Features
-
-### Automatic PowerTools/CodeReady Builder Enablement
-
-The role automatically enables additional repositories based on the distribution:
-
-- **AlmaLinux/Rocky 8**: PowerTools repository
-- **RHEL 9+/AlmaLinux/Rocky**: CodeReady Linux Builder (crb) repository
-- **Oracle Linux 8+**: CodeReady Builder repository
-
-### PostgreSQL Debuginfo Repository
-
-When PostgreSQL debuginfo packages are requested, the role:
-1. Enables existing debuginfo repositories in pgdg-redhat-all.repo
-2. Creates new debuginfo repository entries if they don't exist
-3. Disables GPG checking for debuginfo packages
 
 ## Tags
 
