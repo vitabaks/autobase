@@ -105,7 +105,7 @@ Provision the PostgreSQL cluster infrastructure in public clouds (AWS, GCP, Azur
 | azure_vm_image_offer, azure_vm_image_publisher, azure_vm_image_sku, azure_vm_image_version | Azure | Image reference |
 | hetzner_load_balancer_type | Hetzner | Default: lb21 |
 | hcloud_network_name | Hetzner | Network name if creating, default('postgres-cluster-network-' + target_network_zone) |
-| hcloud_network_ip_range/hcloud_subnetwork_ip_range | Hetzner | CIDRs, default: '10.0.0.0/16'/'10.0.1.0/24' |
+| hcloud_network_ip_range, hcloud_subnetwork_ip_range | Hetzner | CIDRs, default: '10.0.0.0/16'/'10.0.1.0/24' |
 
 ## Dependencies
 
