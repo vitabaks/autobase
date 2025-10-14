@@ -39,7 +39,7 @@ Provision the PostgreSQL cluster infrastructure in public clouds (AWS, GCP, Azur
 | volume_size | int | 100 | Data disk size (GB) |
 | system_volume_type | string | "" | System disk type. Defaults: 'gp3' for AWS, 'pd-ssd' for GCP, 'StandardSSD_LRS' for Azure |
 | system_volume_size | int | 100 | System disk size (GB) |
-| ssh_key_name | string | "" | SName of the SSH key to be added to the server. Note: If not provided, all cloud available SSH keys will be added (applicable to DigitalOcean, Hetzner) |
+| ssh_key_name | string | "" | Name of the SSH key to be added to the server. Note: If not provided, all cloud available SSH keys will be added (applicable to DigitalOcean, Hetzner) |
 | ssh_key_content | string | "" | If provided, the public key content will be added to the cloud (directly to the server for GCP) |
 | cloud_firewall | bool | true | Manage firewall/Security Groups |
 | ssh_public_access | bool | true | Allow public ssh access (required for deployment from the public network). Applicable if server_public_ip is set to true |
@@ -59,8 +59,8 @@ Provision the PostgreSQL cluster infrastructure in public clouds (AWS, GCP, Azur
 | aws_s3_bucket_ignore_public_acls | bool | true | IgnorePublicAcls |
 | aws_s3_bucket_absent | bool | false | Allow delete bucket on state=absent |
 | gcp_bucket_create | bool | true | Create GCS bucket (if 'pgbackrest_install' or 'wal_g_install' is 'true') |
-| gcp_bucket_name | string | {{ patroni_cluster_name }}-backup | Bucket name |
-| gcp_bucket_storage_class | string | MULTI_REGIONAL | Storage class |
+| gcp_bucket_name | string | {{ patroni_cluster_name }}-backup | Storage bucket name |
+| gcp_bucket_storage_class | string | MULTI_REGIONAL | Storage bucket class |
 | gcp_bucket_default_object_acl | string | projectPrivate | Default object ACL |
 | gcp_bucket_absent | bool | false | Allow delete bucket on state=absent |
 | azure_blob_storage_create | bool | true | Create Azure Blob container (if 'pgbackrest_install' or 'wal_g_install' is 'true') |
@@ -99,8 +99,8 @@ Provision the PostgreSQL cluster infrastructure in public clouds (AWS, GCP, Azur
 | digital_ocean_load_balancer_size_unit | DO | default(3) if server_location not in ['ams2', 'nyc2', 'sfo1'] |
 | digital_ocean_load_balancer_port, digital_ocean_load_balancer_target_port | DO | LB port, default: pgbouncer_listen_port |
 | azure_resource_group | Azure | Resource group name |
-| azure_virtual_network/azure_subnet | Azure | VNet/Subnet names, default: postgres-cluster-network/postgres-cluster-subnet |
-| azure_virtual_network_prefix/azure_subnet_prefix | Azure | CIDRs, default: '10.0.0.0/16'/'10.0.1.0/24' |
+| azure_virtual_network, azure_subnet | Azure | VNet/Subnet names, default: postgres-cluster-network/postgres-cluster-subnet |
+| azure_virtual_network_prefix, azure_subnet_prefix | Azure | CIDRs, default: '10.0.0.0/16'/'10.0.1.0/24' |
 | azure_admin_username | Azure | Default: azureadmin |
 | azure_vm_image_offer, azure_vm_image_publisher, azure_vm_image_sku, azure_vm_image_version | Azure | Image reference |
 | hetzner_load_balancer_type | Hetzner | Default: lb21 |
