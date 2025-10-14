@@ -1,98 +1,20 @@
 # Consul
 
-![Molecule](https://github.com/ansible-community/ansible-consul/workflows/Molecule/badge.svg?branch=master&event=pull_request)
-[![Average time to resolve an issue](http://isitmaintained.com/badge/resolution/ansible-community/ansible-consul.svg)](http://isitmaintained.com/project/ansible-community/ansible-consul "Average time to resolve an issue")
-[![Percentage of issues still open](http://isitmaintained.com/badge/open/ansible-community/ansible-consul.svg)](http://isitmaintained.com/project/ansible-community/ansible-consul "Percentage of issues still open")
-
 This Ansible role installs [Consul](https://consul.io/), including establishing a filesystem structure and server or client agent configuration with support for some common operational features.
 
-It can also bootstrap a development or evaluation cluster of 3 server agents running in a Vagrant and VirtualBox based environment. See [README_VAGRANT.md](https://github.com/ansible-community/ansible-consul/blob/master/examples/README_VAGRANT.md) and the associated [Vagrantfile](https://github.com/ansible-community/ansible-consul/blob/master/examples/Vagrantfile) for more details.
-
-## Role Philosophy
-
-> “Another flaw in the human character is that everybody wants to build and nobody wants to do maintenance.”<br>
-> ― Kurt Vonnegut, Hocus Pocus
-
-Please note that the original design goal of this role was more concerned with the initial installation and bootstrapping of a Consul server cluster environment and so it does not currently concern itself (all that much) with performing ongoing maintenance of a cluster.
-
-Many users have expressed that the Vagrant based environment makes getting a working local Consul server cluster environment up and running an easy process — so this role will target that experience as a primary motivator for existing.
-
-If you get some mileage from it in other ways, then all the better!
-
-## Role migration and installation
-
-This role was originally developed by Brian Shumate and was known on Ansible Galaxy as **brianshumate.consul**. Brian asked the community to be relieved of the maintenance burden, and therefore Bas Meijer transferred the role to **ansible-community** so that a team of volunteers can maintain it. At the moment there is no membership of ansible-community on https://galaxy.ansible.com and therefore to install this role into your project you should create a file `requirements.yml` in the subdirectory `roles/` of your project with this content:
-
-```
----
-- src: https://github.com/ansible-community/ansible-consul.git
-  name: ansible-consul
-  scm: git
-  version: master
-```
-
-This repo has tagged releases that you can use to pin the version.
-
-Tower will install the role automatically, if you use the CLI to control ansible, then install it like:
-
-```
-ansible-galaxy install -p roles -r roles/requirements.yml
-```
-
-## Requirements
-
-This role requires a FreeBSD, Debian, or Red Hat Enterprise Linux distribution or Windows Server 2012 R2.
-
-The role might work with other OS distributions and versions, but is known to function well with the following software versions:
-
-- Consul: 1.8.7
-- Ansible: 2.8.2
-- Alpine Linux: 3.8
-- CentOS: 7, 8
-- Debian: 9
-- FreeBSD: 11
-- Mac OS X: 10.15 (Catalina)
-- RHEL: 7, 8
-- Rocky Linux: 8
-- OracleLinux: 7, 8
-- Ubuntu: 16.04
-- Windows: Server 2012 R2
-
-Note that for the "local" installation mode (the default), this role will locally download only one instance of the Consul archive, unzip it and install the resulting binary on all desired Consul hosts.
-
-To do so requires that `unzip` is available on the Ansible control host and the role will fail if it doesn't detect `unzip` in the PATH.
-
-Collection requirements for this role are listed in the [`requirements.yml`](requirements.yml) file. It is your responsibility to make sure that you install these collections to ensure that the role runs properly. Usually, this can be done with:
-
-```
-ansible-galaxy collection install -r requirements.yml
-```
-
-## Caveats
-
-This role does not fully support the limit option (`ansible -l`) to limit the hosts, as this will break populating required host variables. If you do use the limit option with this role, you can encounter template errors like:
-
-```
-Undefined is not JSON serializable.
-```
+Based on [ansible-consul](https://github.com/ansible-collections/ansible-consul) role.
 
 ## Role Variables
 
-The role uses variables defined in these 3 places:
-
-- Hosts inventory file (see `examples/vagrant_hosts` for an example)
-- `vars/*.yml` (primarily OS/distributions specific variables)
-- `defaults/main.yml` (everything else)
-
-> :warning: **NOTE**: The role relies on the inventory host group for the consul servers to be defined as the variable `consul_group_name` and it will not function properly otherwise. Alternatively the consul servers can be placed in the default host group `[consul_instances]` in the inventory as shown in the examples below.
-
 Many role variables can also take their values from environment variables as well; those are noted in the description where appropriate.
+
+Some values are redefined at the `vitabaks.autobase.common` role level.
 
 ### `consul_version`
 
 - Version to install
 - Set value as `latest` for the latest available version of consul
-- Default value: 1.8.7
+- Default value: latest
 
 ### `consul_architecture_map`
 
@@ -129,25 +51,21 @@ Many role variables can also take their values from environment variables as wel
 
 - Binary installation path
 - Default Linux value: `/usr/local/bin`
-- Default Windows value: `C:\ProgramData\consul\bin`
 
 ### `consul_config_path`
 
 - Base configuration file path
 - Default Linux value: `/etc/consul`
-- Default Windows value: `C:\ProgramData\consul\config`
 
 ### `consul_configd_path`
 
 - Additional configuration directory
-- Default Linux value: `{{ consul_config_path }}/consul.d`
-- Default Windows value: `C:\ProgramData\consul\config.d`
+- Default Linux value: `{{ consul_config_path }}/conf.d`
 
 ### `consul_data_path`
 
 - Data directory path as defined in [data_dir or -data-dir](https://www.consul.io/docs/agent/options.html#_data_dir)
-- Default Linux value: `/opt/consul`
-- Default Windows value: `C:\ProgramData\consul\data`
+- Default Linux value: `/var/lib/consul`
 
 ### `consul_configure_syslogd`
 
@@ -163,7 +81,6 @@ Many role variables can also take their values from environment variables as wel
   - Log path for use in rsyslogd configuration on Linux. Ignored if `consul_configure_syslogd` is false.
 - Default Linux value: `/var/log/consul`
   - Override with `CONSUL_LOG_PATH` environment variable
-- Default Windows value: `C:\ProgramData\consul\log`
 
 ### `consul_log_file`
 
@@ -217,13 +134,11 @@ Many role variables can also take their values from environment variables as wel
 
 - Run path for process identifier (PID) file
 - Default Linux value: `/run/consul`
-- Default Windows value: `C:\ProgramData\consul`
 
 ### `consul_user`
 
 - OS user
 - Default Linux value: consul
-- Default Windows value: LocalSystem
 
 ### `consul_manage_user`
 
@@ -350,8 +265,7 @@ consul_node_meta:
 
 - Log to syslog as defined in [enable_syslog or -syslog](https://www.consul.io/docs/agent/options.html#_syslog)
   - Override with `CONSUL_SYSLOG_ENABLE` environment variable
-- Default Linux value: false
-- Default Windows value: false
+- Default Linux value: true
 
 ### `consul_bind_address`
 
@@ -545,7 +459,7 @@ Notice that the dict object has to use precisely the names stated in the documen
 
 - Enable TLS
   - Override with `CONSUL_ACL_TLS_ENABLE` environment variable
-- Default value: false
+- Default value: true
 
 ### `consul_tls_copy_keys`
 
@@ -558,7 +472,7 @@ Notice that the dict object has to use precisely the names stated in the documen
 
 - Target directory for TLS files
   - Override with `CONSUL_TLS_DIR` environment variable
-- Default value: `/etc/consul/ssl`
+- Default value: `{{ consul_config_path }}/tls`
 
 ### `consul_tls_ca_crt`
 
@@ -684,19 +598,18 @@ auto_encrypt:
 ### `consul_install_remotely`
 
 - Whether to download the files for installation directly on the remote hosts
-- This is the only option on Windows as WinRM is somewhat limited in this scope
 - Default value: false
 
 ### `consul_install_from_repo`
 
 - Boolean, whether to install consul from repository as opposed to installing the binary directly.
 - Supported distros: Amazon Linux, CentOS, Debian, Fedora, Ubuntu, Red Hat, Rocky.
-- Default value: false
+- Default value: true
 
 ### `consul_ui`
 
 - Enable the consul ui?
-- Default value: true
+- Default value: false
 
 ### `consul_ui_legacy`
 
@@ -706,12 +619,12 @@ auto_encrypt:
 ### `consul_disable_update_check`
 
 - Disable the consul update check?
-- Default value: false
+- Default value: true
 
 ### `consul_enable_script_checks`
 
 - Enable script based checks?
-- Default value: false
+- Default value: true
 - This is discouraged in favor of `consul_enable_local_script_checks`.
 
 ### `consul_enable_local_script_checks`
@@ -969,26 +882,6 @@ packages with different package names.
 - List of OS packages to install
 - Default value: list
 
-### `consul_windows_pkg`
-
-- Consul package filename
-- Default value: `{{ consul_version }}_windows_amd64.zip`
-
-### `consul_windows_url`
-
-- Consul package download URL
-- Default value: `{{ consul_zip_url }}`
-
-### `consul_windows_sha256`
-
-- Consul download SHA256 summary
-- Default value: SHA256 summary
-
-### `consul_windows_os_packages`
-
-- List of OS packages to install
-- Default value: list
-
 ### `consul_performance`
 
 - List of Consul performance tuning items
@@ -1032,8 +925,6 @@ consul_limits:
 Ansible requires GNU tar and this role performs some local use of the unarchive module for efficiency, so ensure that your system has `gtar` and `unzip` installed and in the PATH. If you don't this role will install `unzip` on the remote machines to unarchive the ZIP files.
 
 If you're on system with a different (i.e. BSD) `tar`, like macOS and you see odd errors during unarchive tasks, you could be missing `gtar`.
-
-Installing Ansible on Windows requires the PowerShell Community Extensions. These already installed on Windows Server 2012 R2 and onward. If you're attempting this role on Windows Server 2008 or earlier, you'll want to install the extensions [here](https://pscx.codeplex.com/).
 
 ## Example Playbook
 
@@ -1124,7 +1015,7 @@ consul3.node.consul.  0 IN  A 10.1.42.230
 
 - Whether to install and configure DNS API forwarding on port 53 using DNSMasq
   - Override with `CONSUL_DNSMASQ_ENABLE` environment variable
-- Default value: false
+- Default value: true
 
 ### `consul_dnsmasq_bind_interfaces`
 
@@ -1141,12 +1032,12 @@ consul3.node.consul.  0 IN  A 10.1.42.230
 
 - dnsmasq cache-size
 - If smaller then 0, the default dnsmasq setting will be used.
-- Default value: _-1_
+- Default value: 0
 
 ### `consul_dnsmasq_servers`
 
 - Upstream DNS servers used by dnsmasq
-- Default value: _8.8.8.8_ and _8.8.4.4_
+- Default value: _1.1.1.1_ _8.8.8.8_
 
 ### `consul_dnsmasq_revservers`
 
@@ -1234,45 +1125,6 @@ Services object:
 | weights             | False    | dict   |         | [Weight of a service in DNS SRV responses](https://www.consul.io/docs/agent/services.html#dns-srv-weights) |
 | token               | False    | string |         | ACL token to use to register this service                                                                  |
 
-Configuration example:
-
-```yaml
-consul_services:
-  - name: "openshift"
-    tags: ["production"]
-  - name: "redis"
-    id: "redis"
-    tags: ["primary"]
-    address: ""
-    meta:
-      meta: "for my service"
-    proxy:
-      destination_service_name: "redis"
-      destination_service_id: "redis1"
-      local_service_address: "127.0.0.1"
-      local_service_port: 9090
-      config: {}
-      upstreams: []
-    checks:
-      - args: ["/home/consul/check.sh"]
-        interval: "10s"
-```
-
-Then you can check that the service is well added to the catalog
-
-```
-> consul catalog services
-consul
-openshift
-redis
-```
-
-> **Note:** to delete a service that has been added from this role, remove it from the `consul_services` list and apply the role again.
-
-### Vagrant and VirtualBox
-
-See [examples/README_VAGRANT.md](https://github.com/ansible-community/ansible-consul/blob/master/examples/README_VAGRANT.md) for details on quick Vagrant deployments under VirtualBox for development, evaluation, testing, etc.
-
 ## License
 
 BSD
@@ -1280,9 +1132,3 @@ BSD
 ## Author Information
 
 [Brian Shumate](http://brianshumate.com)
-
-## Contributors
-
-Special thanks to the folks listed in [CONTRIBUTORS.md](https://github.com/ansible-community/ansible-consul/blob/master/CONTRIBUTORS.md) for their contributions to this project.
-
-Contributions are welcome, provided that you can agree to the terms outlined in [CONTRIBUTING.md](https://github.com/ansible-community/ansible-consul/blob/master/CONTRIBUTING.md).
