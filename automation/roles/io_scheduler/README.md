@@ -10,9 +10,9 @@ Configures Linux I/O scheduler and request queue depth for specified block devic
 | scheduler | [] | List of device tuning items. Each item: { sched: "<scheduler>", nr_requests: "<number>", device: "<block device>" }. |
 
 Item fields:
-- sched: one of noop, deadline, mq-deadline, or none.
-- nr_requests: number of I/O requests kept in the queue (e.g., "1024"). Optional; applied only if supported by the device.
-- device: block device name (e.g., "sdb", "nvme1n1").
+- `sched`: one of noop, deadline, mq-deadline, or none.
+- `nr_requests`: number of I/O requests kept in the queue (e.g., "1024").
+- `device`: block device name (e.g., "sdb", "nvme1n1").
 
 ### Example
 
