@@ -1,14 +1,6 @@
 # Ansible Role: haproxy
 
-This role installs and configures [HAProxy](http://www.haproxy.org/), a reliable, high-performance TCP/HTTP load balancer that provides load balancing and high availability for PostgreSQL database connections.
-
-## Requirements
-
-### Prerequisites
-
-- Target PostgreSQL servers must be accessible
-- Network connectivity between HAProxy and PostgreSQL servers
-- Proper firewall configuration for HAProxy ports
+This role installs and configures [HAProxy](http://www.haproxy.org/), a reliable, high-performance TCP/HTTP load balancer that provides load balancing for PostgreSQL database connections.
 
 ## Role Variables
 
@@ -27,10 +19,20 @@ This role installs and configures [HAProxy](http://www.haproxy.org/), a reliable
 | `haproxy_listen_port.replicas_sync` | `5002` | Port for synchronous replica connections |
 | `haproxy_listen_port.replicas_async` | `5003` | Port for asynchronous replica connections |
 | `haproxy_listen_port.stats` | `7000` | Port for statistics dashboard |
-| `haproxy_listen_port.master_direct` | `6000` | Direct primary connections (bypasses PgBouncer) |
-| `haproxy_listen_port.replicas_direct` | `6001` | Direct replica connections (bypasses PgBouncer) |
-| `haproxy_listen_port.replicas_sync_direct` | `6002` | Direct sync replica connections (bypasses PgBouncer) |
-| `haproxy_listen_port.replicas_async_direct` | `6003` | Direct async replica connections (bypasses PgBouncer) |
+| `haproxy_listen_port.master_direct` |  | Direct primary connections (bypasses PgBouncer) |
+| `haproxy_listen_port.replicas_direct` |  | Direct replica connections (bypasses PgBouncer) |
+| `haproxy_listen_port.replicas_sync_direct` |  | Direct sync replica connections (bypasses PgBouncer) |
+| `haproxy_listen_port.replicas_async_direct` |  | Direct async replica connections (bypasses PgBouncer) |
+
+Note:
+- `master_direct`/`replicas_direct`/`replicas_sync_direct`/`replicas_async_direct` are optional and only used when defined (intended to bypass PgBouncer for direct PostgreSQL connections).
+
+### Addressing
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `haproxy_bind_address` | `"{{ bind_address }}"` | Address to bind listeners (stats and data ports) when no VIP is used. |
+| `cluster_vip` | `""` | Virtual IP for HAProxy high availability and single entry point; when set, data ports bind to `cluster_vip` while stats bind to `haproxy_bind_address`. |
 
 ### Connection Limits
 
@@ -55,25 +57,5 @@ This role installs and configures [HAProxy](http://www.haproxy.org/), a reliable
 
 ## Dependencies
 
-```yaml
-dependencies:
-  - role: vitabaks.autobase.common
-```
-
-## Tags
-
-Use these tags to run specific parts of the role:
-
-- `haproxy`: Run all HAProxy tasks
-- `load_balancing`: Run load balancing configuration tasks
-- `haproxy_conf`: Configure HAProxy only
-- `haproxy_service`: Manage HAProxy service only
-- `haproxy_selinux`: Configure SELinux policies only
-
-## License
-
-MIT
-
-## Author Information
-
-This role is part of the [Autobase](https://github.com/vitabaks/autobase) project for automated PostgreSQL database platform deployment.
+This role depends on:
+- `vitabaks.autobase.common` - Provides common variables and configurations
