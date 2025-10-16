@@ -1,6 +1,8 @@
 # Ansible Role: copy
 
-Fetch files from the first host in the master group and copy them to all target hosts.
+This role copies arbitrary files to PostgreSQL cluster servers. You can either:
+- pre-place files on the controller in /autobase/automation/playbooks/files, or
+- optionally fetch them from the primary node (first host in the "master" group) and then distribute to all other servers.
 
 ## Variables
 
@@ -11,7 +13,7 @@ Fetch files from the first host in the master group and copy them to all target 
 
 ### Examples:
 
-Copy the certificate files from the primary node to the replicas
+Fetch the certificate files from the primary node and copy to the replicas
 
 ```yaml
 fetch_files_from_master:
