@@ -1,120 +1,43 @@
 # Ansible Role: packages
 
-This role manages system package installation for PostgreSQL and related components. It handles package repositories, system dependencies, and PostgreSQL installation across different operating systems and installation methods.
-
-## Description
-
-The packages role is responsible for installing and managing system packages required for a PostgreSQL cluster deployment. This role:
-
-- Installs system packages required by PostgreSQL and related tools
-- Manages PostgreSQL package repositories (PGDG)
-- Handles PostgreSQL installation from packages or source
-- Configures package manager caches and repositories
-- Manages PostgreSQL AppStream modules on RHEL/CentOS
-- Supports proxy environments for package downloads
-- Provides flexibility for different installation methods
-
-## Requirements
-
-### Prerequisites
-
-- Network connectivity for package downloads
-- Appropriate privileges for package installation
-- Valid package repository access
+This role installs system packages and PostgreSQL packages from repositories (dnf/apt) and optionally perf/FlameGraph and packages from local files.
 
 ## Role Variables
 
-This role uses variables defined in the `vitabaks.autobase.common` role.
+| Variable | Default | Description |
+|---|---|---|
+| installation_method | "packages" | Installation method: "packages" (deb/rpm). |
+| system_packages | [...] | List of system packages to install. |
+| postgresql_packages | [...] | List of PostgreSQL packages to install. |
+| packages_from_file | [] | Optional list of local package files (deb/rpm) to install from /files directory. |
+| install_perf | false | Install perf and FlameGraph helper. |
+| python_version | "3" | Python major version to select alternatives (RedHat) and package names. |
+| skip_dnf_makecache | false | Skip DNF cache refresh on RedHat family. |
+| proxy_env | {} | Optional proxy environment for package downloads. |
 
-### Installation Method
 
-```yaml
-# Installation method selection
-installation_method: "packages"        # or "source"
+## Extension Auto-Setup
 
-# Skip DNF cache refresh (for faster runs)
-skip_dnf_makecache: false
-```
+This role can install popular PostgreSQL extensions automatically when corresponding enable_*** flags are set. It picks the correct package name for Debian/RedHat, handles version mapping where needed, and for some extensions fetches artifacts directly from GitHub (via tasks/extensions_github.yml) using regex-based matching.
 
-### System Packages
-
-```yaml
-# System packages to install (defined in common role)
-system_packages:
-  - curl
-  - wget
-  - gnupg2
-  - lsb-release
-  - ca-certificates
-  - python3
-  - python3-pip
-  - rsync
-  - htop
-  - iotop
-  - sysstat
-  - unzip
-  - tar
-```
-
-### PostgreSQL Configuration
-
-```yaml
-# PostgreSQL installation
-install_postgresql_repo: true          # Install PGDG repository
-postgresql_version: "16"                # PostgreSQL version to install
-
-# PostgreSQL packages (defined in common role)
-postgresql_packages:
-  - "postgresql-{{ postgresql_version }}"
-  - "postgresql-client-{{ postgresql_version }}"
-  - "postgresql-contrib-{{ postgresql_version }}"
-  - "postgresql-server-dev-{{ postgresql_version }}"
-
-# Additional packages for specific features
-postgresql_extensions_packages: []     # Extension packages
-postgresql_develop_packages: []        # Development packages
-```
-
-### Repository Configuration
-
-```yaml
-# Proxy environment (if needed)
-proxy_env:
-  http_proxy: "http://proxy.example.com:3128"
-  https_proxy: "http://proxy.example.com:3128"
-  
-# Repository URLs and keys
-postgresql_apt_key_url: "https://apt.postgresql.org/pub/repos/apt/ACCC4CF8.asc"
-postgresql_apt_repository: "deb https://apt.postgresql.org/pub/repos/apt/ {{ ansible_distribution_release }}-pgdg main"
-```
+| Variable | Default | Description |
+|---|---|---|
+| enable_timescale / enable_timescaledb | false | Install TimescaleDB package.|
+| enable_citus | false | Install Citus package. |
+| enable_pg_repack | false | Install pg_repack package. |
+| enable_pg_cron | false | Install pg_cron package. |
+| enable_pgaudit | false | Install pgaudit package. |
+| enable_postgis | false | Install PostGIS package. |
+| enable_pgrouting | false | Install pgRouting package. |
+| enable_pg_stat_kcache | false | Install pg_stat_kcache package. |
+| enable_pg_wait_sampling | false | Install pg_wait_sampling package. |
+| enable_pg_partman | false | Install pg_partman package. |
+| enable_pgvector | false | Install pgvector package. |
+| enable_pgvectorscale | false | Install pgvectorscale from GitHub releases. |
+| enable_pg_search / enable_paradedb | false | Install ParadeDB’s pg_search from GitHub releases. |
+| enable_pg_analytics / enable_paradedb | false | Install pg_analytics from GitHub releases. |
 
 ## Dependencies
 
-```yaml
-dependencies:
-  - role: vitabaks.autobase.common
-```
-
-
-## Tags
-
-Use these tags to run specific parts of the role:
-
-- `install_packages`: Install system packages
-- `install_postgres`: Install PostgreSQL packages
-- `install_extensions`: Install PostgreSQL extensions
-- `install_packages_from_file`: Install packages from file
-- `perf`: Install performance monitoring tools
-- `pgvector`: Install pgvector extension
-- `postgis`: Install PostGIS extension
-- `timescaledb`: Install TimescaleDB extension
-- `pg_cron`: Install pg_cron extension
-- `pgaudit`: Install pgAudit extension
-
-## License
-
-MIT
-
-## Author Information
-
-This role is part of the [Autobase](https://github.com/vitabaks/autobase) project for automated PostgreSQL database platform deployment.
+This role depends on:
+- `vitabaks.autobase.common` - Provides common variables and configurations
