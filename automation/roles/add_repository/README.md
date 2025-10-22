@@ -71,13 +71,3 @@ yum_repository:
 
 This role depends on:
 - `vitabaks.autobase.common` - Provides common variables and configurations
-
-## Tags
-
-Available tags for selective execution:
-- `add_repo`: General repository addition
-- `install_postgresql_repo`: PostgreSQL repository installation
-- `install_epel_repo`: EPEL repository installation
-- `timescaledb`, `timescale`: TimescaleDB repository
-- `citus`: Citus repository
-- `debuginfo`: PostgreSQL debuginfo repository
