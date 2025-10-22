@@ -35,6 +35,3 @@ ssh_public_keys: |
 
 This role depends on:
 - `vitabaks.autobase.common` - Provides common variables and configurations
-
-## Tags
-- ssh_public_keys
