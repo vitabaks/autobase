@@ -2,14 +2,6 @@
 
 This role installs and configures [Patroni](https://github.com/patroni/patroni), a high-availability solution for PostgreSQL that manages PostgreSQL configuration and provides automatic failover in PostgreSQL clusters.
 
-## Requirements
-
-### Prerequisites
-
-- PostgreSQL server must be installed
-- Python 3.6 or higher
-- One of the following DCS (Distributed Configuration Store): etcd, Consul, or ZooKeeper
-
 ## Role Variables
 
 ### Core Configuration
@@ -21,24 +13,28 @@ This role installs and configures [Patroni](https://github.com/patroni/patroni),
 | `patroni_superuser_password` | `""` | PostgreSQL superuser password (auto-generated if empty) |
 | `patroni_replication_username` | `"replicator"` | PostgreSQL replication user username |
 | `patroni_replication_password` | `""` | PostgreSQL replication user password (auto-generated if empty) |
+| `patroni_superuser_auth_options` | `[]` | Extra libpq auth options for superuser (e.g., sslmode, sslrootcert). Defaults depend on tls_cert_generate. |
+| `patroni_replication_auth_options` | `[]` | Extra libpq auth options for replication user (e.g., sslmode, sslrootcert). Defaults depend on tls_cert_generate. |
 
 ### Installation Configuration
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `patroni_installation_method` | `"pip"` | Installation method for Patroni (`pip`, `deb`, or `rpm`) |
 | `patroni_install_version` | `"latest"` | Patroni version to install when using pip |
+| `patroni_installation_method` | `"deb"`/`"rpm"` | Installation method for Patroni (`deb`, `rpm`, or `pip`) |
+| `patroni_latest_requirements` | `false` | Use latest requirements.txt from master branch. When using pip. |
 | `patroni_pip_package_repo` | `[]` | List of custom Patroni package repository URLs |
 | `patroni_pip_requirements_repo` | `[]` | List of custom requirements repository URLs |
 | `patroni_deb_package_repo` | `[]` | List of custom DEB package repository URLs |
 | `patroni_rpm_package_repo` | `[]` | List of custom RPM package repository URLs |
-| `patroni_latest_requirements` | `false` | Use latest requirements.txt from master branch |
 
 ### Network Configuration
 
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `patroni_bind_address` | `"{{ bind_address }}"` | IP address for PostgreSQL connections (defaults to bind_address) |
+| `patroni_restapi_connect_addr` | `""` | Optional hostname for REST API (otherwise IP is used). |
+| `postgresql_connect_addr` | `""` | Optional hostname for DB connections (otherwise IP is used). |
 
 ### REST API Configuration
 
@@ -49,6 +45,43 @@ This role installs and configures [Patroni](https://github.com/patroni/patroni),
 | `patroni_restapi_username` | `"patroni"` | REST API username |
 | `patroni_restapi_password` | `""` | REST API password (auto-generated if empty) |
 | `patroni_restapi_request_queue_size` | `5` | REST API request queue size |
+| `patroni_restapi_protocol` | `https` | REST API protocol. |
+| `patroni_restapi_certfile` | `"/etc/tls/server.crt"` | REST API TLS cert path (when HTTPS). |
+| `patroni_restapi_keyfile` | `"/etc/tls/server.key"` | REST API TLS key path (when HTTPS). |
+| `patroni_restapi_cafile` | `"/etc/tls/ca.crt"` | REST API CA path (when HTTPS). |
+
+### Cluster Behavior Configuration
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `patroni_ttl` | `30` | TTL for leader key in DCS |
+| `patroni_loop_wait` | `10` | Sleep time between runs |
+| `patroni_retry_timeout` | `10` | Timeout for retrying failed operations |
+| `patroni_master_start_timeout` | `300` | Timeout for master startup |
+| `patroni_maximum_lag_on_failover` | `1048576` | Maximum lag in bytes for failover eligibility |
+| `patroni_maximum_lag_on_replica` | `"100MB"` | Maximum lag for read-only queries |
+| `patroni_postgresql_use_pg_rewind` | `true` | Enable pg_rewind for faster recovery |
+| `patroni_remove_data_directory_on_rewind_failure` | `false` | Remove data directory on rewind failure |
+| `patroni_remove_data_directory_on_diverged_timelines` | `false` | Remove data directory on diverged timelines |
+| `patroni_use_unix_socket` | `true` | Prefer unix socket for local cluster connections. |
+| `patroni_use_unix_socket_repl` | `true` | Prefer unix socket for replication user connections. |
+| `synchronous_mode` | `false` | Enable synchronous replication. |
+| `synchronous_mode_strict` | `false` | If true, block writes when no synchronous replica is available. |
+| `synchronous_node_count` | `1` | Number of synchronous standbys. |
+
+### Bootstrap Configuration
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `patroni_cluster_bootstrap_method` | `"initdb"` | Bootstrap method (`initdb`, `wal-g`, `pgbackrest`, `pg_probackup`) |
+| `patroni_create_replica_methods` | `[basebackup]` | List of replica creation methods. |
+
+### Watchdog Configuration
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `patroni_watchdog_mode` | `"automatic"` | Watchdog mode (`automatic`, `off`, `required`) |
+| `patroni_watchdog_device` | `"/dev/watchdog"` | Watchdog device path. |
 
 ### Logging Configuration
 
@@ -66,38 +99,42 @@ This role installs and configures [Patroni](https://github.com/patroni/patroni),
 | `patroni_log_loggers_patroni_postmaster` | `"warning"` | Log level for patroni.postmaster logger |
 | `patroni_log_loggers_urllib3` | `"warning"` | Log level for urllib3 logger |
 
-### Cluster Behavior Configuration
+### Callbacks Configuration
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `patroni_ttl` | `30` | TTL for leader key in DCS |
-| `patroni_loop_wait` | `10` | Sleep time between runs |
-| `patroni_retry_timeout` | `10` | Timeout for retrying failed operations |
-| `patroni_master_start_timeout` | `300` | Timeout for master startup |
-| `patroni_maximum_lag_on_failover` | `1048576` | Maximum lag in bytes for failover eligibility |
-| `patroni_maximum_lag_on_replica` | `"100MB"` | Maximum lag for read-only queries |
+| `patroni_callbacks` | `[]` | List of callback configurations (action:script). |
 
-### PostgreSQL Configuration
+### Standby Cluster Configuration
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `patroni_postgresql_use_pg_rewind` | `true` | Enable pg_rewind for faster recovery |
-| `patroni_remove_data_directory_on_rewind_failure` | `false` | Remove data directory on rewind failure |
-| `patroni_remove_data_directory_on_diverged_timelines` | `false` | Remove data directory on diverged timelines |
+| `patroni_standby_cluster` | `{}` | Standby Cluster Configuration. See below. |
+| `patroni_standby_cluster.host` | `""` | IP address of main cluster host |
+| `patroni_standby_cluster.port` | `"5432"` | port of main cluster host |
+| `patroni_standby_cluster.primary_slot_name` | `""` | which slot on the remote primary to use for replication (optional) |
+| `patroni_standby_cluster.restore_command` | `""` | command to restore WAL records from the remote primary to standby leader (optional) |
+| `patroni_standby_cluster.recovery_min_apply_delay` | `""` | how long to wait before actually apply WAL records on a standby leader (optional) |
 
-### Bootstrap Configuration
+Requirements:
+1. the cluster name for standby cluster must be unique (see 'patroni_cluster_name' variable)
+2. the IP addresses (or network) of the standby cluster servers must be added to the pg_hba.conf of the Main Cluster (see 'postgresql_pg_hba' variable).
+
+### Slots Configuration
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `patroni_cluster_bootstrap_method` | `"initdb"` | Bootstrap method (`initdb`, `wal-g`, `pgbackrest`, `pg_probackup`) |
-| `patroni_create_replica_methods` | `[]` | List of replica creation methods |
+| `patroni_slots` | `[]` | Permanent replication slots. These slots will be preserved during switchover/failover. |
 
-### Watchdog Configuration
+Example:
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `patroni_watchdog_mode` | `"automatic"` | Watchdog mode (`automatic`, `off`, `required`) |
-| `patroni_watchdog_device` | `"/dev/watchdog"` | Watchdog device path |
+```yaml
+patroni_slots:
+  - slot: "logical_replication_slot" # the name of the permanent replication slot.
+    type: "logical" # the type of slot. Could be 'physical' or 'logical' (if the slot is logical, you have to define 'database' and 'plugin').
+    plugin: "pgoutput" # the plugin name for the logical slot.
+    database: "postgres" # the database name where logical slots should be created.
+```
 
 ### DCS Integration (etcd)
 
@@ -107,59 +144,36 @@ This role installs and configures [Patroni](https://github.com/patroni/patroni),
 | `patroni_etcd_namespace` | `"service"` | etcd namespace prefix |
 | `patroni_etcd_username` | `""` | etcd authentication username |
 | `patroni_etcd_password` | `""` | etcd authentication password |
-| `patroni_etcd_protocol` | `"http"` | etcd protocol (`http` or `https`) |
+| `patroni_etcd_protocol` | `"https"` | etcd protocol (`http` or `https`) |
 | `patroni_etcd_cacert` | `"/etc/patroni/tls/etcd/ca.crt"` | etcd CA certificate path |
 | `patroni_etcd_cert` | `"/etc/patroni/tls/etcd/server.crt"` | etcd client certificate path |
 | `patroni_etcd_key` | `"/etc/patroni/tls/etcd/server.key"` | etcd client key path |
 
-### Standby Cluster Configuration
+### PostgreSQL Configuration
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `patroni_standby_cluster` | `{}` | Standby cluster configuration object |
-
-### Slots Configuration
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `patroni_slots` | `[]` | List of replication slot configurations |
-
-### Callbacks Configuration
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `patroni_callbacks` | `[]` | List of callback configurations |
-
-### PostgreSQL Directories
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `postgresql_data_dir` | `/var/lib/postgresql/{{ postgresql_version }}/main` | PostgreSQL data directory |
-| `postgresql_bin_dir` | `/usr/lib/postgresql/{{ postgresql_version }}/bin` | PostgreSQL binary directory |
-| `postgresql_log_dir` | `"/var/log/postgresql"` | PostgreSQL log directory |
-| `postgresql_wal_dir` | `""` | Custom WAL directory (optional) |
+| `postgresql_bin_dir` | `/usr/lib/postgresql/{{ postgresql_version }}/bin`  (Debian) / `"/usr/pgsql-{{ postgresql_version }}/bin"` (RedHat) | PostgreSQL binary directory. |
+| `postgresql_home_dir` | `"/var/lib/postgresql"` (Debian) / `"/var/lib/pgsql"` (RedHat) | PostgreSQL OS home directory. |
+| `postgresql_data_dir` | `/pgdata/{{ postgresql_version }}/main` (if cloud_provider is specified) / else `/var/lib/postgresql/{{ postgresql_version }}/main` (Debian) / `"/var/lib/pgsql/{{ postgresql_version }}/data"` (RedHat) | PostgreSQL data directory. |
+| `postgresql_wal_dir` | `""` | Custom WAL directory. If defined, symlink will be created (optional). |
+| `postgresql_conf_dir` | `/etc/postgresql/{{ postgresql_version }}/main`  (Debian) / `"{{ postgresql_data_dir }}` (RedHat) | Path to PostgreSQL configuration directory. |
+| `postgresql_log_dir` | `"/var/log/postgresql"` | PostgreSQL log directory. |
+| `postgresql_unix_socket_dir` | `"/var/run/postgresql"` | Directory for PostgreSQL unix sockets. |
+| `postgresql_listen_addr` | "`0.0.0.0"` | Listen address used in Patroni postgresql.listen. |
+| `postgresql_port` | `5432` | Cluster port used in listen/connect_address. |
+| `postgresql_encoding` | "`UTF8`" | Passed to initdb during bootstrap. |
+| `postgresql_locale` | "`en_US.UTF-8`" | Passed to initdb during bootstrap. |
+| `postgresql_data_checksums` | `true` | Enables data checksums during initdb. |
+| `postgresql_password_encryption_algorithm` | "`scram-sha-256`" | Default auth method in generated pg_hba. |
+| `postgresql_parameters` | [...] | Cluster-wide parameters stored in DCS (bootstrap.dcs.postgresql.parameters). |
+| `local_postgresql_parameters` | [...] | Host-local parameters merged under postgresql.parameters. |
+| `postgresql_pg_hba` | [...] | Lines rendered into pg_hba.conf template. |
+| `postgresql_pg_ident` | `[]` | Entries rendered into pg_ident.conf via template. |
+| `postgresql_restore_command` | `""` | If set, added under postgresql.recovery_conf. |
 
 ## Dependencies
 
-```yaml
-dependencies:
-  - role: vitabaks.autobase.common
-```
-
-## Tags
-
-Use these tags to run specific parts of the role:
-
-- `patroni`: Run all Patroni tasks
-- `patroni_install`: Install Patroni package only
-- `patroni_conf`: Configure Patroni only
-- `pip`: Install pip dependencies only
-- `pg_hba`: Configure pg_hba.conf only
-
-## License
-
-MIT
-
-## Author Information
-
-This role is part of the [Autobase](https://github.com/vitabaks/autobase) project for automated PostgreSQL database platform deployment.
+This role depends on:
+- `vitabaks.autobase.common` - Provides common variables and configurations
+- `vitabaks.autobase.bind_address` - Detects the available private IPv4 address
