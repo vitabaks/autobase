@@ -2,6 +2,8 @@
 
 This role manages extensions for databases in a PostgreSQL cluster, providing automated installation and configuration of extensions across multiple databases.
 
+Based on [community.postgresql.postgresql_ext](https://docs.ansible.com/ansible/latest/collections/community/postgresql/postgresql_ext_module.html) module.
+
 ## Role Variables
 
 | Variable | Default | Description |
