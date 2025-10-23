@@ -2,6 +2,8 @@
 
 This role manages databases within a PostgreSQL cluster, providing automated creation and configuration of databases with proper ownership, encoding, and locale settings.
 
+Based on [community.postgresql.postgresql_db](https://docs.ansible.com/ansible/latest/collections/community/postgresql/postgresql_db_module.html) module.
+
 ## Role Variables
 
 | Variable | Default | Description |
