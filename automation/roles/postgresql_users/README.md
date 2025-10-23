@@ -2,22 +2,13 @@
 
 This role manages PostgreSQL database users within a PostgreSQL cluster, providing automated creation and configuration of users with proper role attributes, passwords, and role memberships.
 
-## Requirements
-
-### Prerequisites
-
-- PostgreSQL server must be installed and running
-- Sufficient privileges to create users and grant roles
-- Target roles must exist if granting role memberships
+Based on [community.postgresql.postgresql_user](https://docs.ansible.com/ansible/latest/collections/community/postgresql/postgresql_user_module.html) module.
 
 ## Role Variables
 
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `postgresql_users` | `[]` | List of users to create with configuration parameters |
-| `postgresql_port` | `5432` | PostgreSQL connection port |
-| `patroni_superuser_username` | `"postgres"` | PostgreSQL superuser username |
-| `patroni_superuser_password` | `""` | PostgreSQL superuser password |
 
 ### User Configuration Format
 
@@ -34,64 +25,22 @@ Each user entry supports the following parameters:
 
 | Flag | Description |
 |------|-------------|
-| `SUPERUSER` | User has superuser privileges |
+| `LOGIN` | User can log in (default) |
+| `NOLOGIN` | User cannot log in |  
 | `CREATEDB` | User can create databases |
 | `CREATEROLE` | User can create other users |
+| `SUPERUSER` | User has superuser privileges |
 | `REPLICATION` | User can perform replication |
-| `LOGIN` | User can log in (default) |
-| `NOLOGIN` | User cannot log in |
-- **flags** (required): PostgreSQL role attributes (comma-separated)
-- **role** (optional): PostgreSQL role to grant membership to this user
+
+### Example:
+
+```yaml
+postgresql_users:
+  - { name: "app_user", password: "app_user_pass", flags: "LOGIN" }
+  - { name: "pgwatch", password: "pgwatch_pass", flags: "LOGIN", role: "pg_monitor" }
+```
 
 ## Dependencies
 
-```yaml
-dependencies:
-  - role: vitabaks.autobase.common
-```
-
-## PostgreSQL Role Flags
-
-### Common Role Attributes
-
-- **SUPERUSER** / **NOSUPERUSER**: Superuser privileges
-- **CREATEDB** / **NOCREATEDB**: Can create databases
-- **CREATEROLE** / **NOCREATEROLE**: Can create other roles
-- **LOGIN** / **NOLOGIN**: Can log in (default: LOGIN)
-- **REPLICATION** / **NOREPLICATION**: Can initiate replication
-- **BYPASSRLS** / **NOBYPASSRLS**: Can bypass row level security
-- **INHERIT** / **NOINHERIT**: Inherit privileges from granted roles (default: INHERIT)
-
-### Useful Combinations
-
-```yaml
-# Application user
-flags: "CREATEDB,NOSUPERUSER"
-
-# Read-only user
-flags: "NOSUPERUSER,NOINHERIT"
-
-# Admin user
-flags: "SUPERUSER,CREATEDB,CREATEROLE"
-
-# Replication user
-flags: "REPLICATION,LOGIN,NOSUPERUSER"
-
-# Service account (no login)
-flags: "NOLOGIN,NOSUPERUSER"
-```
-
-
-## Tags
-
-Use these tags to run specific parts of the role:
-
-- `postgresql_users`: Create/configure PostgreSQL users
-
-## License
-
-MIT
-
-## Author Information
-
-This role is part of the [Autobase](https://github.com/vitabaks/autobase) project for automated PostgreSQL database platform deployment.
+This role depends on:
+- `vitabaks.autobase.common` - Provides common variables and configurations
