@@ -23,5 +23,7 @@
   "settingsPasswordSecretInfo": "Enter the SSH username and password below to access the cluster servers. It is assumed that the user account, such as root or one with sudo privileges, has already been created on the servers.",
   "settingsConfidentialDataStore": "All confidential data entered in these fields is stored in encrypted form.",
   "sshPrivateKey": "SSH private key",
-  "month": "Month"
+  "month": "Month",
+  "expertMode": "Expert mode",
+  "enableExpertMode": "Enable expert mode"
 }

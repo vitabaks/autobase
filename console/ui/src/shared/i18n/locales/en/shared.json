@@ -20,6 +20,7 @@
   "user": "User",
   "username": "Username",
   "password": "Password",
+  "userPassword": "User password",
   "project": "Project",
   "on": "On",
   "off": "Off",
@@ -51,5 +52,8 @@
   },
   "switchToLightMode": "Switch to Light Mode",
   "switchToDarkMode": "Switch to Dark Mode",
-  "switchToSystemMode": "Switch to System Mode"
+  "switchToSystemMode": "Switch to System Mode",
+  "valid": "Valid",
+  "invalid": "Invalid",
+  "locale": "Locale"
 }

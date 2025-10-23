@@ -1,16 +1,14 @@
 import { FC } from 'react';
-import { Controller, useFormContext, useFieldArray } from 'react-hook-form';
+import { Controller, useFieldArray, useFormContext } from 'react-hook-form';
 import { CLUSTER_FORM_FIELD_NAMES } from '@widgets/cluster-form/model/constants.ts';
 import DatabaseServerBox from '@entities/database-servers-block/ui/DatabaseServerBox.tsx';
-import { Checkbox, FormControlLabel, FormHelperText, Box, Button, Stack, Typography } from '@mui/material';
+import { Box, Button, Checkbox, FormControlLabel, Stack, Typography } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import { useTranslation } from 'react-i18next';
 
 const DatabaseServersBlock: FC = () => {
   const { t } = useTranslation('clusters');
-  const { control, watch } = useFormContext();
-
-  const clusterExists = watch(CLUSTER_FORM_FIELD_NAMES.EXISTING_CLUSTER);
+  const { control } = useFormContext();
 
   const { fields, append, remove } = useFieldArray({
     control,
@@ -31,12 +29,7 @@ const DatabaseServersBlock: FC = () => {
         defaultValue={false}
         render={({ field: { value, onChange } }) => (
           <FormControlLabel
-            control={
-              <Checkbox 
-                checked={value}
-                onChange={e => onChange(e.target.checked)}
-              />
-            }
+            control={<Checkbox checked={value} onChange={(e) => onChange(e.target.checked)} />}
             label={t('clusterExistsLabel')}
           />
         )}
@@ -51,7 +44,7 @@ const DatabaseServersBlock: FC = () => {
             <DatabaseServerBox
               key={field.id}
               index={index}
-              {...(index !== 0 ? { remove: removeServer(index) } : {})} // removing entity such way is required to avoid bugs with wrong element removed
+              {...(index !== 0 ? { remove: removeServer(index) } : {})} // removing entity such way is required to avoid bugs with a wrong element removed
             />
           ))}
         </Box>

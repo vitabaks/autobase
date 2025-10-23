@@ -1,4 +1,4 @@
-import { FC } from 'react';
+import { ChangeEvent, FC } from 'react';
 import { Box, Slider, TextField, Typography, useTheme } from '@mui/material';
 import { SliderBoxProps } from '@shared/ui/slider-box/model/types.ts';
 
@@ -18,10 +18,11 @@ const ClusterSliderBox: FC<SliderBoxProps> = ({
   error,
   limitMin = true,
   limitMax,
+  topRightElements,
 }) => {
   const theme = useTheme();
 
-  const onChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const onChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { value } = e.target;
     if (/^\d*$/.test(value)) {
       const num = Number(value);
@@ -30,7 +31,12 @@ const ClusterSliderBox: FC<SliderBoxProps> = ({
   };
 
   return (
-    <Box display="flex" border={`1px solid ${theme.palette.divider}`} height="100px" borderRadius="8px" overflow="hidden">
+    <Box
+      display="flex"
+      border={`1px solid ${theme.palette.divider}`}
+      height="100px"
+      borderRadius="8px"
+      overflow="hidden">
       <Box
         display="flex"
         alignItems="center"
@@ -53,7 +59,14 @@ const ClusterSliderBox: FC<SliderBoxProps> = ({
         />
         <Typography>{unit}</Typography>
       </Box>
-      <Box display="flex" alignItems="center" justifyContent="center" width="100%" padding="32px">
+      <Box
+        display="flex"
+        alignItems="flex-end"
+        flexDirection="column"
+        justifyContent="center"
+        width="100%"
+        padding="32px">
+        {topRightElements ?? null}
         <Slider
           value={amount}
           onChange={changeAmount}
@@ -61,7 +74,7 @@ const ClusterSliderBox: FC<SliderBoxProps> = ({
           valueLabelDisplay="auto"
           min={min}
           max={max}
-          marks={(marks ?? generateSliderMarks(min ?? 1, max ?? 100, marksAmount ?? 0, marksAdditionalLabel)) as any}
+          marks={marks ?? generateSliderMarks(min ?? 1, max ?? 100, marksAmount ?? 0, marksAdditionalLabel)}
         />
       </Box>
     </Box>

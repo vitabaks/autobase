@@ -14,28 +14,29 @@ const SettingsProxyBlock: React.FC = () => {
       <Typography fontWeight="bold" fontSize={16}>
         {t('proxyServer')}
       </Typography>
-      <Typography whiteSpace="pre-line" fontSize={14}>{t('proxyServerInfo')}</Typography>
+      <Typography whiteSpace="pre-line" fontSize={14}>
+        {t('proxyServerInfo')}
+      </Typography>
       <Stack gap="8px">
-        <Controller
-          control={control}
-          name={SETTINGS_FORM_FIELDS_NAMES.HTTP_PROXY}
-          render={({ field: { value, onChange } }) => (
-            <Stack direction="row" gap="16px" alignItems="center">
-              <Typography width="90px">http_proxy</Typography>
-              <TextField size="small" value={value} onChange={onChange} />
-            </Stack>
-          )}
-        />
-        <Controller
-          control={control}
-          name={SETTINGS_FORM_FIELDS_NAMES.HTTPS_PROXY}
-          render={({ field: { value, onChange } }) => (
-            <Stack direction="row" gap="16px" alignItems="center">
-              <Typography width="90px">https_proxy</Typography>
-              <TextField size="small" value={value} onChange={onChange} />
-            </Stack>
-          )}
-        />
+        {[
+          {
+            fieldName: SETTINGS_FORM_FIELDS_NAMES.HTTP_PROXY,
+            label: 'http_proxy',
+          },
+          { fieldName: SETTINGS_FORM_FIELDS_NAMES.HTTPS_PROXY, label: 'https_proxy' },
+        ].map(({ fieldName, label }) => (
+          <Controller
+            key={fieldName}
+            control={control}
+            name={fieldName}
+            render={({ field }) => (
+              <Stack direction="row" gap="16px" alignItems="center">
+                <Typography width="90px">{label}</Typography>
+                <TextField {...field} size="small" />
+              </Stack>
+            )}
+          />
+        ))}
       </Stack>
     </Stack>
   );

@@ -1,5 +1,6 @@
 {
   "requiredField": "Required field",
   "clusterShouldHaveProperNaming": "Cluster name should have only letters, numbers, hyphens and have length equal or less than 24",
-  "shouldBeACorrectV4Ip": "The value should be a valid IPv4 address"
+  "shouldBeACorrectV4Ip": "The value should be a valid IPv4 address",
+  "configFormat": "Value should have \"key:value\" or \"key=value\" format"
 }

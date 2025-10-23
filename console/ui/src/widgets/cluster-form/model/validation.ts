@@ -2,12 +2,17 @@ import { TFunction } from 'i18next';
 import * as yup from 'yup';
 import { CLUSTER_FORM_FIELD_NAMES } from '@widgets/cluster-form/model/constants.ts';
 import { PROVIDERS } from '@shared/config/constants.ts';
-import { AUTHENTICATION_METHODS } from '@shared/model/constants.ts';
+import { AUTHENTICATION_METHODS, IS_EXPERT_MODE } from '@shared/model/constants.ts';
 import ipRegex from 'ip-regex';
 import { SECRET_MODAL_CONTENT_FORM_FIELD_NAMES } from '@entities/secret-form-block/model/constants.ts';
+import { BackupsBlockFormSchema } from '@entities/backups-block/model/validation.ts';
+import { DatabasesBlockSchema } from '@entities/databases-block/model/validation.ts';
+import { ConnectionPoolsBlockSchema } from '@entities/connection-pools-block/model/validation.ts';
+import { PostgresParametersBlockFormSchema } from '@entities/postgres-parameters-block/model/validation.ts';
+import { KernelParametersBlockFormSchema } from '@entities/kernel-parameters-block/model/validation.ts';
 
-const cloudFormSchema = (t: TFunction) =>
-  yup.object({
+const CloudFormSchema = (t: TFunction) => {
+  const defaultClusterFormSchema = yup.object({
     [CLUSTER_FORM_FIELD_NAMES.REGION]: yup
       .mixed()
       .when(CLUSTER_FORM_FIELD_NAMES.PROVIDER, ([provider], schema) =>
@@ -66,8 +71,11 @@ const cloudFormSchema = (t: TFunction) =>
       ),
   });
 
-export const localFormSchema = (t: TFunction) =>
-  yup.object({
+  return IS_EXPERT_MODE ? defaultClusterFormSchema : defaultClusterFormSchema;
+};
+
+export const LocalFormSchema = (t: TFunction) => {
+  const defaultLocalFormSchema = yup.object({
     [CLUSTER_FORM_FIELD_NAMES.DATABASE_SERVERS]: yup
       .mixed()
       .when(CLUSTER_FORM_FIELD_NAMES.PROVIDER, ([provider], schema) =>
@@ -186,8 +194,11 @@ export const localFormSchema = (t: TFunction) =>
       ),
   });
 
-export const ClusterFormSchema = (t: TFunction) =>
-  yup
+  return IS_EXPERT_MODE ? defaultLocalFormSchema : defaultLocalFormSchema;
+};
+
+export const ClusterFormSchema = (t: TFunction) => {
+  const defaultSchema = yup
     .object({
       [CLUSTER_FORM_FIELD_NAMES.PROVIDER]: yup.object().required(),
       [CLUSTER_FORM_FIELD_NAMES.ENVIRONMENT_ID]: yup.number(),
@@ -200,5 +211,15 @@ export const ClusterFormSchema = (t: TFunction) =>
       [CLUSTER_FORM_FIELD_NAMES.DESCRIPTION]: yup.string(),
       [CLUSTER_FORM_FIELD_NAMES.POSTGRES_VERSION]: yup.number().required(t('requiredField', { ns: 'validation' })),
     })
-    .concat(cloudFormSchema(t))
-    .concat(localFormSchema(t));
+    .concat(CloudFormSchema(t))
+    .concat(LocalFormSchema(t));
+
+  return IS_EXPERT_MODE
+    ? defaultSchema
+        .concat(DatabasesBlockSchema)
+        .concat(ConnectionPoolsBlockSchema)
+        .concat(BackupsBlockFormSchema(t))
+        .concat(PostgresParametersBlockFormSchema(t))
+        .concat(KernelParametersBlockFormSchema(t))
+    : defaultSchema;
+};
