@@ -2,14 +2,6 @@
 
 This role installs and configures [PgBouncer](https://www.pgbouncer.org/), a lightweight connection pooler for PostgreSQL that reduces resource consumption by pooling and reusing database connections.
 
-## Requirements
-
-### Prerequisites
-
-- PostgreSQL server must be installed and accessible
-- Target databases and users should exist
-- Network connectivity between PgBouncer and PostgreSQL servers
-
 ## Role Variables
 
 ### Core Configuration
@@ -30,7 +22,7 @@ This role installs and configures [PgBouncer](https://www.pgbouncer.org/), a lig
 | `pgbouncer_max_client_conn` | `100000` | Maximum number of client connections |
 | `pgbouncer_max_db_connections` | `10000` | Maximum number of database connections |
 | `pgbouncer_default_pool_size` | `100` | Default pool size per database |
-| `pgbouncer_default_pool_mode` | `"session"` | Default pooling mode (`session`, `transaction`, `statement`) |
+| `pgbouncer_default_pool_mode` | `"session"` | Default pooling mode (`session`, `transaction`) |
 | `pgbouncer_query_wait_timeout` | `120` | Maximum time queries are allowed to spend waiting for execution |
 | `pgbouncer_max_prepared_statements` | `1024` | Maximum number of prepared statements per connection |
 
@@ -38,7 +30,7 @@ This role installs and configures [PgBouncer](https://www.pgbouncer.org/), a lig
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `pgbouncer_auth_type` | `"md5"` | Authentication method (`md5`, `plain`, `cert`, `pam`) |
+| `pgbouncer_auth_type` | `"{{ postgresql_password_encryption_algorithm }}"` | Authentication method (commonly `scram-sha-256` or `md5`) |
 | `pgbouncer_auth_user` | `true` | Use auth_user function for authentication |
 | `pgbouncer_auth_username` | `"pgbouncer"` | Username for auth_user queries |
 | `pgbouncer_auth_password` | `""` | Password for auth_user (auto-generated if empty) |
@@ -57,13 +49,13 @@ This role installs and configures [PgBouncer](https://www.pgbouncer.org/), a lig
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `pgbouncer_tls_dir` | `"{{ tls_dir }}"` | TLS certificate directory |
-| `pgbouncer_client_tls_sslmode` | `"require"/"disable"` | Client TLS mode (based on TLS settings) |
+| `pgbouncer_client_tls_sslmode` | `"{{ 'require' if tls_cert_generate else 'disable' }}"` | Client TLS mode |
 | `pgbouncer_client_tls_key_file` | `"{{ tls_privatekey }}"` | Client TLS private key file |
 | `pgbouncer_client_tls_cert_file` | `"{{ tls_cert }}"` | Client TLS certificate file |
 | `pgbouncer_client_tls_ca_file` | `"{{ tls_ca_cert }}"` | Client TLS CA certificate file |
 | `pgbouncer_client_tls_protocols` | `"secure"` | Client TLS protocols (tlsv1.2, tlsv1.3) |
 | `pgbouncer_client_tls_ciphers` | `"secure"` | Client TLS cipher suites |
-| `pgbouncer_server_tls_sslmode` | `"require"/"disable"` | Server TLS mode (based on TLS settings) |
+| `pgbouncer_server_tls_sslmode` | `"{{ 'require' if tls_cert_generate else 'disable' }}"` | Server TLS mode |
 | `pgbouncer_server_tls_key_file` | `"{{ tls_privatekey }}"` | Server TLS private key file |
 | `pgbouncer_server_tls_cert_file` | `"{{ tls_cert }}"` | Server TLS certificate file |
 | `pgbouncer_server_tls_ca_file` | `"{{ tls_ca_cert }}"` | Server TLS CA certificate file |
@@ -74,31 +66,16 @@ This role installs and configures [PgBouncer](https://www.pgbouncer.org/), a lig
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `pgbouncer_pools` | `[]` | List of database pool configurations (auto-configured from `postgresql_databases`) |
+| `pgbouncer_pools` | `[]` | List of database pool configurations. |
+
+pgbouncer_pools item fields:
+| Field | Description | Example |
+|-------|-------------|---------|
+| `name` | Pool name | `"postgres"` |
+| `dbname` | Target database name | `"postgres"` |
+| `pool_parameters` | Optional per-pool parameters | `"pool_size=20 pool_mode=transaction"` |
 
 ## Dependencies
 
-```yaml
-dependencies:
-  - role: vitabaks.autobase.common
-```
-
-## Tags
-
-Use these tags to run specific parts of the role:
-
-- `pgbouncer`: Run all PgBouncer tasks
-- `pgbouncer_install`: Install PgBouncer package only
-- `pgbouncer_conf`: Configure PgBouncer only
-- `pgbouncer_service`: Manage PgBouncer service only
-- `pgbouncer_auth_query`: Configure authentication query only
-- `pgbouncer_generate_userlist`: Generate user list only
-- `pgbouncer_logrotate`: Configure log rotation only
-
-## License
-
-MIT
-
-## Author Information
-
-This role is part of the [Autobase](https://github.com/vitabaks/autobase) project for automated PostgreSQL database platform deployment.
+This role depends on:
+- `vitabaks.autobase.common` - Provides common variables and configurations
