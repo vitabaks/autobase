@@ -1,5 +1,34 @@
 ---
 # Patroni configure
+
+# Ensure archive_command is set correctly for pgbackrest (same logic as pre_checks/pgbackrest.yml)
+- name: "pgBackRest | Ensure 'archive_command' is set to '{{ pgbackrest_archive_command | default('') }}'"
+  ansible.builtin.set_fact:
+    postgresql_parameters: >-
+      {{ postgresql_parameters | rejectattr('option', 'equalto', 'archive_command') | list
+      + [{'option': 'archive_command', 'value': pgbackrest_archive_command}] }}
+  vars:
+    archive_command_item: "{{ postgresql_parameters | selectattr('option', 'equalto', 'archive_command') | list | last }}"
+  when:
+    - pgbackrest_install is defined
+    - pgbackrest_install | bool
+    - archive_command_item is undefined or archive_command_item.value != pgbackrest_archive_command
+  tags: patroni, patroni_conf
+
+# Ensure archive_command is set correctly for wal-g (same logic as pre_checks/wal_g.yml)
+- name: "WAL-G | Ensure 'archive_command' is set to '{{ wal_g_archive_command | default('') }}'"
+  ansible.builtin.set_fact:
+    postgresql_parameters: >-
+      {{ postgresql_parameters | rejectattr('option', 'equalto', 'archive_command') | list
+      + [{'option': 'archive_command', 'value': wal_g_archive_command}] }}
+  vars:
+    archive_command_item: "{{ postgresql_parameters | selectattr('option', 'equalto', 'archive_command') | list | last }}"
+  when:
+    - wal_g_install is defined
+    - wal_g_install | bool
+    - archive_command_item is undefined or archive_command_item.value != wal_g_archive_command
+  tags: patroni, patroni_conf
+
 - name: Make sure that conf directory exists
   ansible.builtin.file:
     path: /etc/patroni
