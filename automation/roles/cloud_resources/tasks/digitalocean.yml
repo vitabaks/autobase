@@ -757,6 +757,8 @@
         - sync
       loop_control:
         label: "{{ patroni_cluster_name }}-{{ item }}"
+      register: do_lb_del_result
+      failed_when: do_lb_del_result is failed and ('not found' not in (do_lb_del_result.msg | default('') | lower))
       when: cloud_load_balancer | bool and
         (item == 'primary' or
         (item == 'replica' and server_count | int > 1) or
