@@ -102,13 +102,13 @@
     - name: "DigitalOcean: Get fingerprint for SSH key '{{ ssh_key_name | default('') }}'"
       ansible.builtin.set_fact:
         ssh_key_fingerprint: "{{ [item.fingerprint] }}"
-      loop: "{{ ssh_keys.data | lower }}"
-      loop_control: # do not display the public key
-        label: "{{ item.name }}"
+      loop: "{{ ssh_keys.data | default([]) }}"
+      loop_control:
+        label: "{{ item.name | default('unknown') }}"
       when:
         - ((ssh_key_name | length > 0 and ssh_key_name != (tmp_ssh_key_name | default(''))) or
-          (ssh_key_name == (tmp_ssh_key_name | default('')) and ssh_public_keys | default('') | length > 0))
-        - item.name == ssh_key_name | lower
+          (ssh_key_name == (tmp_ssh_key_name | default('')) and (ssh_public_keys | default('') | length > 0)))
+        - (item.name | lower) == (ssh_key_name | lower)
 
     # Stop, if the ssh key is not found
     - name: "DigitalOcean: Fail if SSH key '{{ ssh_key_name | default('') }}' is not found"
@@ -122,13 +122,13 @@
     # get the fingerprint of all ssh keys
     - name: "DigitalOcean: Get fingerprint for all SSH keys"
       ansible.builtin.set_fact:
-        ssh_key_fingerprint: "{{ ssh_key_fingerprint | default([]) + [item.fingerprint] }}"
-      loop: "{{ ssh_keys.data | lower }}"
-      loop_control: # do not display the public key
-        label: "{{ item.name }}"
+        ssh_key_fingerprint: "{{ (ssh_key_fingerprint | default([])) + [item.fingerprint] }}"
+      loop: "{{ ssh_keys.data | default([]) }}"
+      loop_control:
+        label: "{{ item.name | default('unknown') }}"
       when:
-        - (ssh_key_name | length < 1 or ssh_key_name == (tmp_ssh_key_name | default('')))
-        - (ssh_public_keys is not defined or ssh_public_keys | length < 1)
+        - (ssh_key_name | length < 1) or (ssh_key_name == (tmp_ssh_key_name | default('')))
+        - (ssh_public_keys is not defined) or ((ssh_public_keys | length) < 1)
   when: state == 'present'
 
 # Create (if state is present)
