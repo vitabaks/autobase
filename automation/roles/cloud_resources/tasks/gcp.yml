@@ -558,7 +558,7 @@
             | map(attribute='resources') | map('default', []) | list | flatten
             | selectattr('id','defined') | map(attribute='id') | list
           }}
-      loop: "{{ server_result.results | selectattr('networkInterfaces', 'defined') }}"
+      loop: "{{ server_result.results | selectattr('networkInterfaces', 'defined') | list }}"
       loop_control:
         label: >-
           public_ip: {{ item.networkInterfaces[0].accessConfigs[0].natIP | default('') }},
@@ -568,7 +568,7 @@
       ansible.builtin.import_tasks: inventory.yml
   when:
     - server_result.results is defined
-    - server_result.results | selectattr('networkInterfaces', 'defined')
+    - (server_result.results | selectattr('networkInterfaces', 'defined') | list | length) > 0
 
 # Delete (if state is absent)
 - block:
