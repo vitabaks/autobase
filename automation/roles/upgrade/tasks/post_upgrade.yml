@@ -49,7 +49,7 @@
   ansible.builtin.package:
     name: "{{ item }}"
     state: absent
-  loop: "{{ postgresql_packages | replace(postgresql_version | string, pg_old_version | string) }}"
+  loop: "{{ postgresql_packages | map('regex_replace', postgresql_version | string, pg_old_version | string) | list }}"
   register: package_remove
   until: package_remove is success
   delay: 5
@@ -68,7 +68,7 @@
     name: "{{ item }}"
     state: absent
     purge: true
-  loop: "{{ postgresql_packages | replace(postgresql_version | string, pg_old_version | string) }}"
+  loop: "{{ postgresql_packages | map('regex_replace', postgresql_version | string, pg_old_version | string) | list }}"
   register: apt_remove
   until: apt_remove is success
   delay: 5
