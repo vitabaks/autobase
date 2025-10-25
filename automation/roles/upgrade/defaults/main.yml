@@ -37,7 +37,7 @@ pg_upper_datadir: "{{ pg_new_datadir | regex_replace('/$', '') | dirname | dirna
 
 # List of package names for the new PostgreSQL version to be installed.
 # automatically detects the list of packages based on the 'postgresql_packages' variable
-pg_new_packages: "{{ postgresql_packages | replace(postgresql_version | string, pg_new_version | string) }}"
+pg_new_packages: "{{ postgresql_packages | map('regex_replace', postgresql_version | string, pg_new_version | string) | list }}"
 
 # Alternatively, you can explicitly specify the list of new packages to install.
 # This gives you more control and should be used if the automatic update does not meet your needs.

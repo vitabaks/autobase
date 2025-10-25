@@ -4,11 +4,11 @@
 - block:
     - name: Gather facts from pgbackrest server
       ansible.builtin.setup:
-      delegate_to: "{{ groups['pgbackrest'][0] }}"
+      delegate_to: "{{ pgbackrest_delegate }}"
       run_once: true
 
     - name: Update dnf cache
-      delegate_to: "{{ groups['pgbackrest'][0] }}"
+      delegate_to: "{{ pgbackrest_delegate }}"
       run_once: true
       ansible.builtin.shell: dnf clean all && dnf -y makecache
       args:
@@ -16,7 +16,7 @@
       when: ansible_os_family == "RedHat" and not (skip_dnf_makecache | default(false) | bool)
 
     - name: Update apt cache
-      delegate_to: "{{ groups['pgbackrest'][0] }}"
+      delegate_to: "{{ pgbackrest_delegate }}"
       run_once: true
       ansible.builtin.apt:
         update_cache: true
@@ -28,7 +28,7 @@
       when: ansible_os_family == "Debian"
 
     - name: Install the latest version of pgbackrest package
-      delegate_to: "{{ groups['pgbackrest'][0] }}"
+      delegate_to: "{{ pgbackrest_delegate }}"
       run_once: true
       ansible.builtin.package:
         name: pgbackrest
@@ -39,7 +39,9 @@
       retries: 3
   become: true
   become_user: root
+  vars:
+    pgbackrest_delegate: "{{ (groups.get('pgbackrest') | default([], true) | list | first) | default(inventory_hostname, true) }}"
   when:
     - pgbackrest_install | bool
-    - pgbackrest_repo_host | default('') | length > 0
-    - groups['pgbackrest'] | default([]) | length > 0
+    - (pgbackrest_repo_host | default('')) | length > 0
+    - (groups.get('pgbackrest') | default([], true) | length) > 0

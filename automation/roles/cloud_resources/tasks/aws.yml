@@ -582,7 +582,7 @@
             | selectattr('instances','defined') | map(attribute='instances') | list | flatten
             | selectattr('instance_id','defined') | map(attribute='instance_id') | list
           }}
-      loop: "{{ server_result.results | selectattr('instances', 'defined') }}"
+      loop: "{{ server_result.results | selectattr('instances', 'defined') | list }}"
       loop_control:
         label: >-
           public_ip: {{ item.instances[0].public_ip_address | default('') }},
@@ -592,7 +592,7 @@
       ansible.builtin.import_tasks: inventory.yml
   when:
     - server_result.results is defined
-    - server_result.results | selectattr('instances', 'defined')
+    - (server_result.results | selectattr('instances','defined') | list | length) > 0
 
 # Delete the temporary ssh key from the cloud after creating the EC2 instance
 - name: "AWS: Remove temporary SSH key '{{ ssh_key_name | default('') }}' from cloud"

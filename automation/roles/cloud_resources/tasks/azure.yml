@@ -386,7 +386,7 @@
             private_ips | default([]) +
             [item.ansible_facts.azure_vm.network_profile.network_interfaces[0].properties.ip_configurations[0].private_ip_address]
           }}
-      loop: "{{ server_result.results | selectattr('ansible_facts.azure_vm', 'defined') }}"
+      loop: "{{ server_result.results | selectattr('ansible_facts.azure_vm', 'defined') | list }}"
       loop_control:
         label: "{{ item.ansible_facts.azure_vm.network_profile.network_interfaces[0].properties.ip_configurations[0].private_ip_address }}"
 
@@ -530,7 +530,7 @@
             | map(attribute='vms') | map('default', []) | list | flatten
             | selectattr('id','defined') | map(attribute='id') | list
           }}
-      loop: "{{ server_result.results | selectattr('ansible_facts.azure_vm', 'defined') }}"
+      loop: "{{ server_result.results | selectattr('ansible_facts.azure_vm', 'defined') | list }}"
       loop_control:
         label: >-
           public_ip: {{ (public_ip_address.results if public_ip_address is defined else []) | selectattr('idx', 'equalto', item.idx) | map(attribute='state.ip_address') | first | default('') }},
@@ -540,7 +540,7 @@
       ansible.builtin.import_tasks: inventory.yml
   when:
     - server_result.results is defined
-    - server_result.results | selectattr('ansible_facts.azure_vm', 'defined')
+    - (server_result.results | selectattr('ansible_facts.azure_vm', 'defined') | list | length) > 0
 
 # Delete (if state is absent)
 - block:

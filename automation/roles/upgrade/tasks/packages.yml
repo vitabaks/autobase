@@ -26,7 +26,7 @@
   ansible.builtin.package:
     name: "{{ item }}"
     state: latest
-  loop: "{{ pg_new_packages }}"
+  loop: "{{ pg_new_packages | list }}"
   register: package_status
   until: package_status is success
   delay: 5
