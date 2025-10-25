@@ -40,7 +40,9 @@
       run_once: true
       ansible.builtin.set_fact:
         repo1_path: "{{ pgbackrest_server_conf['global'] | selectattr('option', 'equalto', 'repo1-path') | map(attribute='value') | list | first }}"
-      when: pgbackrest_repo_type | lower == 'posix'
+      when:
+        - (pgbackrest_repo_type | default('posix')) | lower == 'posix'
+        - pgbackrest_delegate is not none
 
     - name: "Make sure the {{ repo1_path | default('') }} directory exists"
       delegate_to: "{{ pgbackrest_delegate }}"
@@ -51,7 +53,9 @@
         owner: "{{ pgbackrest_repo_user }}"
         group: "{{ pgbackrest_repo_user }}"
         mode: "0750"
-      when: repo1_path | default('') | length > 0
+      when:
+        - pgbackrest_delegate is not none
+        - repo1_path | default('') | length > 0
 
     - name: Create stanza "{{ pgbackrest_stanza | default('') }}"
       become: true
@@ -63,8 +67,9 @@
       changed_when:
         - stanza_create_result.rc == 0
         - stanza_create_result.stdout is not search("already exists")
+      when: pgbackrest_delegate is not none
   vars:
-    pgbackrest_delegate: "{{ groups.get('pgbackrest', []) | first }}"
+    pgbackrest_delegate: "{{ (groups.get('pgbackrest') or [None])[0] }}"
   when:
     - pgbackrest_repo_host | default('') | length > 0
     - groups.get('pgbackrest', []) | length > 0
