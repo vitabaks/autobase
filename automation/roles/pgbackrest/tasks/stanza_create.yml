@@ -64,8 +64,8 @@
         - stanza_create_result.rc == 0
         - stanza_create_result.stdout is not search("already exists")
   vars:
-    pgbackrest_delegate: "{{ (groups.get('pgbackrest') | default([]) | first) | default(inventory_hostname) }}"
+    pgbackrest_delegate: "{{ (groups.get('pgbackrest') | default([], true) | list | first) | default(inventory_hostname, true) }}"
   when:
-    - pgbackrest_repo_host | default('') | length > 0
-    - groups.get('pgbackrest', []) | length > 0
+    - (pgbackrest_repo_host | default('')) | length > 0
+    - (groups.get('pgbackrest') | default([], true) | length) > 0
   tags: pgbackrest, pgbackrest_stanza_create

@@ -152,11 +152,11 @@
   become_user: "{{ pgbackrest_repo_user }}"
   ignore_errors: true # show the error and continue the playbook execution
   vars:
-    pgbackrest_delegate: "{{ (groups.get('pgbackrest') | default([]) | first) | default(inventory_hostname) }}"
+    pgbackrest_delegate: "{{ (groups.get('pgbackrest') | default([], true) | list | first) | default(inventory_hostname, true) }}"
   when:
     - pgbackrest_install | bool
-    - pgbackrest_repo_host | default('') | length > 0
-    - groups.get('pgbackrest', []) | length > 0
+    - (pgbackrest_repo_host | default('')) | length > 0
+    - (groups.get('pgbackrest') | default([], true) | length) > 0
 
 # WAL-G
 - block:
