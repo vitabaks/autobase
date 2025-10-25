@@ -124,14 +124,14 @@
 # pgBackRest (dedicated)
 - block:
     - name: pgbackrest | Check pg-path option
-      delegate_to: "{{ groups['pgbackrest'][0] }}"
+      delegate_to: "{{ pgbackrest_delegate }}"
       run_once: true
       ansible.builtin.command: "grep -c '^pg[0-9]*-path=' {{ pgbackrest_conf_file | dirname }}/conf.d/{{ pgbackrest_stanza }}.conf"
       register: pg_path_count
       changed_when: false
 
     - name: pgbackrest | Update pg-path in pgbackrest.conf
-      delegate_to: "{{ groups['pgbackrest'][0] }}"
+      delegate_to: "{{ pgbackrest_delegate }}"
       run_once: true
       ansible.builtin.replace:
         path: "{{ pgbackrest_conf_file | dirname }}/conf.d/{{ pgbackrest_stanza }}.conf"
@@ -144,16 +144,19 @@
       when: pg_path_count.stdout | int > 0
 
     - name: pgbackrest | Upgrade stanza "{{ pgbackrest_stanza | default('') }}"
-      delegate_to: "{{ groups['pgbackrest'][0] }}"
+      delegate_to: "{{ pgbackrest_delegate }}"
       run_once: true
       ansible.builtin.command: "pgbackrest --stanza={{ pgbackrest_stanza }} --no-online stanza-upgrade"
       when: pg_path_count.stdout | int > 0 and pgbackrest_stanza_upgrade | bool
   become: true
   become_user: "{{ pgbackrest_repo_user }}"
   ignore_errors: true # show the error and continue the playbook execution
+  vars:
+    pgbackrest_delegate: "{{ (groups.get('pgbackrest') | default([]) | first) | default(inventory_hostname) }}"
   when:
     - pgbackrest_install | bool
-    - pgbackrest_repo_host | length > 0
+    - pgbackrest_repo_host | default('') | length > 0
+    - groups.get('pgbackrest', []) | length > 0
 
 # WAL-G
 - block:
