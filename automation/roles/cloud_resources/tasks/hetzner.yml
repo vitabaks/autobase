@@ -723,7 +723,7 @@
             | map(attribute='hcloud_server_info') | map('default', []) | list | flatten
             | selectattr('id','defined') | map(attribute='id') | list
           }}
-      loop: "{{ server_result.results | selectattr('hcloud_server', 'defined') }}"
+      loop: "{{ server_result.results | selectattr('hcloud_server', 'defined') | list }}"
       loop_control:
         label: >-
           public_ip: {{ item.hcloud_server.ipv4_address | default('') }},
@@ -733,7 +733,7 @@
       ansible.builtin.import_tasks: inventory.yml
   when:
     - server_result.results is defined
-    - server_result.results | selectattr('hcloud_server', 'defined')
+    - (server_result.results | selectattr('data','defined') | list | length) > 0
 
 # Delete the temporary ssh key from the cloud after creating the server
 - name: "Hetzner Cloud: Remove temporary SSH key {{ ssh_key_name | default('') }} from cloud"
