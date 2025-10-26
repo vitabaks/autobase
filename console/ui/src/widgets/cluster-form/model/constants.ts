@@ -1,13 +1,16 @@
 import { AUTHENTICATION_METHODS, IS_EXPERT_MODE } from '@shared/model/constants.ts';
-import { BACKUP_METHODS, BACKUPS_BLOCK_FIELD_NAMES } from '@entities/backups-block/model/const.ts';
-import { ADDITIONAL_SETTINGS_BLOCK_FIELD_NAMES } from '@entities/additional-settings-block/model/const.ts';
-import { POSTGRES_PARAMETERS_FIELD_NAMES } from '@entities/postgres-parameters-block/model/const.ts';
-import { KERNEL_PARAMETERS_FIELD_NAMES } from '@entities/kernel-parameters-block/model/const.ts';
-import { DATABASES_BLOCK_FIELD_NAMES } from '@entities/databases-block/model/const.ts';
-import { CONNECTION_POOLS_BLOCK_FIELD_NAMES, POOL_MODES } from '@entities/connection-pools-block/model/const.ts';
-import { INSTANCES_AMOUNT_BLOCK_VALUES } from '@entities/cluster-form-instances-amount-block/model/const.ts';
-import { STORAGE_BLOCK_FIELDS } from '@entities/storage-block/model/const.ts';
-import { EXTENSION_BLOCK_FIELD_NAMES } from '@entities/extensions-block/model/const.ts';
+import { BACKUP_METHODS, BACKUPS_BLOCK_FIELD_NAMES } from '@entities/cluster/expert-mode/backups-block/model/const.ts';
+import { ADDITIONAL_SETTINGS_BLOCK_FIELD_NAMES } from '@entities/cluster/expert-mode/additional-settings-block/model/const.ts';
+import { POSTGRES_PARAMETERS_FIELD_NAMES } from '@entities/cluster/expert-mode/postgres-parameters-block/model/const.ts';
+import { KERNEL_PARAMETERS_FIELD_NAMES } from '@entities/cluster/expert-mode/kernel-parameters-block/model/const.ts';
+import { DATABASES_BLOCK_FIELD_NAMES } from '@entities/cluster/expert-mode/databases-block/model/const.ts';
+import {
+  CONNECTION_POOLS_BLOCK_FIELD_NAMES,
+  POOL_MODES,
+} from '@entities/cluster/expert-mode/connection-pools-block/model/const.ts';
+import { INSTANCES_AMOUNT_BLOCK_VALUES } from '@entities/cluster/instances-amount-block/model/const.ts';
+import { STORAGE_BLOCK_FIELDS } from '@entities/cluster/storage-block/model/const.ts';
+import { EXTENSION_BLOCK_FIELD_NAMES } from '@entities/cluster/expert-mode/extensions-block/model/const.ts';
 
 const CLUSTER_CLOUD_PROVIDER_FIELD_NAMES = Object.freeze({
   REGION: 'region',
@@ -62,6 +65,8 @@ export const CLUSTER_FORM_DEFAULT_VALUES = Object.freeze({
   [CLUSTER_FORM_FIELD_NAMES.AUTHENTICATION_METHOD]: AUTHENTICATION_METHODS.SSH,
   [CLUSTER_FORM_FIELD_NAMES.IS_USE_DEFINED_SECRET]: false,
   [CLUSTER_FORM_FIELD_NAMES.SECRET_ID]: '',
+  [CLUSTER_FORM_FIELD_NAMES.INSTANCE_TYPE]: 'small',
+  [CLUSTER_FORM_FIELD_NAMES.STORAGE_AMOUNT]: 100,
   [CLUSTER_FORM_FIELD_NAMES.DATABASE_SERVERS]: Array(3)
     .fill(0)
     .map(() => ({
@@ -72,30 +77,36 @@ export const CLUSTER_FORM_DEFAULT_VALUES = Object.freeze({
   ...(IS_EXPERT_MODE
     ? {
         [CLUSTER_FORM_FIELD_NAMES.IS_SPOT_INSTANCES]: false,
-        [CLUSTER_FORM_FIELD_NAMES.IS_BACKUPS_ENABLED]: true,
-        [CLUSTER_FORM_FIELD_NAMES.BACKUP_METHOD]: BACKUP_METHODS.PG_BACK_REST,
-        [CLUSTER_FORM_FIELD_NAMES.BACKUP_RETENTION]: 1,
-        [CLUSTER_FORM_FIELD_NAMES.BACKUP_START_TIME]: 1,
-        [ADDITIONAL_SETTINGS_BLOCK_FIELD_NAMES.SYNC_STANDBY_NODES]: 1,
+        [STORAGE_BLOCK_FIELDS.FILE_SYSTEM_TYPE]: 'ext4',
+        [BACKUPS_BLOCK_FIELD_NAMES.IS_BACKUPS_ENABLED]: true,
+        [BACKUPS_BLOCK_FIELD_NAMES.BACKUP_METHOD]: BACKUP_METHODS.PG_BACK_REST,
+        [BACKUPS_BLOCK_FIELD_NAMES.BACKUP_RETENTION]: 1,
+        [BACKUPS_BLOCK_FIELD_NAMES.BACKUP_START_TIME]: 1,
+        [BACKUPS_BLOCK_FIELD_NAMES.CONFIG_GLOBAL]: '',
+        [BACKUPS_BLOCK_FIELD_NAMES.CONFIG_STANZA]: '',
+        [POSTGRES_PARAMETERS_FIELD_NAMES.POSTGRES_PARAMETERS]: '',
+        [KERNEL_PARAMETERS_FIELD_NAMES.KERNEL_PARAMETERS]: '',
+        [DATABASES_BLOCK_FIELD_NAMES.DATABASES]: [
+          {
+            [DATABASES_BLOCK_FIELD_NAMES.DATABASE_NAME]: 'db1',
+            [DATABASES_BLOCK_FIELD_NAMES.USER_NAME]: '',
+            [DATABASES_BLOCK_FIELD_NAMES.USER_PASSWORD]: '',
+            [DATABASES_BLOCK_FIELD_NAMES.ENCODING]: 'UTF8',
+            [DATABASES_BLOCK_FIELD_NAMES.LOCALE]: 'en_US.UTF-8',
+          },
+        ],
+        [CONNECTION_POOLS_BLOCK_FIELD_NAMES.IS_CONNECTION_POOLER_ENABLED]: true,
+        [CONNECTION_POOLS_BLOCK_FIELD_NAMES.POOLS]: [
+          {
+            [CONNECTION_POOLS_BLOCK_FIELD_NAMES.POOL_NAME]: 'db1',
+            [CONNECTION_POOLS_BLOCK_FIELD_NAMES.POOL_SIZE]: 20,
+            [CONNECTION_POOLS_BLOCK_FIELD_NAMES.POOL_MODE]: POOL_MODES[0],
+          },
+        ],
+        [EXTENSION_BLOCK_FIELD_NAMES.EXTENSIONS]: {},
+        [ADDITIONAL_SETTINGS_BLOCK_FIELD_NAMES.SYNC_STANDBY_NODES]: 2, // 2 because it should be one less than the number of servers, which is 3 by default
         [ADDITIONAL_SETTINGS_BLOCK_FIELD_NAMES.IS_CLOUD_LOAD_BALANCER]: true,
         [ADDITIONAL_SETTINGS_BLOCK_FIELD_NAMES.IS_NETDATA_MONITORING]: true,
-        [CLUSTER_FORM_FIELD_NAMES.DATABASES]: [
-          {
-            [CLUSTER_FORM_FIELD_NAMES.DATABASE_NAME]: 'db1',
-            [CLUSTER_FORM_FIELD_NAMES.USER_NAME]: '',
-            [CLUSTER_FORM_FIELD_NAMES.USER_PASSWORD]: '',
-            [CLUSTER_FORM_FIELD_NAMES.ENCODING]: 'UTF8',
-            [CLUSTER_FORM_FIELD_NAMES.LOCALE]: 'en_US.UTF-8',
-          },
-        ],
-        [CLUSTER_FORM_FIELD_NAMES.IS_CONNECTION_POOLER_ENABLED]: true,
-        [CLUSTER_FORM_FIELD_NAMES.POOLS]: [
-          {
-            [CLUSTER_FORM_FIELD_NAMES.POOL_NAME]: 'db1',
-            [CLUSTER_FORM_FIELD_NAMES.POOL_SIZE]: 20,
-            [CLUSTER_FORM_FIELD_NAMES.POOL_MODE]: POOL_MODES[0],
-          },
-        ],
       }
     : {}),
 });

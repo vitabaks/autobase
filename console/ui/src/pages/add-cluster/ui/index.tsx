@@ -1,4 +1,4 @@
-import React, { FC, useEffect, useState } from 'react';
+import { FC, useEffect, useState } from 'react';
 import ClusterForm from '@widgets/cluster-form';
 import ClusterSummary from '@widgets/cluster-summary';
 import { Box, Stack } from '@mui/material';
@@ -13,6 +13,8 @@ import { useGetEnvironmentsQuery } from '@shared/api/api/environments.ts';
 import { useGetPostgresVersionsQuery } from '@shared/api/api/other.ts';
 import { useGetClustersDefaultNameQuery } from '@shared/api/api/clusters.ts';
 import Spinner from '@shared/ui/spinner';
+import { STORAGE_BLOCK_FIELDS } from '@entities/cluster/storage-block/model/const.ts';
+import { IS_EXPERT_MODE } from '@shared/model/constants.ts';
 
 const AddCluster: FC = () => {
   const { t } = useTranslation(['clusters', 'validation', 'toasts']);
@@ -41,17 +43,22 @@ const AddCluster: FC = () => {
           [CLUSTER_FORM_FIELD_NAMES.PROVIDER]: providers?.[0],
           [CLUSTER_FORM_FIELD_NAMES.REGION]: providers?.[0]?.cloud_regions?.[0]?.code,
           [CLUSTER_FORM_FIELD_NAMES.REGION_CONFIG]: providers?.[0]?.cloud_regions?.[0]?.datacenters?.[0],
-          [CLUSTER_FORM_FIELD_NAMES.INSTANCE_TYPE]: 'small',
           [CLUSTER_FORM_FIELD_NAMES.INSTANCE_CONFIG]: providers?.[0]?.instance_types?.small?.[0],
-          [CLUSTER_FORM_FIELD_NAMES.STORAGE_AMOUNT]: 100,
           [CLUSTER_FORM_FIELD_NAMES.POSTGRES_VERSION]: postgresVersions.data?.data?.at(-1)?.major_version,
           [CLUSTER_FORM_FIELD_NAMES.ENVIRONMENT_ID]: environments.data?.data?.[0]?.id,
           [CLUSTER_FORM_FIELD_NAMES.CLUSTER_NAME]: clusterName.data?.name ?? 'postgres-cluster',
+          ...(IS_EXPERT_MODE
+            ? {
+                [STORAGE_BLOCK_FIELDS.VOLUME_TYPE]:
+                  providers?.[0]?.volumes?.find((volume) => volume?.is_default)?.volume_type ??
+                  providers?.[0]?.volumes?.[0]?.volume_type,
+              }
+            : {}),
         }));
       };
       void resetForm().then(() => setIsResetting(false));
     }
-  }, [deployments.data?.data, postgresVersions.data?.data, environments.data?.data, clusterName.data, methods]);
+  }, [deployments.data?.data, postgresVersions.data?.data, environments.data?.data, clusterName.data]);
 
   return (
     <FormProvider {...methods}>

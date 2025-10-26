@@ -42,7 +42,7 @@ const ClusterSliderBox: FC<SliderBoxProps> = ({
         alignItems="center"
         justifyContent="center"
         borderRight={`1px solid ${theme.palette.divider}`}
-        width="200px"
+        minWidth="155px"
         height="100px"
         padding="8px"
         boxSizing="border-box"
@@ -55,7 +55,7 @@ const ClusterSliderBox: FC<SliderBoxProps> = ({
           error={!!error}
           helperText={(error as any)?.message ?? ''}
           size="small"
-          sx={{ width: '100px' }}
+          sx={{ width: '75px' }}
         />
         <Typography>{unit}</Typography>
       </Box>

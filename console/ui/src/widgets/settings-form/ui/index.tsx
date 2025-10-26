@@ -1,10 +1,10 @@
 import { FC, useEffect, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
-import { SettingsFormValues } from '@entities/settings-proxy-block/model/types.ts';
+import { SettingsFormValues } from '@entities/settings/proxy-block/model/types.ts';
 import { Box, Button, CircularProgress, Stack } from '@mui/material';
-import SettingsProxyBlock from '@entities/settings-proxy-block';
+import SettingsProxyBlock from '@entities/settings/proxy-block';
 import { useTranslation } from 'react-i18next';
-import { SETTINGS_FORM_FIELDS_NAMES } from '@entities/settings-proxy-block/model/constants.ts';
+import { SETTINGS_FORM_FIELDS_NAMES } from '@entities/settings/proxy-block/model/constants.ts';
 import {
   useGetSettingsQuery,
   usePatchSettingsByNameMutation,
@@ -13,7 +13,7 @@ import {
 import { toast } from 'react-toastify';
 import { handleRequestErrorCatch } from '@shared/lib/functions.ts';
 import Spinner from '@shared/ui/spinner';
-import SettingExpertModeBlock from '@entities/settings-expert-mode-block/ui';
+import SettingExpertModeBlock from '@entities/settings/expert-mode-block/ui';
 import { LOCAL_STORAGE_ITEMS } from '@shared/model/constants.ts';
 
 const SettingsForm: FC = () => {

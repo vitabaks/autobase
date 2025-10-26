@@ -9,8 +9,9 @@ import { AUTHENTICATION_METHODS } from '@shared/model/constants.ts';
 import { ClusterDatabaseServer } from '@widgets/cluster-form/model/types.ts';
 import { SecretFormValues } from '@entities/secret-form-block/model/types.ts';
 import { SECRET_MODAL_CONTENT_FORM_FIELD_NAMES } from '@entities/secret-form-block/model/constants.ts';
-import { BackupsBlockValues } from '@entities/backups-block/model/types.ts';
-import { ExtensionsBlockValues } from '@entities/extensions-block/model/types.ts';
+import { BackupsBlockValues } from '@entities/cluster/expert-mode/backups-block/model/types.ts';
+import { ExtensionsBlockValues } from '@entities/cluster/expert-mode/extensions-block/model/types.ts';
+import { DatabasesBlockValues } from '@entities/cluster/expert-mode/databases-block/model/types.ts';
 
 export interface ClusterSecretModalProps {
   isClusterFormSubmitting?: boolean;
@@ -50,7 +51,8 @@ interface ClusterLocalMachineProviderFormValues
 export interface ClusterFormValues
   extends ClusterCloudProviderFormValues,
     ClusterLocalMachineProviderFormValues,
-    ExtensionsBlockValues {
+    ExtensionsBlockValues,
+    DatabasesBlockValues {
   [CLUSTER_FORM_FIELD_NAMES.PROVIDER]: ResponseDeploymentInfo;
   [CLUSTER_FORM_FIELD_NAMES.ENVIRONMENT_ID]: number;
   [CLUSTER_FORM_FIELD_NAMES.CLUSTER_NAME]: string;

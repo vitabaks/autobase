@@ -55,5 +55,7 @@
   "switchToSystemMode": "Switch to System Mode",
   "valid": "Valid",
   "invalid": "Invalid",
-  "locale": "Locale"
+  "locale": "Locale",
+  "somethingWentWrongWhileRendering": "Something went wrong while rendering",
+  "none": "None"
 }

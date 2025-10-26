@@ -1,9 +1,9 @@
 import React, { lazy, useRef } from 'react';
-import ProvidersBlock from '@entities/providers-block';
-import ClusterFormEnvironmentBlock from '@entities/cluster-form-environment-block';
-import ClusterNameBox from '@entities/cluster-form-cluster-name-block';
-import ClusterDescriptionBlock from '@entities/cluster-description-block';
-import PostgresVersionBox from '@entities/postgres-version-block';
+import ClusterFormProvidersBlock from '@entities/cluster/providers-block';
+import ClusterFormEnvironmentBlock from '@entities/cluster/environment-block';
+import ClusterNameBox from '@entities/cluster/cluster-name-block';
+import ClusterDescriptionBlock from '@entities/cluster/description-block';
+import PostgresVersionBox from '@entities/cluster/postgres-version-block';
 import DefaultFormButtons from '@shared/ui/default-form-buttons';
 import { useFormContext } from 'react-hook-form';
 import { generateAbsoluteRouterPath, handleRequestErrorCatch } from '@shared/lib/functions.ts';
@@ -28,13 +28,13 @@ import { getSecretBodyFromValues } from '@entities/secret-form-block/lib/functio
 import { SECRET_MODAL_CONTENT_FORM_FIELD_NAMES } from '@entities/secret-form-block/model/constants.ts';
 import { ClusterFormProps } from '@widgets/cluster-form/model/types.ts';
 
-const DatabaseBlock = lazy(() => import('@entities/databases-block/ui'));
-const ConnectionPoolsBlock = lazy(() => import('@entities/connection-pools-block/ui'));
-const ExtensionsBlock = lazy(() => import('@entities/extensions-block/ui'));
-const BackupsBlock = lazy(() => import('@entities/backups-block/ui'));
-const PostgresParametersBlock = lazy(() => import('@entities/postgres-parameters-block/ui'));
-const KernelParametersBlock = lazy(() => import('@entities/kernel-parameters-block/ui'));
-const AdditionalSettingsBlock = lazy(() => import('@entities/additional-settings-block/ui'));
+const DatabaseBlock = lazy(() => import('@entities/cluster/expert-mode/databases-block/ui'));
+const ConnectionPoolsBlock = lazy(() => import('@entities/cluster/expert-mode/connection-pools-block/ui'));
+const ExtensionsBlock = lazy(() => import('@entities/cluster/expert-mode/extensions-block/ui'));
+const BackupsBlock = lazy(() => import('@entities/cluster/expert-mode/backups-block/ui'));
+const PostgresParametersBlock = lazy(() => import('@entities/cluster/expert-mode/postgres-parameters-block/ui'));
+const KernelParametersBlock = lazy(() => import('@entities/cluster/expert-mode/kernel-parameters-block/ui'));
+const AdditionalSettingsBlock = lazy(() => import('@entities/cluster/expert-mode/additional-settings-block/ui'));
 
 const ClusterForm: React.FC<ClusterFormProps> = ({
   deploymentsData = [],
@@ -140,7 +140,7 @@ const ClusterForm: React.FC<ClusterFormProps> = ({
             : methods.handleSubmit(onSubmit)
         }>
         <Stack direction="column" gap={2}>
-          <ProvidersBlock providers={deploymentsData} />
+          <ClusterFormProvidersBlock providers={deploymentsData} />
           {watchProvider?.code === PROVIDERS.LOCAL ? (
             <ClusterFormLocalMachineFormPart />
           ) : (

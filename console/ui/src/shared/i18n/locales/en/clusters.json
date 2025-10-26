@@ -109,5 +109,7 @@
   "connectionPooler": "Connection pooler",
   "connectionPools": "Connection pools",
   "extensions": "Extensions",
-  "showEnabled": "Show enabled"
+  "showEnabled": "Show enabled",
+  "noExtensionsFound": "No extensions found",
+  "somethingWentWrongWhileRenderingExtensionsSwiper": "Something went wrong while rendering extensions swiper"
 }

@@ -16,12 +16,12 @@ const ClustersTableExportButton: FC<ClustersTableRemoveButtonProps> = ({ cluster
     // Handle boolean values
     if (valueRaw === 'true') return true;
     if (valueRaw === 'false') return false;
-    
+
     // Handle numeric values
     if (!isNaN(Number(valueRaw)) && valueRaw !== '') {
       return Number(valueRaw);
     }
-    
+
     // Handle JSON structures (objects and arrays)
     if (valueRaw.startsWith('{') || valueRaw.startsWith('[')) {
       try {
@@ -31,7 +31,7 @@ const ClustersTableExportButton: FC<ClustersTableRemoveButtonProps> = ({ cluster
         // If JSON parsing fails, try to fix common issues
         try {
           let fixedValue = valueRaw;
-          
+
           if (valueRaw.startsWith('{')) {
             // Fix object notation: {key:value} -> {"key":"value"}
             // Handle unquoted keys and values
@@ -58,7 +58,7 @@ const ClustersTableExportButton: FC<ClustersTableRemoveButtonProps> = ({ cluster
                 });
               });
           }
-          
+
           return JSON.parse(fixedValue);
         } catch (e2) {
           // If all parsing attempts fail, return as string
@@ -66,7 +66,7 @@ const ClustersTableExportButton: FC<ClustersTableRemoveButtonProps> = ({ cluster
         }
       }
     }
-    
+
     // Return as string if no special processing needed
     return valueRaw;
   };

@@ -5,11 +5,12 @@ import { PROVIDERS } from '@shared/config/constants.ts';
 import { AUTHENTICATION_METHODS, IS_EXPERT_MODE } from '@shared/model/constants.ts';
 import ipRegex from 'ip-regex';
 import { SECRET_MODAL_CONTENT_FORM_FIELD_NAMES } from '@entities/secret-form-block/model/constants.ts';
-import { BackupsBlockFormSchema } from '@entities/backups-block/model/validation.ts';
-import { DatabasesBlockSchema } from '@entities/databases-block/model/validation.ts';
-import { ConnectionPoolsBlockSchema } from '@entities/connection-pools-block/model/validation.ts';
-import { PostgresParametersBlockFormSchema } from '@entities/postgres-parameters-block/model/validation.ts';
-import { KernelParametersBlockFormSchema } from '@entities/kernel-parameters-block/model/validation.ts';
+import { BackupsBlockFormSchema } from '@entities/cluster/expert-mode/backups-block/model/validation.ts';
+import { DatabasesBlockSchema } from '@entities/cluster/expert-mode/databases-block/model/validation.ts';
+import { ConnectionPoolsBlockSchema } from '@entities/cluster/expert-mode/connection-pools-block/model/validation.ts';
+import { PostgresParametersBlockFormSchema } from '@entities/cluster/expert-mode/postgres-parameters-block/model/validation.ts';
+import { KernelParametersBlockFormSchema } from '@entities/cluster/expert-mode/kernel-parameters-block/model/validation.ts';
+import { AdditionalSettingsBlockFormSchema } from '@entities/cluster/expert-mode/additional-settings-block/model/validation.ts';
 
 const CloudFormSchema = (t: TFunction) => {
   const defaultClusterFormSchema = yup.object({
@@ -217,9 +218,10 @@ export const ClusterFormSchema = (t: TFunction) => {
   return IS_EXPERT_MODE
     ? defaultSchema
         .concat(DatabasesBlockSchema)
-        .concat(ConnectionPoolsBlockSchema)
+        .concat(ConnectionPoolsBlockSchema(t))
         .concat(BackupsBlockFormSchema(t))
         .concat(PostgresParametersBlockFormSchema(t))
         .concat(KernelParametersBlockFormSchema(t))
+        .concat(AdditionalSettingsBlockFormSchema(t))
     : defaultSchema;
 };

@@ -9,13 +9,15 @@ import {
   SECRET_MODAL_CONTENT_BODY_FORM_FIELDS,
   SECRET_MODAL_CONTENT_FORM_FIELD_NAMES,
 } from '@entities/secret-form-block/model/constants.ts';
-import { DATABASES_BLOCK_FIELD_NAMES } from '@entities/databases-block/model/const.ts';
-import { CONNECTION_POOLS_BLOCK_FIELD_NAMES } from '@entities/connection-pools-block/model/const.ts';
-import { BACKUPS_BLOCK_FIELD_NAMES } from '@entities/backups-block/model/const.ts';
-import { POSTGRES_PARAMETERS_FIELD_NAMES } from '@entities/postgres-parameters-block/model/const.ts';
-import { KERNEL_PARAMETERS_FIELD_NAMES } from '@entities/kernel-parameters-block/model/const.ts';
-import { ADDITIONAL_SETTINGS_BLOCK_FIELD_NAMES } from '@entities/additional-settings-block/model/const.ts';
-import { EXTENSION_BLOCK_FIELD_NAMES } from '@entities/extensions-block/model/const.ts';
+import { DATABASES_BLOCK_FIELD_NAMES } from '@entities/cluster/expert-mode/databases-block/model/const.ts';
+import { CONNECTION_POOLS_BLOCK_FIELD_NAMES } from '@entities/cluster/expert-mode/connection-pools-block/model/const.ts';
+import { BACKUPS_BLOCK_FIELD_NAMES } from '@entities/cluster/expert-mode/backups-block/model/const.ts';
+import { POSTGRES_PARAMETERS_FIELD_NAMES } from '@entities/cluster/expert-mode/postgres-parameters-block/model/const.ts';
+import { KERNEL_PARAMETERS_FIELD_NAMES } from '@entities/cluster/expert-mode/kernel-parameters-block/model/const.ts';
+import { ADDITIONAL_SETTINGS_BLOCK_FIELD_NAMES } from '@entities/cluster/expert-mode/additional-settings-block/model/const.ts';
+import { INSTANCES_AMOUNT_BLOCK_VALUES } from '@entities/cluster/instances-amount-block/model/const.ts';
+import { STORAGE_BLOCK_FIELDS } from '@entities/cluster/storage-block/model/const.ts';
+import { EXTENSION_BLOCK_FIELD_NAMES } from '@entities/cluster/expert-mode/extensions-block/model/const.ts';
 
 export const getCommonExtraVars = (values: ClusterFormValues) => ({
   postgresql_version: values[CLUSTER_FORM_FIELD_NAMES.POSTGRES_VERSION],
@@ -178,11 +180,16 @@ export const mapFormValuesToRequestFields = ({
   };
 
   if (IS_EXPERT_MODE) {
-    return {
-      ...baseCloudClusterObject,
-      server_spot: !!values[CLUSTER_FORM_FIELD_NAMES.IS_SPOT_INSTANCES],
-      pg_data_mount_fstype: values[CLUSTER_FORM_FIELD_NAMES.FILE_SYSTEM_TYPE],
-      volume_type: values[CLUSTER_FORM_FIELD_NAMES.VOLUME_TYPE],
+    const fromInstancesAmountBlock = {
+      server_spot: !!values[INSTANCES_AMOUNT_BLOCK_VALUES.IS_SPOT_INSTANCES],
+    };
+
+    const fromStorageAmountBlock = {
+      pg_data_mount_fstype: values[STORAGE_BLOCK_FIELDS.FILE_SYSTEM_TYPE],
+      volume_type: values[STORAGE_BLOCK_FIELDS.VOLUME_TYPE],
+    };
+
+    const fromDatabasesBlock = {
       postgresql_databases: values[DATABASES_BLOCK_FIELD_NAMES.DATABASES].map((db) => ({
         db: db?.[DATABASES_BLOCK_FIELD_NAMES.DATABASE_NAME],
         owner: db?.[DATABASES_BLOCK_FIELD_NAMES.USER_NAME],
@@ -193,15 +200,41 @@ export const mapFormValuesToRequestFields = ({
         name: db?.[DATABASES_BLOCK_FIELD_NAMES.USER_NAME],
         password: db?.[DATABASES_BLOCK_FIELD_NAMES.USER_PASSWORD],
       })),
+    };
+
+    const fromConnectionPoolsBlock = {
       pgbouncer_install: !!values[CONNECTION_POOLS_BLOCK_FIELD_NAMES.IS_CONNECTION_POOLER_ENABLED],
-      pgbouncer_pools: values?.[CONNECTION_POOLS_BLOCK_FIELD_NAMES.POOLS].map((pool) => ({
-        name: pool?.[CONNECTION_POOLS_BLOCK_FIELD_NAMES.POOL_NAME],
-        dbname: pool?.[CONNECTION_POOLS_BLOCK_FIELD_NAMES.POOL_NAME],
-        pool_parameters: {
-          pool_size: pool?.[CONNECTION_POOLS_BLOCK_FIELD_NAMES.POOL_SIZE],
-          pool_mode: pool?.[CONNECTION_POOLS_BLOCK_FIELD_NAMES.POOL_MODE],
+      ...(!!values[CONNECTION_POOLS_BLOCK_FIELD_NAMES.IS_CONNECTION_POOLER_ENABLED] // do not add pools info if connection pooler is disabled
+        ? {
+            pgbouncer_pools: values?.[CONNECTION_POOLS_BLOCK_FIELD_NAMES.POOLS].map((pool) => ({
+              name: pool?.[CONNECTION_POOLS_BLOCK_FIELD_NAMES.POOL_NAME],
+              dbname: pool?.[CONNECTION_POOLS_BLOCK_FIELD_NAMES.POOL_NAME],
+              pool_parameters: {
+                pool_size: pool?.[CONNECTION_POOLS_BLOCK_FIELD_NAMES.POOL_SIZE],
+                pool_mode: pool?.[CONNECTION_POOLS_BLOCK_FIELD_NAMES.POOL_MODE],
+              },
+            })),
+          }
+        : {}),
+    };
+
+    const fromExtensionsBlock = {
+      postgresql_extensions: Object.entries(values?.[EXTENSION_BLOCK_FIELD_NAMES.EXTENSIONS]).reduce(
+        (acc, [key, value]) => {
+          if (value.length) {
+            const convertedToReqFormat = value.map((item) => ({
+              ext: key,
+              db: values[DATABASES_BLOCK_FIELD_NAMES.NAMES][item],
+            }));
+            return [...acc, ...convertedToReqFormat];
+          }
+          return acc;
         },
-      })),
+        [],
+      ),
+    };
+
+    const fromBackupPoolsBlock = {
       ...(values?.[BACKUPS_BLOCK_FIELD_NAMES.BACKUP_METHOD]
         ? values[BACKUPS_BLOCK_FIELD_NAMES.BACKUP_METHOD] === 'pgbackrest_install'
           ? {
@@ -221,6 +254,9 @@ export const mapFormValuesToRequestFields = ({
               wal_g_json: values?.[BACKUPS_BLOCK_FIELD_NAMES.CONFIG_GLOBAL],
             }
         : {}),
+    };
+
+    const fromPostgresParametersBlock = {
       local_postgresql_parameters: values?.[POSTGRES_PARAMETERS_FIELD_NAMES.POSTGRES_PARAMETERS],
       ...(values?.[KERNEL_PARAMETERS_FIELD_NAMES.KERNEL_PARAMETERS]
         ? {
@@ -237,12 +273,31 @@ export const mapFormValuesToRequestFields = ({
               : {}),
           }
         : {}),
+    };
+
+    const fromAdditionalSettingsBlock = {
+      ...(values[ADDITIONAL_SETTINGS_BLOCK_FIELD_NAMES.SYNC_STANDBY_NODES]
+        ? {
+            synchronous_mode: true,
+            synchronous_node_count: values[ADDITIONAL_SETTINGS_BLOCK_FIELD_NAMES.SYNC_STANDBY_NODES],
+            synchronous_mode_strict: !!values?.[ADDITIONAL_SETTINGS_BLOCK_FIELD_NAMES.IS_SYNC_MODE_STRICT],
+          }
+        : {}),
       database_public_access: !!values?.[ADDITIONAL_SETTINGS_BLOCK_FIELD_NAMES.IS_DB_PUBLIC_ACCESS],
       cloud_load_balancer: !!values?.[ADDITIONAL_SETTINGS_BLOCK_FIELD_NAMES.IS_CLOUD_LOAD_BALANCER],
       netdata_install: !!values?.[ADDITIONAL_SETTINGS_BLOCK_FIELD_NAMES.IS_NETDATA_MONITORING],
-      postgresql_extensions: values[EXTENSION_BLOCK_FIELD_NAMES.EXTENSIONS]?.map((extension) => ({
-        ext: extension.name,
-      })),
+    };
+
+    return {
+      ...baseCloudClusterObject,
+      ...fromInstancesAmountBlock,
+      ...fromStorageAmountBlock,
+      ...fromDatabasesBlock,
+      ...fromConnectionPoolsBlock,
+      ...fromExtensionsBlock,
+      ...fromBackupPoolsBlock,
+      ...fromPostgresParametersBlock,
+      ...fromAdditionalSettingsBlock,
     };
   }
 
