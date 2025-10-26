@@ -339,7 +339,7 @@
                 port: "{{ pgbouncer_listen_port | default('6432') }}"
             network:
               selfLink: "global/networks/{{ gcp_network_name }}"
-            instances: "{{ instances_selflink }}"
+            instances: "{{ instances_selflink | from_json }}"
             state: present
           vars:
             region: "{{ server_location[:-2] if server_location[-2:] | regex_search('-[a-z]$') else server_location }}"
@@ -348,9 +348,7 @@
             instances_selflink: >- # TODO: use "{{ server_result.results | map(attribute='selfLink') | map('community.general.dict_kv', 'selfLink') | list }}"
               [
                 {% for i in range(1, (server_count | int) + 1) %}
-                  {
-                    "selfLink": "zones/{{ zone }}/instances/{{ server_name }}{{ '%02d' % i }}"
-                  }{% if not loop.last %},{% endif %}
+                  { "selfLink": "zones/{{ zone }}/instances/{{ server_name }}{{ '%02d' % i }}" }{% if not loop.last %},{% endif %}
                 {% endfor %}
               ]
           register: instance_group
@@ -558,7 +556,7 @@
             | map(attribute='resources') | map('default', []) | list | flatten
             | selectattr('id','defined') | map(attribute='id') | list
           }}
-      loop: "{{ server_result.results | selectattr('networkInterfaces', 'defined') }}"
+      loop: "{{ server_result.results | selectattr('networkInterfaces', 'defined') | list }}"
       loop_control:
         label: >-
           public_ip: {{ item.networkInterfaces[0].accessConfigs[0].natIP | default('') }},
@@ -568,7 +566,7 @@
       ansible.builtin.import_tasks: inventory.yml
   when:
     - server_result.results is defined
-    - server_result.results | selectattr('networkInterfaces', 'defined')
+    - (server_result.results | selectattr('networkInterfaces', 'defined') | list | length) > 0
 
 # Delete (if state is absent)
 - block:
