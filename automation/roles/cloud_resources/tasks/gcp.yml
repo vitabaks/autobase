@@ -348,9 +348,7 @@
             instances_selflink: >- # TODO: use "{{ server_result.results | map(attribute='selfLink') | map('community.general.dict_kv', 'selfLink') | list }}"
               [
                 {% for i in range(1, (server_count | int) + 1) %}
-                  {
-                    "selfLink": "zones/{{ zone }}/instances/{{ server_name }}{{ '%02d' % i }}"
-                  }{% if not loop.last %},{% endif %}
+                  { "selfLink": "zones/{{ zone }}/instances/{{ server_name }}{{ '%02d' % i }}" }{% if not loop.last %},{% endif %}
                 {% endfor %}
               ]
           register: instance_group
