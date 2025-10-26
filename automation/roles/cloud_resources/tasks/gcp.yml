@@ -339,7 +339,7 @@
                 port: "{{ pgbouncer_listen_port | default('6432') }}"
             network:
               selfLink: "global/networks/{{ gcp_network_name }}"
-            instances: "{{ instances_selflink }}"
+            instances: "{{ instances_selflink | from_json }}"
             state: present
           vars:
             region: "{{ server_location[:-2] if server_location[-2:] | regex_search('-[a-z]$') else server_location }}"
