@@ -297,9 +297,9 @@
             key_data: "{{ ssh_key_content }}"
         ssh_password_enabled: false
         image:
-          offer: "{{ azure_vm_image_offer | default('0001-com-ubuntu-server-jammy') }}"
+          offer: "{{ azure_vm_image_offer | default('ubuntu-24_04-lts') }}"
           publisher: "{{ azure_vm_image_publisher | default('Canonical') }}"
-          sku: "{{ azure_vm_image_sku | default('22_04-lts-gen2') }}"
+          sku: "{{ azure_vm_image_sku | default('server') }}"
           version: "{{ azure_vm_image_version | default('latest') }}"
         os_type: Linux
         os_disk_size_gb: "{{ system_volume_size | default('80') }}" # system disk size
