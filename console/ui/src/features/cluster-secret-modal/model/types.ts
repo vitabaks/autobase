@@ -25,7 +25,7 @@ export interface ClusterSecretModalFormValues extends SecretFormValues {
 interface ClusterCloudProviderFormValues extends BackupsBlockValues {
   [CLUSTER_FORM_FIELD_NAMES.REGION]?: string;
   [CLUSTER_FORM_FIELD_NAMES.REGION_CONFIG]?: DeploymentInfoCloudRegion;
-  [CLUSTER_FORM_FIELD_NAMES.INSTANCE_TYPE]?: ['small', 'medium', 'large'];
+  [CLUSTER_FORM_FIELD_NAMES.INSTANCE_TYPE]?: 'small' | 'medium' | 'large' | 'custom';
   [CLUSTER_FORM_FIELD_NAMES.INSTANCE_CONFIG]?: DeploymentInstanceType;
   [CLUSTER_FORM_FIELD_NAMES.INSTANCES_AMOUNT]?: number;
   [CLUSTER_FORM_FIELD_NAMES.STORAGE_AMOUNT]?: number;

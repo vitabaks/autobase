@@ -7,7 +7,6 @@ export const BackupsBlockFormSchema = (t: TFunction) =>
   yup.object({
     [BACKUPS_BLOCK_FIELD_NAMES.IS_BACKUPS_ENABLED]: yup.boolean(),
     [BACKUPS_BLOCK_FIELD_NAMES.CONFIG_GLOBAL]: configValidationSchema(t).optional(),
-    [BACKUPS_BLOCK_FIELD_NAMES.CONFIG_STANZA]: configValidationSchema(t).optional(),
     [BACKUPS_BLOCK_FIELD_NAMES.BACKUP_START_TIME]: yup.string(),
     [BACKUPS_BLOCK_FIELD_NAMES.BACKUP_RETENTION]: yup.number().typeError(t('onlyNumbers', { ns: 'validation' })),
   });

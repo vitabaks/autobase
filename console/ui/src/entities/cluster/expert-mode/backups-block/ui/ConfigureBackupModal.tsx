@@ -1,9 +1,10 @@
 import { FC, useState } from 'react';
-import { Button, Card, Modal, Stack, TextField, Typography } from '@mui/material';
-import { Controller, useFormContext } from 'react-hook-form';
+import { Button, Card, Modal, Stack, TextField, Tooltip, Typography } from '@mui/material';
+import { Controller, useFormContext, useWatch } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { BACKUP_METHODS, BACKUPS_BLOCK_FIELD_NAMES } from '@entities/cluster/expert-mode/backups-block/model/const.ts';
-import { renderIcon } from '@entities/cluster/expert-mode/backups-block/lib/functions.tsx';
+import DoNotDisturbAltOutlinedIcon from '@mui/icons-material/DoNotDisturbAltOutlined';
+import DoneOutlinedIcon from '@mui/icons-material/DoneOutlined';
 
 const ConfigureBackupModal: FC = () => {
   const { t } = useTranslation(['clusters', 'shared']);
@@ -12,13 +13,13 @@ const ConfigureBackupModal: FC = () => {
 
   const {
     control,
-    watch,
     formState: { errors },
   } = useFormContext();
 
   const handleModalOpenState = (isOpen: boolean) => () => setIsModalOpen(isOpen);
 
-  const watchBackupMethod = watch(BACKUPS_BLOCK_FIELD_NAMES.BACKUP_METHOD);
+  const watchBackupMethod = useWatch({ name: BACKUPS_BLOCK_FIELD_NAMES.BACKUP_METHOD });
+  const watchConfig = useWatch({ name: BACKUPS_BLOCK_FIELD_NAMES.CONFIG_GLOBAL });
 
   return (
     <>
@@ -26,7 +27,11 @@ const ConfigureBackupModal: FC = () => {
         <Button onClick={handleModalOpenState(true)} variant="outlined">
           {t('configure')}
         </Button>
-        {renderIcon()}
+        {watchConfig ? (
+          <Tooltip title={t(errors?.[BACKUPS_BLOCK_FIELD_NAMES.CONFIG_GLOBAL] ? 'Invalid' : 'Valid')}>
+            {errors?.[BACKUPS_BLOCK_FIELD_NAMES.CONFIG_GLOBAL] ? <DoNotDisturbAltOutlinedIcon /> : <DoneOutlinedIcon />}
+          </Tooltip>
+        ) : null}
       </Stack>
       <Modal open={isModalOpen} onClose={handleModalOpenState(false)}>
         <Card
@@ -46,35 +51,7 @@ const ConfigureBackupModal: FC = () => {
             <Typography fontWeight="bold" fontSize={20}>
               {t('configureBackup')}
             </Typography>
-            {watchBackupMethod === BACKUP_METHODS.PG_BACK_REST ? (
-              <Stack gap="8px">
-                {[
-                  {
-                    fieldName: BACKUPS_BLOCK_FIELD_NAMES.CONFIG_GLOBAL,
-                    label: t('global'),
-                  },
-                  { fieldName: BACKUPS_BLOCK_FIELD_NAMES.CONFIG_STANZA, label: 'Stanza' },
-                ].map(({ fieldName, label }) => (
-                  <Controller
-                    key={fieldName}
-                    control={control}
-                    name={fieldName}
-                    render={({ field }) => (
-                      <TextField
-                        {...field}
-                        fullWidth
-                        multiline
-                        rows={20}
-                        label={label}
-                        size="small"
-                        error={!!errors?.[fieldName]}
-                        helperText={errors?.[fieldName]?.message as string}
-                      />
-                    )}
-                  />
-                ))}
-              </Stack>
-            ) : (
+            {
               <Controller
                 control={control}
                 name={BACKUPS_BLOCK_FIELD_NAMES.CONFIG_GLOBAL}
@@ -84,14 +61,14 @@ const ConfigureBackupModal: FC = () => {
                     fullWidth
                     multiline
                     rows={20}
-                    label={t('global')}
+                    label={watchBackupMethod === BACKUP_METHODS.PG_BACK_REST ? t('global') : ''}
                     size="small"
                     error={!!errors?.[BACKUPS_BLOCK_FIELD_NAMES.CONFIG_GLOBAL]}
                     helperText={errors?.[BACKUPS_BLOCK_FIELD_NAMES.CONFIG_GLOBAL]?.message as string}
                   />
                 )}
               />
-            )}
+            }
           </Stack>
         </Card>
       </Modal>

@@ -11,6 +11,7 @@ import { ConnectionPoolsBlockSchema } from '@entities/cluster/expert-mode/connec
 import { PostgresParametersBlockFormSchema } from '@entities/cluster/expert-mode/postgres-parameters-block/model/validation.ts';
 import { KernelParametersBlockFormSchema } from '@entities/cluster/expert-mode/kernel-parameters-block/model/validation.ts';
 import { AdditionalSettingsBlockFormSchema } from '@entities/cluster/expert-mode/additional-settings-block/model/validation.ts';
+import { DataDiskStorageBlockFormSchema } from '@entities/cluster/expert-mode/data-disk-storage-block/model/validation.ts';
 
 const CloudFormSchema = (t: TFunction) => {
   const defaultClusterFormSchema = yup.object({
@@ -217,6 +218,7 @@ export const ClusterFormSchema = (t: TFunction) => {
 
   return IS_EXPERT_MODE
     ? defaultSchema
+        .concat(DataDiskStorageBlockFormSchema(t))
         .concat(DatabasesBlockSchema)
         .concat(ConnectionPoolsBlockSchema(t))
         .concat(BackupsBlockFormSchema(t))

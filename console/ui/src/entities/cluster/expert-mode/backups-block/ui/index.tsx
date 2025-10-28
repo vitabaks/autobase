@@ -50,19 +50,12 @@ const BackupsBlock: FC = () => {
           control={control}
           name={BACKUPS_BLOCK_FIELD_NAMES.IS_BACKUPS_ENABLED}
           render={({ field }) => (
-            <FormControlLabel
-              {...field}
-              checked={!!field.value}
-              control={<Checkbox />}
-              sx={{
-                '& .MuiFormControlLabel-label': {
-                  width: '250px',
-                },
-                marginLeft: 0,
-              }}
-              labelPlacement="start"
-              label={t('backups')}
-            />
+            <Stack direction="row" alignItems="center">
+              <Stack direction="row" alignItems="center" width={250}>
+                <Typography>{t('backups')}</Typography>
+              </Stack>
+              <Checkbox {...field} checked={!!field.value} />
+            </Stack>
           )}
         />
         {watchIsBackupsEnabled ? (
@@ -71,47 +64,37 @@ const BackupsBlock: FC = () => {
               control={control}
               name={BACKUPS_BLOCK_FIELD_NAMES.BACKUP_METHOD}
               render={({ field }) => (
-                <FormControlLabel
-                  control={
-                    <RadioGroup
-                      {...field}
-                      row
-                      onChange={(e) => {
-                        if (field.value === BACKUP_METHODS.PG_BACK_REST) {
-                          resetField(BACKUPS_BLOCK_FIELD_NAMES.CONFIG_GLOBAL);
-                          resetField(BACKUPS_BLOCK_FIELD_NAMES.CONFIG_STANZA);
-                        } else resetField(BACKUPS_BLOCK_FIELD_NAMES.CONFIG_GLOBAL);
-                        field.onChange(e);
-                      }}>
-                      {[
-                        { label: 'pgBackRest', value: BACKUP_METHODS.PG_BACK_REST },
-                        { label: 'WAL-G', value: BACKUP_METHODS.WAL_G },
-                      ].map(({ label, value }) => (
-                        <FormControlLabel
-                          key={value}
-                          value={value}
-                          label={label}
-                          control={<Radio />}
-                          sx={{
-                            '& .MuiFormControlLabel-label': {
-                              width: 'fit-content !important',
-                            },
-                            marginLeft: 0,
-                          }}
-                          labelPlacement="end"
-                        />
-                      ))}
-                    </RadioGroup>
-                  }
-                  sx={{
-                    '& .MuiFormControlLabel-label': {
-                      width: '250px',
-                    },
-                    marginLeft: 0,
-                  }}
-                  labelPlacement="start"
-                  label={t('backupMethod')}
-                />
+                <Stack direction="row" alignItems="center">
+                  <Stack direction="row" alignItems="center" width={250}>
+                    <Typography>{t('backupMethod')}</Typography>
+                  </Stack>
+                  <RadioGroup
+                    {...field}
+                    row
+                    onChange={(e) => {
+                      resetField(BACKUPS_BLOCK_FIELD_NAMES.CONFIG_GLOBAL);
+                      field.onChange(e);
+                    }}>
+                    {[
+                      { label: 'pgBackRest', value: BACKUP_METHODS.PG_BACK_REST },
+                      { label: 'WAL-G', value: BACKUP_METHODS.WAL_G },
+                    ].map(({ label, value }) => (
+                      <FormControlLabel
+                        key={value}
+                        value={value}
+                        label={label}
+                        control={<Radio />}
+                        sx={{
+                          '& .MuiFormControlLabel-label': {
+                            width: 'fit-content !important',
+                          },
+                          marginLeft: 0,
+                        }}
+                        labelPlacement="end"
+                      />
+                    ))}
+                  </RadioGroup>
+                </Stack>
               )}
             />
             <Controller
@@ -120,7 +103,19 @@ const BackupsBlock: FC = () => {
               render={({ field }) => (
                 <Stack direction="row" alignItems="center">
                   <Typography width="250px">{t('backupStartTime')}</Typography>
-                  <Select {...field} size="small" label={t('backupStartTime')}>
+                  <Select
+                    {...field}
+                    size="small"
+                    MenuProps={{
+                      sx: {
+                        height: '300px',
+                      },
+                    }}
+                    sx={{
+                      '& .MuiMenu-list': {
+                        height: '50px',
+                      },
+                    }}>
                     {range(0, 24).map((value) => (
                       <MenuItem key={value} value={value}>
                         {`${value}:00`}

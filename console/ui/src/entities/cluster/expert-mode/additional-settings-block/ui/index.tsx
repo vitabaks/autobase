@@ -1,10 +1,12 @@
 import { ChangeEvent, FC } from 'react';
-import { Checkbox, FormControlLabel, Link, Slider, Stack, TextField, Tooltip, Typography } from '@mui/material';
+import { Checkbox, Link, Slider, Stack, TextField, Tooltip, Typography } from '@mui/material';
 import { Trans, useTranslation } from 'react-i18next';
 import { Controller, useFormContext, useWatch } from 'react-hook-form';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import { ADDITIONAL_SETTINGS_BLOCK_FIELD_NAMES } from '@entities/cluster/expert-mode/additional-settings-block/model/const.ts';
 import { INSTANCES_AMOUNT_BLOCK_VALUES } from '@entities/cluster/instances-amount-block/model/const.ts';
+import ErrorBox from '@shared/ui/error-box/ui';
+import { ErrorBoundary } from 'react-error-boundary';
 
 const AdditionalSettingsBlock: FC = () => {
   const { t } = useTranslation('clusters');
@@ -15,6 +17,7 @@ const AdditionalSettingsBlock: FC = () => {
   } = useFormContext();
 
   const watchInstancesAmount = useWatch({ name: INSTANCES_AMOUNT_BLOCK_VALUES.INSTANCES_AMOUNT });
+  const watchSyncStandbyNodes = useWatch({ name: ADDITIONAL_SETTINGS_BLOCK_FIELD_NAMES.SYNC_STANDBY_NODES });
 
   const handleInputChange = (onChange: (event: ChangeEvent) => void) => (e: ChangeEvent<HTMLInputElement>) => {
     // prevent user from entering more or less than restricted amount in input field
@@ -33,106 +36,100 @@ const AdditionalSettingsBlock: FC = () => {
       <Typography fontWeight="bold" marginBottom="8px">
         {t('additionalSettings')}
       </Typography>
-      <Stack direction="column" spacing={1} alignItems="flex-start">
-        <Controller
-          control={control}
-          name={ADDITIONAL_SETTINGS_BLOCK_FIELD_NAMES.SYNC_STANDBY_NODES}
-          render={({ field }) => (
-            <Stack direction="row" alignItems="center">
-              <Stack direction="row" alignItems="center" gap={1} width="250px">
-                <Typography>{t('syncStandbyNodes')}</Typography>
-                <Tooltip title={t('syncStandbyNodesTooltip')}>
-                  <HelpOutlineIcon fontSize="small" />
-                </Tooltip>
-              </Stack>
-              <Stack>
-                <TextField
-                  {...field}
-                  onChange={handleInputChange(field.onChange)}
-                  size="small"
-                  error={!!errors?.[ADDITIONAL_SETTINGS_BLOCK_FIELD_NAMES.SYNC_STANDBY_NODES]}
-                  helperText={errors?.[ADDITIONAL_SETTINGS_BLOCK_FIELD_NAMES.SYNC_STANDBY_NODES]?.message as string}
-                />
-                <Slider
-                  {...field}
-                  step={1}
-                  min={0}
-                  max={watchInstancesAmount - 1}
-                  sx={{ paddingTop: 0, marginTop: '-8px' }}
-                />
-              </Stack>
-            </Stack>
-          )}
-        />
-        {[
-          {
-            fieldName: ADDITIONAL_SETTINGS_BLOCK_FIELD_NAMES.IS_SYNC_MODE_STRICT,
-            label: t('syncModeStrict'),
-            tooltip: t('syncModeStrictTooltip'),
-          },
-          {
-            fieldName: ADDITIONAL_SETTINGS_BLOCK_FIELD_NAMES.IS_DB_PUBLIC_ACCESS,
-            label: t('dbPublicAccess'),
-            tooltip: t('dbPublicAccessTooltip'),
-          },
-          {
-            fieldName: ADDITIONAL_SETTINGS_BLOCK_FIELD_NAMES.IS_CLOUD_LOAD_BALANCER,
-            label: t('cloudLoadBalancer'),
-            tooltip: t('cloudLoadBalancerTooltip'),
-          },
-        ].map(({ fieldName, label, tooltip }) => (
+      <ErrorBoundary fallback={<ErrorBox />}>
+        <Stack direction="column" spacing={1} alignItems="flex-start">
           <Controller
-            key={fieldName}
             control={control}
-            name={fieldName}
+            name={ADDITIONAL_SETTINGS_BLOCK_FIELD_NAMES.SYNC_STANDBY_NODES}
             render={({ field }) => (
-              <FormControlLabel
-                {...field}
-                checked={!!field.value}
-                control={<Checkbox />}
-                sx={{
-                  '& .MuiFormControlLabel-label': {
-                    width: '250px',
-                  },
-                  marginLeft: 0,
-                }}
-                labelPlacement="start"
-                label={
-                  <Stack direction="row" alignItems="center">
+              <Stack direction="row" alignItems="center">
+                <Stack direction="row" alignItems="center" gap={1} width="250px">
+                  <Typography>{t('syncStandbyNodes')}</Typography>
+                  <Tooltip title={t('syncStandbyNodesTooltip')}>
+                    <HelpOutlineIcon fontSize="small" />
+                  </Tooltip>
+                </Stack>
+                <Stack>
+                  <TextField
+                    {...field}
+                    onChange={handleInputChange(field.onChange)}
+                    size="small"
+                    error={!!errors?.[ADDITIONAL_SETTINGS_BLOCK_FIELD_NAMES.SYNC_STANDBY_NODES]}
+                    helperText={errors?.[ADDITIONAL_SETTINGS_BLOCK_FIELD_NAMES.SYNC_STANDBY_NODES]?.message as string}
+                  />
+                  <Slider
+                    {...field}
+                    step={1}
+                    min={0}
+                    max={watchInstancesAmount - 1}
+                    sx={{ paddingTop: 0, marginTop: '-8px' }}
+                  />
+                </Stack>
+              </Stack>
+            )}
+          />
+          {watchSyncStandbyNodes ? (
+            <Controller
+              control={control}
+              name={ADDITIONAL_SETTINGS_BLOCK_FIELD_NAMES.IS_SYNC_MODE_STRICT}
+              render={({ field }) => (
+                <Stack direction="row" alignItems="center">
+                  <Stack direction="row" alignItems="center" width={250}>
+                    <Typography marginRight={1}>{t('syncModeStrict')}</Typography>
+                    <Tooltip title={t('syncModeStrict')}>
+                      <HelpOutlineIcon fontSize="small" />
+                    </Tooltip>
+                  </Stack>
+                  <Checkbox {...field} checked={!!field.value} />
+                </Stack>
+              )}
+            />
+          ) : null}
+          {[
+            {
+              fieldName: ADDITIONAL_SETTINGS_BLOCK_FIELD_NAMES.IS_DB_PUBLIC_ACCESS,
+              label: t('dbPublicAccess'),
+              tooltip: t('dbPublicAccessTooltip'),
+            },
+            {
+              fieldName: ADDITIONAL_SETTINGS_BLOCK_FIELD_NAMES.IS_CLOUD_LOAD_BALANCER,
+              label: t('cloudLoadBalancer'),
+              tooltip: t('cloudLoadBalancerTooltip'),
+            },
+          ].map(({ fieldName, label, tooltip }) => (
+            <Controller
+              key={fieldName}
+              control={control}
+              name={fieldName}
+              render={({ field }) => (
+                <Stack direction="row" alignItems="center">
+                  <Stack direction="row" alignItems="center" width={250}>
                     <Typography marginRight={1}>{label}</Typography>
                     <Tooltip title={tooltip}>
                       <HelpOutlineIcon fontSize="small" />
                     </Tooltip>
                   </Stack>
-                }
-              />
+                  <Checkbox {...field} checked={!!field.value} />
+                </Stack>
+              )}
+            />
+          ))}
+          <Controller
+            control={control}
+            name={ADDITIONAL_SETTINGS_BLOCK_FIELD_NAMES.IS_NETDATA_MONITORING}
+            render={({ field }) => (
+              <Stack direction="row" alignItems="center">
+                <Stack direction="row" alignItems="center" width={250}>
+                  <Trans i18nKey="netdataMonitoring" t={t}>
+                    <Link target="_blank" href={'https://github.com/netdata/netdata'} color="text.secondary" />
+                  </Trans>
+                </Stack>
+                <Checkbox {...field} checked={!!field.value} />
+              </Stack>
             )}
           />
-        ))}
-        <Controller
-          control={control}
-          name={ADDITIONAL_SETTINGS_BLOCK_FIELD_NAMES.IS_NETDATA_MONITORING}
-          render={({ field }) => (
-            <FormControlLabel
-              {...field}
-              checked={!!field.value}
-              control={<Checkbox />}
-              sx={{
-                '& .MuiFormControlLabel-label': {
-                  width: '250px',
-                },
-                marginLeft: 0,
-              }}
-              labelPlacement="start"
-              label={
-                <Trans i18nKey="netdataMonitoring" t={t}>
-                  <Link target="_blank" href={'https://github.com/netdata/netdata'} color="text.secondary" />
-                </Trans>
-              }
-            />
-          )}
-        />
-      </Stack>
+        </Stack>
+      </ErrorBoundary>
     </Stack>
   );
 };

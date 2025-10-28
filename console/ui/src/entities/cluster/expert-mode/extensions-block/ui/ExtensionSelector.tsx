@@ -4,10 +4,10 @@ import { Controller, useFormContext, useWatch } from 'react-hook-form';
 import { DATABASES_BLOCK_FIELD_NAMES } from '@entities/cluster/expert-mode/databases-block/model/const.ts';
 import { useTranslation } from 'react-i18next';
 import { EXTENSION_BLOCK_FIELD_NAMES } from '@entities/cluster/expert-mode/extensions-block/model/const.ts';
-import { ExtensionBoxProps } from '@entities/cluster/expert-mode/extensions-block/model/types.ts';
+import { ExtensionSelectorProps } from '@entities/cluster/expert-mode/extensions-block/model/types.ts';
 import { intersection } from 'lodash';
 
-const ExtensionSelector: FC<ExtensionBoxProps> = ({ extension }) => {
+const ExtensionSelector: FC<ExtensionSelectorProps> = ({ extension }) => {
   const { t } = useTranslation('clusters');
   const [anchorEl, setAnchorEl] = useState<HTMLInputElement | null>(null);
   const [isChecked, setIsChecked] = useState(false);
@@ -26,7 +26,10 @@ const ExtensionSelector: FC<ExtensionBoxProps> = ({ extension }) => {
     setAnchorEl(null);
   };
 
-  const open = Boolean(anchorEl);
+  const handleChange = (onChange) => (e: ChangeEvent<HTMLInputElement>) => {
+    setIsChecked(!!e.target.value?.length);
+    onChange(e);
+  };
 
   useEffect(() => {
     const intersected = intersection(
@@ -37,22 +40,12 @@ const ExtensionSelector: FC<ExtensionBoxProps> = ({ extension }) => {
     intersected?.length ? setIsChecked(true) : setIsChecked(false);
   }, [watchAvailableNames]);
 
-  const handleChange = (onChange) => (e: ChangeEvent<HTMLInputElement>) => {
-    setIsChecked(!!e.target.value?.length);
-    onChange(e);
-  };
-
   return (
     <Box>
-      <Switch checked={isChecked} onClick={handleSwitchClick} sx={{ position: 'absolute', right: 0, top: 0 }} />
-      <Popover
-        open={open}
-        anchorEl={anchorEl}
-        onClose={handleClose}
-        anchorOrigin={{
-          vertical: 'bottom',
-          horizontal: 'left',
-        }}>
+      <div onClick={handleSwitchClick}>
+        <Switch checked={isChecked} sx={{ position: 'absolute', right: 0, top: 0 }} />
+      </div>
+      <Popover open={!!anchorEl} anchorEl={anchorEl} onClose={handleClose}>
         <Box bgcolor="#fff" padding={1} width={200}>
           <FormControl fullWidth>
             <InputLabel size="small">{t('databases')}</InputLabel>
@@ -61,13 +54,19 @@ const ExtensionSelector: FC<ExtensionBoxProps> = ({ extension }) => {
               name={`${EXTENSION_BLOCK_FIELD_NAMES.EXTENSIONS}.${extension.name}`}
               render={({ field: { value, onChange } }) => (
                 <Select
-                  size="small"
+                  defaultOpen
+                  onClose={handleClose} // close Popover too when closing Select
                   fullWidth
                   multiple
                   renderValue={(selected) => selected.map((value) => watchAvailableNames[value]).join(', ')}
                   label={t('databases')}
                   onChange={handleChange(onChange)}
-                  value={value ?? []}>
+                  value={value ?? []}
+                  MenuProps={{
+                    sx: {
+                      height: '300px',
+                    },
+                  }}>
                   {watchAvailableNames
                     ? Object.entries(watchAvailableNames)
                         .slice(1) // workaround to remove duplicated first db name

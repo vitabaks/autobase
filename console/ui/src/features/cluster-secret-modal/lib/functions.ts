@@ -18,6 +18,8 @@ import { ADDITIONAL_SETTINGS_BLOCK_FIELD_NAMES } from '@entities/cluster/expert-
 import { INSTANCES_AMOUNT_BLOCK_VALUES } from '@entities/cluster/instances-amount-block/model/const.ts';
 import { STORAGE_BLOCK_FIELDS } from '@entities/cluster/storage-block/model/const.ts';
 import { EXTENSION_BLOCK_FIELD_NAMES } from '@entities/cluster/expert-mode/extensions-block/model/const.ts';
+import { DATA_DISK_STORAGE_BLOCK_FIELD_NAMES } from '@entities/cluster/expert-mode/data-disk-storage-block/model/const.ts';
+import { INSTANCES_BLOCK_CUSTOM_FORM_VALUES } from '@entities/cluster/instances-block/model/const.ts';
 
 export const getCommonExtraVars = (values: ClusterFormValues) => ({
   postgresql_version: values[CLUSTER_FORM_FIELD_NAMES.POSTGRES_VERSION],
@@ -180,9 +182,21 @@ export const mapFormValuesToRequestFields = ({
   };
 
   if (IS_EXPERT_MODE) {
-    const fromInstancesAmountBlock = {
-      server_spot: !!values[INSTANCES_AMOUNT_BLOCK_VALUES.IS_SPOT_INSTANCES],
+    const fromInstanceType = {
+      server_type: values[INSTANCES_BLOCK_CUSTOM_FORM_VALUES.SERVER_TYPE],
     };
+
+    const fromDataDiskStorage = {
+      server_network: values[DATA_DISK_STORAGE_BLOCK_FIELD_NAMES.SERVER_NETWORK],
+    };
+
+    const fromInstancesAmountBlock =
+      [PROVIDERS.AWS, PROVIDERS.GCP, PROVIDERS.AZURE].includes(values[CLUSTER_FORM_FIELD_NAMES.PROVIDER]?.code) &&
+      !!values[INSTANCES_AMOUNT_BLOCK_VALUES.IS_SPOT_INSTANCES]
+        ? {
+            server_spot: true,
+          }
+        : {};
 
     const fromStorageAmountBlock = {
       pg_data_mount_fstype: values[STORAGE_BLOCK_FIELDS.FILE_SYSTEM_TYPE],
@@ -244,7 +258,6 @@ export const mapFormValuesToRequestFields = ({
               PGBACKREST_RETENTION_ARCHIVE: values?.[BACKUPS_BLOCK_FIELD_NAMES.BACKUP_RETENTION],
               pgbackrest_conf: {
                 global: values?.[BACKUPS_BLOCK_FIELD_NAMES.CONFIG_GLOBAL],
-                stanza: values?.[BACKUPS_BLOCK_FIELD_NAMES.CONFIG_STANZA],
               },
             }
           : {
@@ -289,6 +302,8 @@ export const mapFormValuesToRequestFields = ({
     };
 
     return {
+      ...(values?.[CLUSTER_FORM_FIELD_NAMES.INSTANCE_TYPE] === 'custom' ? { ...fromInstanceType } : {}),
+      ...fromDataDiskStorage,
       ...baseCloudClusterObject,
       ...fromInstancesAmountBlock,
       ...fromStorageAmountBlock,

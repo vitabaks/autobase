@@ -111,5 +111,8 @@
   "extensions": "Extensions",
   "showEnabled": "Show enabled",
   "noExtensionsFound": "No extensions found",
-  "somethingWentWrongWhileRenderingExtensionsSwiper": "Something went wrong while rendering extensions swiper"
+  "somethingWentWrongWhileRenderingExtensionsSwiper": "Something went wrong while rendering extensions swiper",
+  "network": "Network",
+  "serverNetwork": "Server network",
+  "serverType": "Server type"
 }

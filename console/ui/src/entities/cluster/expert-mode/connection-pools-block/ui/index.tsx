@@ -26,7 +26,7 @@ const ConnectionPoolsBlock: FC = () => {
     append({
       [CONNECTION_POOLS_BLOCK_FIELD_NAMES.POOL_NAME]: '',
       [CONNECTION_POOLS_BLOCK_FIELD_NAMES.POOL_SIZE]: 20,
-      [CONNECTION_POOLS_BLOCK_FIELD_NAMES.POOL_MODE]: POOL_MODES[0],
+      [CONNECTION_POOLS_BLOCK_FIELD_NAMES.POOL_MODE]: POOL_MODES[0].option,
     });
 
   const removeServer = (index: number) => () => remove(index);
@@ -58,19 +58,21 @@ const ConnectionPoolsBlock: FC = () => {
           )}
         />
         {watchIsConnectionPoolerEnabled ? (
-          <Box display="flex" gap="16px" flexWrap="wrap" justifyContent="flex-start" alignItems="center">
-            {fields.map((field, index) => (
-              <ConnectionPoolBox
-                key={field.id}
-                index={index}
-                {...(index !== 0 ? { remove: removeServer(index) } : {})} // removing entity such way is required to avoid bugs with a wrong element removed
-              />
-            ))}
-          </Box>
+          <>
+            <Box display="flex" gap="16px" flexWrap="wrap" justifyContent="flex-start" alignItems="center">
+              {fields.map((field, index) => (
+                <ConnectionPoolBox
+                  key={field.id}
+                  index={index}
+                  {...(index !== 0 ? { remove: removeServer(index) } : {})} // removing entity such way is required to avoid bugs with a wrong element removed
+                />
+              ))}
+            </Box>
+            <Button onClick={appendItem}>
+              <AddIcon />
+            </Button>
+          </>
         ) : null}
-        <Button onClick={appendItem}>
-          <AddIcon />
-        </Button>
       </Stack>
     </Box>
   );

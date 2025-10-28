@@ -6,4 +6,15 @@ export const CONNECTION_POOLS_BLOCK_FIELD_NAMES = Object.freeze({
   POOL_MODE: 'poolMode',
 });
 
-export const POOL_MODES = Object.freeze(['transaction']);
+export const POOL_MODES = Object.freeze([
+  {
+    option: 'transaction',
+    tooltip: 'Server is released back to pool after transaction finishes.',
+  },
+  { option: 'session', tooltip: 'Server is released back to pool after client disconnects.' },
+  {
+    option: 'statement',
+    tooltip:
+      'Server is released back to pool after query finishes. Transactions spanning multiple statements are disallowed in this mode.',
+  },
+]);

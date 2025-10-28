@@ -4,7 +4,6 @@ export const BACKUPS_BLOCK_FIELD_NAMES = Object.freeze({
   BACKUP_START_TIME: 'backupStartTime',
   BACKUP_RETENTION: 'backupRetention',
   CONFIG_GLOBAL: 'configGlobal',
-  CONFIG_STANZA: 'configStanza',
 });
 
 export const BACKUP_METHODS = Object.freeze({

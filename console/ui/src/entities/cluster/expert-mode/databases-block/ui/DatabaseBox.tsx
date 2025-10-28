@@ -48,7 +48,7 @@ const DatabaseBox: FC<DatabasesBlockProps> = ({ id, index, remove }) => {
       ) : null}
       <Stack direction="column" gap={2}>
         <Typography fontWeight="bold">{`${t('database', { ns: 'clusters' })} ${index + 1}`}</Typography>
-        <Stack direction="column" alignItems="flex-start">
+        <Stack direction="column" alignItems="flex-start" gap={2}>
           {[
             {
               fieldName: DATABASES_BLOCK_FIELD_NAMES.DATABASE_NAME,
@@ -83,7 +83,7 @@ const DatabaseBox: FC<DatabasesBlockProps> = ({ id, index, remove }) => {
                   sx={{ width: '25ch' }}
                   label={label}
                   error={!!errors[DATABASES_BLOCK_FIELD_NAMES.DATABASES]?.[index]?.[fieldName]}
-                  helperText={errors?.[DATABASES_BLOCK_FIELD_NAMES.DATABASES]?.[index]?.[fieldName]?.message ?? ' '}
+                  helperText={errors?.[DATABASES_BLOCK_FIELD_NAMES.DATABASES]?.[index]?.[fieldName]?.message as string}
                   {...(isPassword
                     ? {
                         type: isPasswordHidden ? 'password' : 'text',

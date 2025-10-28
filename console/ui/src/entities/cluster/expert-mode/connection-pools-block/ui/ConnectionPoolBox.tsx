@@ -9,6 +9,7 @@ import {
   Select,
   Stack,
   TextField,
+  Tooltip,
   Typography,
 } from '@mui/material';
 import { useTranslation } from 'react-i18next';
@@ -50,7 +51,7 @@ const ConnectionPoolBox: FC<ConnectionPoolBlockProps> = ({ index, remove }) => {
       ) : null}
       <Stack direction="column" gap={2}>
         <Typography fontWeight="bold">{`${t('pool', { ns: 'clusters' })} ${index + 1}`}</Typography>
-        <Stack direction="column" alignItems="flex-start">
+        <Stack direction="column" alignItems="flex-start" gap={2}>
           {[
             {
               fieldName: CONNECTION_POOLS_BLOCK_FIELD_NAMES.POOL_NAME,
@@ -71,7 +72,9 @@ const ConnectionPoolBox: FC<ConnectionPoolBlockProps> = ({ index, remove }) => {
                   size="small"
                   label={label}
                   error={!!errors[CONNECTION_POOLS_BLOCK_FIELD_NAMES.POOLS]?.[index]?.[fieldName]}
-                  helperText={errors?.[CONNECTION_POOLS_BLOCK_FIELD_NAMES.POOLS]?.[index]?.[fieldName]?.message ?? ' '}
+                  helperText={
+                    errors?.[CONNECTION_POOLS_BLOCK_FIELD_NAMES.POOLS]?.[index]?.[fieldName]?.message as string
+                  }
                 />
               )}
             />
@@ -97,8 +100,8 @@ const ConnectionPoolBox: FC<ConnectionPoolBlockProps> = ({ index, remove }) => {
                     ]?.message
                   }>
                   {POOL_MODES.map((mode) => (
-                    <MenuItem key={mode} value={mode}>
-                      {mode}
+                    <MenuItem key={mode.option} value={mode.option}>
+                      <Tooltip title={mode.tooltip}>{mode.option}</Tooltip>
                     </MenuItem>
                   ))}
                 </Select>

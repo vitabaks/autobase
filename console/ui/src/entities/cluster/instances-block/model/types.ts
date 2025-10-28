@@ -1,4 +1,4 @@
-import { DeploymentInstanceType } from '@shared/api/api/other.ts';
+import { DeploymentInstanceType } from '@/shared/api/api/deployments';
 
 export interface CloudFormInstancesBlockProps {
   instances: {

@@ -19,7 +19,7 @@ const DatabaseBlock: FC = () => {
   const appendItem = () => {
     append({
       [DATABASES_BLOCK_FIELD_NAMES.DATABASE_NAME]: `db${index}`,
-      [DATABASES_BLOCK_FIELD_NAMES.USER_NAME]: '',
+      [DATABASES_BLOCK_FIELD_NAMES.USER_NAME]: 'user1',
       [DATABASES_BLOCK_FIELD_NAMES.USER_PASSWORD]: '',
       [DATABASES_BLOCK_FIELD_NAMES.ENCODING]: 'UTF-8',
       [DATABASES_BLOCK_FIELD_NAMES.LOCALE]: 'en_US.UTF-8',

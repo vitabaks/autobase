@@ -1,8 +1,8 @@
 import { FC, useEffect, useState } from 'react';
-import { Box, FormControl, InputLabel, MenuItem, Select, Stack, Typography, useTheme } from '@mui/material';
+import { Box, FormControl, InputLabel, MenuItem, Select, Stack, Tooltip, Typography, useTheme } from '@mui/material';
 import ClusterSliderBox from '@shared/ui/slider-box';
 import { useTranslation } from 'react-i18next';
-import { Controller, useFormContext } from 'react-hook-form';
+import { Controller, useFormContext, useWatch } from 'react-hook-form';
 import { CLUSTER_FORM_FIELD_NAMES } from '@widgets/cluster-form/model/constants.ts';
 import StorageIcon from '@assets/storageIcon.svg?react';
 import { fileSystemTypeOptions, STORAGE_BLOCK_FIELDS } from '@entities/cluster/storage-block/model/const.ts';
@@ -11,17 +11,17 @@ import { IS_EXPERT_MODE } from '@shared/model/constants.ts';
 const StorageBlock: FC = () => {
   const { t } = useTranslation(['clusters', 'shared']);
   const theme = useTheme();
-  const [storage, setStorage] = useState({});
+  const [storage, setStorage] = useState({}); // full info about selected storage
   const [volumeTypes, setVolumeTypes] = useState([]);
 
   const {
     control,
-    watch,
     setValue,
     formState: { errors },
   } = useFormContext();
 
-  const watchProvider = watch(CLUSTER_FORM_FIELD_NAMES.PROVIDER);
+  const watchProvider = useWatch({ name: CLUSTER_FORM_FIELD_NAMES.PROVIDER });
+  const watchVolume = useWatch({ name: STORAGE_BLOCK_FIELDS.VOLUME_TYPE });
 
   useEffect(() => {
     const volumes = watchProvider?.volumes;
@@ -40,6 +40,14 @@ const StorageBlock: FC = () => {
       volumes?.find((volume) => volume?.is_default)?.volume_type ?? volumes?.[0]?.volume_type,
     );
   }, [watchProvider]);
+
+  useEffect(() => {
+    // set selected storage size sa minimum available for selected volume
+    const volumes = watchProvider?.volumes;
+    const storage = volumes?.find((volume) => volume?.volume_type === watchVolume);
+    setStorage(storage);
+    setValue(STORAGE_BLOCK_FIELDS.STORAGE_AMOUNT, storage?.min_size ?? 1);
+  }, [watchVolume]);
 
   return (
     <Box>
@@ -87,7 +95,13 @@ const StorageBlock: FC = () => {
                           <Select {...field} size="small" label={label}>
                             {options.map(({ value, label }) => (
                               <MenuItem key={value} value={value}>
-                                {label}
+                                <Tooltip
+                                  title={
+                                    watchProvider?.volumes?.find((volume) => volume?.volume_type === value)
+                                      ?.volume_description ?? ''
+                                  }>
+                                  {label}
+                                </Tooltip>
                               </MenuItem>
                             ))}
                           </Select>
