@@ -333,3 +333,8 @@ Note: For variables marked as "Derived value", the default value is determined b
   - **Print info messages**
     - List the Patroni cluster members
     - Upgrade completed
+
+## Dependencies
+
+This role depends on:
+- `vitabaks.autobase.common` - Provides common variables and configurations
