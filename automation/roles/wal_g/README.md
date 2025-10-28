@@ -2,126 +2,35 @@
 
 This role installs and configures [WAL-G](https://github.com/wal-g/wal-g), an archival and restoration tool for PostgreSQL. WAL-G is designed to perform continuous archiving of PostgreSQL WAL files and provide point-in-time recovery capabilities with cloud storage support.
 
-## Description
+## Variables
 
-WAL-G is a fast and efficient tool for backing up and restoring PostgreSQL databases. It provides continuous archiving of WAL (Write-Ahead Log) files and supports various storage backends including cloud storage. This role:
+| Variable | Default | Description |
+|---|---|---|
+| wal_g_install | false | Master toggle to install/configure WAL-G. |
+| wal_g_installation_method | "binary" | Installation path: "binary" or "src". Builds from source on RHEL8 automatically due to GLIBC constraints. |
+| wal_g_version | 3.0.7 | WAL-G version. |
+| wal_g_path | `/usr/local/bin/wal-g --config {{ postgresql_home_dir }}/.walg.json` | WAL-G executable plus default config argument. The binary is copied to the first path segment. |
+| wal_g_json | [...] | WAL-G configuration variables (option:value). |
+| wal_g_archive_command | `{{ wal_g_path }} wal-push %p` | archive_command used by PostgreSQL. |
+| wal_g_patroni_cluster_bootstrap_command | `{{ wal_g_path }} backup-fetch {{ postgresql_data_dir }} LATEST` | Patroni bootstrap command for recovery from WAL-G backup. |
+| wal_g_patroni_cluster_bootstrap_recovery_conf | [...] | List for Patroni recovery parameters (restore_command, recovery_target_action, etc.). |
+| wal_g_backup_command | [...] | Parts that form the backup command (joined into a single string for cron). |
+| wal_g_delete_command | [...] | Parts that form the retention delete command (joined into a single string for cron). |
+| wal_g_cron_jobs | [...] | List of cron jobs. Each item supports: name, user, file, minute, hour, day, month, weekday, job, state, disabled. |
+| wal_g_prefetch_dir_create | true | Create WAL-G prefetch directory. |
+| wal_g_prefetch_dir_path | `{{ postgresql_home_dir }}/wal-g-prefetch` | Prefetch directory path. |
 
-- Installs WAL-G from precompiled binaries or source code
-- Configures WAL-G for continuous WAL archiving
-- Sets up cloud storage backends (AWS S3, Google Cloud, Azure, etc.)
-- Integrates with Patroni for automated backup management
-- Provides automatic configuration based on cloud provider
-- Manages WAL-G configuration files and permissions
+Notes:
+- Binary installation is skipped if the installed version equals wal_g_version.
+- On RHEL 8, the role builds from source due to GLIBC requirements for official binaries.
+- The role creates ~postgres/.walg.json and the prefetch directory when enabled.
+- Cron jobs are created via ansible.builtin.cron from wal_g_cron_jobs.
 
-## Requirements
+### WAL-G auto conf (cloud_provider)
 
-### Prerequisites
-
-- PostgreSQL server must be installed
-- Cloud storage credentials (if using cloud backends)
-- Network connectivity for cloud storage access
-- For source installation: Go 1.19+ and development tools
-
-## Role Variables
-
-This role uses variables defined in the `vitabaks.autobase.common` role and provides automatic configuration based on cloud providers.
-
-### Installation Configuration
-
-```yaml
-# WAL-G installation method
-wal_g_installation_method: "binary"    # or "src" for source compilation
-
-# WAL-G version to install
-wal_g_version: "2.0.1"
-
-# WAL-G binary path
-wal_g_path: "/usr/local/bin/wal-g"
-
-# Installation source URL (for binary installation)
-wal_g_download_url: "https://github.com/wal-g/wal-g/releases/download/v{{ wal_g_version }}/wal-g-pg-ubuntu-20.04-amd64"
-```
-
-### Automatic Configuration
-
-```yaml
-# Enable automatic backup configuration based on cloud provider
-wal_g_auto_conf: true
-
-# Cloud provider (auto-configures storage backend)
-cloud_provider: ""  # aws, gcp, azure, digitalocean
-```
-
-### Storage Configuration
-
-#### AWS S3 Configuration
-```yaml
-wal_g_s3_bucket: "my-postgres-backups"
-wal_g_s3_region: "us-east-1"
-wal_g_s3_endpoint: "https://s3.amazonaws.com"
-wal_g_s3_access_key_id: "{{ vault_aws_access_key }}"
-wal_g_s3_secret_access_key: "{{ vault_aws_secret_key }}"
-```
-
-#### Google Cloud Storage Configuration
-```yaml
-wal_g_gs_bucket: "my-postgres-backups"
-wal_g_google_application_credentials: "/path/to/service-account.json"
-```
-
-#### Azure Configuration
-```yaml
-wal_g_azure_storage_account: "mystorageaccount"
-wal_g_azure_storage_access_key: "{{ vault_azure_access_key }}"
-wal_g_azure_storage_container: "postgres-backups"
-```
-
-#### File System Configuration
-```yaml
-wal_g_file_prefix: "/backup/wal-g"
-```
-
-### Backup and Retention Settings
-
-```yaml
-# Compression settings
-wal_g_compression_method: "brotli"     # brotli, gzip, lz4, lzma, zstd
-wal_g_compression_level: 6             # 1-9 for gzip, 1-11 for brotli
-
-# Retention policy
-wal_g_retain_count: 7                  # Number of backups to retain
-wal_g_retain_after: "168h"             # Retain for 168 hours (7 days)
-
-# Upload settings
-wal_g_upload_concurrency: 16           # Parallel upload workers
-wal_g_download_concurrency: 10         # Parallel download workers
-
-# Delta backups
-wal_g_delta_max_steps: 0              # Disable delta backups (0), or max delta chain length
-```
+If `cloud_provider` is set, the role runs tasks/[auto_conf.yml](./tasks/auto_conf.yml) to automatically build WAL-G config.
 
 ## Dependencies
 
-```yaml
-dependencies:
-  - role: vitabaks.autobase.common
-```
-
-
-## Tags
-
-Use these tags to run specific parts of the role:
-
-- `wal-g`: Run all WAL-G tasks
-- `wal_g`: Run all WAL-G configuration tasks
-- `wal_g_install`: Install WAL-G only
-- `wal_g_conf`: Configure WAL-G only
-- `wal_g_cron`: Configure backup cron jobs only
-
-## License
-
-MIT
-
-## Author Information
-
-This role is part of the [Autobase](https://github.com/vitabaks/autobase) project for automated PostgreSQL database platform deployment.
+This role depends on:
+- `vitabaks.autobase.common` - Provides common variables and configurations
