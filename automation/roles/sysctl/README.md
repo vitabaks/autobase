@@ -59,4 +59,6 @@ sysctl_conf:
 ```
 
 ## Dependencies
-- Variables provided by roles/common/defaults/main.yml (this repository).
+
+This role depends on:
+- `vitabaks.autobase.common` - Provides common variables and configurations
