@@ -1,117 +1,62 @@
 # Ansible Role: sysctl
 
-This role configures Linux kernel parameters via sysctl for optimal PostgreSQL database performance and system behavior. It provides dynamic kernel parameter management based on server roles and requirements.
+Configures Linux kernel parameters via sysctl for PostgreSQL and related components. The role composes parameters dynamically from group-based mappings and applies them persistently.
 
 ## Description
-
-System kernel parameters significantly impact PostgreSQL performance, memory management, and network behavior. This role:
-
-- Configures kernel parameters dynamically based on server group membership
-- Optimizes memory management settings for PostgreSQL workloads
-- Tunes network parameters for high-performance database connections
-- Sets filesystem and I/O parameters for optimal database performance
-- Provides role-specific parameter sets for different server types
-- Ensures parameter persistence across reboots
-
-## Requirements
-
-### Prerequisites
-
-- Root privileges for kernel parameter modification
-- Understanding of kernel parameter impacts on system behavior
-- Proper resource planning for memory and I/O settings
+- Collects sysctl entries from sysctl_conf for all groups the host belongs to.
+- Flattens and de-duplicates entries, then applies them via ansible.posix.sysctl.
+- Persists settings under sysctl_file and reloads sysctl.
 
 ## Role Variables
 
-This role uses variables defined in the `vitabaks.autobase.common` role.
+| Variable    | Default | Type | Description |
+|-------------|---------|------|-------------|
+| sysctl_set  | true    | bool | Master toggle. If false, the role does nothing. |
+| sysctl_file | /etc/sysctl.d/autobase.sysctl.conf | path | Destination file for persistent sysctl settings. |
+| sysctl_conf | see common defaults | dict | Mapping of group name -> list of {name, value} entries. Keys commonly used in this project: etcd_cluster, consul_instances, master, replica, pgbackrest, postgres_cluster, balancers. |
 
-### Main Configuration
+Notes on sysctl_conf:
+- Example structure (see roles/common/defaults/main.yml for the full list and defaults):
+  - postgres_cluster: includes memory, networking, and scheduler-tuning (e.g., vm.swappiness, net.core.somaxconn, etc.).
+  - balancers: network tuning for HAProxy hosts.
+  - etcd_cluster/consul_instances: I/O and network tuning for DCS nodes.
+- You may add your own group keys; the role automatically picks them up if the host is a member of those groups.
 
+Example:
 ```yaml
-# Enable/disable sysctl configuration
 sysctl_set: true
-
-# Dynamic sysctl configuration based on group membership
-sysctl_conf: {}  # Populated from common role defaults
-```
-
-### Kernel Parameter Categories
-
-The role organizes parameters by server group and function:
-
-#### PostgreSQL Database Servers
-```yaml
+sysctl_file: /etc/sysctl.d/autobase.sysctl.conf
 sysctl_conf:
+  etcd_cluster: []
+  master: []
+  replica: []
   postgres_cluster:
-    # Memory management
-    - {name: "vm.swappiness", value: "1"}
-    - {name: "vm.dirty_background_ratio", value: "5"}
-    - {name: "vm.dirty_ratio", value: "10"}
-    - {name: "vm.dirty_expire_centisecs", value: "6000"}
-    - {name: "vm.dirty_writeback_centisecs", value: "500"}
-    
-    # Shared memory and semaphores
-    - {name: "kernel.shmmax", value: "68719476736"}    # 64GB
-    - {name: "kernel.shmall", value: "16777216"}       # 64GB/4KB
-    - {name: "kernel.sem", value: "250 32000 100 128"}
-    
-    # Network optimization
-    - {name: "net.core.rmem_max", value: "134217728"}
-    - {name: "net.core.wmem_max", value: "134217728"}
-    - {name: "net.ipv4.tcp_rmem", value: "4096 87380 134217728"}
-    - {name: "net.ipv4.tcp_wmem", value: "4096 65536 134217728"}
-```
-
-#### Load Balancers (HAProxy)
-```yaml
-sysctl_conf:
+    - { name: "vm.overcommit_memory", value: "2" }
+    - { name: "vm.swappiness", value: "1" }
+    - { name: "vm.min_free_kbytes", value: "102400" }
+    - { name: "vm.dirty_expire_centisecs", value: "1000" }
+    - { name: "vm.dirty_background_bytes", value: "67108864" }
+    - { name: "vm.dirty_bytes", value: "536870912" }
+    - { name: "vm.nr_hugepages", value: "9510" }  # ~18GB
+    - { name: "vm.zone_reclaim_mode", value: "0" }
+    - { name: "kernel.numa_balancing", value: "0" }
+    - { name: "kernel.sched_autogroup_enabled", value: "0" }
+    - { name: "net.ipv4.ip_nonlocal_bind", value: "1" }
+    - { name: "net.ipv4.ip_forward", value: "1" }
+    - { name: "net.ipv4.ip_local_port_range", value: "10000 65535" }
+    - { name: "net.core.netdev_max_backlog", value: "10000" }
+    - { name: "net.ipv4.tcp_max_syn_backlog", value: "8192" }
+    - { name: "net.core.somaxconn", value: "65535" }
+    - { name: "net.ipv4.tcp_tw_reuse", value: "1" }
   balancers:
-    # Network performance
-    - {name: "net.core.somaxconn", value: "65535"}
-    - {name: "net.ipv4.tcp_max_syn_backlog", value: "65535"}
-    - {name: "net.ipv4.ip_local_port_range", value: "1024 65535"}
-    - {name: "net.ipv4.tcp_fin_timeout", value: "30"}
-    - {name: "net.ipv4.tcp_keepalive_time", value: "120"}
-    
-    # Connection tracking
-    - {name: "net.netfilter.nf_conntrack_max", value: "1048576"}
-    - {name: "net.netfilter.nf_conntrack_tcp_timeout_established", value: "1800"}
-```
-
-#### etcd Cluster Members
-```yaml
-sysctl_conf:
-  etcd_cluster:
-    # I/O optimization for etcd
-    - {name: "vm.dirty_background_ratio", value: "3"}
-    - {name: "vm.dirty_ratio", value: "5"}
-    - {name: "vm.dirty_expire_centisecs", value: "3000"}
-    - {name: "vm.dirty_writeback_centisecs", value: "100"}
-    
-    # Network tuning
-    - {name: "net.core.rmem_default", value: "262144"}
-    - {name: "net.core.wmem_default", value: "262144"}
+    - { name: "net.ipv4.ip_nonlocal_bind", value: "1" }
+    - { name: "net.ipv4.ip_forward", value: "1" }
+    - { name: "net.ipv4.ip_local_port_range", value: "10000 65535" }
+    - { name: "net.core.netdev_max_backlog", value: "10000" }
+    - { name: "net.ipv4.tcp_max_syn_backlog", value: "8192" }
+    - { name: "net.core.somaxconn", value: "65535" }
+    - { name: "net.ipv4.tcp_tw_reuse", value: "1" }
 ```
 
 ## Dependencies
-
-```yaml
-dependencies:
-  - role: vitabaks.autobase.common
-```
-
-
-## Tags
-
-Use these tags to run specific parts of the role:
-
-- `sysctl`: Configure system kernel parameters
-- `kernel`: Configure kernel parameters
-
-## License
-
-MIT
-
-## Author Information
-
-This role is part of the [Autobase](https://github.com/vitabaks/autobase) project for automated PostgreSQL database platform deployment.
+- Variables provided by roles/common/defaults/main.yml (this repository).
