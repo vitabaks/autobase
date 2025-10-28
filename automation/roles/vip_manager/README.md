@@ -2,111 +2,22 @@
 
 This role installs and configures [vip-manager](https://github.com/cybertec-postgresql/vip-manager), a service that manages virtual IP addresses for PostgreSQL high availability clusters. It provides automatic VIP assignment to the PostgreSQL primary server for seamless application connectivity during failover.
 
-## Description
-
-vip-manager is a lightweight service that automatically manages virtual IP addresses in PostgreSQL HA clusters. Unlike keepalived, which is primarily designed for load balancers, vip-manager is specifically designed for database clusters. This role:
-
-- Installs vip-manager from official packages or repositories
-- Configures VIP assignment based on PostgreSQL primary role
-- Integrates with Patroni for automatic failover detection
-- Manages systemd service for vip-manager lifecycle
-- Supports multiple DCS backends (etcd, Consul)
-- Provides IP address management without VRRP complexity
-- Handles network interface and routing configuration
-
-## Requirements
-
-### Prerequisites
-
-- PostgreSQL cluster managed by Patroni
-- Distributed Configuration Store (etcd, Consul, or ZooKeeper)
-- Virtual IP address available on the network segment
-- Network infrastructure supporting IP address changes
-- Appropriate system privileges for IP management
-
 ## Role Variables
 
-This role uses variables defined in the `vitabaks.autobase.common` role and Patroni configuration.
-
-### Installation Configuration
-
-```yaml
-# vip-manager installation method
-vip_manager_package_repo: "https://github.com/cybertec-postgresql/vip-manager/releases/download/v2.2.0/vip-manager_2.2.0_linux_amd64.deb"
-
-# vip-manager version
-vip_manager_version: "2.2.0"
-```
-
-### Virtual IP Configuration
-
-```yaml
-# Virtual IP address for PostgreSQL primary
-cluster_vip: "10.0.1.100"
-
-# Network interface for VIP assignment
-vip_manager_iface: "{{ ansible_default_ipv4.interface }}"
-
-# VIP netmask (CIDR notation)
-vip_manager_mask: 24
-
-# VIP key in DCS (used by Patroni)
-vip_manager_key: "/service/{{ patroni_cluster_name }}/leader"
-```
-
-### DCS Integration
-
-```yaml
-# DCS type (etcd, consul)
-dcs_type: "etcd"
-
-# DCS endpoints
-dcs_endpoint: "http://{{ groups['etcd_cluster'][0] }}:2379"
-
-# Alternative: multiple endpoints for HA
-dcs_endpoints:
-  - "http://etcd-01:2379"
-  - "http://etcd-02:2379"
-  - "http://etcd-03:2379"
-```
-
-### Service Configuration
-
-```yaml
-# vip-manager configuration file path
-vip_manager_conf: "/etc/vip-manager.yml"
-
-# Systemd service configuration
-vip_manager_user: "postgres"
-vip_manager_group: "postgres"
-
-# Logging configuration
-vip_manager_verbose: false
-vip_manager_log_level: "INFO"
-```
+| Variable | Default | Description |
+|---|---|---|
+| vip_manager_version | 3.0.0 | vip-manager version to install. |
+| vip_manager_package_repo | `https://github.com/cybertec-postgresql/vip-manager/releases/download/v{{ vip_manager_version }}/vip-manager_{{ vip_manager_version }}_Linux_{{ vip_manager_architecture_map[ansible_architecture] }}.{{ pkg_type }}` | Package URL (deb/rpm). |
+| vip_manager_conf | /etc/patroni/vip-manager.yml | Config file path. |
+| vip_manager_interval | 1000 | Check interval in milliseconds. |
+| vip_manager_iface | `{{ vip_interface }}` | Network interface to bind the VIP. |
+| vip_manager_ip | `{{ cluster_vip }}` | VIP address to manage. |
+| vip_manager_mask | 24 | VIP netmask (CIDR). |
+| vip_manager_dcs_type | `{{ dcs_type }}` | DCS backend type: etcd, consul, or patroni. Default: "etcd"|
+| vip_interface | `{{ ansible_default_ipv4.interface }}` | Default interface used to derive vip_manager_iface. |
+| cluster_vip | "" | Cluster VIP. Required for actual VIP management. |
 
 ## Dependencies
 
-```yaml
-dependencies:
-  - role: vitabaks.autobase.common
-```
-
-
-## Tags
-
-Use these tags to run specific parts of the role:
-
-- `vip_manager`: Run all VIP Manager tasks
-- `vip`: Run VIP-related configuration
-- `vip_manager_install`: Install VIP Manager only
-- `vip_manager_conf`: Configure VIP Manager only  
-- `vip_manager_service`: Manage VIP Manager service only
-
-## License
-
-MIT
-
-## Author Information
-
-This role is part of the [Autobase](https://github.com/vitabaks/autobase) project for automated PostgreSQL database platform deployment.
+This role depends on:
+- `vitabaks.autobase.common` - Provides common variables and configurations
