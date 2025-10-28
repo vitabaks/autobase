@@ -11,4 +11,6 @@ Sets the system timezone on target hosts. Installs `tzdata` when using package-b
 Note: The role runs only when timezone variable is non-empty. 
 
 ## Dependencies
-- Variables provided by roles/common/defaults/main.yml (this repository).
+
+This role depends on:
+- `vitabaks.autobase.common` - Provides common variables and configurations
