@@ -7,6 +7,8 @@ import { ADDITIONAL_SETTINGS_BLOCK_FIELD_NAMES } from '@entities/cluster/expert-
 import { INSTANCES_AMOUNT_BLOCK_VALUES } from '@entities/cluster/instances-amount-block/model/const.ts';
 import ErrorBox from '@shared/ui/error-box/ui';
 import { ErrorBoundary } from 'react-error-boundary';
+import { CLUSTER_FORM_FIELD_NAMES } from '@widgets/cluster-form/model/constants.ts';
+import { PROVIDERS } from '@shared/config/constants.ts';
 
 const AdditionalSettingsBlock: FC = () => {
   const { t } = useTranslation('clusters');
@@ -18,6 +20,7 @@ const AdditionalSettingsBlock: FC = () => {
 
   const watchInstancesAmount = useWatch({ name: INSTANCES_AMOUNT_BLOCK_VALUES.INSTANCES_AMOUNT });
   const watchSyncStandbyNodes = useWatch({ name: ADDITIONAL_SETTINGS_BLOCK_FIELD_NAMES.SYNC_STANDBY_NODES });
+  const watchProvider = useWatch({ name: CLUSTER_FORM_FIELD_NAMES.PROVIDER });
 
   const handleInputChange = (onChange: (event: ChangeEvent) => void) => (e: ChangeEvent<HTMLInputElement>) => {
     // prevent user from entering more or less than restricted amount in input field
@@ -85,35 +88,37 @@ const AdditionalSettingsBlock: FC = () => {
               )}
             />
           ) : null}
-          {[
-            {
-              fieldName: ADDITIONAL_SETTINGS_BLOCK_FIELD_NAMES.IS_DB_PUBLIC_ACCESS,
-              label: t('dbPublicAccess'),
-              tooltip: t('dbPublicAccessTooltip'),
-            },
-            {
-              fieldName: ADDITIONAL_SETTINGS_BLOCK_FIELD_NAMES.IS_CLOUD_LOAD_BALANCER,
-              label: t('cloudLoadBalancer'),
-              tooltip: t('cloudLoadBalancerTooltip'),
-            },
-          ].map(({ fieldName, label, tooltip }) => (
-            <Controller
-              key={fieldName}
-              control={control}
-              name={fieldName}
-              render={({ field }) => (
-                <Stack direction="row" alignItems="center">
-                  <Stack direction="row" alignItems="center" width={250}>
-                    <Typography marginRight={1}>{label}</Typography>
-                    <Tooltip title={tooltip}>
-                      <HelpOutlineIcon fontSize="small" />
-                    </Tooltip>
-                  </Stack>
-                  <Checkbox {...field} checked={!!field.value} />
-                </Stack>
-              )}
-            />
-          ))}
+          {watchProvider?.code !== PROVIDERS.LOCAL
+            ? [
+                {
+                  fieldName: ADDITIONAL_SETTINGS_BLOCK_FIELD_NAMES.IS_DB_PUBLIC_ACCESS,
+                  label: t('dbPublicAccess'),
+                  tooltip: t('dbPublicAccessTooltip'),
+                },
+                {
+                  fieldName: ADDITIONAL_SETTINGS_BLOCK_FIELD_NAMES.IS_CLOUD_LOAD_BALANCER,
+                  label: t('cloudLoadBalancer'),
+                  tooltip: t('cloudLoadBalancerTooltip'),
+                },
+              ].map(({ fieldName, label, tooltip }) => (
+                <Controller
+                  key={fieldName}
+                  control={control}
+                  name={fieldName}
+                  render={({ field }) => (
+                    <Stack direction="row" alignItems="center">
+                      <Stack direction="row" alignItems="center" width={250}>
+                        <Typography marginRight={1}>{label}</Typography>
+                        <Tooltip title={tooltip}>
+                          <HelpOutlineIcon fontSize="small" />
+                        </Tooltip>
+                      </Stack>
+                      <Checkbox {...field} checked={!!field.value} />
+                    </Stack>
+                  )}
+                />
+              ))
+            : null}
           <Controller
             control={control}
             name={ADDITIONAL_SETTINGS_BLOCK_FIELD_NAMES.IS_NETDATA_MONITORING}

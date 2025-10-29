@@ -9,6 +9,8 @@ import ServersIcon from '@assets/serversIcon.svg?react';
 import { ProvidersBlockProps } from '@entities/cluster/providers-block/model/types.ts';
 import { PROVIDERS } from '@shared/config/constants.ts';
 import ClusterFormCloudProviderBox from '@entities/cluster/providers-block/ui/ClusterFormCloudProviderBox.tsx';
+import { INSTANCES_BLOCK_FIELD_NAMES } from '@entities/cluster/instances-block/model/const.ts';
+import { STORAGE_BLOCK_FIELDS } from '@entities/cluster/storage-block/model/const.ts';
 
 const ClusterFormProvidersBlock: FC<ProvidersBlockProps> = ({ providers }) => {
   const { t } = useTranslation('clusters');
@@ -23,9 +25,9 @@ const ClusterFormProvidersBlock: FC<ProvidersBlockProps> = ({ providers }) => {
       [CLUSTER_FORM_FIELD_NAMES.PROVIDER]: value,
       [CLUSTER_FORM_FIELD_NAMES.REGION]: value?.cloud_regions?.[0]?.code,
       [CLUSTER_FORM_FIELD_NAMES.REGION_CONFIG]: value?.cloud_regions?.[0]?.datacenters?.[0],
-      [CLUSTER_FORM_FIELD_NAMES.INSTANCE_TYPE]: 'small',
+      [INSTANCES_BLOCK_FIELD_NAMES.INSTANCE_TYPE]: 'small',
       [CLUSTER_FORM_FIELD_NAMES.INSTANCE_CONFIG]: value?.instance_types?.small?.[0],
-      [CLUSTER_FORM_FIELD_NAMES.STORAGE_AMOUNT]:
+      [STORAGE_BLOCK_FIELDS.STORAGE_AMOUNT]:
         (value as any)?.volumes?.find((volume: any) => volume?.is_default)?.min_size < 100
           ? 100
           : (value as any)?.volumes?.find((volume: any) => volume?.is_default)?.min_size,

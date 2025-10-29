@@ -12,37 +12,46 @@ import { INSTANCES_AMOUNT_BLOCK_VALUES } from '@entities/cluster/instances-amoun
 import { STORAGE_BLOCK_FIELDS } from '@entities/cluster/storage-block/model/const.ts';
 import { EXTENSION_BLOCK_FIELD_NAMES } from '@entities/cluster/expert-mode/extensions-block/model/const.ts';
 import { DATA_DISK_STORAGE_BLOCK_FIELD_NAMES } from '@entities/cluster/expert-mode/data-disk-storage-block/model/const.ts';
-import { INSTANCES_BLOCK_CUSTOM_FORM_VALUES } from '@entities/cluster/instances-block/model/const.ts';
+import { INSTANCES_BLOCK_FIELD_NAMES } from '@entities/cluster/instances-block/model/const.ts';
+import {
+  LOAD_BALANCERS_DATABASES_DEFAULT_VALUES,
+  LOAD_BALANCERS_FIELD_NAMES,
+} from '@entities/cluster/load-balancers-block/model/const.ts';
+import {
+  DCS_BLOCK_FIELD_NAMES,
+  DCS_DATABASES_DEFAULT_VALUES,
+  DCS_TYPES,
+} from '@entities/cluster/expert-mode/dcs-block/model/const.ts';
+import { DATA_DIRECTORY_FIELD_NAMES } from '@entities/cluster/expert-mode/data-directory-block/model/const.ts';
+import { DATABASE_SERVERS_FIELD_NAMES } from '@entities/cluster/database-servers-block/model/const.ts';
 
 const CLUSTER_CLOUD_PROVIDER_FIELD_NAMES = Object.freeze({
   REGION: 'region',
   REGION_CONFIG: 'regionConfig',
   INSTANCE_TYPE: 'instanceType',
   INSTANCE_CONFIG: 'instanceConfig',
-  STORAGE_AMOUNT: 'storageAmount',
   SSH_PUBLIC_KEY: 'sshPublicKey',
   ...INSTANCES_AMOUNT_BLOCK_VALUES,
   ...STORAGE_BLOCK_FIELDS,
-  ...(IS_EXPERT_MODE
-    ? {
-        ...ADDITIONAL_SETTINGS_BLOCK_FIELD_NAMES,
-      }
-    : {}),
+  ...(IS_EXPERT_MODE ? {} : {}),
 });
 
 const CLUSTER_LOCAL_MACHINE_FIELD_NAMES = Object.freeze({
-  DATABASE_SERVERS: 'databaseServers',
   EXISTING_CLUSTER: 'existingCluster',
   HOSTNAME: 'hostname',
-  IP_ADDRESS: 'ipAddress',
-  LOCATION: 'location',
   AUTHENTICATION_METHOD: 'authenticationMethod',
   SECRET_KEY_NAME: 'secretKeyName',
   AUTHENTICATION_IS_SAVE_TO_CONSOLE: 'authenticationSaveToConsole',
   CLUSTER_VIP_ADDRESS: 'clusterVIPAddress',
-  IS_HAPROXY_LOAD_BALANCER: 'isHaproxyLoadBalancer',
   IS_USE_DEFINED_SECRET: 'isUseDefinedSecret',
-  ...(IS_EXPERT_MODE ? {} : {}),
+  ...LOAD_BALANCERS_FIELD_NAMES,
+  ...DATABASE_SERVERS_FIELD_NAMES,
+  ...(IS_EXPERT_MODE
+    ? {
+        ...DCS_BLOCK_FIELD_NAMES,
+        ...DATA_DIRECTORY_FIELD_NAMES,
+      }
+    : {}),
 });
 
 export const CLUSTER_FORM_FIELD_NAMES = Object.freeze({
@@ -62,13 +71,43 @@ export const CLUSTER_FORM_FIELD_NAMES = Object.freeze({
   ...KERNEL_PARAMETERS_FIELD_NAMES,
 });
 
-export const CLUSTER_FORM_DEFAULT_VALUES = Object.freeze({
-  [CLUSTER_FORM_FIELD_NAMES.INSTANCES_AMOUNT]: 3,
+export const CLOUD_CLUSTER_DEFAULT_VALUES = Object.freeze({
+  [INSTANCES_AMOUNT_BLOCK_VALUES.INSTANCES_AMOUNT]: 3,
+  [INSTANCES_BLOCK_FIELD_NAMES.INSTANCE_TYPE]: 'small',
+  [STORAGE_BLOCK_FIELDS.STORAGE_AMOUNT]: 100,
+  ...(IS_EXPERT_MODE
+    ? {
+        [BACKUPS_BLOCK_FIELD_NAMES.IS_BACKUPS_ENABLED]: true,
+        [INSTANCES_BLOCK_FIELD_NAMES.SERVER_TYPE]: '',
+        [DATA_DISK_STORAGE_BLOCK_FIELD_NAMES.SERVER_NETWORK]: '',
+        [INSTANCES_AMOUNT_BLOCK_VALUES.IS_SPOT_INSTANCES]: false,
+        [STORAGE_BLOCK_FIELDS.FILE_SYSTEM_TYPE]: 'ext4',
+        [ADDITIONAL_SETTINGS_BLOCK_FIELD_NAMES.IS_CLOUD_LOAD_BALANCER]: true,
+      }
+    : {}),
+});
+
+export const LOCAL_CLUSTER_DEFAULT_VALUES = Object.freeze({
   [CLUSTER_FORM_FIELD_NAMES.AUTHENTICATION_METHOD]: AUTHENTICATION_METHODS.SSH,
+  ...(IS_EXPERT_MODE
+    ? {
+        [BACKUPS_BLOCK_FIELD_NAMES.IS_BACKUPS_ENABLED]: false,
+        [DCS_BLOCK_FIELD_NAMES.TYPE]: DCS_TYPES[0],
+        [DCS_BLOCK_FIELD_NAMES.IS_DEPLOY_NEW_CLUSTER]: true,
+        [DCS_BLOCK_FIELD_NAMES.IS_DEPLOY_TO_DB_SERVERS]: false,
+        [DCS_BLOCK_FIELD_NAMES.DATABASES]: [DCS_DATABASES_DEFAULT_VALUES],
+        [LOAD_BALANCERS_FIELD_NAMES.IS_DEPLOY_TO_DATABASE_SERVERS]: false,
+        [LOAD_BALANCERS_FIELD_NAMES.DATABASES]: [LOAD_BALANCERS_DATABASES_DEFAULT_VALUES],
+        [DATA_DIRECTORY_FIELD_NAMES.DATA_DIRECTORY]: '/pgdata/18/main',
+      }
+    : {}),
+});
+
+export const CLUSTER_FORM_DEFAULT_VALUES = Object.freeze({
+  ...CLOUD_CLUSTER_DEFAULT_VALUES,
+  ...LOCAL_CLUSTER_DEFAULT_VALUES,
   [CLUSTER_FORM_FIELD_NAMES.IS_USE_DEFINED_SECRET]: false,
   [CLUSTER_FORM_FIELD_NAMES.SECRET_ID]: '',
-  [CLUSTER_FORM_FIELD_NAMES.INSTANCE_TYPE]: 'small',
-  [CLUSTER_FORM_FIELD_NAMES.STORAGE_AMOUNT]: 100,
   [CLUSTER_FORM_FIELD_NAMES.DATABASE_SERVERS]: Array(3)
     .fill(0)
     .map(() => ({
@@ -78,11 +117,6 @@ export const CLUSTER_FORM_DEFAULT_VALUES = Object.freeze({
     })),
   ...(IS_EXPERT_MODE
     ? {
-        [INSTANCES_BLOCK_CUSTOM_FORM_VALUES.SERVER_TYPE]: '',
-        [DATA_DISK_STORAGE_BLOCK_FIELD_NAMES.SERVER_NETWORK]: '',
-        [CLUSTER_FORM_FIELD_NAMES.IS_SPOT_INSTANCES]: false,
-        [STORAGE_BLOCK_FIELDS.FILE_SYSTEM_TYPE]: 'ext4',
-        [BACKUPS_BLOCK_FIELD_NAMES.IS_BACKUPS_ENABLED]: true,
         [BACKUPS_BLOCK_FIELD_NAMES.BACKUP_METHOD]: BACKUP_METHODS.PG_BACK_REST,
         [BACKUPS_BLOCK_FIELD_NAMES.BACKUP_RETENTION]: 30,
         [BACKUPS_BLOCK_FIELD_NAMES.BACKUP_START_TIME]: 1,
@@ -108,7 +142,6 @@ export const CLUSTER_FORM_DEFAULT_VALUES = Object.freeze({
         ],
         [EXTENSION_BLOCK_FIELD_NAMES.EXTENSIONS]: {},
         [ADDITIONAL_SETTINGS_BLOCK_FIELD_NAMES.SYNC_STANDBY_NODES]: 0,
-        [ADDITIONAL_SETTINGS_BLOCK_FIELD_NAMES.IS_CLOUD_LOAD_BALANCER]: true,
         [ADDITIONAL_SETTINGS_BLOCK_FIELD_NAMES.IS_NETDATA_MONITORING]: true,
       }
     : {}),

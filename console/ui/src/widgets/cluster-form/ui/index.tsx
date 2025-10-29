@@ -5,7 +5,7 @@ import ClusterNameBox from '@entities/cluster/cluster-name-block';
 import ClusterDescriptionBlock from '@entities/cluster/description-block';
 import PostgresVersionBox from '@entities/cluster/postgres-version-block';
 import DefaultFormButtons from '@shared/ui/default-form-buttons';
-import { useFormContext } from 'react-hook-form';
+import { useFormContext, useWatch } from 'react-hook-form';
 import { generateAbsoluteRouterPath, handleRequestErrorCatch } from '@shared/lib/functions.ts';
 import RouterPaths from '@app/router/routerPathsConfig';
 import { useTranslation } from 'react-i18next';
@@ -27,6 +27,7 @@ import { useGetSecretsQuery, usePostSecretsMutation } from '@shared/api/api/secr
 import { getSecretBodyFromValues } from '@entities/secret-form-block/lib/functions.ts';
 import { SECRET_MODAL_CONTENT_FORM_FIELD_NAMES } from '@entities/secret-form-block/model/constants.ts';
 import { ClusterFormProps } from '@widgets/cluster-form/model/types.ts';
+import { DATABASE_SERVERS_FIELD_NAMES } from '@/entities/cluster/database-servers-block/model/const';
 
 const DatabaseBlock = lazy(() => import('@entities/cluster/expert-mode/databases-block/ui'));
 const ConnectionPoolsBlock = lazy(() => import('@entities/cluster/expert-mode/connection-pools-block/ui'));
@@ -35,6 +36,7 @@ const BackupsBlock = lazy(() => import('@entities/cluster/expert-mode/backups-bl
 const PostgresParametersBlock = lazy(() => import('@entities/cluster/expert-mode/postgres-parameters-block/ui'));
 const KernelParametersBlock = lazy(() => import('@entities/cluster/expert-mode/kernel-parameters-block/ui'));
 const AdditionalSettingsBlock = lazy(() => import('@entities/cluster/expert-mode/additional-settings-block/ui'));
+const DataDirectoryBlock = lazy(() => import('@entities/cluster/expert-mode/data-directory-block/ui'));
 
 const ClusterForm: React.FC<ClusterFormProps> = ({
   deploymentsData = [],
@@ -52,7 +54,7 @@ const ClusterForm: React.FC<ClusterFormProps> = ({
 
   const methods = useFormContext();
 
-  const watchProvider = methods.watch(CLUSTER_FORM_FIELD_NAMES.PROVIDER);
+  const watchProvider = useWatch({ name: CLUSTER_FORM_FIELD_NAMES.PROVIDER });
 
   const secrets = useGetSecretsQuery({ type: watchProvider?.code, projectId: currentProject });
 
@@ -85,7 +87,7 @@ const ClusterForm: React.FC<ClusterFormProps> = ({
     }).unwrap();
     toast.info(
       t(
-        values[CLUSTER_FORM_FIELD_NAMES.EXISTING_CLUSTER]
+        values[DATABASE_SERVERS_FIELD_NAMES.IS_CLUSTER_EXISTS]
           ? 'clusterSuccessfullyImported'
           : 'clusterSuccessfullyCreated',
         {
@@ -106,7 +108,7 @@ const ClusterForm: React.FC<ClusterFormProps> = ({
     }).unwrap();
     toast.info(
       t(
-        values[CLUSTER_FORM_FIELD_NAMES.EXISTING_CLUSTER]
+        values[DATABASE_SERVERS_FIELD_NAMES.IS_CLUSTER_EXISTS]
           ? 'clusterSuccessfullyImported'
           : 'clusterSuccessfullyCreated',
         {
@@ -150,6 +152,7 @@ const ClusterForm: React.FC<ClusterFormProps> = ({
           <ClusterNameBox />
           <ClusterDescriptionBlock />
           <PostgresVersionBox postgresVersions={postgresVersionsData} />
+          {IS_EXPERT_MODE && watchProvider?.code === PROVIDERS.LOCAL ? <DataDirectoryBlock /> : null}
           {IS_EXPERT_MODE ? (
             <>
               <DatabaseBlock />

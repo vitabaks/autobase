@@ -19,7 +19,9 @@ import { INSTANCES_AMOUNT_BLOCK_VALUES } from '@entities/cluster/instances-amoun
 import { STORAGE_BLOCK_FIELDS } from '@entities/cluster/storage-block/model/const.ts';
 import { EXTENSION_BLOCK_FIELD_NAMES } from '@entities/cluster/expert-mode/extensions-block/model/const.ts';
 import { DATA_DISK_STORAGE_BLOCK_FIELD_NAMES } from '@entities/cluster/expert-mode/data-disk-storage-block/model/const.ts';
-import { INSTANCES_BLOCK_CUSTOM_FORM_VALUES } from '@entities/cluster/instances-block/model/const.ts';
+import { INSTANCES_BLOCK_FIELD_NAMES } from '@entities/cluster/instances-block/model/const.ts';
+import { LOAD_BALANCERS_FIELD_NAMES } from '@entities/cluster/load-balancers-block/model/const.ts';
+import { DATABASE_SERVERS_FIELD_NAMES } from '@entities/cluster/database-servers-block/model/const.ts';
 
 export const getCommonExtraVars = (values: ClusterFormValues) => ({
   postgresql_version: values[CLUSTER_FORM_FIELD_NAMES.POSTGRES_VERSION],
@@ -31,7 +33,7 @@ export const getCloudProviderExtraVars = (values: ClusterFormValues) => ({
   server_type: values[CLUSTER_FORM_FIELD_NAMES.INSTANCE_CONFIG].code,
   server_location: values[CLUSTER_FORM_FIELD_NAMES.REGION_CONFIG].code,
   server_count: values[CLUSTER_FORM_FIELD_NAMES.INSTANCES_AMOUNT],
-  volume_size: values[CLUSTER_FORM_FIELD_NAMES.STORAGE_AMOUNT],
+  volume_size: values[STORAGE_BLOCK_FIELDS.STORAGE_AMOUNT],
   ssh_public_keys: values[CLUSTER_FORM_FIELD_NAMES.SSH_PUBLIC_KEY].split('\n').map((key) => `'${key}'`),
   ansible_user: PROVIDER_CODE_TO_ANSIBLE_USER_MAP[values[CLUSTER_FORM_FIELD_NAMES.PROVIDER].code],
   ...getCommonExtraVars(values),
@@ -42,7 +44,7 @@ export const getLocalMachineExtraVars = (values: ClusterFormValues, secretId?: n
   ...(values[CLUSTER_FORM_FIELD_NAMES.CLUSTER_VIP_ADDRESS]
     ? { cluster_vip: values[CLUSTER_FORM_FIELD_NAMES.CLUSTER_VIP_ADDRESS] }
     : {}),
-  ...(values[CLUSTER_FORM_FIELD_NAMES.IS_HAPROXY_LOAD_BALANCER] ? { with_haproxy_load_balancing: true } : {}),
+  ...(values[LOAD_BALANCERS_FIELD_NAMES.IS_HAPROXY_ENABLED] ? { with_haproxy_load_balancing: true } : {}),
   ...(!secretId &&
   !values[CLUSTER_FORM_FIELD_NAMES.IS_USE_DEFINED_SECRET] &&
   values[CLUSTER_FORM_FIELD_NAMES.AUTHENTICATION_METHOD] === AUTHENTICATION_METHODS.PASSWORD
@@ -76,7 +78,7 @@ export const getLocalMachineEnvs = (values: ClusterFormValues, secretId?: number
         },
         children: {
           balancers: {
-            hosts: values[CLUSTER_FORM_FIELD_NAMES.IS_HAPROXY_LOAD_BALANCER]
+            hosts: values[LOAD_BALANCERS_FIELD_NAMES.IS_HAPROXY_ENABLED]
               ? values[CLUSTER_FORM_FIELD_NAMES.DATABASE_SERVERS].reduce(
                   (acc, server) => ({
                     ...acc,
@@ -104,26 +106,30 @@ export const getLocalMachineEnvs = (values: ClusterFormValues, secretId?: number
           },
           master: {
             hosts: {
-              [values[CLUSTER_FORM_FIELD_NAMES.DATABASE_SERVERS][0][CLUSTER_FORM_FIELD_NAMES.IP_ADDRESS]]: {
-                hostname: values[CLUSTER_FORM_FIELD_NAMES.DATABASE_SERVERS][0][CLUSTER_FORM_FIELD_NAMES.HOSTNAME],
-                ansible_host: values[CLUSTER_FORM_FIELD_NAMES.DATABASE_SERVERS][0][CLUSTER_FORM_FIELD_NAMES.IP_ADDRESS],
+              [values[DATABASE_SERVERS_FIELD_NAMES.DATABASE_SERVERS][0][DATABASE_SERVERS_FIELD_NAMES.IP_ADDRESS]]: {
+                hostname:
+                  values[DATABASE_SERVERS_FIELD_NAMES.DATABASE_SERVERS][0][
+                    DATABASE_SERVERS_FIELD_NAMES.DATABASE_HOSTNAME
+                  ],
+                ansible_host:
+                  values[DATABASE_SERVERS_FIELD_NAMES.DATABASE_SERVERS][0][DATABASE_SERVERS_FIELD_NAMES.IP_ADDRESS],
                 server_location:
-                  values[CLUSTER_FORM_FIELD_NAMES.DATABASE_SERVERS]?.[0]?.[CLUSTER_FORM_FIELD_NAMES.LOCATION],
-                postgresql_exists: values[CLUSTER_FORM_FIELD_NAMES.EXISTING_CLUSTER] ?? false,
+                  values[DATABASE_SERVERS_FIELD_NAMES.DATABASE_SERVERS]?.[0]?.[DATABASE_SERVERS_FIELD_NAMES.LOCATION],
+                postgresql_exists: values[DATABASE_SERVERS_FIELD_NAMES.IS_CLUSTER_EXISTS] ?? false,
               },
             },
           },
-          ...(values[CLUSTER_FORM_FIELD_NAMES.DATABASE_SERVERS].length > 1
+          ...(values[DATABASE_SERVERS_FIELD_NAMES.DATABASE_SERVERS].length > 1
             ? {
                 replica: {
-                  hosts: values[CLUSTER_FORM_FIELD_NAMES.DATABASE_SERVERS].slice(1).reduce(
+                  hosts: values[DATABASE_SERVERS_FIELD_NAMES.DATABASE_SERVERS].slice(1).reduce(
                     (acc, server) => ({
                       ...acc,
                       [server.ipAddress]: {
-                        hostname: server?.[CLUSTER_FORM_FIELD_NAMES.HOSTNAME],
-                        ansible_host: server?.[CLUSTER_FORM_FIELD_NAMES.IP_ADDRESS],
-                        server_location: server?.[CLUSTER_FORM_FIELD_NAMES.LOCATION],
-                        postgresql_exists: values[CLUSTER_FORM_FIELD_NAMES.EXISTING_CLUSTER] ?? false,
+                        hostname: server?.[DATABASE_SERVERS_FIELD_NAMES.DATABASE_HOSTNAME],
+                        ansible_host: server?.[DATABASE_SERVERS_FIELD_NAMES.IP_ADDRESS],
+                        server_location: server?.[DATABASE_SERVERS_FIELD_NAMES.LOCATION],
+                        postgresql_exists: values[DATABASE_SERVERS_FIELD_NAMES.IS_CLUSTER_EXISTS] ?? false,
                       },
                     }),
                     {},
@@ -178,12 +184,12 @@ export const mapFormValuesToRequestFields = ({
         ? getLocalMachineExtraVars(values, secretId)
         : getCloudProviderExtraVars(values),
     ),
-    existing_cluster: values[CLUSTER_FORM_FIELD_NAMES.EXISTING_CLUSTER] ?? false,
+    existing_cluster: values[DATABASE_SERVERS_FIELD_NAMES.IS_CLUSTER_EXISTS] ?? false,
   };
 
   if (IS_EXPERT_MODE) {
     const fromInstanceType = {
-      server_type: values[INSTANCES_BLOCK_CUSTOM_FORM_VALUES.SERVER_TYPE],
+      server_type: values[INSTANCES_BLOCK_FIELD_NAMES.SERVER_TYPE],
     };
 
     const fromDataDiskStorage = {
@@ -302,7 +308,7 @@ export const mapFormValuesToRequestFields = ({
     };
 
     return {
-      ...(values?.[CLUSTER_FORM_FIELD_NAMES.INSTANCE_TYPE] === 'custom' ? { ...fromInstanceType } : {}),
+      ...(values?.[INSTANCES_BLOCK_FIELD_NAMES.INSTANCE_TYPE] === 'custom' ? { ...fromInstanceType } : {}),
       ...fromDataDiskStorage,
       ...baseCloudClusterObject,
       ...fromInstancesAmountBlock,

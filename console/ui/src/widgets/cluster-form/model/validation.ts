@@ -11,7 +11,9 @@ import { ConnectionPoolsBlockSchema } from '@entities/cluster/expert-mode/connec
 import { PostgresParametersBlockFormSchema } from '@entities/cluster/expert-mode/postgres-parameters-block/model/validation.ts';
 import { KernelParametersBlockFormSchema } from '@entities/cluster/expert-mode/kernel-parameters-block/model/validation.ts';
 import { AdditionalSettingsBlockFormSchema } from '@entities/cluster/expert-mode/additional-settings-block/model/validation.ts';
-import { DataDiskStorageBlockFormSchema } from '@entities/cluster/expert-mode/data-disk-storage-block/model/validation.ts';
+import { INSTANCES_BLOCK_FIELD_NAMES } from '@entities/cluster/instances-block/model/const.ts';
+import { STORAGE_BLOCK_FIELDS } from '@entities/cluster/storage-block/model/const.ts';
+import { databaseServersBlockValidation } from '@entities/cluster/database-servers-block/model/validation.ts';
 
 const CloudFormSchema = (t: TFunction) => {
   const defaultClusterFormSchema = yup.object({
@@ -32,7 +34,7 @@ const CloudFormSchema = (t: TFunction) => {
               .required()
           : schema.notRequired(),
       ),
-    [CLUSTER_FORM_FIELD_NAMES.INSTANCE_TYPE]: yup
+    [INSTANCES_BLOCK_FIELD_NAMES.INSTANCE_TYPE]: yup
       .mixed()
       .when(CLUSTER_FORM_FIELD_NAMES.PROVIDER, ([provider], schema) =>
         provider?.code !== PROVIDERS.LOCAL ? yup.string().required() : schema.notRequired(),
@@ -59,7 +61,7 @@ const CloudFormSchema = (t: TFunction) => {
       .when(CLUSTER_FORM_FIELD_NAMES.PROVIDER, ([provider], schema) =>
         provider?.code !== PROVIDERS.LOCAL ? yup.number().required() : schema.notRequired(),
       ),
-    [CLUSTER_FORM_FIELD_NAMES.STORAGE_AMOUNT]: yup
+    [STORAGE_BLOCK_FIELDS.STORAGE_AMOUNT]: yup
       .mixed()
       .when(CLUSTER_FORM_FIELD_NAMES.PROVIDER, ([provider], schema) =>
         provider?.code !== PROVIDERS.LOCAL ? yup.number().required() : schema.notRequired(),
@@ -77,124 +79,103 @@ const CloudFormSchema = (t: TFunction) => {
 };
 
 export const LocalFormSchema = (t: TFunction) => {
-  const defaultLocalFormSchema = yup.object({
-    [CLUSTER_FORM_FIELD_NAMES.DATABASE_SERVERS]: yup
-      .mixed()
-      .when(CLUSTER_FORM_FIELD_NAMES.PROVIDER, ([provider], schema) =>
-        provider?.code === PROVIDERS.LOCAL
-          ? yup.array(
-              yup.object({
-                [CLUSTER_FORM_FIELD_NAMES.HOSTNAME]: yup.string().required(t('requiredField', { ns: 'validation' })),
-                [CLUSTER_FORM_FIELD_NAMES.IP_ADDRESS]: yup
-                  .string()
-                  .required(t('requiredField', { ns: 'validation' }))
-                  .test('should be a correct IP', t('shouldBeACorrectV4Ip', { ns: 'validation' }), (value) =>
-                    ipRegex.v4({ exact: true }).test(value),
-                  ),
-                [CLUSTER_FORM_FIELD_NAMES.LOCATION]: yup.string(),
-              }),
-            )
-          : schema.notRequired(),
-      ),
-    [CLUSTER_FORM_FIELD_NAMES.AUTHENTICATION_METHOD]: yup
-      .mixed()
-      .when(CLUSTER_FORM_FIELD_NAMES.PROVIDER, ([provider], schema) =>
-        provider?.code === PROVIDERS.LOCAL ? yup.string().required() : schema.notRequired(),
-      ),
-    [SECRET_MODAL_CONTENT_FORM_FIELD_NAMES.SSH_PRIVATE_KEY]: yup
-      .mixed()
-      .when(
-        [CLUSTER_FORM_FIELD_NAMES.PROVIDER, CLUSTER_FORM_FIELD_NAMES.AUTHENTICATION_METHOD],
-        ([provider, authenticationMethod], schema) =>
-          provider?.code === PROVIDERS.LOCAL && authenticationMethod === AUTHENTICATION_METHODS.SSH
+  const defaultLocalFormSchema = yup
+    .object({
+      [CLUSTER_FORM_FIELD_NAMES.AUTHENTICATION_METHOD]: yup
+        .mixed()
+        .when(CLUSTER_FORM_FIELD_NAMES.PROVIDER, ([provider], schema) =>
+          provider?.code === PROVIDERS.LOCAL ? yup.string().required() : schema.notRequired(),
+        ),
+      [SECRET_MODAL_CONTENT_FORM_FIELD_NAMES.SSH_PRIVATE_KEY]: yup
+        .mixed()
+        .when(
+          [CLUSTER_FORM_FIELD_NAMES.PROVIDER, CLUSTER_FORM_FIELD_NAMES.AUTHENTICATION_METHOD],
+          ([provider, authenticationMethod], schema) =>
+            provider?.code === PROVIDERS.LOCAL && authenticationMethod === AUTHENTICATION_METHODS.SSH
+              ? yup
+                  .mixed()
+                  .when(CLUSTER_FORM_FIELD_NAMES.IS_USE_DEFINED_SECRET, ([isUseDefinedSecret], schema) =>
+                    !isUseDefinedSecret
+                      ? yup.string().required(t('requiredField', { ns: 'validation' }))
+                      : schema.notRequired(),
+                  )
+              : schema.notRequired(),
+        ),
+      [SECRET_MODAL_CONTENT_FORM_FIELD_NAMES.USERNAME]: yup
+        .mixed()
+        .when(
+          [CLUSTER_FORM_FIELD_NAMES.PROVIDER, CLUSTER_FORM_FIELD_NAMES.AUTHENTICATION_METHOD],
+          ([provider, authenticationMethod], schema) =>
+            provider?.code === PROVIDERS.LOCAL && authenticationMethod === AUTHENTICATION_METHODS.PASSWORD
+              ? yup
+                  .mixed()
+                  .when(CLUSTER_FORM_FIELD_NAMES.IS_USE_DEFINED_SECRET, ([isUseDefinedSecret], schema) =>
+                    !isUseDefinedSecret
+                      ? yup.string().required(t('requiredField', { ns: 'validation' }))
+                      : schema.notRequired(),
+                  )
+              : schema.notRequired(),
+        ),
+      [SECRET_MODAL_CONTENT_FORM_FIELD_NAMES.PASSWORD]: yup
+        .mixed()
+        .when(
+          [CLUSTER_FORM_FIELD_NAMES.PROVIDER, CLUSTER_FORM_FIELD_NAMES.AUTHENTICATION_METHOD],
+          ([provider, authenticationMethod], schema) =>
+            provider?.code === PROVIDERS.LOCAL && authenticationMethod === AUTHENTICATION_METHODS.PASSWORD
+              ? yup
+                  .mixed()
+                  .when(CLUSTER_FORM_FIELD_NAMES.IS_USE_DEFINED_SECRET, ([isUseDefinedSecret], schema) =>
+                    !isUseDefinedSecret
+                      ? yup.string().required(t('requiredField', { ns: 'validation' }))
+                      : schema.notRequired(),
+                  )
+              : schema.notRequired(),
+        ),
+      [CLUSTER_FORM_FIELD_NAMES.AUTHENTICATION_IS_SAVE_TO_CONSOLE]: yup
+        .mixed()
+        .when(
+          [CLUSTER_FORM_FIELD_NAMES.PROVIDER, CLUSTER_FORM_FIELD_NAMES.IS_USE_DEFINED_SECRET],
+          ([provider, isUseDefinedSecret], schema) =>
+            provider?.code === PROVIDERS.LOCAL && !isUseDefinedSecret ? yup.boolean() : schema.notRequired(),
+        ),
+      [CLUSTER_FORM_FIELD_NAMES.SECRET_KEY_NAME]: yup
+        .mixed()
+        .when(
+          [CLUSTER_FORM_FIELD_NAMES.PROVIDER, CLUSTER_FORM_FIELD_NAMES.AUTHENTICATION_IS_SAVE_TO_CONSOLE],
+          ([provider, isSaveToConsole], schema) =>
+            provider?.code === PROVIDERS.LOCAL && isSaveToConsole
+              ? yup.string().required(t('requiredField', { ns: 'validation' }))
+              : schema.notRequired(),
+        ),
+      [CLUSTER_FORM_FIELD_NAMES.CLUSTER_VIP_ADDRESS]: yup
+        .mixed()
+        .when(CLUSTER_FORM_FIELD_NAMES.PROVIDER, ([provider], schema) =>
+          provider?.code === PROVIDERS.LOCAL
             ? yup
-                .mixed()
-                .when(CLUSTER_FORM_FIELD_NAMES.IS_USE_DEFINED_SECRET, ([isUseDefinedSecret], schema) =>
-                  !isUseDefinedSecret
-                    ? yup.string().required(t('requiredField', { ns: 'validation' }))
-                    : schema.notRequired(),
+                .string()
+                .test(
+                  'should be a correct VIP address',
+                  t('shouldBeACorrectV4Ip', { ns: 'validation' }),
+                  (value) => !value || ipRegex.v4({ exact: true }).test(value),
                 )
             : schema.notRequired(),
-      ),
-    [SECRET_MODAL_CONTENT_FORM_FIELD_NAMES.USERNAME]: yup
-      .mixed()
-      .when(
-        [CLUSTER_FORM_FIELD_NAMES.PROVIDER, CLUSTER_FORM_FIELD_NAMES.AUTHENTICATION_METHOD],
-        ([provider, authenticationMethod], schema) =>
-          provider?.code === PROVIDERS.LOCAL && authenticationMethod === AUTHENTICATION_METHODS.PASSWORD
-            ? yup
-                .mixed()
-                .when(CLUSTER_FORM_FIELD_NAMES.IS_USE_DEFINED_SECRET, ([isUseDefinedSecret], schema) =>
-                  !isUseDefinedSecret
-                    ? yup.string().required(t('requiredField', { ns: 'validation' }))
-                    : schema.notRequired(),
-                )
-            : schema.notRequired(),
-      ),
-    [SECRET_MODAL_CONTENT_FORM_FIELD_NAMES.PASSWORD]: yup
-      .mixed()
-      .when(
-        [CLUSTER_FORM_FIELD_NAMES.PROVIDER, CLUSTER_FORM_FIELD_NAMES.AUTHENTICATION_METHOD],
-        ([provider, authenticationMethod], schema) =>
-          provider?.code === PROVIDERS.LOCAL && authenticationMethod === AUTHENTICATION_METHODS.PASSWORD
-            ? yup
-                .mixed()
-                .when(CLUSTER_FORM_FIELD_NAMES.IS_USE_DEFINED_SECRET, ([isUseDefinedSecret], schema) =>
-                  !isUseDefinedSecret
-                    ? yup.string().required(t('requiredField', { ns: 'validation' }))
-                    : schema.notRequired(),
-                )
-            : schema.notRequired(),
-      ),
-    [CLUSTER_FORM_FIELD_NAMES.AUTHENTICATION_IS_SAVE_TO_CONSOLE]: yup
-      .mixed()
-      .when(
-        [CLUSTER_FORM_FIELD_NAMES.PROVIDER, CLUSTER_FORM_FIELD_NAMES.IS_USE_DEFINED_SECRET],
-        ([provider, isUseDefinedSecret], schema) =>
-          provider?.code === PROVIDERS.LOCAL && !isUseDefinedSecret ? yup.boolean() : schema.notRequired(),
-      ),
-    [CLUSTER_FORM_FIELD_NAMES.SECRET_KEY_NAME]: yup
-      .mixed()
-      .when(
-        [CLUSTER_FORM_FIELD_NAMES.PROVIDER, CLUSTER_FORM_FIELD_NAMES.AUTHENTICATION_IS_SAVE_TO_CONSOLE],
-        ([provider, isSaveToConsole], schema) =>
-          provider?.code === PROVIDERS.LOCAL && isSaveToConsole
-            ? yup.string().required(t('requiredField', { ns: 'validation' }))
-            : schema.notRequired(),
-      ),
-    [CLUSTER_FORM_FIELD_NAMES.CLUSTER_VIP_ADDRESS]: yup
-      .mixed()
-      .when(CLUSTER_FORM_FIELD_NAMES.PROVIDER, ([provider], schema) =>
-        provider?.code === PROVIDERS.LOCAL
-          ? yup
-              .string()
-              .test(
-                'should be a correct VIP address',
-                t('shouldBeACorrectV4Ip', { ns: 'validation' }),
-                (value) => !value || ipRegex.v4({ exact: true }).test(value),
-              )
-          : schema.notRequired(),
-      ),
-    [CLUSTER_FORM_FIELD_NAMES.IS_HAPROXY_LOAD_BALANCER]: yup
-      .mixed()
-      .when(CLUSTER_FORM_FIELD_NAMES.PROVIDER, ([provider], schema) =>
-        provider?.code === PROVIDERS.LOCAL ? yup.boolean() : schema.notRequired(),
-      ),
-    [CLUSTER_FORM_FIELD_NAMES.IS_USE_DEFINED_SECRET]: yup
-      .mixed()
-      .when([CLUSTER_FORM_FIELD_NAMES.PROVIDER], ([provider], schema) =>
-        provider?.code === PROVIDERS.LOCAL ? yup.boolean().optional() : schema.notRequired(),
-      ),
-    [CLUSTER_FORM_FIELD_NAMES.SECRET_ID]: yup
-      .mixed()
-      .when(
-        [CLUSTER_FORM_FIELD_NAMES.PROVIDER, CLUSTER_FORM_FIELD_NAMES.IS_USE_DEFINED_SECRET],
-        ([provider, isUseDefinedSecret], schema) =>
-          provider?.code === PROVIDERS.LOCAL && isUseDefinedSecret
-            ? yup.string().required(t('requiredField', { ns: 'validation' }))
-            : schema.notRequired(),
-      ),
-  });
+        ),
+      [CLUSTER_FORM_FIELD_NAMES.IS_USE_DEFINED_SECRET]: yup
+        .mixed()
+        .when([CLUSTER_FORM_FIELD_NAMES.PROVIDER], ([provider], schema) =>
+          provider?.code === PROVIDERS.LOCAL ? yup.boolean().optional() : schema.notRequired(),
+        ),
+      [CLUSTER_FORM_FIELD_NAMES.SECRET_ID]: yup
+        .mixed()
+        .when(
+          [CLUSTER_FORM_FIELD_NAMES.PROVIDER, CLUSTER_FORM_FIELD_NAMES.IS_USE_DEFINED_SECRET],
+          ([provider, isUseDefinedSecret], schema) =>
+            provider?.code === PROVIDERS.LOCAL && isUseDefinedSecret
+              ? yup.string().required(t('requiredField', { ns: 'validation' }))
+              : schema.notRequired(),
+        ),
+    })
+    .concat(databaseServersBlockValidation(t));
 
   return IS_EXPERT_MODE ? defaultLocalFormSchema : defaultLocalFormSchema;
 };
@@ -218,7 +199,6 @@ export const ClusterFormSchema = (t: TFunction) => {
 
   return IS_EXPERT_MODE
     ? defaultSchema
-        .concat(DataDiskStorageBlockFormSchema(t))
         .concat(DatabasesBlockSchema)
         .concat(ConnectionPoolsBlockSchema(t))
         .concat(BackupsBlockFormSchema(t))

@@ -15,6 +15,9 @@ import {
   LocalClustersSummary,
   UseGetSummaryConfigProps,
 } from '@widgets/cluster-summary/model/types.ts';
+import { LOAD_BALANCERS_FIELD_NAMES } from '@/entities/cluster/load-balancers-block/model/const';
+import { STORAGE_BLOCK_FIELDS } from '@entities/cluster/storage-block/model/const.ts';
+import { DATABASE_SERVERS_FIELD_NAMES } from '@entities/cluster/database-servers-block/model/const.ts';
 
 const useGetCloudProviderConfig = () => {
   const { t } = useTranslation(['clusters', 'shared']);
@@ -91,7 +94,7 @@ const useGetCloudProviderConfig = () => {
         children: (
           <Stack direction={'row'} spacing={0.5} alignItems="center" minHeight="20px">
             <StorageIcon height="24px" width="24px" style={{ fill: theme.palette.text.primary }} />
-            <Typography>{data[CLUSTER_FORM_FIELD_NAMES.STORAGE_AMOUNT]} GB</Typography>
+            <Typography>{data[STORAGE_BLOCK_FIELDS.STORAGE_AMOUNT]} GB</Typography>
           </Stack>
         ),
       },
@@ -105,7 +108,7 @@ const useGetCloudProviderConfig = () => {
                 data[CLUSTER_FORM_FIELD_NAMES.INSTANCE_CONFIG]?.price_monthly *
                   data[CLUSTER_FORM_FIELD_NAMES.INSTANCES_AMOUNT] +
                 defaultVolume?.price_monthly *
-                  data[CLUSTER_FORM_FIELD_NAMES.STORAGE_AMOUNT] *
+                  data[STORAGE_BLOCK_FIELDS.STORAGE_AMOUNT] *
                   data[CLUSTER_FORM_FIELD_NAMES.INSTANCES_AMOUNT]
               )?.toFixed(2)}/${t('month', { ns: 'shared' })}`}
             </Typography>
@@ -117,7 +120,7 @@ const useGetCloudProviderConfig = () => {
                 ]?.price_monthly.toFixed(2)}/${t('perServer', { ns: 'clusters' })}`}
                 , ~
                 {`${defaultVolume?.currency}${(
-                  defaultVolume?.price_monthly * data[CLUSTER_FORM_FIELD_NAMES.STORAGE_AMOUNT]
+                  defaultVolume?.price_monthly * data[STORAGE_BLOCK_FIELDS.STORAGE_AMOUNT]
                 )?.toFixed(2)}/${t('perDisk', { ns: 'clusters' })}`}
               </Typography>
             </Stack>
@@ -165,7 +168,7 @@ const useGetLocalMachineConfig = () => {
         <Stack direction={'row'} spacing={0.5} alignItems="center">
           <LanIcon height="24px" width="24px" style={{ fill: theme.palette.text.primary }} />
           <Typography>
-            {data[CLUSTER_FORM_FIELD_NAMES.IS_HAPROXY_LOAD_BALANCER]
+            {data[LOAD_BALANCERS_FIELD_NAMES.IS_HAPROXY_ENABLED]
               ? t('on', { ns: 'shared' })
               : t('off', { ns: 'shared' })}
           </Typography>
@@ -177,13 +180,13 @@ const useGetLocalMachineConfig = () => {
       children: (
         <Stack direction="column" spacing={0.5}>
           <Stack direction="row" spacing={0.5} alignItems="center">
-            {data[CLUSTER_FORM_FIELD_NAMES.DATABASE_SERVERS]?.length >= 3 ? (
+            {data[DATABASE_SERVERS_FIELD_NAMES.DATABASE_SERVERS]?.length >= 3 ? (
               <CheckIcon width="24px" height="24px" style={{ fill: theme.palette.text.primary }} />
             ) : (
               <WarningAmberOutlinedIcon />
             )}
             <Typography>
-              {data[CLUSTER_FORM_FIELD_NAMES.DATABASE_SERVERS]?.length >= 3
+              {data[DATABASE_SERVERS_FIELD_NAMES.DATABASE_SERVERS]?.length >= 3
                 ? t('on', { ns: 'shared' })
                 : t('off', { ns: 'shared' })}
             </Typography>

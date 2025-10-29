@@ -1,10 +1,12 @@
 import { FC } from 'react';
 import { DatabaseServerBlockProps } from '@entities/cluster/database-servers-block/model/types.ts';
 import { Controller, useFormContext } from 'react-hook-form';
-import { CLUSTER_FORM_FIELD_NAMES } from '@widgets/cluster-form/model/constants.ts';
-import { Card, IconButton, Stack, TextField, Typography } from '@mui/material';
+import { Card, Checkbox, IconButton, Stack, TextField, Tooltip, Typography } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import CloseIcon from '@mui/icons-material/Close';
+import { DATABASE_SERVERS_FIELD_NAMES } from '@entities/cluster/database-servers-block/model/const.ts';
+import { IS_EXPERT_MODE } from '@shared/model/constants.ts';
+import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 
 const DatabaseServerBox: FC<DatabaseServerBlockProps> = ({ index, remove }) => {
   const { t } = useTranslation(['clusters', 'shared']);
@@ -20,11 +22,11 @@ const DatabaseServerBox: FC<DatabaseServerBlockProps> = ({ index, remove }) => {
           <CloseIcon />
         </IconButton>
       ) : null}
-      <Stack direction="column" gap="4px">
+      <Stack direction="column" gap={1}>
         <Typography fontWeight="bold">{`${t('server', { ns: 'clusters' })} ${index + 1}`}</Typography>
         <Controller
           control={control}
-          name={`${CLUSTER_FORM_FIELD_NAMES.DATABASE_SERVERS}.${index}.${CLUSTER_FORM_FIELD_NAMES.HOSTNAME}`}
+          name={`${DATABASE_SERVERS_FIELD_NAMES.DATABASE_SERVERS}.${index}.${DATABASE_SERVERS_FIELD_NAMES.DATABASE_HOSTNAME}`}
           render={({ field: { value, onChange } }) => (
             <TextField
               required
@@ -32,17 +34,22 @@ const DatabaseServerBox: FC<DatabaseServerBlockProps> = ({ index, remove }) => {
               onChange={onChange}
               size="small"
               label={t('hostname', { ns: 'clusters' })}
-              error={!!errors[CLUSTER_FORM_FIELD_NAMES.DATABASE_SERVERS]?.[index]?.[CLUSTER_FORM_FIELD_NAMES.HOSTNAME]}
+              error={
+                !!errors[DATABASE_SERVERS_FIELD_NAMES.DATABASE_SERVERS]?.[index]?.[
+                  DATABASE_SERVERS_FIELD_NAMES.DATABASE_HOSTNAME
+                ]
+              }
               helperText={
-                errors?.[CLUSTER_FORM_FIELD_NAMES.DATABASE_SERVERS]?.[index]?.[CLUSTER_FORM_FIELD_NAMES.HOSTNAME]
-                  ?.message ?? ' '
+                errors?.[DATABASE_SERVERS_FIELD_NAMES.DATABASE_SERVERS]?.[index]?.[
+                  DATABASE_SERVERS_FIELD_NAMES.DATABASE_HOSTNAME
+                ]?.message ?? ' '
               }
             />
           )}
         />
         <Controller
           control={control}
-          name={`${CLUSTER_FORM_FIELD_NAMES.DATABASE_SERVERS}.${index}.${CLUSTER_FORM_FIELD_NAMES.IP_ADDRESS}`}
+          name={`${DATABASE_SERVERS_FIELD_NAMES.DATABASE_SERVERS}.${index}.${DATABASE_SERVERS_FIELD_NAMES.IP_ADDRESS}`}
           render={({ field: { value, onChange } }) => (
             <TextField
               required
@@ -51,18 +58,21 @@ const DatabaseServerBox: FC<DatabaseServerBlockProps> = ({ index, remove }) => {
               size="small"
               label={t('ipAddress', { ns: 'clusters' })}
               error={
-                !!errors[CLUSTER_FORM_FIELD_NAMES.DATABASE_SERVERS]?.[index]?.[CLUSTER_FORM_FIELD_NAMES.IP_ADDRESS]
+                !!errors[DATABASE_SERVERS_FIELD_NAMES.DATABASE_SERVERS]?.[index]?.[
+                  DATABASE_SERVERS_FIELD_NAMES.IP_ADDRESS
+                ]
               }
               helperText={
-                errors?.[CLUSTER_FORM_FIELD_NAMES.DATABASE_SERVERS]?.[index]?.[CLUSTER_FORM_FIELD_NAMES.IP_ADDRESS]
-                  ?.message ?? ' '
+                errors?.[DATABASE_SERVERS_FIELD_NAMES.DATABASE_SERVERS]?.[index]?.[
+                  DATABASE_SERVERS_FIELD_NAMES.IP_ADDRESS
+                ]?.message ?? ' '
               }
             />
           )}
         />
         <Controller
           control={control}
-          name={`${CLUSTER_FORM_FIELD_NAMES.DATABASE_SERVERS}.${index}.${CLUSTER_FORM_FIELD_NAMES.LOCATION}`}
+          name={`${DATABASE_SERVERS_FIELD_NAMES.DATABASE_SERVERS}.${index}.${DATABASE_SERVERS_FIELD_NAMES.LOCATION}`}
           render={({ field: { value, onChange } }) => (
             <TextField
               value={value}
@@ -73,6 +83,23 @@ const DatabaseServerBox: FC<DatabaseServerBlockProps> = ({ index, remove }) => {
             />
           )}
         />
+        {IS_EXPERT_MODE ? (
+          <Controller
+            control={control}
+            name={`${DATABASE_SERVERS_FIELD_NAMES.DATABASE_SERVERS}.${index}.${DATABASE_SERVERS_FIELD_NAMES.IS_POSTGRESQL_EXISTS}`}
+            render={({ field }) => (
+              <Stack direction="row" alignItems="center">
+                <Stack direction="row" alignItems="center">
+                  <Typography marginRight={1}>{t('isPostgresqlExists')}</Typography>
+                  <Tooltip title={t('isPostgresqlExistsTooltip')}>
+                    <HelpOutlineIcon fontSize="small" />
+                  </Tooltip>
+                </Stack>
+                <Checkbox {...field} checked={!!field.value} />
+              </Stack>
+            )}
+          />
+        ) : null}
       </Stack>
     </Card>
   );

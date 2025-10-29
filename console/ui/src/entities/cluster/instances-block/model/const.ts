@@ -1,3 +1,4 @@
-export const INSTANCES_BLOCK_CUSTOM_FORM_VALUES = Object.freeze({
+export const INSTANCES_BLOCK_FIELD_NAMES = Object.freeze({
+  INSTANCE_TYPE: 'instanceType',
   SERVER_TYPE: 'serverType',
 });

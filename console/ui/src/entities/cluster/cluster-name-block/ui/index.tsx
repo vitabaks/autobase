@@ -26,7 +26,7 @@ const ClusterFormClusterNameBlock: React.FC = () => {
             value={value as string}
             onChange={onChange}
             error={!!errors[CLUSTER_FORM_FIELD_NAMES.CLUSTER_NAME]}
-            helperText={errors[CLUSTER_FORM_FIELD_NAMES.CLUSTER_NAME]?.message ?? ''}
+            helperText={errors[CLUSTER_FORM_FIELD_NAMES.CLUSTER_NAME]?.message as string}
           />
         )}
       />
