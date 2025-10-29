@@ -56,6 +56,7 @@ export interface ClusterFormValues
     ClusterLocalMachineProviderFormValues,
     ExtensionsBlockValues,
     DatabasesBlockValues {
+  [CLUSTER_FORM_FIELD_NAMES.CREATION_TYPE]: string;
   [CLUSTER_FORM_FIELD_NAMES.PROVIDER]: ResponseDeploymentInfo;
   [CLUSTER_FORM_FIELD_NAMES.ENVIRONMENT_ID]: number;
   [CLUSTER_FORM_FIELD_NAMES.CLUSTER_NAME]: string;

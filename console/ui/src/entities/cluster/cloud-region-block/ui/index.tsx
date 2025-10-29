@@ -3,15 +3,15 @@ import { TabContext, TabList, TabPanel } from '@mui/lab';
 import { CLUSTER_FORM_FIELD_NAMES } from '@widgets/cluster-form/model/constants.ts';
 import { Box, Divider, Stack, Tab, Typography } from '@mui/material';
 import { useTranslation } from 'react-i18next';
-import { Controller, useFormContext } from 'react-hook-form';
+import { Controller, useFormContext, useWatch } from 'react-hook-form';
 import ClusterFormRegionConfigBox from '@widgets/cluster-form/ui/ClusterFormRegionConfigBox.tsx';
 
 const CloudFormRegionBlock: FC = () => {
   const { t } = useTranslation('clusters');
-  const { control, watch, setValue } = useFormContext();
+  const { control, setValue } = useFormContext();
 
-  const watchProvider = watch(CLUSTER_FORM_FIELD_NAMES.PROVIDER);
-  const regionWatch = watch(CLUSTER_FORM_FIELD_NAMES.REGION);
+  const watchProvider = useWatch({ name: CLUSTER_FORM_FIELD_NAMES.PROVIDER });
+  const regionWatch = useWatch({ name: CLUSTER_FORM_FIELD_NAMES.REGION });
 
   const regions = watchProvider?.cloud_regions ?? [];
 

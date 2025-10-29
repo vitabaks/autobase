@@ -1,12 +1,16 @@
 import { FC, useEffect, useState } from 'react';
 import ClusterForm from '@widgets/cluster-form';
 import ClusterSummary from '@widgets/cluster-summary';
-import { Box, Stack } from '@mui/material';
-import { FormProvider, useForm } from 'react-hook-form';
+import { Box, Divider, Stack, Tab } from '@mui/material';
+import { Controller, FormProvider, useForm, useWatch } from 'react-hook-form';
 import { ClusterFormValues } from '@features/cluster-secret-modal/model/types.ts';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { ClusterFormSchema } from '@widgets/cluster-form/model/validation.ts';
-import { CLUSTER_FORM_DEFAULT_VALUES, CLUSTER_FORM_FIELD_NAMES } from '@widgets/cluster-form/model/constants.ts';
+import {
+  CLUSTER_CREATION_TYPES,
+  CLUSTER_FORM_DEFAULT_VALUES,
+  CLUSTER_FORM_FIELD_NAMES,
+} from '@widgets/cluster-form/model/constants.ts';
 import { useTranslation } from 'react-i18next';
 import { useGetExternalDeploymentsQuery } from '@shared/api/api/deployments.ts';
 import { useGetEnvironmentsQuery } from '@shared/api/api/environments.ts';
@@ -15,6 +19,8 @@ import { useGetClustersDefaultNameQuery } from '@shared/api/api/clusters.ts';
 import Spinner from '@shared/ui/spinner';
 import { STORAGE_BLOCK_FIELDS } from '@entities/cluster/storage-block/model/const.ts';
 import { IS_EXPERT_MODE } from '@shared/model/constants.ts';
+import YamlEditorForm from '@widgets/yaml-editor-form/ui';
+import { TabContext, TabList, TabPanel } from '@mui/lab';
 
 const AddCluster: FC = () => {
   const { t } = useTranslation(['clusters', 'validation', 'toasts']);
@@ -30,6 +36,8 @@ const AddCluster: FC = () => {
   const environments = useGetEnvironmentsQuery({ offset: 0, limit: 999_999_999 });
   const postgresVersions = useGetPostgresVersionsQuery();
   const clusterName = useGetClustersDefaultNameQuery();
+
+  const watchClusterCreationType = useWatch({ name: CLUSTER_FORM_FIELD_NAMES.CREATION_TYPE, control: methods.control });
 
   useEffect(() => {
     if (deployments.data?.data && postgresVersions.data?.data && environments.data?.data && clusterName.data) {
@@ -60,21 +68,45 @@ const AddCluster: FC = () => {
     }
   }, [deployments.data?.data, postgresVersions.data?.data, environments.data?.data, clusterName.data]);
 
+  const handleTabChange = (onChange: (...event: any[]) => void) => (_, value: string) => {
+    onChange(value);
+  };
+
   return (
     <FormProvider {...methods}>
       {isResetting || deployments.isFetching || postgresVersions.isFetching || environments.isFetching ? (
         <Spinner />
       ) : (
-        <Stack direction="row">
-          <Box width="75%">
-            <ClusterForm
-              deploymentsData={deployments.data?.data ?? []}
-              environmentsData={environments.data?.data ?? []}
-              postgresVersionsData={postgresVersions.data?.data ?? []}
-            />
-          </Box>
-          <ClusterSummary />
-        </Stack>
+        <TabContext value={watchClusterCreationType}>
+          <Controller
+            name={CLUSTER_FORM_FIELD_NAMES.CREATION_TYPE}
+            render={({ field: { onChange } }) => (
+              <TabList onChange={handleTabChange(onChange)}>
+                {Object.values(CLUSTER_CREATION_TYPES)?.map((value) => (
+                  <Tab key={value} label={value} value={value} />
+                ))}
+              </TabList>
+            )}
+          />
+          <Divider />
+          <TabPanel value={CLUSTER_CREATION_TYPES.FORM}>
+            <Stack direction="row">
+              <Box width="75%">
+                <ClusterForm
+                  deploymentsData={deployments.data?.data ?? []}
+                  environmentsData={environments.data?.data ?? []}
+                  postgresVersionsData={postgresVersions.data?.data ?? []}
+                />
+              </Box>
+              <ClusterSummary />
+            </Stack>
+          </TabPanel>
+          <TabPanel value={CLUSTER_CREATION_TYPES.YAML}>
+            <Box>
+              <YamlEditorForm />
+            </Box>
+          </TabPanel>
+        </TabContext>
       )}
     </FormProvider>
   );

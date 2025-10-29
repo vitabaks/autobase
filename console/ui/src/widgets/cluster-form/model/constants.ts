@@ -25,6 +25,11 @@ import {
 import { DATA_DIRECTORY_FIELD_NAMES } from '@entities/cluster/expert-mode/data-directory-block/model/const.ts';
 import { DATABASE_SERVERS_FIELD_NAMES } from '@entities/cluster/database-servers-block/model/const.ts';
 
+export const CLUSTER_CREATION_TYPES = Object.freeze({
+  FORM: 'form',
+  YAML: 'yaml',
+});
+
 const CLUSTER_CLOUD_PROVIDER_FIELD_NAMES = Object.freeze({
   REGION: 'region',
   REGION_CONFIG: 'regionConfig',
@@ -61,6 +66,7 @@ export const CLUSTER_FORM_FIELD_NAMES = Object.freeze({
   DESCRIPTION: 'description',
   POSTGRES_VERSION: 'postgresVersion',
   SECRET_ID: 'secretId',
+  CREATION_TYPE: 'creationType',
   ...CLUSTER_CLOUD_PROVIDER_FIELD_NAMES,
   ...CLUSTER_LOCAL_MACHINE_FIELD_NAMES,
   ...DATABASES_BLOCK_FIELD_NAMES,
@@ -106,6 +112,7 @@ export const LOCAL_CLUSTER_DEFAULT_VALUES = Object.freeze({
 export const CLUSTER_FORM_DEFAULT_VALUES = Object.freeze({
   ...CLOUD_CLUSTER_DEFAULT_VALUES,
   ...LOCAL_CLUSTER_DEFAULT_VALUES,
+  [CLUSTER_FORM_FIELD_NAMES.CREATION_TYPE]: CLUSTER_CREATION_TYPES.FORM,
   [CLUSTER_FORM_FIELD_NAMES.IS_USE_DEFINED_SECRET]: false,
   [CLUSTER_FORM_FIELD_NAMES.SECRET_ID]: '',
   [CLUSTER_FORM_FIELD_NAMES.DATABASE_SERVERS]: Array(3)
