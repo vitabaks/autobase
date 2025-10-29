@@ -2,7 +2,7 @@ import { FC } from 'react';
 import { Box, TextField, Typography } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import { Controller, useFormContext } from 'react-hook-form';
-import { CLUSTER_FORM_FIELD_NAMES } from '@widgets/cluster-form/model/constants.ts';
+import { SSH_KEY_BLOCK_FIELD_NAMES } from '@entities/cluster/ssh-key-block/model/const.ts';
 
 const ClusterFormSshKeyBlock: FC = () => {
   const { t } = useTranslation('clusters');
@@ -18,7 +18,7 @@ const ClusterFormSshKeyBlock: FC = () => {
       </Typography>
       <Controller
         control={control}
-        name={CLUSTER_FORM_FIELD_NAMES.SSH_PUBLIC_KEY}
+        name={SSH_KEY_BLOCK_FIELD_NAMES.SSH_PUBLIC_KEY}
         render={({ field: { value, onChange } }) => (
           <TextField
             fullWidth
@@ -28,8 +28,8 @@ const ClusterFormSshKeyBlock: FC = () => {
             value={value as string}
             placeholder={t('sshKeyCloudProviderPlaceholder')}
             onChange={onChange}
-            error={!!errors[CLUSTER_FORM_FIELD_NAMES.SSH_PUBLIC_KEY]}
-            helperText={(errors[CLUSTER_FORM_FIELD_NAMES.SSH_PUBLIC_KEY]?.message as string) ?? ''}
+            error={!!errors[SSH_KEY_BLOCK_FIELD_NAMES.SSH_PUBLIC_KEY]}
+            helperText={(errors[SSH_KEY_BLOCK_FIELD_NAMES.SSH_PUBLIC_KEY]?.message as string) ?? ''}
           />
         )}
       />

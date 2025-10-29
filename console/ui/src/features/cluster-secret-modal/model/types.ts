@@ -15,6 +15,7 @@ import { DatabasesBlockValues } from '@entities/cluster/expert-mode/databases-bl
 import { LOAD_BALANCERS_FIELD_NAMES } from '@entities/cluster/load-balancers-block/model/const.ts';
 import { INSTANCES_BLOCK_FIELD_NAMES } from '@entities/cluster/instances-block/model/const.ts';
 import { STORAGE_BLOCK_FIELDS } from '@entities/cluster/storage-block/model/const.ts';
+import { SshKeyBlockValues } from '@entities/cluster/ssh-key-block/model/types.ts';
 
 export interface ClusterSecretModalProps {
   isClusterFormSubmitting?: boolean;
@@ -25,7 +26,7 @@ export interface ClusterSecretModalFormValues extends SecretFormValues {
   [CLUSTER_SECRET_MODAL_FORM_FIELD_NAMES.IS_SAVE_TO_CONSOLE]: boolean;
 }
 
-interface ClusterCloudProviderFormValues extends BackupsBlockValues {
+interface ClusterCloudProviderFormValues extends BackupsBlockValues, SshKeyBlockValues {
   [CLUSTER_FORM_FIELD_NAMES.REGION]?: string;
   [CLUSTER_FORM_FIELD_NAMES.REGION_CONFIG]?: DeploymentInfoCloudRegion;
   [INSTANCES_BLOCK_FIELD_NAMES.INSTANCE_TYPE]?: 'small' | 'medium' | 'large' | 'custom';
@@ -33,7 +34,6 @@ interface ClusterCloudProviderFormValues extends BackupsBlockValues {
   [CLUSTER_FORM_FIELD_NAMES.INSTANCES_AMOUNT]?: number;
   [STORAGE_BLOCK_FIELDS.STORAGE_AMOUNT]?: number;
   [CLUSTER_FORM_FIELD_NAMES.IS_SPOT_INSTANCES]?: boolean;
-  [CLUSTER_FORM_FIELD_NAMES.SSH_PUBLIC_KEY]?: string;
 }
 
 interface ClusterLocalMachineProviderFormValues

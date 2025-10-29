@@ -14,6 +14,7 @@ import { AdditionalSettingsBlockFormSchema } from '@entities/cluster/expert-mode
 import { INSTANCES_BLOCK_FIELD_NAMES } from '@entities/cluster/instances-block/model/const.ts';
 import { STORAGE_BLOCK_FIELDS } from '@entities/cluster/storage-block/model/const.ts';
 import { databaseServersBlockValidation } from '@entities/cluster/database-servers-block/model/validation.ts';
+import { SSH_KEY_BLOCK_FIELD_NAMES } from '@entities/cluster/ssh-key-block/model/const.ts';
 
 const CloudFormSchema = (t: TFunction) => {
   const defaultClusterFormSchema = yup.object({
@@ -66,7 +67,7 @@ const CloudFormSchema = (t: TFunction) => {
       .when(CLUSTER_FORM_FIELD_NAMES.PROVIDER, ([provider], schema) =>
         provider?.code !== PROVIDERS.LOCAL ? yup.number().required() : schema.notRequired(),
       ),
-    [CLUSTER_FORM_FIELD_NAMES.SSH_PUBLIC_KEY]: yup
+    [SSH_KEY_BLOCK_FIELD_NAMES.SSH_PUBLIC_KEY]: yup
       .mixed()
       .when(CLUSTER_FORM_FIELD_NAMES.PROVIDER, ([provider], schema) =>
         provider?.code !== PROVIDERS.LOCAL

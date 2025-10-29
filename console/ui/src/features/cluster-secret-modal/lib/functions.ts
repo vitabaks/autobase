@@ -22,6 +22,7 @@ import { DATA_DISK_STORAGE_BLOCK_FIELD_NAMES } from '@entities/cluster/expert-mo
 import { INSTANCES_BLOCK_FIELD_NAMES } from '@entities/cluster/instances-block/model/const.ts';
 import { LOAD_BALANCERS_FIELD_NAMES } from '@entities/cluster/load-balancers-block/model/const.ts';
 import { DATABASE_SERVERS_FIELD_NAMES } from '@entities/cluster/database-servers-block/model/const.ts';
+import { SSH_KEY_BLOCK_FIELD_NAMES } from '@entities/cluster/ssh-key-block/model/const.ts';
 
 export const getCommonExtraVars = (values: ClusterFormValues) => ({
   postgresql_version: values[CLUSTER_FORM_FIELD_NAMES.POSTGRES_VERSION],
@@ -34,7 +35,7 @@ export const getCloudProviderExtraVars = (values: ClusterFormValues) => ({
   server_location: values[CLUSTER_FORM_FIELD_NAMES.REGION_CONFIG].code,
   server_count: values[CLUSTER_FORM_FIELD_NAMES.INSTANCES_AMOUNT],
   volume_size: values[STORAGE_BLOCK_FIELDS.STORAGE_AMOUNT],
-  ssh_public_keys: values[CLUSTER_FORM_FIELD_NAMES.SSH_PUBLIC_KEY].split('\n').map((key) => `'${key}'`),
+  ssh_public_keys: values[SSH_KEY_BLOCK_FIELD_NAMES.SSH_PUBLIC_KEY].split('\n').map((key) => `'${key}'`),
   ansible_user: PROVIDER_CODE_TO_ANSIBLE_USER_MAP[values[CLUSTER_FORM_FIELD_NAMES.PROVIDER].code],
   ...getCommonExtraVars(values),
   ...values[CLUSTER_FORM_FIELD_NAMES.REGION_CONFIG].cloud_image.image,
