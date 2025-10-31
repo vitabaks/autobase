@@ -1047,6 +1047,10 @@ cron_jobs: []
 #    weekday: "*"
 #    job: "echo 'example job two command'"
 
+# Configure removal of the logrotate configuration file /etc/logrotate.d/postgresql-common
+# when set to true, PostgreSQL log will NOT be rotated by logrotate.
+disable_logrotate_for_postgresql: true # false => do not remove /etc/logrotate.d/postgresql-common, log will be rotated.
+
 # Configure mount points in /etc/fstab and mount the file system (if 'mount.src' is defined)
 mount:
   - path: "/pgdata"
