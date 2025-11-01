@@ -35,7 +35,7 @@ export const getCloudProviderExtraVars = (values: ClusterFormValues) => ({
   server_location: values[CLUSTER_FORM_FIELD_NAMES.REGION_CONFIG].code,
   server_count: values[CLUSTER_FORM_FIELD_NAMES.INSTANCES_AMOUNT],
   volume_size: values[STORAGE_BLOCK_FIELDS.STORAGE_AMOUNT],
-  ssh_public_keys: values[SSH_KEY_BLOCK_FIELD_NAMES.SSH_PUBLIC_KEY].split('\n').map((key) => `'${key}'`),
+  ssh_public_keys: values[SSH_KEY_BLOCK_FIELD_NAMES.SSH_PUBLIC_KEY]?.split('\n').map((key) => `'${key}'`) ?? '', // value should be required in form, allow undefined only for YAML editor to work correctly
   ansible_user: PROVIDER_CODE_TO_ANSIBLE_USER_MAP[values[CLUSTER_FORM_FIELD_NAMES.PROVIDER].code],
   ...getCommonExtraVars(values),
   ...values[CLUSTER_FORM_FIELD_NAMES.REGION_CONFIG].cloud_image.image,
