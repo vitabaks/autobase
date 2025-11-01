@@ -54,7 +54,7 @@ const AuthenticationMethodFormBlock: React.FC = () => {
         {t('authenticationMethod', { ns: 'clusters' })}
       </Typography>
       <Stack direction="column" gap="16px">
-        <Stack direction="row" gap="24px">
+        <Stack direction="row" gap="24px" flexWrap="wrap">
           <Controller
             control={control}
             name={CLUSTER_FORM_FIELD_NAMES.AUTHENTICATION_METHOD}
@@ -112,7 +112,8 @@ const AuthenticationMethodFormBlock: React.FC = () => {
                   helperText={errors[CLUSTER_FORM_FIELD_NAMES.IS_USE_DEFINED_SECRET]?.message as string}>
                   {/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
                   {[t('yes', { ns: 'shared' }), t('no', { ns: 'shared' })].map((option) => (
-                    // @ts-ignore
+                    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                    // @ts-expect-error
                     <MenuItem key={option} value={option === t('yes', { ns: 'shared' })}>
                       {option}
                     </MenuItem>

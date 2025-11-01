@@ -28,6 +28,8 @@ const SettingsForm: FC = () => {
       [SETTINGS_FORM_FIELDS_NAMES.HTTPS_PROXY]: '',
       [SETTINGS_FORM_FIELDS_NAMES.IS_EXPERT_MODE_ENABLED]:
         localStorage.getItem(LOCAL_STORAGE_ITEMS.IS_EXPERT_MODE)?.toString() === 'true',
+      [SETTINGS_FORM_FIELDS_NAMES.IS_YAML_ENABLED]:
+        localStorage.getItem(LOCAL_STORAGE_ITEMS.IS_YAML_ENABLED)?.toString() === 'true',
     },
   });
 
@@ -56,10 +58,17 @@ const SettingsForm: FC = () => {
   const onSubmit = async (values: SettingsFormValues) => {
     try {
       const dirtyFields = methods.formState.dirtyFields;
-      if (dirtyFields[SETTINGS_FORM_FIELDS_NAMES.IS_EXPERT_MODE_ENABLED]) {
+      if (
+        dirtyFields[SETTINGS_FORM_FIELDS_NAMES.IS_EXPERT_MODE_ENABLED] ||
+        dirtyFields[SETTINGS_FORM_FIELDS_NAMES.IS_YAML_ENABLED]
+      ) {
         localStorage.setItem(
           LOCAL_STORAGE_ITEMS.IS_EXPERT_MODE,
           String(values[SETTINGS_FORM_FIELDS_NAMES.IS_EXPERT_MODE_ENABLED]),
+        );
+        localStorage.setItem(
+          LOCAL_STORAGE_ITEMS.IS_YAML_ENABLED,
+          String(values[SETTINGS_FORM_FIELDS_NAMES.IS_YAML_ENABLED]),
         );
         dispatchEvent(new Event('storage'));
       }

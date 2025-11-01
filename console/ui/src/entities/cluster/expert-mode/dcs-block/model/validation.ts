@@ -12,7 +12,7 @@ export const DcsBlockSchema = (t: TFunction) =>
     [DCS_BLOCK_FIELD_NAMES.IS_DEPLOY_TO_DB_SERVERS]: yup.boolean(),
     [DCS_BLOCK_FIELD_NAMES.DATABASES]: yup.array(
       yup.object({
-        [DCS_BLOCK_FIELD_NAMES.DATABASE_ADDRESS]: yup
+        [DCS_BLOCK_FIELD_NAMES.DATABASE_HOSTNAME]: yup
           .mixed()
           .when(
             [CLUSTER_FORM_FIELD_NAMES.PROVIDER, DCS_BLOCK_FIELD_NAMES.IS_DEPLOY_NEW_CLUSTER],

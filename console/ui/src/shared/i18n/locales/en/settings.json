@@ -25,5 +25,7 @@
   "sshPrivateKey": "SSH private key",
   "month": "Month",
   "expertMode": "Expert mode",
-  "enableExpertMode": "Enable expert mode"
+  "expertModeInfo": "Activate Expert Mode to unlock advanced user interface options tailored for experience users.\nThis mode revealis additional settings and features that allow for precise configuration of clusters, including complex parameters adjustments not visible in the standard mode.",
+  "enableExpertMode": "Enable expert mode",
+  "enableYamlTab": "Enable YAML tab"
 }

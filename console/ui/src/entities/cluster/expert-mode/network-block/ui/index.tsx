@@ -2,9 +2,9 @@ import { FC } from 'react';
 import { Stack, TextField, Typography } from '@mui/material';
 import { Controller, useFormContext } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
-import { DATA_DISK_STORAGE_BLOCK_FIELD_NAMES } from '@entities/cluster/expert-mode/data-disk-storage-block/model/const.ts';
+import { NETWORK_BLOCK_FIELD_NAMES } from '@entities/cluster/expert-mode/network-block/model/const.ts';
 
-const DataDiskStorage: FC = () => {
+const Network: FC = () => {
   const { t } = useTranslation('clusters');
 
   const {
@@ -13,20 +13,19 @@ const DataDiskStorage: FC = () => {
   } = useFormContext();
 
   return (
-    <Stack>
-      <Typography fontWeight="bold" marginBottom="8px">
-        {t('network')}
-      </Typography>
+    <Stack gap={1}>
+      <Typography fontWeight="bold">{t('network')}</Typography>
+      <Typography>{t('networkInfo')}</Typography>
       <Controller
         control={control}
-        name={DATA_DISK_STORAGE_BLOCK_FIELD_NAMES.SERVER_NETWORK}
+        name={NETWORK_BLOCK_FIELD_NAMES.SERVER_NETWORK}
         render={({ field }) => (
           <TextField
             {...field}
             size="small"
             label={t('serverNetwork')}
-            error={!!errors[DATA_DISK_STORAGE_BLOCK_FIELD_NAMES.SERVER_NETWORK]}
-            helperText={errors?.[DATA_DISK_STORAGE_BLOCK_FIELD_NAMES.SERVER_NETWORK]?.message as string}
+            error={!!errors[NETWORK_BLOCK_FIELD_NAMES.SERVER_NETWORK]}
+            helperText={errors?.[NETWORK_BLOCK_FIELD_NAMES.SERVER_NETWORK]?.message as string}
           />
         )}
       />
@@ -34,4 +33,4 @@ const DataDiskStorage: FC = () => {
   );
 };
 
-export default DataDiskStorage;
+export default Network;

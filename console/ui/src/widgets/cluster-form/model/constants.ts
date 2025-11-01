@@ -11,7 +11,7 @@ import {
 import { INSTANCES_AMOUNT_BLOCK_VALUES } from '@entities/cluster/instances-amount-block/model/const.ts';
 import { STORAGE_BLOCK_FIELDS } from '@entities/cluster/storage-block/model/const.ts';
 import { EXTENSION_BLOCK_FIELD_NAMES } from '@entities/cluster/expert-mode/extensions-block/model/const.ts';
-import { DATA_DISK_STORAGE_BLOCK_FIELD_NAMES } from '@entities/cluster/expert-mode/data-disk-storage-block/model/const.ts';
+import { NETWORK_BLOCK_FIELD_NAMES } from '@entities/cluster/expert-mode/network-block/model/const.ts';
 import { INSTANCES_BLOCK_FIELD_NAMES } from '@entities/cluster/instances-block/model/const.ts';
 import {
   LOAD_BALANCERS_DATABASES_DEFAULT_VALUES,
@@ -85,7 +85,7 @@ export const CLOUD_CLUSTER_DEFAULT_VALUES = Object.freeze({
     ? {
         [BACKUPS_BLOCK_FIELD_NAMES.IS_BACKUPS_ENABLED]: true,
         [INSTANCES_BLOCK_FIELD_NAMES.SERVER_TYPE]: '',
-        [DATA_DISK_STORAGE_BLOCK_FIELD_NAMES.SERVER_NETWORK]: '',
+        [NETWORK_BLOCK_FIELD_NAMES.SERVER_NETWORK]: '',
         [INSTANCES_AMOUNT_BLOCK_VALUES.IS_SPOT_INSTANCES]: false,
         [STORAGE_BLOCK_FIELDS.FILE_SYSTEM_TYPE]: 'ext4',
         [ADDITIONAL_SETTINGS_BLOCK_FIELD_NAMES.IS_CLOUD_LOAD_BALANCER]: true,
@@ -100,8 +100,10 @@ export const LOCAL_CLUSTER_DEFAULT_VALUES = Object.freeze({
         [BACKUPS_BLOCK_FIELD_NAMES.IS_BACKUPS_ENABLED]: false,
         [DCS_BLOCK_FIELD_NAMES.TYPE]: DCS_TYPES[0],
         [DCS_BLOCK_FIELD_NAMES.IS_DEPLOY_NEW_CLUSTER]: true,
-        [DCS_BLOCK_FIELD_NAMES.IS_DEPLOY_TO_DB_SERVERS]: false,
-        [DCS_BLOCK_FIELD_NAMES.DATABASES]: [DCS_DATABASES_DEFAULT_VALUES],
+        [DCS_BLOCK_FIELD_NAMES.IS_DEPLOY_TO_DB_SERVERS]: true,
+        [DCS_BLOCK_FIELD_NAMES.DATABASES]: Array(3)
+          .fill(0)
+          .map(() => DCS_DATABASES_DEFAULT_VALUES),
         [LOAD_BALANCERS_FIELD_NAMES.IS_DEPLOY_TO_DATABASE_SERVERS]: false,
         [LOAD_BALANCERS_FIELD_NAMES.DATABASES]: [LOAD_BALANCERS_DATABASES_DEFAULT_VALUES],
         [DATA_DIRECTORY_FIELD_NAMES.DATA_DIRECTORY]: '/pgdata/18/main',

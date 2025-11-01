@@ -6,7 +6,7 @@ import StorageBlock from '@entities/cluster/storage-block';
 import ClusterFormSshKeyBlock from '@entities/cluster/ssh-key-block';
 import { IS_EXPERT_MODE } from '@shared/model/constants.ts';
 
-const DataDiskStorageBlock = lazy(() => import('@entities/cluster/expert-mode/data-disk-storage-block/ui'));
+const NetworkBlock = lazy(() => import('@entities/cluster/expert-mode/network-block/ui'));
 
 const ClusterFormCloudProviderFormPart: FC = () => (
   <>
@@ -14,7 +14,7 @@ const ClusterFormCloudProviderFormPart: FC = () => (
     <ClusterFormInstancesBlock />
     <InstancesAmountBlock />
     <StorageBlock />
-    {IS_EXPERT_MODE ? <DataDiskStorageBlock /> : null}
+    {IS_EXPERT_MODE ? <NetworkBlock /> : null}
     <ClusterFormSshKeyBlock />
   </>
 );

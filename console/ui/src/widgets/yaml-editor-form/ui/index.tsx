@@ -49,14 +49,14 @@ const YamlEditorForm: FC = () => {
   const { isValid, isSubmitting } = formState;
 
   return (
-    <Box height="90vh">
+    <Box>
       <form onSubmit={handleSubmit(onSubmit)}>
         <Stack gap={2}>
           <Controller
             control={control}
             name={YAML_EDITOR_FORM_FIELD_NAMES.EDITOR}
             render={({ field }) => (
-              <Editor {...field} defaultLanguage="yaml" height="80vh" onMount={handleEditorDidMount} theme="vs-dark" />
+              <Editor {...field} defaultLanguage="yaml" height="70vh" onMount={handleEditorDidMount} theme="vs-dark" />
             )}
           />
           <DefaultFormButtons

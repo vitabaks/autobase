@@ -1,16 +1,24 @@
-import { FC } from 'react';
+import { FC, useEffect } from 'react';
 import { Box, TextField, Typography } from '@mui/material';
-import { Controller, useFormContext } from 'react-hook-form';
+import { Controller, useFormContext, useWatch } from 'react-hook-form';
 import { DATA_DIRECTORY_FIELD_NAMES } from '@entities/cluster/expert-mode/data-directory-block/model/const.ts';
 import { useTranslation } from 'react-i18next';
+import { CLUSTER_FORM_FIELD_NAMES } from '@widgets/cluster-form/model/constants.ts';
 
 const DataDirectoryBlock: FC = () => {
   const { t } = useTranslation('clusters');
 
   const {
     control,
+    setValue,
     formState: { errors },
   } = useFormContext();
+
+  const watchPostgresVersion = useWatch({ name: CLUSTER_FORM_FIELD_NAMES.POSTGRES_VERSION });
+
+  useEffect(() => {
+    setValue(DATA_DIRECTORY_FIELD_NAMES.DATA_DIRECTORY, `/pgdata/${watchPostgresVersion ?? 18}/main`);
+  }, [watchPostgresVersion]);
 
   return (
     <Box>

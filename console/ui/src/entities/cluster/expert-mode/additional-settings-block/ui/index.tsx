@@ -79,7 +79,7 @@ const AdditionalSettingsBlock: FC = () => {
                 <Stack direction="row" alignItems="center">
                   <Stack direction="row" alignItems="center" width={250}>
                     <Typography marginRight={1}>{t('syncModeStrict')}</Typography>
-                    <Tooltip title={t('syncModeStrict')}>
+                    <Tooltip title={t('syncModeStrictTooltip')}>
                       <HelpOutlineIcon fontSize="small" />
                     </Tooltip>
                   </Stack>
@@ -125,9 +125,11 @@ const AdditionalSettingsBlock: FC = () => {
             render={({ field }) => (
               <Stack direction="row" alignItems="center">
                 <Stack direction="row" alignItems="center" width={250}>
-                  <Trans i18nKey="netdataMonitoring" t={t}>
-                    <Link target="_blank" href={'https://github.com/netdata/netdata'} color="text.secondary" />
-                  </Trans>
+                  <Typography whiteSpace="pre-line">
+                    <Trans i18nKey="netdataMonitoring" t={t}>
+                      <Link target="_blank" href={'https://github.com/netdata/netdata'} color="text.secondary" />
+                    </Trans>
+                  </Typography>
                 </Stack>
                 <Checkbox {...field} checked={!!field.value} />
               </Stack>

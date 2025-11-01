@@ -52,7 +52,7 @@ const BackupsBlock: FC = () => {
           render={({ field }) => (
             <Stack direction="row" alignItems="center">
               <Stack direction="row" alignItems="center" width={250}>
-                <Typography>{t('backups')}</Typography>
+                <Typography>{t('backupsEnabled')}</Typography>
               </Stack>
               <Checkbox {...field} checked={!!field.value} />
             </Stack>

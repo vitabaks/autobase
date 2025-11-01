@@ -18,10 +18,14 @@ import {
 import { LOAD_BALANCERS_FIELD_NAMES } from '@/entities/cluster/load-balancers-block/model/const';
 import { STORAGE_BLOCK_FIELDS } from '@entities/cluster/storage-block/model/const.ts';
 import { DATABASE_SERVERS_FIELD_NAMES } from '@entities/cluster/database-servers-block/model/const.ts';
+import { INSTANCES_BLOCK_FIELD_NAMES } from '@entities/cluster/instances-block/model/const.ts';
+import { useWatch } from 'react-hook-form';
 
 const useGetCloudProviderConfig = () => {
   const { t } = useTranslation(['clusters', 'shared']);
   const theme = useTheme();
+
+  const watchInstanceType = useWatch({ name: INSTANCES_BLOCK_FIELD_NAMES.INSTANCE_TYPE });
 
   return (data: CloudProviderClustersSummary) => {
     const defaultVolume = data[CLUSTER_FORM_FIELD_NAMES.PROVIDER]?.volumes?.find((volume) => volume?.is_default) ?? {};
@@ -102,28 +106,34 @@ const useGetCloudProviderConfig = () => {
         title: `${t('estimatedMonthlyPrice')}*`,
         children: (
           <>
-            <Typography variant="h5" fontWeight="bold">
-              ~
-              {`${data[CLUSTER_FORM_FIELD_NAMES.INSTANCE_CONFIG]?.currency}${(
-                data[CLUSTER_FORM_FIELD_NAMES.INSTANCE_CONFIG]?.price_monthly *
-                  data[CLUSTER_FORM_FIELD_NAMES.INSTANCES_AMOUNT] +
-                defaultVolume?.price_monthly *
-                  data[STORAGE_BLOCK_FIELDS.STORAGE_AMOUNT] *
-                  data[CLUSTER_FORM_FIELD_NAMES.INSTANCES_AMOUNT]
-              )?.toFixed(2)}/${t('month', { ns: 'shared' })}`}
-            </Typography>
-            <Stack direction="row" gap={1}>
-              <Typography>
-                ~
-                {`${data[CLUSTER_FORM_FIELD_NAMES.INSTANCE_CONFIG]?.currency}${data[
-                  CLUSTER_FORM_FIELD_NAMES.INSTANCE_CONFIG
-                ]?.price_monthly.toFixed(2)}/${t('perServer', { ns: 'clusters' })}`}
-                , ~
-                {`${defaultVolume?.currency}${(
-                  defaultVolume?.price_monthly * data[STORAGE_BLOCK_FIELDS.STORAGE_AMOUNT]
-                )?.toFixed(2)}/${t('perDisk', { ns: 'clusters' })}`}
-              </Typography>
-            </Stack>
+            {watchInstanceType !== 'custom' ? (
+              <>
+                <Typography variant="h5" fontWeight="bold">
+                  ~
+                  {`${data[CLUSTER_FORM_FIELD_NAMES.INSTANCE_CONFIG]?.currency}${(
+                    data[CLUSTER_FORM_FIELD_NAMES.INSTANCE_CONFIG]?.price_monthly *
+                      data[CLUSTER_FORM_FIELD_NAMES.INSTANCES_AMOUNT] +
+                    defaultVolume?.price_monthly *
+                      data[STORAGE_BLOCK_FIELDS.STORAGE_AMOUNT] *
+                      data[CLUSTER_FORM_FIELD_NAMES.INSTANCES_AMOUNT]
+                  )?.toFixed(2)}/${t('month', { ns: 'shared' })}`}
+                </Typography>
+                <Stack direction="row" gap={1}>
+                  <Typography>
+                    ~
+                    {`${data[CLUSTER_FORM_FIELD_NAMES.INSTANCE_CONFIG]?.currency}${data[
+                      CLUSTER_FORM_FIELD_NAMES.INSTANCE_CONFIG
+                    ]?.price_monthly.toFixed(2)}/${t('perServer', { ns: 'clusters' })}`}
+                    , ~
+                    {`${defaultVolume?.currency}${(
+                      defaultVolume?.price_monthly * data[STORAGE_BLOCK_FIELDS.STORAGE_AMOUNT]
+                    )?.toFixed(2)}/${t('perDisk', { ns: 'clusters' })}`}
+                  </Typography>
+                </Stack>
+              </>
+            ) : (
+              <Typography>N/A</Typography>
+            )}
             <Typography color="text.secondary" variant="caption" whiteSpace="pre-line">
               <Trans i18nKey="estimatedCostAdditionalInfo" t={t}>
                 <Link

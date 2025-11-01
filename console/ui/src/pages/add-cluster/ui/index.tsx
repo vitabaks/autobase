@@ -18,7 +18,7 @@ import { useGetPostgresVersionsQuery } from '@shared/api/api/other.ts';
 import { useGetClustersDefaultNameQuery } from '@shared/api/api/clusters.ts';
 import Spinner from '@shared/ui/spinner';
 import { STORAGE_BLOCK_FIELDS } from '@entities/cluster/storage-block/model/const.ts';
-import { IS_EXPERT_MODE } from '@shared/model/constants.ts';
+import { IS_EXPERT_MODE, IS_YAML_ENABLED } from '@shared/model/constants.ts';
 import YamlEditorForm from '@widgets/yaml-editor-form/ui';
 import { TabContext, TabList, TabPanel } from '@mui/lab';
 
@@ -72,11 +72,24 @@ const AddCluster: FC = () => {
     onChange(value);
   };
 
+  const clustersForm = (
+    <Stack direction="row">
+      <Box width="75vw">
+        <ClusterForm
+          deploymentsData={deployments.data?.data ?? []}
+          environmentsData={environments.data?.data ?? []}
+          postgresVersionsData={postgresVersions.data?.data ?? []}
+        />
+      </Box>
+      <ClusterSummary />
+    </Stack>
+  );
+
   return (
     <FormProvider {...methods}>
       {isResetting || deployments.isFetching || postgresVersions.isFetching || environments.isFetching ? (
         <Spinner />
-      ) : (
+      ) : IS_EXPERT_MODE && IS_YAML_ENABLED ? (
         <TabContext value={watchClusterCreationType}>
           <Controller
             name={CLUSTER_FORM_FIELD_NAMES.CREATION_TYPE}
@@ -89,24 +102,13 @@ const AddCluster: FC = () => {
             )}
           />
           <Divider />
-          <TabPanel value={CLUSTER_CREATION_TYPES.FORM}>
-            <Stack direction="row">
-              <Box width="75%">
-                <ClusterForm
-                  deploymentsData={deployments.data?.data ?? []}
-                  environmentsData={environments.data?.data ?? []}
-                  postgresVersionsData={postgresVersions.data?.data ?? []}
-                />
-              </Box>
-              <ClusterSummary />
-            </Stack>
-          </TabPanel>
+          <TabPanel value={CLUSTER_CREATION_TYPES.FORM}>{clustersForm}</TabPanel>
           <TabPanel value={CLUSTER_CREATION_TYPES.YAML}>
-            <Box>
-              <YamlEditorForm />
-            </Box>
+            <YamlEditorForm />
           </TabPanel>
         </TabContext>
+      ) : (
+        clustersForm
       )}
     </FormProvider>
   );

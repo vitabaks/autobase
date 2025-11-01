@@ -24,8 +24,12 @@ const DcsDatabaseBox: FC<DcsDatabaseBoxProps> = ({ index, remove }) => {
         <Typography fontWeight="bold">{`${t('server')} ${index + 1}`}</Typography>
         {[
           {
-            fieldName: DCS_BLOCK_FIELD_NAMES.DATABASE_ADDRESS,
+            fieldName: DCS_BLOCK_FIELD_NAMES.DATABASE_HOSTNAME,
             label: t('hostname'),
+          },
+          {
+            fieldName: DCS_BLOCK_FIELD_NAMES.IP_ADDRESS,
+            label: t('ipAddress'),
           },
           { fieldName: DCS_BLOCK_FIELD_NAMES.DATABASE_PORT, label: t('port') },
         ].map(({ fieldName, label }) => (

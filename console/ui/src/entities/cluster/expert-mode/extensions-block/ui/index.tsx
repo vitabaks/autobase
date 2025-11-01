@@ -1,6 +1,6 @@
 import { ChangeEvent, FC, useEffect, useState, useTransition } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Checkbox, FormControlLabel, InputAdornment, Stack, TextField, Typography } from '@mui/material';
+import { Box, Checkbox, FormControlLabel, InputAdornment, Stack, TextField, Typography } from '@mui/material';
 import { ResponseDatabaseExtension, useGetDatabaseExtensionsQuery } from '@shared/api/api/other.ts';
 import Spinner from '@shared/ui/spinner';
 import { useWatch } from 'react-hook-form';
@@ -52,37 +52,39 @@ const ExtensionsBlock: FC = () => {
     <Spinner />
   ) : (
     <ErrorBoundary fallback={<ErrorBox />}>
-      <Stack direction="column" gap={2} width="100%">
-        <Typography fontWeight="bold" marginBottom="8px">
-          {t('extensions')}
-        </Typography>
-        <Stack direction="row" justifyContent="space-between">
-          <TextField
-            size="small"
-            sx={{
-              width: '300px',
-            }}
-            value={searchValue}
-            onChange={handleSearchValueChange}
-            slotProps={{
-              input: {
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon />
-                  </InputAdornment>
-                ),
-              },
-            }}
-          />
-          <FormControlLabel
-            checked={isShowOnlyEnabled}
-            onChange={(e) => setIsShowOnlyEnabled(e.target.checked)}
-            control={<Checkbox />}
-            label={<Typography marginRight={1}>{t('showEnabled')}</Typography>}
-          />
+      <Box width="60vw">
+        <Stack direction="column" gap={2} width="100%">
+          <Typography fontWeight="bold" marginBottom="8px">
+            {t('extensions')}
+          </Typography>
+          <Stack direction="row" justifyContent="space-between">
+            <TextField
+              size="small"
+              sx={{
+                width: '300px',
+              }}
+              value={searchValue}
+              onChange={handleSearchValueChange}
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon />
+                    </InputAdornment>
+                  ),
+                },
+              }}
+            />
+            <FormControlLabel
+              checked={isShowOnlyEnabled}
+              onChange={(e) => setIsShowOnlyEnabled(e.target.checked)}
+              control={<Checkbox />}
+              label={<Typography marginRight={1}>{t('showEnabled')}</Typography>}
+            />
+          </Stack>
+          <ExtensionsSwiper isPending={pending} filteredExtensions={filteredExtensions} />
         </Stack>
-        <ExtensionsSwiper isPending={pending} filteredExtensions={filteredExtensions} />
-      </Stack>
+      </Box>
     </ErrorBoundary>
   );
 };
