@@ -33,7 +33,7 @@ const ClusterSummary: FC = () => {
         position: 'sticky',
         top: '100px',
         margin: '16px',
-        width: '450px',
+        width: '370px',
         height: 'fit-content',
         padding: '16px 24px 16px 24px',
       }}

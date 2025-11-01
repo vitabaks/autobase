@@ -29,6 +29,7 @@ import SecretFormBlock from '@entities/secret-form-block';
 
 import { SECRET_MODAL_CONTENT_FORM_FIELD_NAMES } from '@entities/secret-form-block/model/constants.ts';
 import { getSecretBodyFromValues } from '@entities/secret-form-block/lib/functions.ts';
+import { DATABASE_SERVERS_FIELD_NAMES } from '@entities/cluster/database-servers-block/model/const.ts';
 
 const ClusterSecretModal: FC<ClusterSecretModalProps> = ({ isClusterFormDisabled = false }) => {
   const { t } = useTranslation(['clusters', 'shared', 'toasts']);
@@ -97,14 +98,14 @@ const ClusterSecretModal: FC<ClusterSecretModalProps> = ({ isClusterFormDisabled
       }
       toast.success(
         t(
-          clusterFormValues[CLUSTER_FORM_FIELD_NAMES.EXISTING_CLUSTER]
+          clusterFormValues[DATABASE_SERVERS_FIELD_NAMES.IS_CLUSTER_EXISTS]
             ? 'clusterSuccessfullyImported'
             : 'clusterSuccessfullyCreated',
           {
             ns: 'toasts',
             clusterName: clusterFormValues[CLUSTER_FORM_FIELD_NAMES.CLUSTER_NAME],
-          }
-        )
+          },
+        ),
       );
       navigate(generateAbsoluteRouterPath(RouterPaths.clusters.absolutePath));
     } catch (e) {
@@ -119,11 +120,16 @@ const ClusterSecretModal: FC<ClusterSecretModalProps> = ({ isClusterFormDisabled
   return (
     <Stack direction="row" gap="8px" justifyContent="flex-start" alignItems="center">
       <Button
-        disabled={isClusterFormDisabled || isSubmitting || addSecretTriggerState.isLoading || addClusterTriggerState.isLoading}
+        disabled={
+          isClusterFormDisabled || isSubmitting || addSecretTriggerState.isLoading || addClusterTriggerState.isLoading
+        }
         onClick={handleModalOpenState(true)}
         variant="contained"
-        startIcon={isSubmitting || addSecretTriggerState.isLoading || addClusterTriggerState.isLoading ? <CircularProgress size={16} /> : undefined}
-      >
+        startIcon={
+          isSubmitting || addSecretTriggerState.isLoading || addClusterTriggerState.isLoading ? (
+            <CircularProgress size={16} />
+          ) : undefined
+        }>
         {t('createCluster', { ns: 'clusters' })}
       </Button>
       <Box>
@@ -200,12 +206,21 @@ const ClusterSecretModal: FC<ClusterSecretModalProps> = ({ isClusterFormDisabled
                     </>
                   )}
                   <Button
-                    disabled={!isValid || !isDirty || isSubmitting || addSecretTriggerState.isLoading || addClusterTriggerState.isLoading}
+                    disabled={
+                      !isValid ||
+                      !isDirty ||
+                      isSubmitting ||
+                      addSecretTriggerState.isLoading ||
+                      addClusterTriggerState.isLoading
+                    }
                     variant="contained"
                     type="submit"
                     fullWidth={false}
-                    startIcon={isSubmitting || addSecretTriggerState.isLoading || addClusterTriggerState.isLoading ? <CircularProgress size={16} /> : undefined}
-                  >
+                    startIcon={
+                      isSubmitting || addSecretTriggerState.isLoading || addClusterTriggerState.isLoading ? (
+                        <CircularProgress size={16} />
+                      ) : undefined
+                    }>
                     {t('createCluster', { ns: 'clusters' })}
                   </Button>
                 </Stack>

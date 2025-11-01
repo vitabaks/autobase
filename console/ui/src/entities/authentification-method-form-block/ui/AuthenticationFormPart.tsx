@@ -1,8 +1,8 @@
-import React, { FC } from 'react';
+import { FC } from 'react';
 import { AUTHENTICATION_METHODS } from '@shared/model/constants.ts';
 import SshMethodFormPart from '@entities/authentification-method-form-block/ui/SshMethodFormPart.tsx';
 import PasswordMethodFormPart from '@entities/authentification-method-form-block/ui/PasswordMethodFormPart.tsx';
-import { Controller, useFormContext } from 'react-hook-form';
+import { Controller, useFormContext, useWatch } from 'react-hook-form';
 import { CLUSTER_FORM_FIELD_NAMES } from '@widgets/cluster-form/model/constants.ts';
 import { SECRET_MODAL_CONTENT_FORM_FIELD_NAMES } from '@entities/secret-form-block/model/constants.ts';
 import { TextField } from '@mui/material';
@@ -12,12 +12,10 @@ const AuthenticationFormPart: FC = () => {
   const { t } = useTranslation('shared');
   const {
     control,
-    watch,
     formState: { errors },
   } = useFormContext();
 
-  const watchAuthenticationMethod = watch(CLUSTER_FORM_FIELD_NAMES.AUTHENTICATION_METHOD);
-  const watchIsSaveToConsole = watch(CLUSTER_FORM_FIELD_NAMES.AUTHENTICATION_IS_SAVE_TO_CONSOLE);
+  const watchAuthenticationMethod = useWatch({ name: CLUSTER_FORM_FIELD_NAMES.AUTHENTICATION_METHOD });
 
   return (
     <>
