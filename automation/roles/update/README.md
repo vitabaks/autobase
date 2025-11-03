@@ -148,3 +148,8 @@ When using load balancing for read-only traffic (the "Type A" and "Type C" schem
 - Check the current PostgreSQL version
 - List the Patroni cluster members
 - Update completed.
+
+## Dependencies
+
+This role depends on:
+- `vitabaks.autobase.common` - Provides common variables and configurations

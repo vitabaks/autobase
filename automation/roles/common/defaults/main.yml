@@ -836,9 +836,9 @@ netdata_conf:
 ############################################################
 
 # DNS servers (/etc/resolv.conf)
-nameservers:
-  - "1.1.1.1" # Cloudflare DNS (primary)
-  - "8.8.8.8" # Google DNS (secondary)
+nameservers: []
+#  - "1.1.1.1" # Cloudflare DNS (primary)
+#  - "8.8.8.8" # Google DNS (secondary)
 
 # /etc/hosts (optional)
 etc_hosts: []
@@ -1046,6 +1046,10 @@ cron_jobs: []
 #    month: "*"
 #    weekday: "*"
 #    job: "echo 'example job two command'"
+
+# Configure removal of the logrotate configuration file /etc/logrotate.d/postgresql-common
+# when set to true, PostgreSQL log will NOT be rotated by logrotate.
+disable_logrotate_for_postgresql: true # false => do not remove /etc/logrotate.d/postgresql-common, log will be rotated.
 
 # Configure mount points in /etc/fstab and mount the file system (if 'mount.src' is defined)
 mount:
