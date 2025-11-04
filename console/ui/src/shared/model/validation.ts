@@ -1,4 +1,5 @@
 import * as yup from 'yup';
+import { TFunction } from 'i18next';
 
 export const configValidationSchema = (t: TFunction) =>
   yup
@@ -7,7 +8,7 @@ export const configValidationSchema = (t: TFunction) =>
       'should have correct format',
       t('configFormat', { ns: 'validation' }),
       (value) =>
-        /^[a-z0-9]+\s*:\s*[a-z0-9]+\s*(\n[a-z0-9]+\s*:\s*[a-z0-9]+\s*)*$/i.test(value) ||
-        /^[a-z0-9]+\s*=\s*[a-z0-9]+\s*(\n[a-z0-9]+\s*=\s*[a-z0-9]+\s*)*$/i.test(value) ||
+        /^[^:=\n\r]+:[^:=\n\r]+(\n\r[^:=\n\r]+:[^:=\n\r]+)*$/i.test(value) ||
+        /^[^:=\n\r]+=[^:=\n\r]+(\n\r[^:=\n\r]+=[^:=\n\r]+)*$/i.test(value) ||
         value === '',
     );

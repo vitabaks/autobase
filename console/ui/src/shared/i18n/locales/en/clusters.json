@@ -127,5 +127,6 @@
   "deployToDatabaseServers": "Deploy to database servers",
   "deployToDatabaseServersTooltip": "Select this option to deploy the HAProxy on the database servers. Uncheck if you prefer using dedicated servers for the HAProxy load balancer.",
   "isPostgresqlExists": "PostgreSQL exists",
-  "isPostgresqlExistsTooltip": "If PostgreSQL is already installed and running, this option lets you transform your existing setup into a fully functional high-availability cluster."
+  "isPostgresqlExistsTooltip": "If PostgreSQL is already installed and running, this option lets you transform your existing setup into a fully functional high-availability cluster.",
+  "custom": "Custom"
 }

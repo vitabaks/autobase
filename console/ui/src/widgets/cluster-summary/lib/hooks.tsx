@@ -68,21 +68,24 @@ const useGetCloudProviderConfig = () => {
       },
       {
         title: t('instanceType'),
-        children: (
-          <Stack direction={'column'}>
-            <Typography>{data[CLUSTER_FORM_FIELD_NAMES.INSTANCE_CONFIG]?.code}</Typography>
-            <Stack direction={'row'} spacing={1} alignItems="center">
-              <Stack direction={'row'} spacing={0.5} alignItems="center">
-                <CpuIcon height="24px" width="24px" style={{ fill: theme.palette.text.primary }} />
-                <Typography>{data[CLUSTER_FORM_FIELD_NAMES.INSTANCE_CONFIG]?.cpu} CPU</Typography>
-              </Stack>
-              <Stack direction={'row'} spacing={0.5} alignItems="center">
-                <RamIcon height="24px" width="24px" style={{ fill: theme.palette.text.primary }} />
-                <Typography>{data[CLUSTER_FORM_FIELD_NAMES.INSTANCE_CONFIG]?.ram} GB RAM</Typography>
+        children:
+          watchInstanceType !== 'custom' ? (
+            <Stack direction={'column'}>
+              <Typography>{data[CLUSTER_FORM_FIELD_NAMES.INSTANCE_CONFIG]?.code}</Typography>
+              <Stack direction={'row'} spacing={1} alignItems="center">
+                <Stack direction={'row'} spacing={0.5} alignItems="center">
+                  <CpuIcon height="24px" width="24px" style={{ fill: theme.palette.text.primary }} />
+                  <Typography>{data[CLUSTER_FORM_FIELD_NAMES.INSTANCE_CONFIG]?.cpu} CPU</Typography>
+                </Stack>
+                <Stack direction={'row'} spacing={0.5} alignItems="center">
+                  <RamIcon height="24px" width="24px" style={{ fill: theme.palette.text.primary }} />
+                  <Typography>{data[CLUSTER_FORM_FIELD_NAMES.INSTANCE_CONFIG]?.ram} GB RAM</Typography>
+                </Stack>
               </Stack>
             </Stack>
-          </Stack>
-        ),
+          ) : (
+            <Typography>{t('custom')}</Typography>
+          ),
       },
       {
         title: t('numberOfInstances'),
