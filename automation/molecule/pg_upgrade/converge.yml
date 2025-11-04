@@ -27,7 +27,7 @@
     # Extension Auto-Setup
     - name: Set variables for Extensions test
       ansible.builtin.set_fact:
-        enable_timescale: false # TODO: not available for PostgreSQL 18
+        enable_timescale: true
         enable_pg_repack: true
         enable_pg_cron: true
         enable_pgaudit: true
@@ -35,8 +35,8 @@
         enable_postgis: true
         enable_pgrouting: true
         enable_pg_wait_sampling: true
-        enable_pg_stat_kcache: false # TODO: not available for PostgreSQL 18
-        enable_pg_partman: false # TODO: not available for PostgreSQL 18
+        enable_pg_stat_kcache: true
+        enable_pg_partman: true
         enable_pgvectorscale: false # TODO: not available for PostgreSQL 18
         # create extension
         postgresql_extensions:
