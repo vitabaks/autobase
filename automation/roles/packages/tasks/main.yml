@@ -162,6 +162,7 @@
       ansible.builtin.file:
         dest: /etc/logrotate.d/postgresql-common
         state: absent
+      when: disable_logrotate_for_postgresql | bool
 
     - name: Install PostgreSQL packages
       ansible.builtin.apt:
