@@ -27,7 +27,7 @@
     # Extension Auto-Setup
     - name: Set variables for Extensions test
       ansible.builtin.set_fact:
-        enable_timescale: true
+        enable_timescale: "{{ true if ansible_distribution_major_version != '10' else false }}" # TODO: not available for PostgreSQL 18 on RHEL 10
         enable_pg_repack: true
         enable_pg_cron: true
         enable_pgaudit: true
