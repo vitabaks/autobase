@@ -44,4 +44,13 @@ delete from public.cloud_instances
 where cloud_provider = 'gcp'
 and instance_name like 'n2%';
 
+-- Update PostgreSQL max version for extensions to 18
+update
+  public.extensions
+set
+  postgres_max_version = '18'
+where
+  extension_name in ('pgaudit', 'pg_cron', 'pg_partman', 'pg_repack', 'pg_stat_kcache', 'pg_wait_sampling',
+    'pgvector', 'postgis', 'pgrouting', 'timescaledb');
+
 -- +goose Down
