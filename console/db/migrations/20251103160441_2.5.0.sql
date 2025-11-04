@@ -44,7 +44,7 @@ delete from public.cloud_instances
 where cloud_provider = 'gcp'
 and instance_name like 'n2%';
 
--- Update PostgreSQL max version for extensions to 18
+-- Update PostgreSQL max version for third-party extensions
 update
   public.extensions
 set
@@ -52,5 +52,17 @@ set
 where
   extension_name in ('pgaudit', 'pg_cron', 'pg_partman', 'pg_repack', 'pg_stat_kcache', 'pg_wait_sampling',
     'pgvector', 'postgis', 'pgrouting', 'timescaledb');
+
+-- Update PostgreSQL max version for contrib extensions 
+update
+  public.extensions
+set
+  postgres_max_version = '16'
+where
+  extension_name in ('adminpack', 'old_snapshot');
+
+-- Add new contrib extension
+insert into public.extensions (extension_name, extension_description, postgres_min_version, postgres_max_version, extension_url, extension_image, contrib)
+  values ('pg_logicalinspect', 'functions to inspect logical decoding components', 18, null, null, null, true);
 
 -- +goose Down
