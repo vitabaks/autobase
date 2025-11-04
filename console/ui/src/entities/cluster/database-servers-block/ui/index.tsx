@@ -5,6 +5,7 @@ import { Box, Button, Checkbox, FormControlLabel, Stack, Typography } from '@mui
 import AddIcon from '@mui/icons-material/Add';
 import { useTranslation } from 'react-i18next';
 import { DATABASE_SERVERS_FIELD_NAMES } from '@entities/cluster/database-servers-block/model/const.ts';
+import { IS_EXPERT_MODE } from '@shared/model/constants.ts';
 
 const DatabaseServersBlock: FC = () => {
   const { t } = useTranslation('clusters');
@@ -22,20 +23,24 @@ const DatabaseServersBlock: FC = () => {
       <Typography fontWeight="bold" marginBottom="8px">
         {t('databaseServers')}
       </Typography>
-      <Controller
-        name={DATABASE_SERVERS_FIELD_NAMES.IS_CLUSTER_EXISTS}
-        control={control}
-        defaultValue={false}
-        render={({ field: { value, onChange } }) => (
-          <FormControlLabel
-            control={<Checkbox checked={value} onChange={(e) => onChange(e.target.checked)} />}
-            label={t('clusterExistsLabel')}
+      {!IS_EXPERT_MODE ? (
+        <>
+          <Controller
+            name={DATABASE_SERVERS_FIELD_NAMES.IS_CLUSTER_EXISTS}
+            control={control}
+            defaultValue={false}
+            render={({ field: { value, onChange } }) => (
+              <FormControlLabel
+                control={<Checkbox checked={value} onChange={(e) => onChange(e.target.checked)} />}
+                label={t('clusterExistsLabel')}
+              />
+            )}
           />
-        )}
-      />
-      <Typography variant="caption" color="textSecondary" gutterBottom>
-        {t('clusterExistsHelp')}
-      </Typography>
+          <Typography variant="caption" color="textSecondary" gutterBottom>
+            {t('clusterExistsHelp')}
+          </Typography>
+        </>
+      ) : null}
       <Stack direction="column" gap="16px" justifyContent="center" alignItems="flex-start">
         <Box display="flex" gap="16px" flexWrap="wrap" justifyContent="flex-start" alignItems="center">
           {fields.map((field, index) => (

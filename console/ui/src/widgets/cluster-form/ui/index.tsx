@@ -19,7 +19,6 @@ import { useAppSelector } from '@app/redux/store/hooks.ts';
 import { selectCurrentProject } from '@app/redux/slices/projectSlice/projectSelectors.ts';
 import { Stack } from '@mui/material';
 import ClusterSecretModal from '@features/cluster-secret-modal';
-import { mapFormValuesToRequestFields } from '@features/cluster-secret-modal/lib/functions.ts';
 import { toast } from 'react-toastify';
 import { IS_EXPERT_MODE } from '@shared/model/constants.ts';
 import { ClusterFormValues } from '@features/cluster-secret-modal/model/types.ts';
@@ -28,6 +27,7 @@ import { getSecretBodyFromValues } from '@entities/secret-form-block/lib/functio
 import { SECRET_MODAL_CONTENT_FORM_FIELD_NAMES } from '@entities/secret-form-block/model/constants.ts';
 import { ClusterFormProps } from '@widgets/cluster-form/model/types.ts';
 import { DATABASE_SERVERS_FIELD_NAMES } from '@/entities/cluster/database-servers-block/model/const';
+import { mapFormValuesToRequestFields } from '@shared/lib/clusterValuesTransformFunctions.ts';
 
 const DatabaseBlock = lazy(() => import('@entities/cluster/expert-mode/databases-block/ui'));
 const ConnectionPoolsBlock = lazy(() => import('@entities/cluster/expert-mode/connection-pools-block/ui'));
@@ -85,17 +85,6 @@ const ClusterForm: React.FC<ClusterFormProps> = ({
         projectId: Number(currentProject),
       }),
     }).unwrap();
-    toast.info(
-      t(
-        values[DATABASE_SERVERS_FIELD_NAMES.IS_CLUSTER_EXISTS]
-          ? 'clusterSuccessfullyImported'
-          : 'clusterSuccessfullyCreated',
-        {
-          ns: 'toasts',
-          clusterName: values[CLUSTER_FORM_FIELD_NAMES.CLUSTER_NAME],
-        },
-      ),
-    );
   };
 
   const submitCloudCluster = async (values: ClusterFormValues) => {
@@ -106,23 +95,23 @@ const ClusterForm: React.FC<ClusterFormProps> = ({
         projectId: Number(currentProject),
       }),
     }).unwrap();
-    toast.info(
-      t(
-        values[DATABASE_SERVERS_FIELD_NAMES.IS_CLUSTER_EXISTS]
-          ? 'clusterSuccessfullyImported'
-          : 'clusterSuccessfullyCreated',
-        {
-          ns: 'toasts',
-          clusterName: values[CLUSTER_FORM_FIELD_NAMES.CLUSTER_NAME],
-        },
-      ),
-    );
   };
 
   const onSubmit = async (values: ClusterFormValues) => {
     try {
       if (values[CLUSTER_FORM_FIELD_NAMES.PROVIDER].code === PROVIDERS.LOCAL) await submitLocalCluster(values);
       else await submitCloudCluster(values);
+      toast.info(
+        t(
+          values[DATABASE_SERVERS_FIELD_NAMES.IS_CLUSTER_EXISTS]
+            ? 'clusterSuccessfullyImported'
+            : 'clusterSuccessfullyCreated',
+          {
+            ns: 'toasts',
+            clusterName: values[CLUSTER_FORM_FIELD_NAMES.CLUSTER_NAME],
+          },
+        ),
+      );
       await navigate(generateAbsoluteRouterPath(RouterPaths.clusters.absolutePath));
     } catch (e) {
       handleRequestErrorCatch(e);

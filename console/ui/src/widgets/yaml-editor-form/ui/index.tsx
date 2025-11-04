@@ -15,11 +15,10 @@ import { YamlEditorFormValues } from '@widgets/yaml-editor-form/modal/types.ts';
 import { RequestClusterCreate, usePostClustersMutation } from '@/shared/api/api/clusters';
 import { Box, Stack } from '@mui/material';
 import { toast } from 'react-toastify';
-import { mapFormValuesToRequestFields } from '@features/cluster-secret-modal/lib/functions.ts';
-import { CLUSTER_FORM_FIELD_NAMES } from '@widgets/cluster-form/model/constants.ts';
-import { useAppSelector } from '@app/redux/store/hooks.ts';
-import { selectCurrentProject } from '@app/redux/slices/projectSlice/projectSelectors.ts';
 import * as YAML from 'yaml';
+import ErrorBox from '@shared/ui/error-box/ui';
+import { ErrorBoundary } from 'react-error-boundary';
+import { mapFormValuesToYamlEditor } from '@widgets/yaml-editor-form/lib/functions.ts';
 import IStandaloneCodeEditor = editor.IStandaloneCodeEditor;
 
 const YamlEditorForm: FC = () => {
@@ -27,7 +26,6 @@ const YamlEditorForm: FC = () => {
   const editorRef = useRef<IStandaloneCodeEditor | null>(null);
   const navigate = useNavigate();
 
-  const currentProject = useAppSelector(selectCurrentProject);
   const values = useWatch();
 
   const [postClusterTrigger, postClusterTriggerState] = usePostClustersMutation();
@@ -44,7 +42,9 @@ const YamlEditorForm: FC = () => {
 
   const onSubmit = async (values: YamlEditorFormValues) => {
     try {
-      await postClusterTrigger({ requestClusterCreate: values as RequestClusterCreate }).unwrap();
+      await postClusterTrigger({
+        requestClusterCreate: YAML.parse(values[YAML_EDITOR_FORM_FIELD_NAMES.EDITOR]) as RequestClusterCreate,
+      }).unwrap();
       toast.info(t('clusterSuccessfullyCreated', { ns: 'toasts' }));
       await navigate(generateAbsoluteRouterPath(RouterPaths.clusters.absolutePath));
     } catch (e) {
@@ -57,38 +57,37 @@ const YamlEditorForm: FC = () => {
   const { isValid, isSubmitting } = formState;
 
   useEffect(() => {
-    setValue(
-      YAML_EDITOR_FORM_FIELD_NAMES.EDITOR,
-      YAML.stringify(
-        mapFormValuesToRequestFields({
-          values,
-          secretId: Number(values[CLUSTER_FORM_FIELD_NAMES.SECRET_ID]),
-          projectId: Number(currentProject),
-        }),
-      ),
-    );
+    setValue(YAML_EDITOR_FORM_FIELD_NAMES.EDITOR, YAML.stringify(mapFormValuesToYamlEditor(values)));
   }, []);
 
   return (
-    <Box>
-      <form onSubmit={handleSubmit(onSubmit)}>
-        <Stack gap={2}>
-          <Controller
-            control={control}
-            name={YAML_EDITOR_FORM_FIELD_NAMES.EDITOR}
-            render={({ field }) => (
-              <Editor {...field} defaultLanguage="yaml" height="70vh" onMount={handleEditorDidMount} theme="vs-dark" />
-            )}
-          />
-          <DefaultFormButtons
-            isDisabled={!isValid}
-            isSubmitting={isSubmitting || postClusterTriggerState.isLoading}
-            cancelHandler={cancelHandler}
-            submitButtonLabel={t('createCluster')}
-          />
-        </Stack>
-      </form>
-    </Box>
+    <ErrorBoundary fallback={<ErrorBox />}>
+      <Box width="100%">
+        <form onSubmit={handleSubmit(onSubmit)}>
+          <Stack gap={2}>
+            <Controller
+              control={control}
+              name={YAML_EDITOR_FORM_FIELD_NAMES.EDITOR}
+              render={({ field }) => (
+                <Editor
+                  {...field}
+                  defaultLanguage="yaml"
+                  height="75vh"
+                  onMount={handleEditorDidMount}
+                  theme="vs-dark"
+                />
+              )}
+            />
+            <DefaultFormButtons
+              isDisabled={!isValid}
+              isSubmitting={isSubmitting || postClusterTriggerState.isLoading}
+              cancelHandler={cancelHandler}
+              submitButtonLabel={t('createCluster')}
+            />
+          </Stack>
+        </form>
+      </Box>
+    </ErrorBoundary>
   );
 };
 

@@ -6,16 +6,17 @@ import {
   ResponseDeploymentInfo,
 } from '@shared/api/api/deployments.ts';
 import { AUTHENTICATION_METHODS } from '@shared/model/constants.ts';
-import { ClusterDatabaseServer } from '@widgets/cluster-form/model/types.ts';
 import { SecretFormValues } from '@entities/secret-form-block/model/types.ts';
 import { SECRET_MODAL_CONTENT_FORM_FIELD_NAMES } from '@entities/secret-form-block/model/constants.ts';
 import { BackupsBlockValues } from '@entities/cluster/expert-mode/backups-block/model/types.ts';
 import { ExtensionsBlockValues } from '@entities/cluster/expert-mode/extensions-block/model/types.ts';
 import { DatabasesBlockValues } from '@entities/cluster/expert-mode/databases-block/model/types.ts';
-import { LOAD_BALANCERS_FIELD_NAMES } from '@entities/cluster/load-balancers-block/model/const.ts';
 import { INSTANCES_BLOCK_FIELD_NAMES } from '@entities/cluster/instances-block/model/const.ts';
 import { STORAGE_BLOCK_FIELDS } from '@entities/cluster/storage-block/model/const.ts';
 import { SshKeyBlockValues } from '@entities/cluster/ssh-key-block/model/types.ts';
+import { DcsBlockFormValues } from '@entities/cluster/expert-mode/dcs-block/model/types.ts';
+import { DatabaseServerBlockValues } from '@entities/cluster/database-servers-block/model/types.ts';
+import { LoadBalancersBlockValues } from '@entities/cluster/load-balancers-block/model/types.ts';
 
 export interface ClusterSecretModalProps {
   isClusterFormSubmitting?: boolean;
@@ -38,24 +39,25 @@ interface ClusterCloudProviderFormValues extends BackupsBlockValues, SshKeyBlock
 
 interface ClusterLocalMachineProviderFormValues
   extends Pick<
-    typeof SECRET_MODAL_CONTENT_FORM_FIELD_NAMES,
-    | [SECRET_MODAL_CONTENT_FORM_FIELD_NAMES.USERNAME]
-    | [SECRET_MODAL_CONTENT_FORM_FIELD_NAMES.PASSWORD]
-    | [SECRET_MODAL_CONTENT_FORM_FIELD_NAMES.SSH_PRIVATE_KEY]
-  > {
-  [CLUSTER_FORM_FIELD_NAMES.DATABASE_SERVERS]?: ClusterDatabaseServer[];
+      typeof SECRET_MODAL_CONTENT_FORM_FIELD_NAMES,
+      | [SECRET_MODAL_CONTENT_FORM_FIELD_NAMES.USERNAME]
+      | [SECRET_MODAL_CONTENT_FORM_FIELD_NAMES.PASSWORD]
+      | [SECRET_MODAL_CONTENT_FORM_FIELD_NAMES.SSH_PRIVATE_KEY]
+    >,
+    DatabaseServerBlockValues,
+    DcsBlockFormValues {
   [CLUSTER_FORM_FIELD_NAMES.AUTHENTICATION_METHOD]?: (typeof AUTHENTICATION_METHODS)[keyof typeof AUTHENTICATION_METHODS];
   [CLUSTER_FORM_FIELD_NAMES.SECRET_KEY_NAME]?: string;
   [CLUSTER_FORM_FIELD_NAMES.AUTHENTICATION_IS_SAVE_TO_CONSOLE]?: boolean;
   [CLUSTER_FORM_FIELD_NAMES.CLUSTER_VIP_ADDRESS]?: string;
-  [LOAD_BALANCERS_FIELD_NAMES.IS_HAPROXY_ENABLED]?: boolean;
 }
 
 export interface ClusterFormValues
   extends ClusterCloudProviderFormValues,
     ClusterLocalMachineProviderFormValues,
     ExtensionsBlockValues,
-    DatabasesBlockValues {
+    DatabasesBlockValues,
+    LoadBalancersBlockValues {
   [CLUSTER_FORM_FIELD_NAMES.CREATION_TYPE]: string;
   [CLUSTER_FORM_FIELD_NAMES.PROVIDER]: ResponseDeploymentInfo;
   [CLUSTER_FORM_FIELD_NAMES.ENVIRONMENT_ID]: number;

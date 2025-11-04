@@ -75,7 +75,7 @@ const LoadBalancersBlock: FC = () => {
           />
         ) : null
       ) : null}
-      {IS_EXPERT_MODE && watchIsDeployToDatabases ? (
+      {IS_EXPERT_MODE && watchIsHaproxyEnabled && !watchIsDeployToDatabases ? (
         <Stack direction="column" gap="16px" justifyContent="center" alignItems="flex-start">
           <Box display="flex" gap="16px" flexWrap="wrap" justifyContent="flex-start" alignItems="center">
             {fields.map((field, index) => (

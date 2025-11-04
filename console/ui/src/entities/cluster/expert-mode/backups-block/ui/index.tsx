@@ -13,7 +13,7 @@ import {
   Typography,
 } from '@mui/material';
 import { useTranslation } from 'react-i18next';
-import { Controller, useFormContext } from 'react-hook-form';
+import { Controller, useFormContext, useWatch } from 'react-hook-form';
 import { BACKUP_METHODS, BACKUPS_BLOCK_FIELD_NAMES } from '@entities/cluster/expert-mode/backups-block/model/const.ts';
 import { range } from '@mui/x-data-grid/internals';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
@@ -24,12 +24,11 @@ const BackupsBlock: FC = () => {
 
   const {
     control,
-    watch,
     resetField,
     formState: { errors },
   } = useFormContext();
 
-  const watchIsBackupsEnabled = watch(BACKUPS_BLOCK_FIELD_NAMES.IS_BACKUPS_ENABLED);
+  const watchIsBackupsEnabled = useWatch({ name: BACKUPS_BLOCK_FIELD_NAMES.IS_BACKUPS_ENABLED });
 
   const handleInputChange = (onChange: (event: ChangeEvent) => void) => (e: ChangeEvent<HTMLInputElement>) => {
     // prevent user from entering less than restricted amount in input field

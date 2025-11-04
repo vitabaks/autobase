@@ -1,6 +1,6 @@
 import { FC, useRef, useState } from 'react';
 import Spinner from '@shared/ui/spinner';
-import { IconButton, Stack, Typography } from '@mui/material';
+import { IconButton, Stack, Typography, useTheme } from '@mui/material';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Grid, Pagination } from 'swiper/modules';
@@ -15,6 +15,7 @@ import { ErrorBoundary } from 'react-error-boundary';
 const ExtensionsSwiper: FC<ExtensionsSwiperProps> = ({ isPending = false, filteredExtensions }) => {
   const { t } = useTranslation('clusters');
   const [swiperRef, setSwiperRef] = useState<SwiperTypes | null>(null);
+  const theme = useTheme();
 
   const extensionIcons = useRef(
     Object.entries(
@@ -44,6 +45,10 @@ const ExtensionsSwiper: FC<ExtensionsSwiperProps> = ({ isPending = false, filter
                   <ChevronLeftIcon />
                 </IconButton>
                 <Swiper
+                  style={{
+                    '--swiper-pagination-color': theme.palette.primary.main,
+                    '--swiper-pagination-bullet-inactive-color': theme.palette.primary.main,
+                  }}
                   onSwiper={setSwiperRef}
                   slidesPerView={3}
                   grid={{

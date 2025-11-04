@@ -11,6 +11,7 @@ import { PROVIDERS } from '@shared/config/constants.ts';
 import ClusterFormCloudProviderBox from '@entities/cluster/providers-block/ui/ClusterFormCloudProviderBox.tsx';
 import { INSTANCES_BLOCK_FIELD_NAMES } from '@entities/cluster/instances-block/model/const.ts';
 import { STORAGE_BLOCK_FIELDS } from '@entities/cluster/storage-block/model/const.ts';
+import { BACKUPS_BLOCK_FIELD_NAMES } from '@entities/cluster/expert-mode/backups-block/model/const.ts';
 
 const ClusterFormProvidersBlock: FC<ProvidersBlockProps> = ({ providers }) => {
   const { t } = useTranslation('clusters');
@@ -31,6 +32,7 @@ const ClusterFormProvidersBlock: FC<ProvidersBlockProps> = ({ providers }) => {
         (value as any)?.volumes?.find((volume: any) => volume?.is_default)?.min_size < 100
           ? 100
           : (value as any)?.volumes?.find((volume: any) => volume?.is_default)?.min_size,
+      [BACKUPS_BLOCK_FIELD_NAMES.IS_BACKUPS_ENABLED]: value.code !== PROVIDERS.LOCAL,
     }));
   };
 
