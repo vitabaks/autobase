@@ -9,6 +9,7 @@ export const DatabasesBlockSchema = yup.object({
       [DATABASES_BLOCK_FIELD_NAMES.USER_PASSWORD]: yup.string(),
       [DATABASES_BLOCK_FIELD_NAMES.ENCODING]: yup.string(),
       [DATABASES_BLOCK_FIELD_NAMES.LOCALE]: yup.string(),
+      [DATABASES_BLOCK_FIELD_NAMES.BLOCK_ID]: yup.string(),
     }),
   ),
 });

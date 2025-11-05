@@ -8,7 +8,7 @@ import { DATABASES_BLOCK_FIELD_NAMES } from '@entities/cluster/expert-mode/datab
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 
-const DatabaseBox: FC<DatabasesBlockProps> = ({ id, index, remove }) => {
+const DatabaseBox: FC<DatabasesBlockProps> = ({ index, remove }) => {
   const { t } = useTranslation(['clusters', 'shared']);
   const [isPasswordHidden, setIsPasswordHidden] = useState(true);
   const {
@@ -19,22 +19,23 @@ const DatabaseBox: FC<DatabasesBlockProps> = ({ id, index, remove }) => {
 
   const togglePasswordVisibility = () => setIsPasswordHidden((prev) => !prev);
 
-  const watchDbName = useWatch({
-    name: `${DATABASES_BLOCK_FIELD_NAMES.DATABASES}.${index}.${DATABASES_BLOCK_FIELD_NAMES.DATABASE_NAME}`,
+  const watchDb = useWatch({
+    name: `${DATABASES_BLOCK_FIELD_NAMES.DATABASES}.${index}`,
   });
+
   const watchNames = useWatch({ name: DATABASES_BLOCK_FIELD_NAMES.NAMES });
 
   useEffect(() => {
     const newNames = { ...watchNames }; // update names on change
-    if (watchDbName) {
-      newNames[id] = watchDbName;
-    } else delete newNames[id];
+    if (watchDb) {
+      newNames[watchDb[DATABASES_BLOCK_FIELD_NAMES.BLOCK_ID]] = watchDb[DATABASES_BLOCK_FIELD_NAMES.DATABASE_NAME];
+    } else delete newNames[watchDb[DATABASES_BLOCK_FIELD_NAMES.BLOCK_ID]];
     setValue(DATABASES_BLOCK_FIELD_NAMES.NAMES, newNames);
-  }, [watchDbName]);
+  }, [watchDb]);
 
   const deleteItem = () => {
     const newNames = { ...watchNames };
-    delete newNames[id];
+    delete newNames[watchDb[DATABASES_BLOCK_FIELD_NAMES.BLOCK_ID]];
     setValue(DATABASES_BLOCK_FIELD_NAMES.NAMES, newNames);
     remove?.();
   };

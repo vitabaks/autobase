@@ -34,7 +34,7 @@ const ExtensionSelector: FC<ExtensionSelectorProps> = ({ extension }) => {
     if (watchSelectedExtensions?.[extension.name]) {
       const intersected = intersection(
         watchSelectedExtensions[extension.name],
-        watchAvailableNames ? Object.keys(watchAvailableNames).slice(1) : [], // slice is a workaround to remove duplicated first db name
+        watchAvailableNames ? Object.keys(watchAvailableNames) : [],
       ); // remove db from selected if db removed
       setValue(`${EXTENSION_BLOCK_FIELD_NAMES.EXTENSIONS}.${extension.name}`, intersected);
       intersected?.length ? setIsChecked(true) : setIsChecked(false);
@@ -81,14 +81,12 @@ const ExtensionSelector: FC<ExtensionSelectorProps> = ({ extension }) => {
                     },
                   }}>
                   {watchAvailableNames
-                    ? Object.entries(watchAvailableNames)
-                        .slice(1) // workaround to remove duplicated first db name
-                        .map((db) => (
-                          <MenuItem key={db[0]} value={db[0]}>
-                            <Checkbox checked={value?.includes(db[0]) ?? false} />
-                            <ListItemText primary={db[1]} />
-                          </MenuItem>
-                        ))
+                    ? Object.entries(watchAvailableNames).map((db) => (
+                        <MenuItem key={db[0]} value={db[0]}>
+                          <Checkbox checked={value?.includes(db[0]) ?? false} />
+                          <ListItemText primary={db[1]} />
+                        </MenuItem>
+                      ))
                     : null}
                 </Select>
               )}

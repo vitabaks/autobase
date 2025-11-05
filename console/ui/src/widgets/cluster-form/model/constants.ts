@@ -24,6 +24,7 @@ import {
 } from '@entities/cluster/expert-mode/dcs-block/model/const.ts';
 import { DATA_DIRECTORY_FIELD_NAMES } from '@entities/cluster/expert-mode/data-directory-block/model/const.ts';
 import { DATABASE_SERVERS_FIELD_NAMES } from '@entities/cluster/database-servers-block/model/const.ts';
+import { uniqueId } from 'lodash';
 
 export const CLUSTER_CREATION_TYPES = Object.freeze({
   FORM: 'form',
@@ -135,6 +136,7 @@ export const CLUSTER_FORM_DEFAULT_VALUES = Object.freeze({
             [DATABASES_BLOCK_FIELD_NAMES.USER_PASSWORD]: '',
             [DATABASES_BLOCK_FIELD_NAMES.ENCODING]: 'UTF8',
             [DATABASES_BLOCK_FIELD_NAMES.LOCALE]: 'en_US.UTF-8',
+            [DATABASES_BLOCK_FIELD_NAMES.BLOCK_ID]: uniqueId(),
           },
         ],
         [CONNECTION_POOLS_BLOCK_FIELD_NAMES.IS_CONNECTION_POOLER_ENABLED]: true,
