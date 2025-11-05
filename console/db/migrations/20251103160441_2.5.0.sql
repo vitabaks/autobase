@@ -53,6 +53,10 @@ where
   extension_name in ('pgaudit', 'pg_cron', 'pg_partman', 'pg_repack', 'pg_stat_kcache', 'pg_wait_sampling',
     'pgvector', 'postgis', 'pgrouting', 'timescaledb');
 
+-- Add new third-party extension
+insert into public.extensions (extension_name, extension_description, postgres_min_version, postgres_max_version, extension_url, extension_image, contrib)
+  values ('pgvectorscale', 'Advanced indexing for vector data. Provided by Timescale', 13, 18, 'https://github.com/timescale/pgvectorscale', null, false);
+
 -- Update PostgreSQL max version for contrib extensions 
 update
   public.extensions
