@@ -57,7 +57,10 @@ const YamlEditorForm: FC = () => {
   const { isValid, isSubmitting } = formState;
 
   useEffect(() => {
-    setValue(YAML_EDITOR_FORM_FIELD_NAMES.EDITOR, YAML.stringify(mapFormValuesToYamlEditor(values)));
+    setValue(
+      YAML_EDITOR_FORM_FIELD_NAMES.EDITOR,
+      YAML.stringify(mapFormValuesToYamlEditor(values), { sortMapEntries: true }),
+    );
   }, []);
 
   return (

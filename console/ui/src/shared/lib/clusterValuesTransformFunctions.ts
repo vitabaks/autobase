@@ -20,7 +20,7 @@ import { EXTENSION_BLOCK_FIELD_NAMES } from '@entities/cluster/expert-mode/exten
 import { DATABASES_BLOCK_FIELD_NAMES } from '@entities/cluster/expert-mode/databases-block/model/const.ts';
 import { CONNECTION_POOLS_BLOCK_FIELD_NAMES } from '@entities/cluster/expert-mode/connection-pools-block/model/const.ts';
 import { ADDITIONAL_SETTINGS_BLOCK_FIELD_NAMES } from '@entities/cluster/expert-mode/additional-settings-block/model/const.ts';
-import { BACKUPS_BLOCK_FIELD_NAMES } from '@entities/cluster/expert-mode/backups-block/model/const.ts';
+import { BACKUP_METHODS, BACKUPS_BLOCK_FIELD_NAMES } from '@entities/cluster/expert-mode/backups-block/model/const.ts';
 import { POSTGRES_PARAMETERS_FIELD_NAMES } from '@entities/cluster/expert-mode/postgres-parameters-block/model/const.ts';
 import { KERNEL_PARAMETERS_FIELD_NAMES } from '@entities/cluster/expert-mode/kernel-parameters-block/model/const.ts';
 import { RequestClusterCreate } from '@shared/api/api/clusters.ts';
@@ -89,22 +89,6 @@ export const getLocalMachineExtraVars = (values: ClusterFormValues, secretId?: n
         ansible_ssh_pass: values[SECRET_MODAL_CONTENT_FORM_FIELD_NAMES.PASSWORD],
       }
     : {}),
-  ...getCommonExtraVars(values),
-});
-
-/**
- * Functions creates an object with envs exclusive to local clusters.
- * @param values - Filled form values.
- * @param secretId - Optional ID of secret if exists.
- */
-export const getLocalMachineEnvs = (values: ClusterFormValues, secretId?: number) => ({
-  ...(values[CLUSTER_FORM_FIELD_NAMES.AUTHENTICATION_METHOD] === AUTHENTICATION_METHODS.SSH &&
-  !values[CLUSTER_FORM_FIELD_NAMES.IS_USE_DEFINED_SECRET] &&
-  !secretId
-    ? {
-        SSH_PRIVATE_KEY_CONTENT: values[SECRET_MODAL_CONTENT_FORM_FIELD_NAMES.SSH_PRIVATE_KEY],
-      }
-    : {}),
   ...(IS_EXPERT_MODE
     ? {
         dcs_type: values?.[DCS_BLOCK_FIELD_NAMES.TYPE],
@@ -127,6 +111,22 @@ export const getLocalMachineEnvs = (values: ClusterFormValues, secretId?: number
             }
           : {}),
         postgresql_data_dir: values?.[DATA_DIRECTORY_FIELD_NAMES.DATA_DIRECTORY],
+      }
+    : {}),
+  ...getCommonExtraVars(values),
+});
+
+/**
+ * Functions creates an object with envs exclusive to local clusters.
+ * @param values - Filled form values.
+ * @param secretId - Optional ID of secret if exists.
+ */
+export const getLocalMachineEnvs = (values: ClusterFormValues, secretId?: number) => ({
+  ...(values[CLUSTER_FORM_FIELD_NAMES.AUTHENTICATION_METHOD] === AUTHENTICATION_METHODS.SSH &&
+  !values[CLUSTER_FORM_FIELD_NAMES.IS_USE_DEFINED_SECRET] &&
+  !secretId
+    ? {
+        SSH_PRIVATE_KEY_CONTENT: values[SECRET_MODAL_CONTENT_FORM_FIELD_NAMES.SSH_PRIVATE_KEY],
       }
     : {}),
   ANSIBLE_INVENTORY_JSON: {
@@ -262,10 +262,10 @@ export const getLocalMachineEnvs = (values: ClusterFormValues, secretId?: number
  * Functions creates an object with base cluster envs shared between cloud and local clusters.
  * @param values - Filled form values.
  */
-export const getBaseClusterEnvs = (values: ClusterFormValues) => {
+export const getBaseClusterExtraVars = (values: ClusterFormValues) => {
   const extensions = IS_EXPERT_MODE
     ? Object.entries(values?.[EXTENSION_BLOCK_FIELD_NAMES.EXTENSIONS]).reduce((acc, [key, value]) => {
-        if (value.length) {
+        if (value?.length) {
           const convertedToReqFormat = value.map((item) => ({
             ext: key,
             db: values[DATABASES_BLOCK_FIELD_NAMES.NAMES][item],
@@ -308,16 +308,16 @@ export const getBaseClusterEnvs = (values: ClusterFormValues) => {
             : {}),
           ...(extensions?.length ? { postgresql_extensions: extensions } : {}),
           ...(values?.[BACKUPS_BLOCK_FIELD_NAMES.BACKUP_METHOD]
-            ? values[BACKUPS_BLOCK_FIELD_NAMES.BACKUP_METHOD] === 'pgbackrest_install'
+            ? values[BACKUPS_BLOCK_FIELD_NAMES.BACKUP_METHOD] === BACKUP_METHODS.PG_BACK_REST
               ? {
                   pgbackrest_install: true,
                   PGBACKREST_BACKUP_HOUR: values?.[BACKUPS_BLOCK_FIELD_NAMES.BACKUP_START_TIME],
                   PGBACKREST_RETENTION_FULL: values?.[BACKUPS_BLOCK_FIELD_NAMES.BACKUP_RETENTION],
                   PGBACKREST_RETENTION_ARCHIVE: values?.[BACKUPS_BLOCK_FIELD_NAMES.BACKUP_RETENTION],
-                  ...(values?.[BACKUPS_BLOCK_FIELD_NAMES.CONFIG_GLOBAL]
+                  ...(values?.[BACKUPS_BLOCK_FIELD_NAMES.CONFIG]
                     ? {
                         pgbackrest_conf: {
-                          global: values?.[BACKUPS_BLOCK_FIELD_NAMES.CONFIG_GLOBAL],
+                          global: values?.[BACKUPS_BLOCK_FIELD_NAMES.CONFIG],
                         },
                       }
                     : {}),
@@ -326,11 +326,9 @@ export const getBaseClusterEnvs = (values: ClusterFormValues) => {
                   wal_g_install: true,
                   WALG_BACKUP_HOUR: values?.[BACKUPS_BLOCK_FIELD_NAMES.BACKUP_START_TIME],
                   WAL_G_RETENTION_FULL: values?.[BACKUPS_BLOCK_FIELD_NAMES.BACKUP_RETENTION],
-                  ...(values?.[BACKUPS_BLOCK_FIELD_NAMES.CONFIG_GLOBAL]
+                  ...(values?.[BACKUPS_BLOCK_FIELD_NAMES.CONFIG]
                     ? {
-                        wal_g_json: {
-                          global: values?.[BACKUPS_BLOCK_FIELD_NAMES.CONFIG_GLOBAL],
-                        },
+                        wal_g_json: values?.[BACKUPS_BLOCK_FIELD_NAMES.CONFIG],
                       }
                     : {}),
                 }
@@ -343,7 +341,7 @@ export const getBaseClusterEnvs = (values: ClusterFormValues) => {
           ...(values?.[KERNEL_PARAMETERS_FIELD_NAMES.KERNEL_PARAMETERS]
             ? {
                 sysctl_set: true,
-                sysctl_conf: values[KERNEL_PARAMETERS_FIELD_NAMES.KERNEL_PARAMETERS],
+                sysctl_conf: { postgres_cluster: values[KERNEL_PARAMETERS_FIELD_NAMES.KERNEL_PARAMETERS] },
               }
             : {}),
           ...(values?.[ADDITIONAL_SETTINGS_BLOCK_FIELD_NAMES.SYNC_STANDBY_NODES]
@@ -364,40 +362,41 @@ export const getBaseClusterEnvs = (values: ClusterFormValues) => {
  * Function converts passed object into format required by API for some fields ('key=value').
  * @param object - Passed parameters.
  */
-const convertObjectToRequiredFormat = (object: Record<any, any>) => {
+const convertObjectToRequiredFormat = (object: Record<string, any>) => {
   return Object.entries(object).reduce((acc: string[], [key, value]) => {
-    if (typeof object[key] === 'object') return [...acc, `${key}=${btoa(value)}`]; // convert arrays and objects values into base64 format for server
+    if (typeof object[key] === 'object') return [...acc, `${key}=${JSON.stringify(value)}`];
     return [...acc, `${key}=${value}`];
   }, []);
 };
 
-const getRequestCloudEnvs = (values, secretsInfo) => {
-  const baseClusterEnvs = getBaseClusterEnvs(values);
+const convertObjectValueToBase64Format = (object: Record<string, any>) => {
+  return Object.entries(object).reduce((acc: string[], [key, value]) => [...acc, `${key}=${btoa(value)}`], []);
+};
 
+const getRequestCloudParams = (values, secretsInfo) => {
   return {
-    envs: convertObjectToRequiredFormat({
+    envs: convertObjectValueToBase64Format({
       ...Object.fromEntries(
         Object.entries({
           ...secretsInfo,
         }).filter(([key]) => SECRET_MODAL_CONTENT_BODY_FORM_FIELDS?.[key]),
       ),
-      ...baseClusterEnvs,
     }),
-    extra_vars: convertObjectToRequiredFormat(getCloudProviderExtraVars(values)),
+    extra_vars: convertObjectToRequiredFormat({
+      ...getBaseClusterExtraVars(values),
+      ...getCloudProviderExtraVars(values),
+    }),
   };
 };
 
-const getRequestLocalMachineEnvs = (values, secretId) => {
-  const baseClusterEnvs = getBaseClusterEnvs(values);
+const getRequestLocalMachineParams = (values, secretId) => {
+  const baseClusterExtraVars = getBaseClusterExtraVars(values);
   const localMachineEnvs = getLocalMachineEnvs(values, secretId);
   const localMachineExtraVars = getLocalMachineExtraVars(values, secretId);
 
   return {
-    envs: convertObjectToRequiredFormat({
-      ...localMachineEnvs,
-      ...baseClusterEnvs,
-    }),
-    extra_vars: convertObjectToRequiredFormat({ ...localMachineExtraVars }),
+    envs: convertObjectValueToBase64Format(localMachineEnvs),
+    extra_vars: convertObjectToRequiredFormat({ ...baseClusterExtraVars, ...localMachineExtraVars }),
     existing_cluster: values[DATABASE_SERVERS_FIELD_NAMES.IS_CLUSTER_EXISTS] ?? false,
   };
 };
@@ -431,7 +430,7 @@ export const mapFormValuesToRequestFields = ({
   return {
     ...baseObject,
     ...(values[CLUSTER_FORM_FIELD_NAMES.PROVIDER].code !== PROVIDERS.LOCAL
-      ? getRequestCloudEnvs(values, secretsInfo)
-      : getRequestLocalMachineEnvs(values, secretId)),
+      ? getRequestCloudParams(values, secretsInfo)
+      : getRequestLocalMachineParams(values, secretId)),
   };
 };

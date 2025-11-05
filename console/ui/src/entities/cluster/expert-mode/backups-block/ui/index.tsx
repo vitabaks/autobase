@@ -71,7 +71,7 @@ const BackupsBlock: FC = () => {
                     {...field}
                     row
                     onChange={(e) => {
-                      resetField(BACKUPS_BLOCK_FIELD_NAMES.CONFIG_GLOBAL);
+                      resetField(BACKUPS_BLOCK_FIELD_NAMES.CONFIG);
                       field.onChange(e);
                     }}>
                     {[

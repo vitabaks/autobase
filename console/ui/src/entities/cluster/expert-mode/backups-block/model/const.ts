@@ -3,7 +3,7 @@ export const BACKUPS_BLOCK_FIELD_NAMES = Object.freeze({
   BACKUP_METHOD: 'backupMethod',
   BACKUP_START_TIME: 'backupStartTime',
   BACKUP_RETENTION: 'backupRetention',
-  CONFIG_GLOBAL: 'configGlobal',
+  CONFIG: 'backupConfig',
 });
 
 export const BACKUP_METHODS = Object.freeze({

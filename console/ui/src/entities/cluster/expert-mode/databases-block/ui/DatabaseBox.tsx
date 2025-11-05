@@ -19,18 +19,18 @@ const DatabaseBox: FC<DatabasesBlockProps> = ({ id, index, remove }) => {
 
   const togglePasswordVisibility = () => setIsPasswordHidden((prev) => !prev);
 
-  const watchName = useWatch({
+  const watchDbName = useWatch({
     name: `${DATABASES_BLOCK_FIELD_NAMES.DATABASES}.${index}.${DATABASES_BLOCK_FIELD_NAMES.DATABASE_NAME}`,
   });
   const watchNames = useWatch({ name: DATABASES_BLOCK_FIELD_NAMES.NAMES });
 
   useEffect(() => {
     const newNames = { ...watchNames }; // update names on change
-    if (watchName) {
-      newNames[id] = watchName;
+    if (watchDbName) {
+      newNames[id] = watchDbName;
     } else delete newNames[id];
     setValue(DATABASES_BLOCK_FIELD_NAMES.NAMES, newNames);
-  }, [watchName]);
+  }, [watchDbName]);
 
   const deleteItem = () => {
     const newNames = { ...watchNames };

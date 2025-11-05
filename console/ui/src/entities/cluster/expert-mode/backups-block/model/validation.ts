@@ -8,7 +8,7 @@ import { PROVIDERS } from '@shared/config/constants.ts';
 export const BackupsBlockFormSchema = (t: TFunction) =>
   yup.object({
     [BACKUPS_BLOCK_FIELD_NAMES.IS_BACKUPS_ENABLED]: yup.boolean(),
-    [BACKUPS_BLOCK_FIELD_NAMES.CONFIG_GLOBAL]: yup
+    [BACKUPS_BLOCK_FIELD_NAMES.CONFIG]: yup
       .mixed()
       .when(
         [CLUSTER_FORM_FIELD_NAMES.PROVIDER, BACKUPS_BLOCK_FIELD_NAMES.IS_BACKUPS_ENABLED],

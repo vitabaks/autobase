@@ -19,7 +19,7 @@ const ConfigureBackupModal: FC = () => {
   const handleModalOpenState = (isOpen: boolean) => () => setIsModalOpen(isOpen);
 
   const watchBackupMethod = useWatch({ name: BACKUPS_BLOCK_FIELD_NAMES.BACKUP_METHOD });
-  const watchConfig = useWatch({ name: BACKUPS_BLOCK_FIELD_NAMES.CONFIG_GLOBAL });
+  const watchConfig = useWatch({ name: BACKUPS_BLOCK_FIELD_NAMES.CONFIG });
 
   return (
     <>
@@ -28,8 +28,8 @@ const ConfigureBackupModal: FC = () => {
           {t('configure')}
         </Button>
         {watchConfig ? (
-          <Tooltip title={t(errors?.[BACKUPS_BLOCK_FIELD_NAMES.CONFIG_GLOBAL] ? 'Invalid' : 'Valid')}>
-            {errors?.[BACKUPS_BLOCK_FIELD_NAMES.CONFIG_GLOBAL] ? <DoNotDisturbAltOutlinedIcon /> : <DoneOutlinedIcon />}
+          <Tooltip title={t(errors?.[BACKUPS_BLOCK_FIELD_NAMES.CONFIG] ? 'Invalid' : 'Valid')}>
+            {errors?.[BACKUPS_BLOCK_FIELD_NAMES.CONFIG] ? <DoNotDisturbAltOutlinedIcon /> : <DoneOutlinedIcon />}
           </Tooltip>
         ) : null}
       </Stack>
@@ -54,7 +54,7 @@ const ConfigureBackupModal: FC = () => {
             {
               <Controller
                 control={control}
-                name={BACKUPS_BLOCK_FIELD_NAMES.CONFIG_GLOBAL}
+                name={BACKUPS_BLOCK_FIELD_NAMES.CONFIG}
                 render={({ field }) => (
                   <TextField
                     {...field}
@@ -63,8 +63,8 @@ const ConfigureBackupModal: FC = () => {
                     rows={20}
                     label={watchBackupMethod === BACKUP_METHODS.PG_BACK_REST ? t('global') : ''}
                     size="small"
-                    error={!!errors?.[BACKUPS_BLOCK_FIELD_NAMES.CONFIG_GLOBAL]}
-                    helperText={errors?.[BACKUPS_BLOCK_FIELD_NAMES.CONFIG_GLOBAL]?.message as string}
+                    error={!!errors?.[BACKUPS_BLOCK_FIELD_NAMES.CONFIG]}
+                    helperText={errors?.[BACKUPS_BLOCK_FIELD_NAMES.CONFIG]?.message as string}
                   />
                 )}
               />
