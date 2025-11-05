@@ -84,7 +84,13 @@ const useGetCloudProviderConfig = () => {
               </Stack>
             </Stack>
           ) : (
-            <Typography>{t('custom')}</Typography>
+            <Typography
+              sx={{
+                width: '100%',
+                wordWrap: 'anywhere', // wrap words to prevent text squeezing outside of summary card
+              }}>
+              {data?.[INSTANCES_BLOCK_FIELD_NAMES.SERVER_TYPE] ?? ''}
+            </Typography>
           ),
       },
       {
