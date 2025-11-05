@@ -17,7 +17,7 @@ const ExtensionBox: FC<ExtensionBoxProps> = ({ extension, extensionIcons }) => {
         <Stack direction="row" alignItems="center" justifyContent="space-between">
           <Typography fontWeight="bold">
             {extension?.url ? (
-              <Link target="_blank" href={extension.url} color="#000">
+              <Link target="_blank" href={extension.url} color={theme.palette.text.primary}>
                 <u>{extension.name}</u>
               </Link>
             ) : (
