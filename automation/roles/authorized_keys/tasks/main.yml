@@ -11,17 +11,7 @@
         user: "{{ system_user.stdout }}"
         key: "{{ item }}"
         state: present
-      loop: '{{ ssh_public_keys_list | map(''replace'', ''"'', '''') | map(''replace'', "''", "") | list }}'
-      vars:
-        ssh_public_keys_list: >-
-          {{
-            (ssh_public_keys
-            | replace('\n', ',')
-            | split(',')
-            | map('trim')
-            | list)
-            if ssh_public_keys is string else ssh_public_keys
-          }}
+      loop: "{{ ssh_public_keys | from_yaml if ssh_public_keys is string else ssh_public_keys }}"
   when:
     - ssh_public_keys is defined
     - ssh_public_keys | length > 0
