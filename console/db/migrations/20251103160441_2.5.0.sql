@@ -69,4 +69,12 @@ where
 insert into public.extensions (extension_name, extension_description, postgres_min_version, postgres_max_version, extension_url, extension_image, contrib)
   values ('pg_logicalinspect', 'functions to inspect logical decoding components', 18, null, null, null, true);
 
+-- Remove logo references for third-party extensions lacking an official image
+update
+  public.extensions
+set
+  extension_image = null
+where
+  extension_name in ('pg_cron', 'pg_partman', 'pg_repack', 'pgvector');
+
 -- +goose Down
