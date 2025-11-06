@@ -71,7 +71,7 @@
         enable_pg_wait_sampling: true
         enable_pg_stat_kcache: true
         enable_pg_partman: true
-        enable_pgvectorscale: true
+        enable_pgvectorscale: "{{ true if ansible_os_family == 'Debian' else false }}" # pgvectorscale packages are available only for Debian-based disros.
         # create extension
         postgresql_extensions:
           - { ext: "vector", db: "postgres" }
