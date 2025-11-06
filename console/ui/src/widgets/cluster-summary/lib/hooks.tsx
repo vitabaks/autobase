@@ -20,6 +20,8 @@ import { STORAGE_BLOCK_FIELDS } from '@entities/cluster/storage-block/model/cons
 import { DATABASE_SERVERS_FIELD_NAMES } from '@entities/cluster/database-servers-block/model/const.ts';
 import { INSTANCES_BLOCK_FIELD_NAMES } from '@entities/cluster/instances-block/model/const.ts';
 import { useWatch } from 'react-hook-form';
+import { DCS_BLOCK_FIELD_NAMES } from '@entities/cluster/expert-mode/dcs-block/model/const.ts';
+import { IS_EXPERT_MODE } from '@shared/model/constants.ts';
 
 const useGetCloudProviderConfig = () => {
   const { t } = useTranslation(['clusters', 'shared']);
@@ -163,6 +165,19 @@ const useGetLocalMachineConfig = () => {
   const { t } = useTranslation(['clusters', 'shared']);
   const theme = useTheme();
 
+  const isHighAvailability = (data) => {
+    if (
+      (IS_EXPERT_MODE &&
+        !data[DCS_BLOCK_FIELD_NAMES.IS_DEPLOY_NEW_CLUSTER] &&
+        data[DCS_BLOCK_FIELD_NAMES.DATABASES]?.length >= 3) ||
+      (IS_EXPERT_MODE &&
+        data[DCS_BLOCK_FIELD_NAMES.IS_DEPLOY_NEW_CLUSTER] &&
+        data[DATABASE_SERVERS_FIELD_NAMES.DATABASE_SERVERS]?.length >= 3) ||
+      (!IS_EXPERT_MODE && data[DATABASE_SERVERS_FIELD_NAMES.DATABASE_SERVERS]?.length >= 3)
+    )
+      return true;
+  };
+
   return (data: LocalClustersSummary) => [
     {
       title: t('name'),
@@ -204,11 +219,7 @@ const useGetLocalMachineConfig = () => {
             ) : (
               <WarningAmberOutlinedIcon />
             )}
-            <Typography>
-              {data[DATABASE_SERVERS_FIELD_NAMES.DATABASE_SERVERS]?.length >= 3
-                ? t('on', { ns: 'shared' })
-                : t('off', { ns: 'shared' })}
-            </Typography>
+            <Typography>{isHighAvailability(data) ? t('on', { ns: 'shared' }) : t('off', { ns: 'shared' })}</Typography>
           </Stack>
           <Typography variant="caption" color="text.secondary">
             {t('highAvailabilityInfo')}

@@ -4,6 +4,7 @@ import { DCS_BLOCK_FIELD_NAMES } from './const';
 export interface DcsDatabaseBoxProps {
   index: number;
   remove?: UseFieldArrayRemove;
+  fields: Record<string, string>[];
 }
 
 export interface DcsBlockFormValues {

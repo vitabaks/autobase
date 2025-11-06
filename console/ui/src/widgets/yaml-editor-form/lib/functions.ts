@@ -2,7 +2,6 @@ import { ClusterFormValues } from '@features/cluster-secret-modal/model/types.ts
 import {
   getBaseClusterExtraVars,
   getCloudProviderExtraVars,
-  getLocalMachineEnvs,
   getLocalMachineExtraVars,
 } from '@shared/lib/clusterValuesTransformFunctions.ts';
 import { POSTGRES_PARAMETERS_FIELD_NAMES } from '@entities/cluster/expert-mode/postgres-parameters-block/model/const.ts';
@@ -28,33 +27,31 @@ const convertModalParametersToYaml = (value: string) =>
  * Function converts passed form values into correct YAML "key:value" format with mapped keys.
  * @param values - Filled form values.
  */
-export const mapFormValuesToYamlEditor = (values: ClusterFormValues) => {
-  return {
-    ...getBaseClusterExtraVars(values),
-    ...(values[CLUSTER_FORM_FIELD_NAMES.PROVIDER]?.code !== PROVIDERS.LOCAL
-      ? { ...getCloudProviderExtraVars(values) }
-      : { ...getLocalMachineEnvs(values), ...getLocalMachineExtraVars(values) }),
-    ...(values?.[POSTGRES_PARAMETERS_FIELD_NAMES.POSTGRES_PARAMETERS]
+export const mapFormValuesToYamlEditor = (values: ClusterFormValues) => ({
+  ...getBaseClusterExtraVars(values),
+  ...(values[CLUSTER_FORM_FIELD_NAMES.PROVIDER]?.code !== PROVIDERS.LOCAL
+    ? { ...getCloudProviderExtraVars(values) }
+    : { ...getLocalMachineExtraVars(values) }),
+  ...(values?.[POSTGRES_PARAMETERS_FIELD_NAMES.POSTGRES_PARAMETERS]
+    ? {
+        local_postgresql_parameters: convertModalParametersToYaml(
+          values[POSTGRES_PARAMETERS_FIELD_NAMES.POSTGRES_PARAMETERS],
+        ),
+      }
+    : {}),
+  ...(values?.[BACKUPS_BLOCK_FIELD_NAMES.CONFIG]
+    ? values?.[BACKUPS_BLOCK_FIELD_NAMES.BACKUP_METHOD] === BACKUP_METHODS.PG_BACK_REST
       ? {
-          local_postgresql_parameters: convertModalParametersToYaml(
-            values[POSTGRES_PARAMETERS_FIELD_NAMES.POSTGRES_PARAMETERS],
-          ),
+          pgbackrest_conf: { global: convertModalParametersToYaml(values[BACKUPS_BLOCK_FIELD_NAMES.CONFIG]) },
         }
-      : {}),
-    ...(values?.[BACKUPS_BLOCK_FIELD_NAMES.CONFIG]
-      ? values?.[BACKUPS_BLOCK_FIELD_NAMES.BACKUP_METHOD] === BACKUP_METHODS.PG_BACK_REST
-        ? {
-            pgbackrest_conf: { global: convertModalParametersToYaml(values[BACKUPS_BLOCK_FIELD_NAMES.CONFIG]) },
-          }
-        : { wal_g_json: convertModalParametersToYaml(values?.[BACKUPS_BLOCK_FIELD_NAMES.CONFIG]) }
-      : {}),
-    ...(values?.[KERNEL_PARAMETERS_FIELD_NAMES.KERNEL_PARAMETERS]
-      ? {
-          sysctl_set: true,
-          sysctl_conf: {
-            postgres_cluster: convertModalParametersToYaml(values[KERNEL_PARAMETERS_FIELD_NAMES.KERNEL_PARAMETERS]),
-          },
-        }
-      : {}),
-  };
-};
+      : { wal_g_json: convertModalParametersToYaml(values?.[BACKUPS_BLOCK_FIELD_NAMES.CONFIG]) }
+    : {}),
+  ...(values?.[KERNEL_PARAMETERS_FIELD_NAMES.KERNEL_PARAMETERS]
+    ? {
+        sysctl_set: true,
+        sysctl_conf: {
+          postgres_cluster: convertModalParametersToYaml(values[KERNEL_PARAMETERS_FIELD_NAMES.KERNEL_PARAMETERS]),
+        },
+      }
+    : {}),
+});

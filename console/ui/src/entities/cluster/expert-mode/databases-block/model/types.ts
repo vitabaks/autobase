@@ -17,4 +17,5 @@ export interface DatabasesBlockSingleValue {
 
 export interface DatabasesBlockValues {
   [DATABASES_BLOCK_FIELD_NAMES.DATABASES]?: DatabasesBlockSingleValue[];
+  [DATABASES_BLOCK_FIELD_NAMES.NAMES]?: Record<string, string>;
 }

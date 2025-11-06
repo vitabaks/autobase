@@ -16,7 +16,12 @@ import { STORAGE_BLOCK_FIELDS } from '@entities/cluster/storage-block/model/cons
 import { SshKeyBlockValues } from '@entities/cluster/ssh-key-block/model/types.ts';
 import { DcsBlockFormValues } from '@entities/cluster/expert-mode/dcs-block/model/types.ts';
 import { DatabaseServerBlockValues } from '@entities/cluster/database-servers-block/model/types.ts';
+import { DataDirectoryFormValues } from '@entities/cluster/expert-mode/data-directory-block/model/types.ts';
 import { LoadBalancersBlockValues } from '@entities/cluster/load-balancers-block/model/types.ts';
+import { ConnectionPoolBlockValues } from '@entities/cluster/expert-mode/connection-pools-block/model/types.ts';
+import { AdditionalSettingsBlockValues } from '@entities/cluster/expert-mode/additional-settings-block/model/types.ts';
+import { PostgresParametersBlockValues } from '@entities/cluster/expert-mode/postgres-parameters-block/model/types.ts';
+import { KernelParametersBlockValues } from '@entities/cluster/expert-mode/kernel-parameters-block/model/types.ts';
 
 export interface ClusterSecretModalProps {
   isClusterFormSubmitting?: boolean;
@@ -35,6 +40,7 @@ interface ClusterCloudProviderFormValues extends BackupsBlockValues, SshKeyBlock
   [CLUSTER_FORM_FIELD_NAMES.INSTANCES_AMOUNT]?: number;
   [STORAGE_BLOCK_FIELDS.STORAGE_AMOUNT]?: number;
   [CLUSTER_FORM_FIELD_NAMES.IS_SPOT_INSTANCES]?: boolean;
+  [CLUSTER_FORM_FIELD_NAMES.IS_USE_DEFINED_SECRET]?: boolean;
 }
 
 interface ClusterLocalMachineProviderFormValues
@@ -55,9 +61,15 @@ interface ClusterLocalMachineProviderFormValues
 export interface ClusterFormValues
   extends ClusterCloudProviderFormValues,
     ClusterLocalMachineProviderFormValues,
+    SecretFormValues,
     ExtensionsBlockValues,
     DatabasesBlockValues,
-    LoadBalancersBlockValues {
+    LoadBalancersBlockValues,
+    DataDirectoryFormValues,
+    ConnectionPoolBlockValues,
+    AdditionalSettingsBlockValues,
+    PostgresParametersBlockValues,
+    KernelParametersBlockValues {
   [CLUSTER_FORM_FIELD_NAMES.CREATION_TYPE]: string;
   [CLUSTER_FORM_FIELD_NAMES.PROVIDER]: ResponseDeploymentInfo;
   [CLUSTER_FORM_FIELD_NAMES.ENVIRONMENT_ID]: number;

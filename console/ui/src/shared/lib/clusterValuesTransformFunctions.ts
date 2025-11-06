@@ -37,7 +37,6 @@ export const getCommonExtraVars = (values: ClusterFormValues) => ({
 /**
  * Functions creates an object with envs exclusive to cloud clusters that should be put in 'extra_vars' request field.
  * @param values - Filled form values.
- * @param secretId - Optional ID of secret if exists.
  */
 export const getCloudProviderExtraVars = (values: ClusterFormValues) => ({
   cloud_provider: values[CLUSTER_FORM_FIELD_NAMES.PROVIDER].code,
@@ -92,10 +91,21 @@ export const getLocalMachineExtraVars = (values: ClusterFormValues, secretId?: n
   ...(IS_EXPERT_MODE
     ? {
         dcs_type: values?.[DCS_BLOCK_FIELD_NAMES.TYPE],
-        patroni_etcd_hosts: values?.[DCS_BLOCK_FIELD_NAMES.DATABASES]?.map((database) => ({
-          host: database[DCS_BLOCK_FIELD_NAMES.DATABASE_HOSTNAME],
-          port: database[DCS_BLOCK_FIELD_NAMES.DATABASE_PORT],
-        })),
+        ...(!values[DCS_BLOCK_FIELD_NAMES.IS_DEPLOY_NEW_CLUSTER] && values[DCS_BLOCK_FIELD_NAMES.TYPE] === DCS_TYPES[0]
+          ? {
+              patroni_etcd_hosts: values?.[DCS_BLOCK_FIELD_NAMES.DATABASES]?.map((database) => ({
+                host: database[DCS_BLOCK_FIELD_NAMES.IP_ADDRESS],
+                port: database[DCS_BLOCK_FIELD_NAMES.DATABASE_PORT],
+              })),
+            }
+          : !values[DCS_BLOCK_FIELD_NAMES.IS_DEPLOY_NEW_CLUSTER] && values[DCS_BLOCK_FIELD_NAMES.TYPE] === DCS_TYPES[1]
+            ? {
+                consul_join: values?.[DCS_BLOCK_FIELD_NAMES.DATABASES]?.map(
+                  (database) => database[DCS_BLOCK_FIELD_NAMES.IP_ADDRESS],
+                ),
+                consul_ports_serf_lan: 8301,
+              }
+            : {}),
         ...(!values[LOAD_BALANCERS_FIELD_NAMES.IS_DEPLOY_TO_DATABASE_SERVERS] &&
         values[LOAD_BALANCERS_FIELD_NAMES.IS_HAPROXY_ENABLED]
           ? {
@@ -196,7 +206,9 @@ export const getLocalMachineEnvs = (values: ClusterFormValues, secretId?: number
         },
         consul_instances: {
           hosts:
-            IS_EXPERT_MODE && values[DCS_BLOCK_FIELD_NAMES.TYPE] === DCS_TYPES[1]
+            IS_EXPERT_MODE &&
+            !values[DCS_BLOCK_FIELD_NAMES.IS_DEPLOY_TO_DB_SERVERS] &&
+            values[DCS_BLOCK_FIELD_NAMES.TYPE] === DCS_TYPES[1]
               ? values[DCS_BLOCK_FIELD_NAMES.DATABASES].reduce(
                   (acc, server) => ({
                     ...acc,
@@ -264,7 +276,7 @@ export const getLocalMachineEnvs = (values: ClusterFormValues, secretId?: number
  */
 export const getBaseClusterExtraVars = (values: ClusterFormValues) => {
   const extensions = IS_EXPERT_MODE
-    ? Object.entries(values?.[EXTENSION_BLOCK_FIELD_NAMES.EXTENSIONS]).reduce((acc, [key, value]) => {
+    ? (Object.entries(values?.[EXTENSION_BLOCK_FIELD_NAMES.EXTENSIONS])?.reduce((acc, [key, value]) => {
         if (value?.length) {
           const convertedToReqFormat = value.map((item) => ({
             ext: key,
@@ -273,7 +285,7 @@ export const getBaseClusterExtraVars = (values: ClusterFormValues) => {
           return [...acc, ...convertedToReqFormat];
         }
         return acc;
-      }, [])
+      }, []) ?? [])
     : '';
 
   return {
@@ -294,7 +306,7 @@ export const getBaseClusterExtraVars = (values: ClusterFormValues) => {
           database_public_access: !!values?.[ADDITIONAL_SETTINGS_BLOCK_FIELD_NAMES.IS_DB_PUBLIC_ACCESS],
           cloud_load_balancer: !!values?.[ADDITIONAL_SETTINGS_BLOCK_FIELD_NAMES.IS_CLOUD_LOAD_BALANCER],
           netdata_install: !!values?.[ADDITIONAL_SETTINGS_BLOCK_FIELD_NAMES.IS_NETDATA_MONITORING],
-          ...(!!values[CONNECTION_POOLS_BLOCK_FIELD_NAMES.IS_CONNECTION_POOLER_ENABLED] // do not add pools info if connection pooler is disabled
+          ...(values[CONNECTION_POOLS_BLOCK_FIELD_NAMES.IS_CONNECTION_POOLER_ENABLED] // do not add pools info if connection pooler is disabled
             ? {
                 pgbouncer_pools: values?.[CONNECTION_POOLS_BLOCK_FIELD_NAMES.POOLS]?.map((pool) => ({
                   name: pool?.[CONNECTION_POOLS_BLOCK_FIELD_NAMES.POOL_NAME],
@@ -373,7 +385,7 @@ const convertObjectValueToBase64Format = (object: Record<string, any>) => {
   return Object.entries(object).reduce((acc: string[], [key, value]) => [...acc, `${key}=${btoa(value)}`], []);
 };
 
-const getRequestCloudParams = (values, secretsInfo) => {
+const getRequestCloudParams = (values, secretsInfo, customExtraVars) => {
   return {
     envs: convertObjectValueToBase64Format({
       ...Object.fromEntries(
@@ -382,21 +394,23 @@ const getRequestCloudParams = (values, secretsInfo) => {
         }).filter(([key]) => SECRET_MODAL_CONTENT_BODY_FORM_FIELDS?.[key]),
       ),
     }),
-    extra_vars: convertObjectToRequiredFormat({
-      ...getBaseClusterExtraVars(values),
-      ...getCloudProviderExtraVars(values),
-    }),
+    extra_vars: convertObjectToRequiredFormat(
+      customExtraVars ?? {
+        ...getBaseClusterExtraVars(values),
+        ...getCloudProviderExtraVars(values),
+      },
+    ),
   };
 };
 
-const getRequestLocalMachineParams = (values, secretId) => {
+const getRequestLocalMachineParams = (values, secretId, customExtraVars) => {
   const baseClusterExtraVars = getBaseClusterExtraVars(values);
   const localMachineEnvs = getLocalMachineEnvs(values, secretId);
   const localMachineExtraVars = getLocalMachineExtraVars(values, secretId);
 
   return {
     envs: convertObjectValueToBase64Format(localMachineEnvs),
-    extra_vars: convertObjectToRequiredFormat({ ...baseClusterExtraVars, ...localMachineExtraVars }),
+    extra_vars: convertObjectToRequiredFormat(customExtraVars ?? { ...baseClusterExtraVars, ...localMachineExtraVars }),
     existing_cluster: values[DATABASE_SERVERS_FIELD_NAMES.IS_CLUSTER_EXISTS] ?? false,
   };
 };
@@ -407,17 +421,20 @@ const getRequestLocalMachineParams = (values, secretId) => {
  * @param secretId - Optional ID of secret if exists.
  * @param projectId - Optional ID of a current project.
  * @param secretsInfo - Optional object with secret information.
+ * @param customExtraVars - Optional parameter with custom extra vars (from YAML editor).
  */
 export const mapFormValuesToRequestFields = ({
   values,
   secretId,
   projectId,
   secretsInfo,
+  customExtraVars,
 }: {
   values: ClusterFormValues;
   secretId?: number;
   projectId: number;
   secretsInfo?: object;
+  customExtraVars?: Record<string, any>;
 }): RequestClusterCreate => {
   const baseObject = {
     name: values[CLUSTER_FORM_FIELD_NAMES.CLUSTER_NAME],
@@ -430,7 +447,7 @@ export const mapFormValuesToRequestFields = ({
   return {
     ...baseObject,
     ...(values[CLUSTER_FORM_FIELD_NAMES.PROVIDER].code !== PROVIDERS.LOCAL
-      ? getRequestCloudParams(values, secretsInfo)
-      : getRequestLocalMachineParams(values, secretId)),
+      ? getRequestCloudParams(values, secretsInfo, customExtraVars)
+      : getRequestLocalMachineParams(values, secretId, customExtraVars)),
   };
 };

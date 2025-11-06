@@ -1,4 +1,4 @@
-import { FC } from 'react';
+import { FC, useEffect, useState } from 'react';
 import {
   Box,
   Button,
@@ -18,12 +18,15 @@ import {
   DCS_BLOCK_FIELD_NAMES,
   DCS_DATABASES_DEFAULT_VALUES,
   DCS_TYPES,
+  getCorrectFields,
 } from '@entities/cluster/expert-mode/dcs-block/model/const.ts';
 import AddIcon from '@mui/icons-material/Add';
 import DcsDatabaseBox from '@entities/cluster/expert-mode/dcs-block/ui/DcsDatabaseBox.tsx';
 
 const DcsBlock: FC = () => {
   const { t } = useTranslation('clusters');
+  const [correctFields, setCorrectFields] = useState([]);
+
   const {
     control,
     formState: { errors },
@@ -34,11 +37,17 @@ const DcsBlock: FC = () => {
     name: DCS_BLOCK_FIELD_NAMES.DATABASES,
   });
 
+  const watchIsDeployToDcsCluster = useWatch({ name: DCS_BLOCK_FIELD_NAMES.IS_DEPLOY_NEW_CLUSTER });
+  const watchIsDeployToDbServers = useWatch({ name: DCS_BLOCK_FIELD_NAMES.IS_DEPLOY_TO_DB_SERVERS });
+  const watchDcsType = useWatch({ name: DCS_BLOCK_FIELD_NAMES.TYPE });
+
   const addServer = () => append(DCS_DATABASES_DEFAULT_VALUES);
 
   const removeServer = (index: number) => () => remove(index);
 
-  const watchIsDeployNewCluster = useWatch({ name: DCS_BLOCK_FIELD_NAMES.IS_DEPLOY_NEW_CLUSTER });
+  useEffect(() => {
+    setCorrectFields(getCorrectFields({ watchIsDeployToDcsCluster, watchIsDeployToDbServers, watchDcsType, t }));
+  }, [watchIsDeployToDcsCluster, watchIsDeployToDbServers, watchDcsType]);
 
   return (
     <Box>
@@ -52,12 +61,7 @@ const DcsBlock: FC = () => {
           render={({ field }) => (
             <FormControl fullWidth size="small">
               <InputLabel size="small">{t('dcsType')}</InputLabel>
-              <Select
-                {...field}
-                size="small"
-                label={t('dcsType')}
-                error={!!errors[DCS_BLOCK_FIELD_NAMES.TYPE]}
-                helperText={errors[DCS_BLOCK_FIELD_NAMES.TYPE]?.message as string}>
+              <Select {...field} size="small" label={t('dcsType')} error={!!errors[DCS_BLOCK_FIELD_NAMES.TYPE]}>
                 {DCS_TYPES.map((mode) => (
                   <MenuItem key={mode} value={mode}>
                     {mode}
@@ -82,7 +86,7 @@ const DcsBlock: FC = () => {
             </Stack>
           )}
         />
-        {watchIsDeployNewCluster ? (
+        {watchIsDeployToDcsCluster ? (
           <Controller
             control={control}
             name={DCS_BLOCK_FIELD_NAMES.IS_DEPLOY_TO_DB_SERVERS}
@@ -98,13 +102,15 @@ const DcsBlock: FC = () => {
               </Stack>
             )}
           />
-        ) : (
+        ) : null}
+        {correctFields?.length ? (
           <Stack direction="column" gap="16px" justifyContent="center" alignItems="flex-start">
             <Box display="flex" gap="16px" flexWrap="wrap" justifyContent="flex-start" alignItems="center">
               {fields.map((field, index) => (
                 <DcsDatabaseBox
                   key={field.id}
                   index={index}
+                  fields={correctFields}
                   {...(index !== 0 ? { remove: removeServer(index) } : {})} // removing entity such way is required to avoid bugs with a wrong element removed
                 />
               ))}
@@ -113,7 +119,7 @@ const DcsBlock: FC = () => {
               <AddIcon />
             </Button>
           </Stack>
-        )}
+        ) : null}
       </Stack>
     </Box>
   );

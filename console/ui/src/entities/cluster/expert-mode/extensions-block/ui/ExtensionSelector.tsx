@@ -30,7 +30,6 @@ const ExtensionSelector: FC<ExtensionSelectorProps> = ({ extension }) => {
   };
 
   useEffect(() => {
-    console.log('Available names', watchAvailableNames);
     if (watchSelectedExtensions?.[extension.name]) {
       const intersected = intersection(
         watchSelectedExtensions[extension.name],

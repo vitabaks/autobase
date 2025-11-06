@@ -32,40 +32,23 @@ const LoadBalancersBlock: FC = () => {
       <Typography fontWeight="bold" marginBottom="8px">
         {t('loadBalancers')}
       </Typography>
-      {[
-        {
-          fieldName: LOAD_BALANCERS_FIELD_NAMES.IS_HAPROXY_ENABLED,
-          label: t('haproxyLoadBalancer'),
-          tooltip: t('haproxyLoadBalancerTooltip'),
-        },
-      ].map(({ fieldName, label, tooltip }) => (
-        <Controller
-          key={fieldName}
-          control={control}
-          name={fieldName}
-          render={({ field }) => (
-            <Stack direction="row" alignItems="center">
-              <Stack direction="row" alignItems="center" width={250}>
-                <Typography marginRight={1}>{label}</Typography>
-                <Tooltip title={tooltip}>
-                  <HelpOutlineIcon fontSize="small" />
-                </Tooltip>
-              </Stack>
-              <Checkbox {...field} checked={!!field.value} />
-            </Stack>
-          )}
-        />
-      ))}
-      {IS_EXPERT_MODE ? (
-        watchIsHaproxyEnabled ? (
+      <Stack gap={1}>
+        {[
+          {
+            fieldName: LOAD_BALANCERS_FIELD_NAMES.IS_HAPROXY_ENABLED,
+            label: t('haproxyLoadBalancer'),
+            tooltip: t('haproxyLoadBalancerTooltip'),
+          },
+        ].map(({ fieldName, label, tooltip }) => (
           <Controller
+            key={fieldName}
             control={control}
-            name={LOAD_BALANCERS_FIELD_NAMES.IS_DEPLOY_TO_DATABASE_SERVERS}
+            name={fieldName}
             render={({ field }) => (
               <Stack direction="row" alignItems="center">
                 <Stack direction="row" alignItems="center" width={250}>
-                  <Typography marginRight={1}>{t('deployToDatabaseServers')}</Typography>
-                  <Tooltip title={t('deployToDatabaseServersTooltip')}>
+                  <Typography marginRight={1}>{label}</Typography>
+                  <Tooltip title={tooltip}>
                     <HelpOutlineIcon fontSize="small" />
                   </Tooltip>
                 </Stack>
@@ -73,24 +56,43 @@ const LoadBalancersBlock: FC = () => {
               </Stack>
             )}
           />
-        ) : null
-      ) : null}
-      {IS_EXPERT_MODE && watchIsHaproxyEnabled && !watchIsDeployToDatabases ? (
-        <Stack direction="column" gap="16px" justifyContent="center" alignItems="flex-start">
-          <Box display="flex" gap="16px" flexWrap="wrap" justifyContent="flex-start" alignItems="center">
-            {fields.map((field, index) => (
-              <LoadBalancersDatabaseBox
-                key={field.id}
-                index={index}
-                {...(index !== 0 ? { remove: removeServer(index) } : {})} // removing entity such way is required to avoid bugs with a wrong element removed
-              />
-            ))}
-          </Box>
-          <Button onClick={addServer}>
-            <AddIcon />
-          </Button>
-        </Stack>
-      ) : null}
+        ))}
+        {IS_EXPERT_MODE ? (
+          watchIsHaproxyEnabled ? (
+            <Controller
+              control={control}
+              name={LOAD_BALANCERS_FIELD_NAMES.IS_DEPLOY_TO_DATABASE_SERVERS}
+              render={({ field }) => (
+                <Stack direction="row" alignItems="center">
+                  <Stack direction="row" alignItems="center" width={250}>
+                    <Typography marginRight={1}>{t('deployToDatabaseServers')}</Typography>
+                    <Tooltip title={t('deployToDatabaseServersTooltip')}>
+                      <HelpOutlineIcon fontSize="small" />
+                    </Tooltip>
+                  </Stack>
+                  <Checkbox {...field} checked={!!field.value} />
+                </Stack>
+              )}
+            />
+          ) : null
+        ) : null}
+        {IS_EXPERT_MODE && watchIsHaproxyEnabled && !watchIsDeployToDatabases ? (
+          <Stack direction="column" gap="16px" justifyContent="center" alignItems="flex-start">
+            <Box display="flex" gap="16px" flexWrap="wrap" justifyContent="flex-start" alignItems="center">
+              {fields.map((field, index) => (
+                <LoadBalancersDatabaseBox
+                  key={field.id}
+                  index={index}
+                  {...(index !== 0 ? { remove: removeServer(index) } : {})} // removing entity such way is required to avoid bugs with a wrong element removed
+                />
+              ))}
+            </Box>
+            <Button onClick={addServer}>
+              <AddIcon />
+            </Button>
+          </Stack>
+        ) : null}
+      </Stack>
     </Box>
   );
 };

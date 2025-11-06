@@ -19,14 +19,18 @@ import * as YAML from 'yaml';
 import ErrorBox from '@shared/ui/error-box/ui';
 import { ErrorBoundary } from 'react-error-boundary';
 import { mapFormValuesToYamlEditor } from '@widgets/yaml-editor-form/lib/functions.ts';
+import { mapFormValuesToRequestFields } from '@shared/lib/clusterValuesTransformFunctions.ts';
+import { useAppSelector } from '@app/redux/store/hooks.ts';
+import { selectCurrentProject } from '@app/redux/slices/projectSlice/projectSelectors.ts';
 import IStandaloneCodeEditor = editor.IStandaloneCodeEditor;
 
 const YamlEditorForm: FC = () => {
   const { t } = useTranslation('clusters');
   const editorRef = useRef<IStandaloneCodeEditor | null>(null);
   const navigate = useNavigate();
+  const currentProject = useAppSelector(selectCurrentProject);
 
-  const values = useWatch();
+  const watchUiValues = useWatch();
 
   const [postClusterTrigger, postClusterTriggerState] = usePostClustersMutation();
 
@@ -43,7 +47,11 @@ const YamlEditorForm: FC = () => {
   const onSubmit = async (values: YamlEditorFormValues) => {
     try {
       await postClusterTrigger({
-        requestClusterCreate: YAML.parse(values[YAML_EDITOR_FORM_FIELD_NAMES.EDITOR]) as RequestClusterCreate,
+        requestClusterCreate: mapFormValuesToRequestFields({
+          values: watchUiValues as RequestClusterCreate,
+          projectId: Number(currentProject),
+          customExtraVars: YAML.parse(values[YAML_EDITOR_FORM_FIELD_NAMES.EDITOR]),
+        }),
       }).unwrap();
       toast.info(t('clusterSuccessfullyCreated', { ns: 'toasts' }));
       await navigate(generateAbsoluteRouterPath(RouterPaths.clusters.absolutePath));
