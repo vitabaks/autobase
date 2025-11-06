@@ -25,27 +25,27 @@
   ansible.builtin.fail:
     msg:
       - "pgvectorscale is not supported on {{ ansible_distribution }} {{ ansible_distribution_release }}."
-      - "Supported OS: Debian (trixie, bookworm), Ubuntu (jammy, noble)."
+      - "Note: packages on the timescale/pgvectorscale github repository are available only for Debian-based distros."
   when:
     - enable_pgvectorscale | default(false) | bool
-    - not (ansible_os_family == "Debian" and ansible_distribution_release in ['trixie', 'bookworm', 'jammy', 'noble'])
+    - not ansible_os_family == "Debian"
 
 - name: ParadeDB | Checking PostgreSQL version
   ansible.builtin.fail:
     msg:
-      - "The current PostgreSQL version ({{ postgresql_version }}) is not supported by the ParadeDB (pg_search, pg_analytics)."
+      - "The current PostgreSQL version ({{ postgresql_version }}) is not supported by the ParadeDB (pg_search)."
       - "PostgreSQL version must be {{ paradedb_minimal_pg_version | default(14) }} or higher."
   when:
-    - (enable_paradedb | default(false) | bool) or (enable_pg_search | default(false) | bool) or (enable_pg_analytics | default(false) | bool)
+    - (enable_paradedb | default(false) | bool) or (enable_pg_search | default(false) | bool)
     - postgresql_version | string is version(paradedb_minimal_pg_version | default(14) | string, '<')
 
 - name: ParadeDB | Checking supported operating system and version
   ansible.builtin.fail:
     msg:
-      - "ParadeDB (pg_search, pg_analytics) is not supported on {{ ansible_distribution }} {{ ansible_distribution_release }}."
-      - "Supported OS: Debian (bullseye, bookworm), Ubuntu (jammy, noble) or RedHat (8, 9)."
+      - "ParadeDB (pg_search) is not supported on {{ ansible_distribution }} {{ ansible_distribution_release }}."
+      - "Note: packages on the paradedb github repository are available only for Debian 12/13, Ubuntu 22.04/24.04 or RedHat 8/9."
   when:
-    - (enable_paradedb | default(false) | bool) or (enable_pg_search | default(false) | bool) or (enable_pg_analytics | default(false) | bool)
+    - (enable_paradedb | default(false) | bool) or (enable_pg_search | default(false) | bool)
     - not (
       (ansible_os_family == "Debian" and ansible_distribution_release in ['bullseye', 'bookworm', 'jammy', 'noble']) or
       (ansible_os_family == "RedHat" and ansible_distribution_major_version in ['8', '9'])
