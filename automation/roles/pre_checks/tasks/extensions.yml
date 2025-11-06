@@ -25,10 +25,10 @@
   ansible.builtin.fail:
     msg:
       - "pgvectorscale is not supported on {{ ansible_distribution }} {{ ansible_distribution_release }}."
-      - "Supported OS: Debian (bookworm), Ubuntu (jammy, noble)."
+      - "Supported OS: Debian (trixie, bookworm), Ubuntu (jammy, noble)."
   when:
     - enable_pgvectorscale | default(false) | bool
-    - not (ansible_os_family == "Debian" and ansible_distribution_release in ['bookworm', 'jammy', 'noble'])
+    - not (ansible_os_family == "Debian" and ansible_distribution_release in ['trixie', 'bookworm', 'jammy', 'noble'])
 
 - name: ParadeDB | Checking PostgreSQL version
   ansible.builtin.fail:
