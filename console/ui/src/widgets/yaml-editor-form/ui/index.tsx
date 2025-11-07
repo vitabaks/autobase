@@ -67,7 +67,7 @@ const YamlEditorForm: FC = () => {
   useEffect(() => {
     setValue(
       YAML_EDITOR_FORM_FIELD_NAMES.EDITOR,
-      YAML.stringify(mapFormValuesToYamlEditor(values), { sortMapEntries: true }),
+      YAML.stringify(mapFormValuesToYamlEditor(watchUiValues), { sortMapEntries: true }),
     );
   }, []);
 
