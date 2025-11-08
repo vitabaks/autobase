@@ -323,9 +323,9 @@ export const getBaseClusterExtraVars = (values: ClusterFormValues) => {
             ? values[BACKUPS_BLOCK_FIELD_NAMES.BACKUP_METHOD] === BACKUP_METHODS.PG_BACK_REST
               ? {
                   pgbackrest_install: true,
-                  PGBACKREST_BACKUP_HOUR: values?.[BACKUPS_BLOCK_FIELD_NAMES.BACKUP_START_TIME],
-                  PGBACKREST_RETENTION_FULL: values?.[BACKUPS_BLOCK_FIELD_NAMES.BACKUP_RETENTION],
-                  PGBACKREST_RETENTION_ARCHIVE: values?.[BACKUPS_BLOCK_FIELD_NAMES.BACKUP_RETENTION],
+                  pgbackrest_backup_hour: values?.[BACKUPS_BLOCK_FIELD_NAMES.BACKUP_START_TIME],
+                  pgbackrest_retention_full: values?.[BACKUPS_BLOCK_FIELD_NAMES.BACKUP_RETENTION],
+                  pgbackrest_retention_archive: values?.[BACKUPS_BLOCK_FIELD_NAMES.BACKUP_RETENTION],
                   ...(values?.[BACKUPS_BLOCK_FIELD_NAMES.CONFIG]
                     ? {
                         pgbackrest_conf: {
@@ -336,8 +336,8 @@ export const getBaseClusterExtraVars = (values: ClusterFormValues) => {
                 }
               : {
                   wal_g_install: true,
-                  WALG_BACKUP_HOUR: values?.[BACKUPS_BLOCK_FIELD_NAMES.BACKUP_START_TIME],
-                  WAL_G_RETENTION_FULL: values?.[BACKUPS_BLOCK_FIELD_NAMES.BACKUP_RETENTION],
+                  wal_g_backup_hour: values?.[BACKUPS_BLOCK_FIELD_NAMES.BACKUP_START_TIME],
+                  wal_g_retention_full: values?.[BACKUPS_BLOCK_FIELD_NAMES.BACKUP_RETENTION],
                   ...(values?.[BACKUPS_BLOCK_FIELD_NAMES.CONFIG]
                     ? {
                         wal_g_json: values?.[BACKUPS_BLOCK_FIELD_NAMES.CONFIG],
