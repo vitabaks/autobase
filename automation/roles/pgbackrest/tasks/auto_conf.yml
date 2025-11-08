@@ -8,18 +8,18 @@
         - { option: "log-level-file", value: "detail" }
         - { option: "log-path", value: "/var/log/pgbackrest" }
         - { option: "repo1-type", value: "s3" }
-        - { option: "repo1-path", value: "{{ PGBACKREST_REPO_PATH | default('/pgbackrest') }}" }
-        - { option: "repo1-s3-key", value: "{{ PGBACKREST_S3_KEY | default(lookup('ansible.builtin.env', 'AWS_ACCESS_KEY_ID')) }}" }
-        - { option: "repo1-s3-key-secret", value: "{{ PGBACKREST_S3_KEY_SECRET | default(lookup('ansible.builtin.env', 'AWS_SECRET_ACCESS_KEY')) }}" }
-        - { option: "repo1-s3-bucket", value: "{{ PGBACKREST_S3_BUCKET | default(aws_s3_bucket_name | default(patroni_cluster_name + '-backup')) }}" }
+        - { option: "repo1-path", value: "{{ pgbackrest_repo_path | default('/pgbackrest') }}" }
+        - { option: "repo1-s3-key", value: "{{ pgbackrest_s3_key | default(lookup('ansible.builtin.env', 'AWS_ACCESS_KEY_ID')) }}" }
+        - { option: "repo1-s3-key-secret", value: "{{ pgbackrest_s3_key_secret | default(lookup('ansible.builtin.env', 'AWS_SECRET_ACCESS_KEY')) }}" }
+        - { option: "repo1-s3-bucket", value: "{{ pgbackrest_s3_bucket | default(aws_s3_bucket_name | default(patroni_cluster_name + '-backup')) }}" }
         - {
             option: "repo1-s3-endpoint",
-            value: "{{ PGBACKREST_S3_ENDPOINT | default('s3.' + (aws_s3_bucket_region | default(server_location)) + '.amazonaws.com') }}",
+            value: "{{ pgbackrest_s3_endpoint | default('s3.' + (aws_s3_bucket_region | default(server_location)) + '.amazonaws.com') }}",
           }
-        - { option: "repo1-s3-region", value: "{{ PGBACKREST_S3_REGION | default(aws_s3_bucket_region | default(server_location)) }}" }
-        - { option: "repo1-retention-full", value: "{{ PGBACKREST_RETENTION_FULL | default('4') }}" }
-        - { option: "repo1-retention-archive", value: "{{ PGBACKREST_RETENTION_ARCHIVE | default('4') }}" }
-        - { option: "repo1-retention-archive-type", value: "{{ PGBACKREST_RETENTION_ARCHIVE_TYPE | default('full') }}" }
+        - { option: "repo1-s3-region", value: "{{ pgbackrest_s3_region | default(aws_s3_bucket_region | default(server_location)) }}" }
+        - { option: "repo1-retention-full", value: "{{ pgbackrest_retention_full | default('4') }}" }
+        - { option: "repo1-retention-archive", value: "{{ pgbackrest_retention_archive | default('4') }}" }
+        - { option: "repo1-retention-archive-type", value: "{{ pgbackrest_retention_archive_type | default('full') }}" }
         - { option: "repo1-bundle", value: "y" }
         - { option: "repo1-block", value: "y" }
         - { option: "start-fast", value: "y" }
@@ -29,7 +29,7 @@
         - { option: "archive-async", value: "y" }
         - { option: "archive-get-queue-max", value: "1GiB" }
         - { option: "spool-path", value: "/var/spool/pgbackrest" }
-        - { option: "process-max", value: "{{ PGBACKREST_PROCESS_MAX | default([ansible_processor_vcpus | int // 2, 1] | max) }}" }
+        - { option: "process-max", value: "{{ pgbackrest_process_max | default([ansible_processor_vcpus | int // 2, 1] | max) }}" }
         - { option: "backup-standby", value: "{{ 'y' if groups['postgres_cluster'] | length > 1 else 'n' }}" }
       stanza:
         - { option: "log-level-console", value: "info" }
@@ -49,12 +49,12 @@
             - { option: "log-level-file", value: "detail" }
             - { option: "log-path", value: "/var/log/pgbackrest" }
             - { option: "repo1-type", value: "gcs" }
-            - { option: "repo1-path", value: "{{ PGBACKREST_REPO_PATH | default('/pgbackrest') }}" }
-            - { option: "repo1-gcs-key", value: "{{ PGBACKREST_GCS_KEY | default(postgresql_home_dir + '/gcs-key.json') }}" }
-            - { option: "repo1-gcs-bucket", value: "{{ PGBACKREST_GCS_BUCKET | default(gcp_bucket_name | default(patroni_cluster_name + '-backup')) }}" }
-            - { option: "repo1-retention-full", value: "{{ PGBACKREST_RETENTION_FULL | default('4') }}" }
-            - { option: "repo1-retention-archive", value: "{{ PGBACKREST_RETENTION_ARCHIVE | default('4') }}" }
-            - { option: "repo1-retention-archive-type", value: "{{ PGBACKREST_RETENTION_ARCHIVE_TYPE | default('full') }}" }
+            - { option: "repo1-path", value: "{{ pgbackrest_repo_path | default('/pgbackrest') }}" }
+            - { option: "repo1-gcs-key", value: "{{ pgbackrest_gcs_key | default(postgresql_home_dir + '/gcs-key.json') }}" }
+            - { option: "repo1-gcs-bucket", value: "{{ pgbackrest_gcs_bucket | default(gcp_bucket_name | default(patroni_cluster_name + '-backup')) }}" }
+            - { option: "repo1-retention-full", value: "{{ pgbackrest_retention_full | default('4') }}" }
+            - { option: "repo1-retention-archive", value: "{{ pgbackrest_retention_archive | default('4') }}" }
+            - { option: "repo1-retention-archive-type", value: "{{ pgbackrest_retention_archive_type | default('full') }}" }
             - { option: "repo1-bundle", value: "y" }
             - { option: "repo1-block", value: "y" }
             - { option: "start-fast", value: "y" }
@@ -64,7 +64,7 @@
             - { option: "archive-async", value: "y" }
             - { option: "archive-get-queue-max", value: "1GiB" }
             - { option: "spool-path", value: "/var/spool/pgbackrest" }
-            - { option: "process-max", value: "{{ PGBACKREST_PROCESS_MAX | default([ansible_processor_vcpus | int // 2, 1] | max) }}" }
+            - { option: "process-max", value: "{{ pgbackrest_process_max | default([ansible_processor_vcpus | int // 2, 1] | max) }}" }
             - { option: "backup-standby", value: "{{ 'y' if groups['postgres_cluster'] | length > 1 else 'n' }}" }
           stanza:
             - { option: "log-level-console", value: "info" }
@@ -81,10 +81,10 @@
           run_once: true # noqa run-once
           no_log: true # do not output GCP service account contents to the ansible log
 
-        - name: "Copy GCP service account contents to {{ PGBACKREST_GCS_KEY | default((postgresql_home_dir | default('')) ~ '/gcs-key.json') }}"
+        - name: "Copy GCP service account contents to {{ pgbackrest_gcs_key | default((postgresql_home_dir | default('')) ~ '/gcs-key.json') }}"
           ansible.builtin.copy:
             content: "{{ gcp_service_account_contents }}"
-            dest: "{{ PGBACKREST_GCS_KEY | default(postgresql_home_dir + '/gcs-key.json') }}"
+            dest: "{{ pgbackrest_gcs_key | default(postgresql_home_dir + '/gcs-key.json') }}"
             mode: "0600"
             owner: "postgres"
             group: "postgres"
@@ -92,10 +92,10 @@
       when: gcs_key_file is not defined
 
     # if 'gcs_key_file' is defined, copy this GCS key file.
-    - name: "Copy GCS key file to {{ PGBACKREST_GCS_KEY | default((postgresql_home_dir | default('')) ~ '/gcs-key.json') }}"
+    - name: "Copy GCS key file to {{ pgbackrest_gcs_key | default((postgresql_home_dir | default('')) ~ '/gcs-key.json') }}"
       ansible.builtin.copy:
         src: "{{ gcs_key_file }}"
-        dest: "{{ PGBACKREST_GCS_KEY | default(postgresql_home_dir + '/gcs-key.json') }}"
+        dest: "{{ pgbackrest_gcs_key | default(postgresql_home_dir + '/gcs-key.json') }}"
         mode: "0600"
         owner: "postgres"
         group: "postgres"
@@ -111,20 +111,20 @@
         - { option: "log-level-file", value: "detail" }
         - { option: "log-path", value: "/var/log/pgbackrest" }
         - { option: "repo1-type", value: "azure" }
-        - { option: "repo1-path", value: "{{ PGBACKREST_REPO_PATH | default('/pgbackrest') }}" }
-        - { option: "repo1-azure-key", value: "{{ PGBACKREST_AZURE_KEY | default(hostvars['localhost']['azure_storage_account_key'] | default('')) }}" }
-        - { option: "repo1-azure-key-type", value: "{{ PGBACKREST_AZURE_KEY_TYPE | default('shared') }}" }
+        - { option: "repo1-path", value: "{{ pgbackrest_repo_path | default('/pgbackrest') }}" }
+        - { option: "repo1-azure-key", value: "{{ pgbackrest_azure_key | default(hostvars['localhost']['azure_storage_account_key'] | default('')) }}" }
+        - { option: "repo1-azure-key-type", value: "{{ pgbackrest_azure_key_type | default('shared') }}" }
         - {
             option: "repo1-azure-account",
-            value: "{{ PGBACKREST_AZURE_ACCOUNT | default(azure_blob_storage_account_name | default(patroni_cluster_name | lower | replace('-', '') | truncate(24, true, ''))) }}",
+            value: "{{ pgbackrest_azure_account | default(azure_blob_storage_account_name | default(patroni_cluster_name | lower | replace('-', '') | truncate(24, true, ''))) }}",
           }
         - {
             option: "repo1-azure-container",
-            value: "{{ PGBACKREST_AZURE_CONTAINER | default(azure_blob_storage_name | default(patroni_cluster_name + '-backup')) }}",
+            value: "{{ pgbackrest_azure_container | default(azure_blob_storage_name | default(patroni_cluster_name + '-backup')) }}",
           }
-        - { option: "repo1-retention-full", value: "{{ PGBACKREST_RETENTION_FULL | default('4') }}" }
-        - { option: "repo1-retention-archive", value: "{{ PGBACKREST_RETENTION_ARCHIVE | default('4') }}" }
-        - { option: "repo1-retention-archive-type", value: "{{ PGBACKREST_RETENTION_ARCHIVE_TYPE | default('full') }}" }
+        - { option: "repo1-retention-full", value: "{{ pgbackrest_retention_full | default('4') }}" }
+        - { option: "repo1-retention-archive", value: "{{ pgbackrest_retention_archive | default('4') }}" }
+        - { option: "repo1-retention-archive-type", value: "{{ pgbackrest_retention_archive_type | default('full') }}" }
         - { option: "repo1-bundle", value: "y" }
         - { option: "repo1-block", value: "y" }
         - { option: "start-fast", value: "y" }
@@ -134,7 +134,7 @@
         - { option: "archive-async", value: "y" }
         - { option: "archive-get-queue-max", value: "1GiB" }
         - { option: "spool-path", value: "/var/spool/pgbackrest" }
-        - { option: "process-max", value: "{{ PGBACKREST_PROCESS_MAX | default([ansible_processor_vcpus | int // 2, 1] | max) }}" }
+        - { option: "process-max", value: "{{ pgbackrest_process_max | default([ansible_processor_vcpus | int // 2, 1] | max) }}" }
         - { option: "backup-standby", value: "{{ 'y' if groups['postgres_cluster'] | length > 1 else 'n' }}" }
       stanza:
         - { option: "log-level-console", value: "info" }
@@ -152,19 +152,19 @@
         - { option: "log-level-file", value: "detail" }
         - { option: "log-path", value: "/var/log/pgbackrest" }
         - { option: "repo1-type", value: "s3" }
-        - { option: "repo1-path", value: "{{ PGBACKREST_REPO_PATH | default('/pgbackrest') }}" }
-        - { option: "repo1-s3-key", value: "{{ PGBACKREST_S3_KEY | default(AWS_ACCESS_KEY_ID | default('')) }}" }
-        - { option: "repo1-s3-key-secret", value: "{{ PGBACKREST_S3_KEY_SECRET | default(AWS_SECRET_ACCESS_KEY | default('')) }}" }
-        - { option: "repo1-s3-bucket", value: "{{ PGBACKREST_S3_BUCKET | default(digital_ocean_spaces_name | default(patroni_cluster_name + '-backup')) }}" }
+        - { option: "repo1-path", value: "{{ pgbackrest_repo_path | default('/pgbackrest') }}" }
+        - { option: "repo1-s3-key", value: "{{ pgbackrest_s3_key | default(AWS_ACCESS_KEY_ID | default('')) }}" }
+        - { option: "repo1-s3-key-secret", value: "{{ pgbackrest_s3_key_secret | default(AWS_SECRET_ACCESS_KEY | default('')) }}" }
+        - { option: "repo1-s3-bucket", value: "{{ pgbackrest_s3_bucket | default(digital_ocean_spaces_name | default(patroni_cluster_name + '-backup')) }}" }
         - {
             option: "repo1-s3-endpoint",
-            value: "{{ PGBACKREST_S3_ENDPOINT | default('https://' + (digital_ocean_spaces_region | default(server_location)) + '.digitaloceanspaces.com') }}",
+            value: "{{ pgbackrest_s3_endpoint | default('https://' + (digital_ocean_spaces_region | default(server_location)) + '.digitaloceanspaces.com') }}",
           }
-        - { option: "repo1-s3-region", value: "{{ PGBACKREST_S3_REGION | default(digital_ocean_spaces_region | default(server_location)) }}" }
-        - { option: "repo1-s3-uri-style", value: "{{ PGBACKREST_S3_URI_STYLE | default('path') }}" }
-        - { option: "repo1-retention-full", value: "{{ PGBACKREST_RETENTION_FULL | default('4') }}" }
-        - { option: "repo1-retention-archive", value: "{{ PGBACKREST_RETENTION_ARCHIVE | default('4') }}" }
-        - { option: "repo1-retention-archive-type", value: "{{ PGBACKREST_RETENTION_ARCHIVE_TYPE | default('full') }}" }
+        - { option: "repo1-s3-region", value: "{{ pgbackrest_s3_region | default(digital_ocean_spaces_region | default(server_location)) }}" }
+        - { option: "repo1-s3-uri-style", value: "{{ pgbackrest_s3_uri_style | default('path') }}" }
+        - { option: "repo1-retention-full", value: "{{ pgbackrest_retention_full | default('4') }}" }
+        - { option: "repo1-retention-archive", value: "{{ pgbackrest_retention_archive | default('4') }}" }
+        - { option: "repo1-retention-archive-type", value: "{{ pgbackrest_retention_archive_type | default('full') }}" }
         - { option: "repo1-bundle", value: "y" }
         - { option: "repo1-block", value: "y" }
         - { option: "start-fast", value: "y" }
@@ -174,7 +174,7 @@
         - { option: "archive-async", value: "y" }
         - { option: "archive-get-queue-max", value: "1GiB" }
         - { option: "spool-path", value: "/var/spool/pgbackrest" }
-        - { option: "process-max", value: "{{ PGBACKREST_PROCESS_MAX | default([ansible_processor_vcpus | int // 2, 1] | max) }}" }
+        - { option: "process-max", value: "{{ pgbackrest_process_max | default([ansible_processor_vcpus | int // 2, 1] | max) }}" }
         - { option: "backup-standby", value: "{{ 'y' if groups['postgres_cluster'] | length > 1 else 'n' }}" }
       stanza:
         - { option: "log-level-console", value: "info" }
@@ -191,19 +191,19 @@
         - { option: "log-level-file", value: "detail" }
         - { option: "log-path", value: "/var/log/pgbackrest" }
         - { option: "repo1-type", value: "s3" }
-        - { option: "repo1-path", value: "{{ PGBACKREST_REPO_PATH | default('/pgbackrest') }}" }
-        - { option: "repo1-s3-key", value: "{{ PGBACKREST_S3_KEY | default(hetzner_object_storage_access_key | default('')) }}" }
-        - { option: "repo1-s3-key-secret", value: "{{ PGBACKREST_S3_KEY_SECRET | default(hetzner_object_storage_secret_key | default('')) }}" }
-        - { option: "repo1-s3-bucket", value: "{{ PGBACKREST_S3_BUCKET | default(hetzner_object_storage_name | default(patroni_cluster_name + '-backup')) }}" }
+        - { option: "repo1-path", value: "{{ pgbackrest_repo_path | default('/pgbackrest') }}" }
+        - { option: "repo1-s3-key", value: "{{ pgbackrest_s3_key | default(hetzner_object_storage_access_key | default('')) }}" }
+        - { option: "repo1-s3-key-secret", value: "{{ pgbackrest_s3_key_secret | default(hetzner_object_storage_secret_key | default('')) }}" }
+        - { option: "repo1-s3-bucket", value: "{{ pgbackrest_s3_bucket | default(hetzner_object_storage_name | default(patroni_cluster_name + '-backup')) }}" }
         - {
             option: "repo1-s3-endpoint",
-            value: "{{ PGBACKREST_S3_ENDPOINT | default(hetzner_object_storage_endpoint | default('https://' + (hetzner_object_storage_region | default(server_location)) + '.your-objectstorage.com')) }}",
+            value: "{{ pgbackrest_s3_endpoint | default(hetzner_object_storage_endpoint | default('https://' + (hetzner_object_storage_region | default(server_location)) + '.your-objectstorage.com')) }}",
           }
-        - { option: "repo1-s3-region", value: "{{ PGBACKREST_S3_REGION | default(hetzner_object_storage_region | default(server_location)) }}" }
-        - { option: "repo1-s3-uri-style", value: "{{ PGBACKREST_S3_URI_STYLE | default('path') }}" }
-        - { option: "repo1-retention-full", value: "{{ PGBACKREST_RETENTION_FULL | default('4') }}" }
-        - { option: "repo1-retention-archive", value: "{{ PGBACKREST_RETENTION_ARCHIVE | default('4') }}" }
-        - { option: "repo1-retention-archive-type", value: "{{ PGBACKREST_RETENTION_ARCHIVE_TYPE | default('full') }}" }
+        - { option: "repo1-s3-region", value: "{{ pgbackrest_s3_region | default(hetzner_object_storage_region | default(server_location)) }}" }
+        - { option: "repo1-s3-uri-style", value: "{{ pgbackrest_s3_uri_style | default('path') }}" }
+        - { option: "repo1-retention-full", value: "{{ pgbackrest_retention_full | default('4') }}" }
+        - { option: "repo1-retention-archive", value: "{{ pgbackrest_retention_archive | default('4') }}" }
+        - { option: "repo1-retention-archive-type", value: "{{ pgbackrest_retention_archive_type | default('full') }}" }
         - { option: "repo1-bundle", value: "y" }
         - { option: "repo1-block", value: "y" }
         - { option: "start-fast", value: "y" }
@@ -213,7 +213,7 @@
         - { option: "archive-async", value: "y" }
         - { option: "archive-get-queue-max", value: "1GiB" }
         - { option: "spool-path", value: "/var/spool/pgbackrest" }
-        - { option: "process-max", value: "{{ PGBACKREST_PROCESS_MAX | default([ansible_processor_vcpus | int // 2, 1] | max) }}" }
+        - { option: "process-max", value: "{{ pgbackrest_process_max | default([ansible_processor_vcpus | int // 2, 1] | max) }}" }
         - { option: "backup-standby", value: "{{ 'y' if groups['postgres_cluster'] | length > 1 else 'n' }}" }
       stanza:
         - { option: "log-level-console", value: "info" }
