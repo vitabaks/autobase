@@ -21,7 +21,8 @@ const ExtensionsSwiper: FC<ExtensionsSwiperProps> = ({ isPending = false, filter
     Object.entries(
       import.meta.glob('../assets/*.{png,jpg,jpeg,svg,PNG,JPEG,SVG}', {
         eager: true,
-        as: 'url',
+        query: '?url',
+        import: 'default',
       }),
     ).reduce((acc, [key, value]) => {
       const iconName = key.match(/(\w*.\w*)$/gi);
