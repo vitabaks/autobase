@@ -39,6 +39,7 @@ export const getCommonExtraVars = (values: ClusterFormValues) => ({
  * @param values - Filled form values.
  */
 export const getCloudProviderExtraVars = (values: ClusterFormValues) => ({
+  ...getCommonExtraVars(values),
   cloud_provider: values[CLUSTER_FORM_FIELD_NAMES.PROVIDER].code,
   server_type:
     values?.[CLUSTER_FORM_FIELD_NAMES.INSTANCE_TYPE] === 'custom'
@@ -67,7 +68,6 @@ export const getCloudProviderExtraVars = (values: ClusterFormValues) => ({
           : {}),
       }
     : {}),
-  ...getCommonExtraVars(values),
 });
 
 /**
@@ -76,6 +76,7 @@ export const getCloudProviderExtraVars = (values: ClusterFormValues) => ({
  * @param secretId - Optional ID of secret if exists.
  */
 export const getLocalMachineExtraVars = (values: ClusterFormValues, secretId?: number) => ({
+  ...getCommonExtraVars(values),
   ...(values[CLUSTER_FORM_FIELD_NAMES.CLUSTER_VIP_ADDRESS]
     ? { cluster_vip: values[CLUSTER_FORM_FIELD_NAMES.CLUSTER_VIP_ADDRESS] }
     : {}),
@@ -123,7 +124,6 @@ export const getLocalMachineExtraVars = (values: ClusterFormValues, secretId?: n
         postgresql_data_dir: values?.[DATA_DIRECTORY_FIELD_NAMES.DATA_DIRECTORY],
       }
     : {}),
-  ...getCommonExtraVars(values),
 });
 
 /**
@@ -394,12 +394,10 @@ const getRequestCloudParams = (values, secretsInfo, customExtraVars) => {
         }).filter(([key]) => SECRET_MODAL_CONTENT_BODY_FORM_FIELDS?.[key]),
       ),
     }),
-    extra_vars: convertObjectToRequiredFormat(
-      customExtraVars ?? {
-        ...getBaseClusterExtraVars(values),
-        ...getCloudProviderExtraVars(values),
-      },
-    ),
+    extra_vars: customExtraVars ?? {
+      ...getBaseClusterExtraVars(values),
+      ...getCloudProviderExtraVars(values),
+    },
   };
 };
 
@@ -410,7 +408,7 @@ const getRequestLocalMachineParams = (values, secretId, customExtraVars) => {
 
   return {
     envs: convertObjectValueToBase64Format(localMachineEnvs),
-    extra_vars: convertObjectToRequiredFormat(customExtraVars ?? { ...baseClusterExtraVars, ...localMachineExtraVars }),
+    extra_vars: customExtraVars ?? { ...baseClusterExtraVars, ...localMachineExtraVars },
     existing_cluster: values[DATABASE_SERVERS_FIELD_NAMES.IS_CLUSTER_EXISTS] ?? false,
   };
 };
