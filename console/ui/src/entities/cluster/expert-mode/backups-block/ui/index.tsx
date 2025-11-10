@@ -1,4 +1,4 @@
-import { ChangeEvent, FC } from 'react';
+import { ChangeEvent, FC, useEffect } from 'react';
 import {
   Checkbox,
   FormControlLabel,
@@ -18,6 +18,8 @@ import { BACKUP_METHODS, BACKUPS_BLOCK_FIELD_NAMES } from '@entities/cluster/exp
 import { range } from '@mui/x-data-grid/internals';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import ConfigureBackupModal from '@entities/cluster/expert-mode/backups-block/ui/ConfigureBackupModal.tsx';
+import { CLUSTER_FORM_FIELD_NAMES } from '@widgets/cluster-form/model/constants.ts';
+import { PROVIDERS } from '@shared/config/constants.ts';
 
 const BackupsBlock: FC = () => {
   const { t } = useTranslation('clusters');
@@ -25,10 +27,12 @@ const BackupsBlock: FC = () => {
   const {
     control,
     resetField,
+    setValue,
     formState: { errors },
   } = useFormContext();
 
   const watchIsBackupsEnabled = useWatch({ name: BACKUPS_BLOCK_FIELD_NAMES.IS_BACKUPS_ENABLED });
+  const watchProvider = useWatch({ name: CLUSTER_FORM_FIELD_NAMES.PROVIDER });
 
   const handleInputChange = (onChange: (event: ChangeEvent) => void) => (e: ChangeEvent<HTMLInputElement>) => {
     // prevent user from entering less than restricted amount in input field
@@ -38,6 +42,10 @@ const BackupsBlock: FC = () => {
     }
     onChange(e);
   };
+
+  useEffect(() => {
+    if (watchProvider?.code === PROVIDERS.LOCAL) setValue(BACKUPS_BLOCK_FIELD_NAMES.IS_BACKUPS_ENABLED, true);
+  }, [watchProvider]);
 
   return (
     <Stack>

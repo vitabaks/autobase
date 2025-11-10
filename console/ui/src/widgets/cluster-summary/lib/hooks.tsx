@@ -165,7 +165,7 @@ const useGetLocalMachineConfig = () => {
   const { t } = useTranslation(['clusters', 'shared']);
   const theme = useTheme();
 
-  const isHighAvailability = (data) => {
+  const isHighAvailability = (data: LocalClustersSummary) => {
     if (
       (IS_EXPERT_MODE &&
         !data[DCS_BLOCK_FIELD_NAMES.IS_DEPLOY_NEW_CLUSTER] &&
@@ -214,7 +214,7 @@ const useGetLocalMachineConfig = () => {
       children: (
         <Stack direction="column" spacing={0.5}>
           <Stack direction="row" spacing={0.5} alignItems="center">
-            {data[DATABASE_SERVERS_FIELD_NAMES.DATABASE_SERVERS]?.length >= 3 ? (
+            {isHighAvailability(data) ? (
               <CheckIcon width="24px" height="24px" style={{ fill: theme.palette.text.primary }} />
             ) : (
               <WarningAmberOutlinedIcon />

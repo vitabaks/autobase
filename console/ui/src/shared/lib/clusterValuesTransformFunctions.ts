@@ -107,21 +107,9 @@ export const getLocalMachineExtraVars = (values: ClusterFormValues, secretId?: n
                 consul_ports_serf_lan: 8301,
               }
             : {}),
-        ...(!values[LOAD_BALANCERS_FIELD_NAMES.IS_DEPLOY_TO_DATABASE_SERVERS] &&
-        values[LOAD_BALANCERS_FIELD_NAMES.IS_HAPROXY_ENABLED]
-          ? {
-              balancers: values[LOAD_BALANCERS_FIELD_NAMES.DATABASES].reduce(
-                (acc, server) => ({
-                  ...acc,
-                  [server[LOAD_BALANCERS_FIELD_NAMES.DATABASES_ADDRESS]]: {
-                    ansible_host: server[LOAD_BALANCERS_FIELD_NAMES.DATABASES_ADDRESS],
-                  },
-                }),
-                {},
-              ),
-            }
-          : {}),
         postgresql_data_dir: values?.[DATA_DIRECTORY_FIELD_NAMES.DATA_DIRECTORY],
+        database_public_access: !!values?.[ADDITIONAL_SETTINGS_BLOCK_FIELD_NAMES.IS_DB_PUBLIC_ACCESS],
+        cloud_load_balancer: !!values?.[ADDITIONAL_SETTINGS_BLOCK_FIELD_NAMES.IS_CLOUD_LOAD_BALANCER],
       }
     : {}),
 });
@@ -150,6 +138,7 @@ export const getLocalMachineEnvs = (values: ClusterFormValues, secretId?: number
             }
           : {}),
       },
+
       children: {
         balancers: {
           hosts:
@@ -303,8 +292,6 @@ export const getBaseClusterExtraVars = (values: ClusterFormValues) => {
             password: db?.[DATABASES_BLOCK_FIELD_NAMES.USER_PASSWORD],
           })),
           pgbouncer_install: !!values[CONNECTION_POOLS_BLOCK_FIELD_NAMES.IS_CONNECTION_POOLER_ENABLED],
-          database_public_access: !!values?.[ADDITIONAL_SETTINGS_BLOCK_FIELD_NAMES.IS_DB_PUBLIC_ACCESS],
-          cloud_load_balancer: !!values?.[ADDITIONAL_SETTINGS_BLOCK_FIELD_NAMES.IS_CLOUD_LOAD_BALANCER],
           netdata_install: !!values?.[ADDITIONAL_SETTINGS_BLOCK_FIELD_NAMES.IS_NETDATA_MONITORING],
           ...(values[CONNECTION_POOLS_BLOCK_FIELD_NAMES.IS_CONNECTION_POOLER_ENABLED] // do not add pools info if connection pooler is disabled
             ? {
@@ -319,7 +306,8 @@ export const getBaseClusterExtraVars = (values: ClusterFormValues) => {
               }
             : {}),
           ...(extensions?.length ? { postgresql_extensions: extensions } : {}),
-          ...(values?.[BACKUPS_BLOCK_FIELD_NAMES.BACKUP_METHOD]
+          ...(values?.[BACKUPS_BLOCK_FIELD_NAMES.BACKUP_METHOD] &&
+          values?.[BACKUPS_BLOCK_FIELD_NAMES.IS_BACKUPS_ENABLED]
             ? values[BACKUPS_BLOCK_FIELD_NAMES.BACKUP_METHOD] === BACKUP_METHODS.PG_BACK_REST
               ? {
                   pgbackrest_install: true,
