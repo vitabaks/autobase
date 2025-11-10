@@ -77,15 +77,27 @@ func (h *postClusterHandler) Handle(param cluster.PostClustersParams) middleware
 	ansibleLogEnv := h.getAnsibleLogEnv(param.Body.Name)
 	localLog.Trace().Strs("file_log", ansibleLogEnv).Msg("got file log name")
 
+	// Parse ExtraVars JSON string from request
+	extraVars := map[string]interface{}{}
+	if param.Body.ExtraVars != "" {
+		if err := json.Unmarshal([]byte(param.Body.ExtraVars), &extraVars); err != nil {
+			localLog.Warn().Str("extra_vars_raw", param.Body.ExtraVars).Err(err).Msg("failed to parse extra_vars JSON; using empty object")
+		}
+	}
+
 	if paramLocation == EnvParamLocation {
 		param.Body.Envs = append(param.Body.Envs, secretEnvs...)
 	} else if paramLocation == ExtraVarsParamLocation {
-		param.Body.ExtraVars = append(param.Body.ExtraVars, secretEnvs...)
+		for _, kv := range secretEnvs {
+			parts := strings.SplitN(kv, "=", 2)
+			if len(parts) == 2 {
+				extraVars[parts[0]] = parts[1]
+			}
+		}
 	}
 	param.Body.Envs = append(param.Body.Envs, ansibleLogEnv...)
-	param.Body.ExtraVars = append(param.Body.ExtraVars, "patroni_cluster_name="+param.Body.Name)
 
-	h.addProxySettings(&param, localLog)
+	h.addProxySettings(extraVars, &param, localLog)
 
 	const (
 		LocationExtraVar          = "server_location"
@@ -101,8 +113,8 @@ func (h *postClusterHandler) Handle(param cluster.PostClustersParams) middleware
 		inventoryJson    InventoryJson
 	)
 
-	// If no cloud_provider is specified, we expect inventory to be passed
-	if getValFromVars(param.Body.ExtraVars, CloudProviderExtraVar) == "" {
+	// If no cloud_provider is specified, expect inventory (in envs)
+	if getValFromExtraVars(extraVars, CloudProviderExtraVar) == "" {
 		rawInventory := getValFromVars(param.Body.Envs, InventoryJsonEnv)
 
 		if rawInventory != "" {
@@ -130,23 +142,32 @@ func (h *postClusterHandler) Handle(param cluster.PostClustersParams) middleware
 		}
 	} else {
 		// For cloud providers, expect server count to be explicitly passed in extra vars
-		serverCount = getIntValFromVars(param.Body.ExtraVars, ServersExtraVar)
+		serverCount = getIntValFromExtraVars(extraVars, ServersExtraVar)
 	}
 
 	status := "deploying"
 	if existing {
 		status = "ready"
 	}
+
+	// Marshal updated extraVars to JSON string for DB / Docker
+	extraVarsBytes, mErr := json.Marshal(extraVars)
+	if mErr != nil {
+		localLog.Error().Err(mErr).Msg("failed to marshal extra_vars; falling back to {}")
+		extraVarsBytes = []byte("{}")
+	}
+	extraVarsJSON := string(extraVarsBytes)
+
 	createdCluster, err := h.db.CreateCluster(param.HTTPRequest.Context(), &storage.CreateClusterReq{
 		ProjectID:         param.Body.ProjectID,
 		EnvironmentID:     param.Body.EnvironmentID,
 		Name:              param.Body.Name,
 		Description:       param.Body.Description,
 		SecretID:          secretID,
-		ExtraVars:         param.Body.ExtraVars,
-		Location:          getValFromVars(param.Body.ExtraVars, LocationExtraVar),
+		ExtraVars:         extraVarsJSON,
+		Location:          getValFromExtraVars(extraVars, LocationExtraVar),
 		ServerCount:       serverCount,
-		PostgreSqlVersion: getIntValFromVars(param.Body.ExtraVars, PostgreSqlVersionExtraVar),
+		PostgreSqlVersion: getIntValFromExtraVars(extraVars, PostgreSqlVersionExtraVar),
 		Status:            status,
 		Inventory:         inventoryJsonVal,
 	})
@@ -238,7 +259,7 @@ func (h *postClusterHandler) Handle(param cluster.PostClustersParams) middleware
 	var dockerId xdocker.InstanceID
 	dockerId, err = h.dockerManager.ManageCluster(param.HTTPRequest.Context(), &xdocker.ManageClusterConfig{
 		Envs:      param.Body.Envs,
-		ExtraVars: param.Body.ExtraVars,
+		ExtraVars: extraVarsJSON,
 		Mounts: []xdocker.Mount{
 			{
 				DockerPath: ansibleLogDir,
@@ -271,20 +292,16 @@ func (h *postClusterHandler) Handle(param cluster.PostClustersParams) middleware
 	})
 }
 
-func (h *postClusterHandler) addProxySettings(param *cluster.PostClustersParams, localLog zerolog.Logger) {
+func (h *postClusterHandler) addProxySettings(extraVars map[string]interface{}, param *cluster.PostClustersParams, localLog zerolog.Logger) {
 	const proxySettingName = "proxy_env"
 	proxySetting, err := h.db.GetSettingByName(param.HTTPRequest.Context(), proxySettingName)
 	if err != nil {
 		localLog.Warn().Err(err).Msg("failed to get proxy setting")
+		return
 	}
 	if proxySetting != nil {
-		proxySettingVal, err := json.Marshal(proxySetting.Value)
-		if err != nil {
-			localLog.Error().Any("proxy_env", proxySetting.Value).Err(err).Msg("failed to marshal proxy_env")
-		} else {
-			param.Body.ExtraVars = append(param.Body.ExtraVars, proxySettingName+"="+string(proxySettingVal))
-			localLog.Info().Str("proxy_env", string(proxySettingVal)).Msg("proxy_env was added to --extra-vars")
-		}
+		extraVars[proxySettingName] = proxySetting.Value
+		localLog.Info().Any("proxy_env", proxySetting.Value).Msg("proxy_env added to extra_vars JSON")
 	}
 }
 
@@ -318,6 +335,56 @@ func getIntValFromVars(vars []string, key string) int {
 	}
 
 	return valInt
+}
+
+// JSON helpers
+func getValFromExtraVars(m map[string]interface{}, key string) string {
+	v, ok := m[key]
+	if !ok || v == nil {
+		return ""
+	}
+	switch t := v.(type) {
+	case string:
+		return t
+	case float64:
+		return strconv.FormatFloat(t, 'f', -1, 64)
+	case bool:
+		if t {
+			return "true"
+		}
+		return "false"
+	default:
+		b, err := json.Marshal(t)
+		if err != nil {
+			return ""
+		}
+		return string(b)
+	}
+}
+
+func getIntValFromExtraVars(m map[string]interface{}, key string) int {
+	v, ok := m[key]
+	if !ok || v == nil {
+		return 0
+	}
+	switch t := v.(type) {
+	case float64:
+		return int(t)
+	case int:
+		return t
+	case int32:
+		return int(t)
+	case int64:
+		return int(t)
+	case string:
+		n, err := strconv.Atoi(t)
+		if err != nil {
+			return 0
+		}
+		return n
+	default:
+		return 0
+	}
 }
 
 type InventoryJson struct {

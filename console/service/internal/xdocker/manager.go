@@ -58,8 +58,9 @@ func (m *dockerManager) ManageCluster(ctx context.Context, config *ManageCluster
 			Env:   config.Envs,
 			Cmd: func() []string {
 				cmd := []string{entryPoint, playbookCreateCluster}
-				for _, vars := range config.ExtraVars {
-					cmd = append(cmd, "--extra-vars", vars)
+
+				if config.ExtraVars != "" {
+					cmd = append(cmd, "--extra-vars", config.ExtraVars)
 				}
 
 				return cmd
