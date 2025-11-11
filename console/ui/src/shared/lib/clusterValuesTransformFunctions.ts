@@ -153,7 +153,6 @@ export const getLocalMachineEnvs = (values: ClusterFormValues, secretId?: number
             }
           : {}),
       },
-
       children: {
         balancers: {
           hosts:
@@ -381,20 +380,8 @@ export const getBaseClusterExtraVars = (values: ClusterFormValues) => {
     : {};
 };
 
-/**
- * Function converts passed object into format required by API for some fields ('key=value').
- * @param object - Passed parameters.
- */
-const convertObjectToRequiredFormat = (object: Record<string, any>) => {
-  return Object.entries(object).reduce((acc: string[], [key, value]) => {
-    if (typeof object[key] === 'object') return [...acc, `${key}=${JSON.stringify(value)}`];
-    return [...acc, `${key}=${value}`];
-  }, []);
-};
-
-const convertObjectValueToBase64Format = (object: Record<string, any>) => {
-  return Object.entries(object).reduce((acc: string[], [key, value]) => [...acc, `${key}=${btoa(value)}`], []);
-};
+const convertObjectValueToBase64Format = (object: Record<string, any>) =>
+  Object.entries(object).reduce((acc: string[], [key, value]) => [...acc, `${key}=${btoa(JSON.stringify(value))}`], []);
 
 const getRequestCloudParams = (values, secretsInfo, customExtraVars) => {
   return {
@@ -413,13 +400,12 @@ const getRequestCloudParams = (values, secretsInfo, customExtraVars) => {
 };
 
 const getRequestLocalMachineParams = (values, secretId, customExtraVars) => {
-  const baseClusterExtraVars = getBaseClusterExtraVars(values);
-  const localMachineEnvs = getLocalMachineEnvs(values, secretId);
-  const localMachineExtraVars = getLocalMachineExtraVars(values, secretId);
-
   return {
-    envs: convertObjectValueToBase64Format(localMachineEnvs),
-    extra_vars: customExtraVars ?? { ...baseClusterExtraVars, ...localMachineExtraVars },
+    envs: convertObjectValueToBase64Format(getLocalMachineEnvs(values, secretId)),
+    extra_vars: customExtraVars ?? {
+      ...getBaseClusterExtraVars(values),
+      ...getLocalMachineExtraVars(values, secretId),
+    },
     existing_cluster: values[DATABASE_SERVERS_FIELD_NAMES.IS_CLUSTER_EXISTS] ?? false,
   };
 };
