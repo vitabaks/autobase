@@ -5,6 +5,7 @@ import (
 	"context"
 	"net/http"
 	"postgresql-cluster-console/pkg/tracer"
+	"strings"
 	"time"
 
 	"github.com/docker/docker/api/types/container"
@@ -40,7 +41,7 @@ func NewDockerManager(host string, image string) (IManager, error) {
 	return &dockerManager{
 		cli:   cli,
 		log:   log.Logger.With().Str("module", "docker_manager").Logger(),
-		image: image,
+		image: strings.TrimSpace(image), // trim to avoid newline / spaces
 	}, nil
 }
 
@@ -58,8 +59,9 @@ func (m *dockerManager) ManageCluster(ctx context.Context, config *ManageCluster
 			Env:   config.Envs,
 			Cmd: func() []string {
 				cmd := []string{entryPoint, playbookCreateCluster}
-				for _, vars := range config.ExtraVars {
-					cmd = append(cmd, "--extra-vars", vars)
+
+				if config.ExtraVars != "" {
+					cmd = append(cmd, "--extra-vars", config.ExtraVars)
 				}
 
 				return cmd
@@ -94,7 +96,7 @@ func (m *dockerManager) ManageCluster(ctx context.Context, config *ManageCluster
 	if err != nil {
 		errRem := m.cli.ContainerRemove(ctx, resp.ID, container.RemoveOptions{})
 		if errRem != nil {
-			localLog.Error().Err(err).Msg("failed to remove container after error on start")
+			localLog.Error().Err(errRem).Msg("failed to remove container after error on start")
 		}
 
 		return "", err
