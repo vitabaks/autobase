@@ -172,6 +172,11 @@ const useGetLocalMachineConfig = () => {
         data[DCS_BLOCK_FIELD_NAMES.DATABASES]?.length >= 3) ||
       (IS_EXPERT_MODE &&
         data[DCS_BLOCK_FIELD_NAMES.IS_DEPLOY_NEW_CLUSTER] &&
+        !data[DCS_BLOCK_FIELD_NAMES.IS_DEPLOY_TO_DB_SERVERS] &&
+        data[DCS_BLOCK_FIELD_NAMES.DATABASES]?.length >= 3) ||
+      (IS_EXPERT_MODE &&
+        data[DCS_BLOCK_FIELD_NAMES.IS_DEPLOY_NEW_CLUSTER] &&
+        data[DCS_BLOCK_FIELD_NAMES.IS_DEPLOY_TO_DB_SERVERS] &&
         data[DATABASE_SERVERS_FIELD_NAMES.DATABASE_SERVERS]?.length >= 3) ||
       (!IS_EXPERT_MODE && data[DATABASE_SERVERS_FIELD_NAMES.DATABASE_SERVERS]?.length >= 3)
     )

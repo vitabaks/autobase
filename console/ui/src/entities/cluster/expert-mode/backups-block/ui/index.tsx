@@ -44,7 +44,7 @@ const BackupsBlock: FC = () => {
   };
 
   useEffect(() => {
-    if (watchProvider?.code === PROVIDERS.LOCAL) setValue(BACKUPS_BLOCK_FIELD_NAMES.IS_BACKUPS_ENABLED, true);
+    if (watchProvider?.code === PROVIDERS.LOCAL) setValue(BACKUPS_BLOCK_FIELD_NAMES.IS_BACKUPS_ENABLED, false);
   }, [watchProvider]);
 
   return (

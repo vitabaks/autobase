@@ -1,6 +1,6 @@
 import { FC, useState } from 'react';
 import { Button, Card, Modal, Stack, TextField, Tooltip, Typography } from '@mui/material';
-import { Controller, useFormContext } from 'react-hook-form';
+import { Controller, useFormContext, useWatch } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { POSTGRES_PARAMETERS_FIELD_NAMES } from '@entities/cluster/expert-mode/postgres-parameters-block/model/const.ts';
 import DoNotDisturbAltOutlinedIcon from '@mui/icons-material/DoNotDisturbAltOutlined';
@@ -13,13 +13,12 @@ const ConfigurePostgresParametersModal: FC = () => {
 
   const {
     control,
-    watch,
     formState: { errors },
   } = useFormContext();
 
   const handleModalOpenState = (isOpen: boolean) => () => setIsModalOpen(isOpen);
 
-  const watchPostgresParameters = watch(POSTGRES_PARAMETERS_FIELD_NAMES.POSTGRES_PARAMETERS);
+  const watchPostgresParameters = useWatch({ name: POSTGRES_PARAMETERS_FIELD_NAMES.POSTGRES_PARAMETERS });
 
   return (
     <>

@@ -26,6 +26,21 @@ import { KERNEL_PARAMETERS_FIELD_NAMES } from '@entities/cluster/expert-mode/ker
 import { RequestClusterCreate } from '@shared/api/api/clusters.ts';
 
 /**
+ * Get value from modal form (postgres or kernel params) and convert to correct format.
+ * @param value - Form value.
+ */
+export const convertModalParametersToArray = (value?: string) =>
+  value?.length
+    ? value.split(/[\n\r]/).map((item) => {
+        const values = item.split(/[:=]/);
+        return {
+          option: values?.[0].trim(), // due to splitting rule, values might have unnecessary whitespaces that needs to be removed
+          value: values?.[1].trim(),
+        };
+      })
+    : value;
+
+/**
  * Functions creates an object with shared cluster envs that should be put in 'extra_vars' request field.
  * @param values - Filled form values.
  */
@@ -57,6 +72,8 @@ export const getCloudProviderExtraVars = (values: ClusterFormValues) => ({
     ? {
         pg_data_mount_fstype: values[STORAGE_BLOCK_FIELDS.FILE_SYSTEM_TYPE],
         volume_type: values[STORAGE_BLOCK_FIELDS.VOLUME_TYPE],
+        database_public_access: !!values?.[ADDITIONAL_SETTINGS_BLOCK_FIELD_NAMES.IS_DB_PUBLIC_ACCESS],
+        cloud_load_balancer: !!values?.[ADDITIONAL_SETTINGS_BLOCK_FIELD_NAMES.IS_CLOUD_LOAD_BALANCER],
         ...([PROVIDERS.AWS, PROVIDERS.GCP, PROVIDERS.AZURE].includes(values[CLUSTER_FORM_FIELD_NAMES.PROVIDER]?.code) &&
         !!values[INSTANCES_AMOUNT_BLOCK_VALUES.IS_SPOT_INSTANCES]
           ? {
@@ -108,8 +125,6 @@ export const getLocalMachineExtraVars = (values: ClusterFormValues, secretId?: n
               }
             : {}),
         postgresql_data_dir: values?.[DATA_DIRECTORY_FIELD_NAMES.DATA_DIRECTORY],
-        database_public_access: !!values?.[ADDITIONAL_SETTINGS_BLOCK_FIELD_NAMES.IS_DB_PUBLIC_ACCESS],
-        cloud_load_balancer: !!values?.[ADDITIONAL_SETTINGS_BLOCK_FIELD_NAMES.IS_CLOUD_LOAD_BALANCER],
       }
     : {}),
 });
@@ -260,102 +275,110 @@ export const getLocalMachineEnvs = (values: ClusterFormValues, secretId?: number
 });
 
 /**
- * Functions creates an object with base cluster envs shared between cloud and local clusters.
+ * Function converts 'extensions' form value into request format.
+ * @param values - Filled form values.
+ */
+const getExtensions = (values: ClusterFormValues) =>
+  Object.entries(values?.[EXTENSION_BLOCK_FIELD_NAMES.EXTENSIONS])?.reduce((acc, [key, value]) => {
+    if (value?.length) {
+      const convertedToReqFormat = value.map((item) => ({
+        ext: key,
+        db: values[DATABASES_BLOCK_FIELD_NAMES.NAMES][item],
+      }));
+      return [...acc, ...convertedToReqFormat];
+    }
+    return acc;
+  }, []) ?? [];
+
+/**
+ * Functions creates an object with base cluster extra_vars shared between cloud and local clusters.
  * @param values - Filled form values.
  */
 export const getBaseClusterExtraVars = (values: ClusterFormValues) => {
-  const extensions = IS_EXPERT_MODE
-    ? (Object.entries(values?.[EXTENSION_BLOCK_FIELD_NAMES.EXTENSIONS])?.reduce((acc, [key, value]) => {
-        if (value?.length) {
-          const convertedToReqFormat = value.map((item) => ({
-            ext: key,
-            db: values[DATABASES_BLOCK_FIELD_NAMES.NAMES][item],
-          }));
-          return [...acc, ...convertedToReqFormat];
-        }
-        return acc;
-      }, []) ?? [])
-    : '';
+  const extensions = IS_EXPERT_MODE ? getExtensions(values) : [];
 
-  return {
-    ...(IS_EXPERT_MODE
-      ? {
-          postgresql_databases: values[DATABASES_BLOCK_FIELD_NAMES.DATABASES]?.map((db) => ({
-            db: db?.[DATABASES_BLOCK_FIELD_NAMES.DATABASE_NAME],
-            owner: db?.[DATABASES_BLOCK_FIELD_NAMES.USER_NAME],
-            encoding: db?.[DATABASES_BLOCK_FIELD_NAMES.ENCODING],
-            lc_ctype: db?.[DATABASES_BLOCK_FIELD_NAMES.LOCALE],
-            lc_collate: db?.[DATABASES_BLOCK_FIELD_NAMES.LOCALE],
-          })),
-          postgresql_users: values[DATABASES_BLOCK_FIELD_NAMES.DATABASES]?.map((db) => ({
-            name: db?.[DATABASES_BLOCK_FIELD_NAMES.USER_NAME],
-            password: db?.[DATABASES_BLOCK_FIELD_NAMES.USER_PASSWORD],
-          })),
-          pgbouncer_install: !!values[CONNECTION_POOLS_BLOCK_FIELD_NAMES.IS_CONNECTION_POOLER_ENABLED],
-          netdata_install: !!values?.[ADDITIONAL_SETTINGS_BLOCK_FIELD_NAMES.IS_NETDATA_MONITORING],
-          ...(values[CONNECTION_POOLS_BLOCK_FIELD_NAMES.IS_CONNECTION_POOLER_ENABLED] // do not add pools info if connection pooler is disabled
+  return IS_EXPERT_MODE
+    ? {
+        postgresql_databases: values[DATABASES_BLOCK_FIELD_NAMES.DATABASES]?.map((db) => ({
+          db: db?.[DATABASES_BLOCK_FIELD_NAMES.DATABASE_NAME],
+          owner: db?.[DATABASES_BLOCK_FIELD_NAMES.USER_NAME],
+          encoding: db?.[DATABASES_BLOCK_FIELD_NAMES.ENCODING],
+          lc_ctype: db?.[DATABASES_BLOCK_FIELD_NAMES.LOCALE],
+          lc_collate: db?.[DATABASES_BLOCK_FIELD_NAMES.LOCALE],
+        })),
+        postgresql_users: values[DATABASES_BLOCK_FIELD_NAMES.DATABASES]?.map((db) => ({
+          name: db?.[DATABASES_BLOCK_FIELD_NAMES.USER_NAME],
+          password: db?.[DATABASES_BLOCK_FIELD_NAMES.USER_PASSWORD],
+        })),
+        pgbouncer_install: !!values[CONNECTION_POOLS_BLOCK_FIELD_NAMES.IS_CONNECTION_POOLER_ENABLED],
+        netdata_install: !!values?.[ADDITIONAL_SETTINGS_BLOCK_FIELD_NAMES.IS_NETDATA_MONITORING],
+        ...(values[CONNECTION_POOLS_BLOCK_FIELD_NAMES.IS_CONNECTION_POOLER_ENABLED] // do not add pools info if connection pooler is disabled
+          ? {
+              pgbouncer_pools: values?.[CONNECTION_POOLS_BLOCK_FIELD_NAMES.POOLS]?.map((pool) => ({
+                name: pool?.[CONNECTION_POOLS_BLOCK_FIELD_NAMES.POOL_NAME],
+                dbname: pool?.[CONNECTION_POOLS_BLOCK_FIELD_NAMES.POOL_NAME],
+                pool_parameters: {
+                  pool_size: pool?.[CONNECTION_POOLS_BLOCK_FIELD_NAMES.POOL_SIZE],
+                  pool_mode: pool?.[CONNECTION_POOLS_BLOCK_FIELD_NAMES.POOL_MODE],
+                },
+              })),
+            }
+          : {}),
+        ...(extensions?.length ? { postgresql_extensions: extensions } : {}),
+        ...(values?.[BACKUPS_BLOCK_FIELD_NAMES.BACKUP_METHOD] && values?.[BACKUPS_BLOCK_FIELD_NAMES.IS_BACKUPS_ENABLED]
+          ? values[BACKUPS_BLOCK_FIELD_NAMES.BACKUP_METHOD] === BACKUP_METHODS.PG_BACK_REST
             ? {
-                pgbouncer_pools: values?.[CONNECTION_POOLS_BLOCK_FIELD_NAMES.POOLS]?.map((pool) => ({
-                  name: pool?.[CONNECTION_POOLS_BLOCK_FIELD_NAMES.POOL_NAME],
-                  dbname: pool?.[CONNECTION_POOLS_BLOCK_FIELD_NAMES.POOL_NAME],
-                  pool_parameters: {
-                    pool_size: pool?.[CONNECTION_POOLS_BLOCK_FIELD_NAMES.POOL_SIZE],
-                    pool_mode: pool?.[CONNECTION_POOLS_BLOCK_FIELD_NAMES.POOL_MODE],
-                  },
-                })),
-              }
-            : {}),
-          ...(extensions?.length ? { postgresql_extensions: extensions } : {}),
-          ...(values?.[BACKUPS_BLOCK_FIELD_NAMES.BACKUP_METHOD] &&
-          values?.[BACKUPS_BLOCK_FIELD_NAMES.IS_BACKUPS_ENABLED]
-            ? values[BACKUPS_BLOCK_FIELD_NAMES.BACKUP_METHOD] === BACKUP_METHODS.PG_BACK_REST
-              ? {
-                  pgbackrest_install: true,
-                  pgbackrest_backup_hour: values?.[BACKUPS_BLOCK_FIELD_NAMES.BACKUP_START_TIME],
-                  pgbackrest_retention_full: values?.[BACKUPS_BLOCK_FIELD_NAMES.BACKUP_RETENTION],
-                  pgbackrest_retention_archive: values?.[BACKUPS_BLOCK_FIELD_NAMES.BACKUP_RETENTION],
-                  ...(values?.[BACKUPS_BLOCK_FIELD_NAMES.CONFIG]
-                    ? {
-                        pgbackrest_conf: {
-                          global: values?.[BACKUPS_BLOCK_FIELD_NAMES.CONFIG],
-                        },
-                      }
-                    : {}),
-                }
-              : {
-                  wal_g_install: true,
-                  wal_g_backup_hour: values?.[BACKUPS_BLOCK_FIELD_NAMES.BACKUP_START_TIME],
-                  wal_g_retention_full: values?.[BACKUPS_BLOCK_FIELD_NAMES.BACKUP_RETENTION],
-                  ...(values?.[BACKUPS_BLOCK_FIELD_NAMES.CONFIG]
-                    ? {
-                        wal_g_json: values?.[BACKUPS_BLOCK_FIELD_NAMES.CONFIG],
-                      }
-                    : {}),
-                }
-            : {}),
-          ...(values?.[POSTGRES_PARAMETERS_FIELD_NAMES.POSTGRES_PARAMETERS]
-            ? {
-                local_postgresql_parameters: values[POSTGRES_PARAMETERS_FIELD_NAMES.POSTGRES_PARAMETERS],
-              }
-            : {}),
-          ...(values?.[KERNEL_PARAMETERS_FIELD_NAMES.KERNEL_PARAMETERS]
-            ? {
-                sysctl_set: true,
-                sysctl_conf: { postgres_cluster: values[KERNEL_PARAMETERS_FIELD_NAMES.KERNEL_PARAMETERS] },
-              }
-            : {}),
-          ...(values?.[ADDITIONAL_SETTINGS_BLOCK_FIELD_NAMES.SYNC_STANDBY_NODES]
-            ? {
-                synchronous_mode: true,
-                synchronous_node_count: values[ADDITIONAL_SETTINGS_BLOCK_FIELD_NAMES.SYNC_STANDBY_NODES],
-                ...(values?.[ADDITIONAL_SETTINGS_BLOCK_FIELD_NAMES.IS_SYNC_MODE_STRICT]
-                  ? { synchronous_mode_strict: true }
+                pgbackrest_install: true,
+                pgbackrest_backup_hour: values?.[BACKUPS_BLOCK_FIELD_NAMES.BACKUP_START_TIME],
+                pgbackrest_retention_full: values?.[BACKUPS_BLOCK_FIELD_NAMES.BACKUP_RETENTION],
+                pgbackrest_retention_archive: values?.[BACKUPS_BLOCK_FIELD_NAMES.BACKUP_RETENTION],
+                ...(values?.[BACKUPS_BLOCK_FIELD_NAMES.CONFIG]
+                  ? {
+                      pgbackrest_conf: {
+                        global: convertModalParametersToArray(values?.[BACKUPS_BLOCK_FIELD_NAMES.CONFIG]),
+                      },
+                    }
                   : {}),
               }
-            : {}),
-        }
-      : {}),
-  };
+            : {
+                wal_g_install: true,
+                wal_g_backup_hour: values?.[BACKUPS_BLOCK_FIELD_NAMES.BACKUP_START_TIME],
+                wal_g_retention_full: values?.[BACKUPS_BLOCK_FIELD_NAMES.BACKUP_RETENTION],
+                ...(values?.[BACKUPS_BLOCK_FIELD_NAMES.CONFIG]
+                  ? {
+                      wal_g_json: convertModalParametersToArray(values?.[BACKUPS_BLOCK_FIELD_NAMES.CONFIG]),
+                    }
+                  : {}),
+              }
+          : {}),
+        ...(values?.[POSTGRES_PARAMETERS_FIELD_NAMES.POSTGRES_PARAMETERS]
+          ? {
+              local_postgresql_parameters: convertModalParametersToArray(
+                values?.[POSTGRES_PARAMETERS_FIELD_NAMES.POSTGRES_PARAMETERS],
+              ),
+            }
+          : {}),
+        ...(values?.[KERNEL_PARAMETERS_FIELD_NAMES.KERNEL_PARAMETERS]
+          ? {
+              sysctl_set: true,
+              sysctl_conf: {
+                postgres_cluster: convertModalParametersToArray(
+                  values?.[KERNEL_PARAMETERS_FIELD_NAMES.KERNEL_PARAMETERS],
+                ),
+              },
+            }
+          : {}),
+        ...(values?.[ADDITIONAL_SETTINGS_BLOCK_FIELD_NAMES.SYNC_STANDBY_NODES]
+          ? {
+              synchronous_mode: true,
+              synchronous_node_count: values[ADDITIONAL_SETTINGS_BLOCK_FIELD_NAMES.SYNC_STANDBY_NODES],
+              ...(values?.[ADDITIONAL_SETTINGS_BLOCK_FIELD_NAMES.IS_SYNC_MODE_STRICT]
+                ? { synchronous_mode_strict: true }
+                : {}),
+            }
+          : {}),
+      }
+    : {};
 };
 
 /**
