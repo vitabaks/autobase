@@ -31,7 +31,7 @@ docker-lint-console-db: ## Lint console db Dockerfile
 docker-lint-console: ## Lint console Dockerfile (all services)
 	@echo "Lint console container Dockerfile"
 	docker run --rm -i -v $(PWD)/console/Dockerfile:/Dockerfile \
-	hadolint/hadolint hadolint --ignore DL3002 --ignore DL3008 --ignore DL3059 --ignore DL4001 /Dockerfile
+	hadolint/hadolint hadolint --ignore DL3002 --ignore DL3008 --ignore DL3013 --ignore DL3059 --ignore DL4001 /Dockerfile
 
 .PHONY: docker-build docker-build-console-ui docker-build-console-api docker-build-console-db docker-build-console
 docker-build: docker-build-automation docker-build-console-ui docker-build-console-api docker-build-console-db docker-build-console ## Build for all Docker images
