@@ -9,27 +9,17 @@
     - name: "Add public keys to ~{{ system_user.stdout | default('') }}/.ssh/authorized_keys"
       ansible.posix.authorized_key:
         user: "{{ system_user.stdout }}"
-        key: "{{ item }}"
+        key: "{{ item | replace(\"'\", '') | replace('\"', '') | trim }}"
         state: present
-      loop: '{{ ssh_public_keys_list }}'
-      vars:
-        ssh_public_keys_list: >-
-          {{
-            (
-              ssh_public_keys
-              | replace('[', '')
-              | replace(']', '')
-              | replace("'", '')
-              | replace('"', '')
-              | split(',')
-              | map('trim')
-              | reject('equalto', '')
-              | list
-              if ssh_public_keys is string
-              else ssh_public_keys
-            )
-          }}
-  when:
+      loop: >-
+        {{
+          (ssh_public_keys
+          | replace('\n', ',')
+          | split(',')
+          | reject('equalto', '')
+          | list)
+          if ssh_public_keys is string else ssh_public_keys
+        }}
     - ssh_public_keys is defined
     - ssh_public_keys | length > 0
   tags: ssh_public_keys
