@@ -20,6 +20,7 @@
           | list)
           if ssh_public_keys is string else ssh_public_keys
         }}
+  when:
     - ssh_public_keys is defined
     - ssh_public_keys | length > 0
   tags: ssh_public_keys
