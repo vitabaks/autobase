@@ -267,7 +267,7 @@ tags:
   {{ patroni_tags | replace(" ", "") | replace("=", ": ") | replace(",", "\n  ") }}
 {% endif %}
 {% set normalized_tags = patroni_tags | default('') | replace(" ", "") %}
-{% if 'nosync=' not in normalized_tags %}
+{% if 'nosync=' not in normalized_tags and 'sync_priority=' not in normalized_tags %}
   nosync: false
 {% endif %}
 {% if 'noloadbalance=' not in normalized_tags %}
