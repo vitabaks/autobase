@@ -351,6 +351,25 @@
           register: ec2_spot_request_result
           when: item.instances[0] | default('') | length < 1
 
+        - name: "AWS: Wait for EC2 Spot instance to be created"
+          amazon.aws.ec2_instance:
+            access_key: "{{ lookup('ansible.builtin.env', 'AWS_ACCESS_KEY_ID') }}"
+            secret_key: "{{ lookup('ansible.builtin.env', 'AWS_SECRET_ACCESS_KEY') }}"
+            region: "{{ server_location }}"
+            filters:
+              spot-instance-request-id: "{{ item.spot_request.spot_instance_request_id }}"
+          loop: "{{ ec2_spot_request_result.results }}"
+          loop_control:
+            index_var: idx
+            label: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}"
+          register: ec2_spot_instance_wait_result
+          until:
+            - ec2_spot_instance_wait_result.instances[0][ip_address_type] is defined
+            - ec2_spot_instance_wait_result.instances[0][ip_address_type] | length > 0
+          retries: 12
+          delay: 10
+          when: item.spot_request.spot_instance_request_id is defined
+
         - name: "AWS: Rename the EC2 Spot instance"
           amazon.aws.ec2_instance:
             access_key: "{{ lookup('ansible.builtin.env', 'AWS_ACCESS_KEY_ID') }}"
@@ -364,9 +383,7 @@
             index_var: idx
             label: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}"
           register: ec2_spot_instance_result
-          until:
-            - ec2_spot_instance_result.instances[0][ip_address_type] is defined
-            - ec2_spot_instance_result.instances[0][ip_address_type] | length > 0
+          until: ec2_spot_instance_result is success
           retries: 3
           delay: 10
           when: item.spot_request.spot_instance_request_id is defined
