@@ -1,4 +1,4 @@
-import { FC, useRef, useState } from 'react';
+import { FC, useState } from 'react';
 import Spinner from '@shared/ui/spinner';
 import { IconButton, Stack, Typography, useTheme } from '@mui/material';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
@@ -12,23 +12,10 @@ import { ExtensionsSwiperProps } from '@entities/cluster/expert-mode/extensions-
 import ErrorBox from '@shared/ui/error-box/ui';
 import { ErrorBoundary } from 'react-error-boundary';
 
-const ExtensionsSwiper: FC<ExtensionsSwiperProps> = ({ isPending = false, filteredExtensions }) => {
+const ExtensionsSwiper: FC<ExtensionsSwiperProps> = ({ isPending = false, filteredExtensions, extensionIcons }) => {
   const { t } = useTranslation('clusters');
   const [swiperRef, setSwiperRef] = useState<SwiperTypes | null>(null);
   const theme = useTheme();
-
-  const extensionIcons = useRef(
-    Object.entries(
-      import.meta.glob('../assets/*.{png,jpg,jpeg,svg,PNG,JPEG,SVG}', {
-        eager: true,
-        query: '?url',
-        import: 'default',
-      }),
-    ).reduce((acc, [key, value]) => {
-      const iconName = key.match(/(\w*.\w*)$/gi);
-      return iconName?.[0] ? { ...acc, [iconName[0]]: value } : acc;
-    }, {}),
-  );
 
   const handleSwipeNext = () => swiperRef?.slideNext();
   const handleSwipePrev = () => swiperRef?.slidePrev();
@@ -47,6 +34,7 @@ const ExtensionsSwiper: FC<ExtensionsSwiperProps> = ({ isPending = false, filter
                 </IconButton>
                 <Swiper
                   style={{
+                    // @ts-expect-error ts cannot see this field in Swiper styles
                     '--swiper-pagination-color': theme.palette.primary.main,
                     '--swiper-pagination-bullet-inactive-color': theme.palette.primary.main,
                   }}
@@ -64,7 +52,7 @@ const ExtensionsSwiper: FC<ExtensionsSwiperProps> = ({ isPending = false, filter
                   modules={[Grid, Pagination]}>
                   {filteredExtensions?.map((extension) => (
                     <SwiperSlide key={`${extension?.name} + ${extension?.description}`}>
-                      <ExtensionBox extension={extension} extensionIcons={extensionIcons.current} />
+                      <ExtensionBox extension={extension} extensionIcons={extensionIcons} />
                     </SwiperSlide>
                   ))}
                 </Swiper>

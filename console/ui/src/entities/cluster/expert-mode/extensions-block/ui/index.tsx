@@ -1,4 +1,4 @@
-import { ChangeEvent, FC, useEffect, useState, useTransition } from 'react';
+import { ChangeEvent, FC, useEffect, useRef, useState, useTransition } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Box, Checkbox, FormControlLabel, InputAdornment, Stack, TextField, Typography } from '@mui/material';
 import { ResponseDatabaseExtension, useGetDatabaseExtensionsQuery } from '@shared/api/api/other.ts';
@@ -25,6 +25,21 @@ const ExtensionsBlock: FC = () => {
 
   const watchPostgresVersion = useWatch({ name: CLUSTER_FORM_FIELD_NAMES.POSTGRES_VERSION });
   const watchEnabledExtensions = useWatch({ name: EXTENSION_BLOCK_FIELD_NAMES.EXTENSIONS });
+
+  const extensionIcons = useRef<Record<string, string>>({});
+
+  useEffect(() => {
+    extensionIcons.current = Object.entries(
+      import.meta.glob('../assets/*.{png,jpg,jpeg,svg,PNG,JPEG,SVG}', {
+        eager: true,
+        query: '?url',
+        import: 'default',
+      }),
+    ).reduce((acc, [key, value]) => {
+      const iconName = key.match(/(\w*.\w*)$/gi);
+      return iconName?.[0] ? { ...acc, [iconName[0]]: value } : acc;
+    }, {});
+  }, []);
 
   const extensions = useGetDatabaseExtensionsQuery({
     postgresVersion: watchPostgresVersion,
@@ -82,7 +97,11 @@ const ExtensionsBlock: FC = () => {
               label={<Typography marginRight={1}>{t('showEnabled')}</Typography>}
             />
           </Stack>
-          <ExtensionsSwiper isPending={pending} filteredExtensions={filteredExtensions} />
+          <ExtensionsSwiper
+            isPending={pending}
+            filteredExtensions={filteredExtensions}
+            extensionIcons={extensionIcons.current}
+          />
         </Stack>
       </Box>
     </ErrorBoundary>

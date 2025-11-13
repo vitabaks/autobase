@@ -9,7 +9,7 @@ export interface ExtensionBoxProps extends ExtensionSelectorProps {
   extensionIcons: Record<string, string>;
 }
 
-export interface ExtensionsSwiperProps {
+export interface ExtensionsSwiperProps extends Pick<ExtensionBoxProps, 'extensionIcons'> {
   isPending: boolean;
   filteredExtensions: ResponseDatabaseExtension[];
 }

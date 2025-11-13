@@ -111,15 +111,15 @@ export const getLocalMachineExtraVars = (values: ClusterFormValues, secretId?: n
         dcs_type: values?.[DCS_BLOCK_FIELD_NAMES.TYPE],
         ...(!values[DCS_BLOCK_FIELD_NAMES.IS_DEPLOY_NEW_CLUSTER] && values[DCS_BLOCK_FIELD_NAMES.TYPE] === DCS_TYPES[0]
           ? {
-              patroni_etcd_hosts: values?.[DCS_BLOCK_FIELD_NAMES.DATABASES]?.map((database) => ({
-                host: database[DCS_BLOCK_FIELD_NAMES.IP_ADDRESS],
-                port: database[DCS_BLOCK_FIELD_NAMES.DATABASE_PORT],
+              patroni_etcd_hosts: values?.[DCS_BLOCK_FIELD_NAMES.DCS_DATABASES]?.map((database) => ({
+                host: database[DCS_BLOCK_FIELD_NAMES.DCS_DATABASE_IP_ADDRESS],
+                port: database[DCS_BLOCK_FIELD_NAMES.DCS_DATABASE_PORT],
               })),
             }
           : !values[DCS_BLOCK_FIELD_NAMES.IS_DEPLOY_NEW_CLUSTER] && values[DCS_BLOCK_FIELD_NAMES.TYPE] === DCS_TYPES[1]
             ? {
-                consul_join: values?.[DCS_BLOCK_FIELD_NAMES.DATABASES]?.map(
-                  (database) => database[DCS_BLOCK_FIELD_NAMES.IP_ADDRESS],
+                consul_join: values?.[DCS_BLOCK_FIELD_NAMES.DCS_DATABASES]?.map(
+                  (database) => database[DCS_BLOCK_FIELD_NAMES.DCS_DATABASE_IP_ADDRESS],
                 ),
                 consul_ports_serf_lan: 8301,
               }
@@ -128,6 +128,98 @@ export const getLocalMachineExtraVars = (values: ClusterFormValues, secretId?: n
       }
     : {}),
 });
+
+const constructDcsEnvs = (values: ClusterFormValues) => {
+  if (IS_EXPERT_MODE && !values[DCS_BLOCK_FIELD_NAMES.IS_DEPLOY_TO_DB_SERVERS]) {
+    switch (values[DCS_BLOCK_FIELD_NAMES.TYPE]) {
+      case DCS_TYPES[0]:
+        return {
+          etcd_cluster: {
+            hosts: values[DCS_BLOCK_FIELD_NAMES.DCS_DATABASES].reduce(
+              (acc, server) => ({
+                ...acc,
+                [server[DCS_BLOCK_FIELD_NAMES.DCS_DATABASE_IP_ADDRESS]]: {
+                  hostname: server[DCS_BLOCK_FIELD_NAMES.DCS_DATABASE_HOSTNAME],
+                  ansible_host: server[DCS_BLOCK_FIELD_NAMES.DCS_DATABASE_IP_ADDRESS],
+                },
+              }),
+              {},
+            ),
+          },
+          consul_instances: { hosts: {} },
+        };
+      case DCS_TYPES[1]:
+        return {
+          etcd_cluster: { hosts: {} },
+          consul_instances: {
+            hosts: values[DCS_BLOCK_FIELD_NAMES.DCS_DATABASES].reduce(
+              (acc, server) => ({
+                ...acc,
+                [server[DCS_BLOCK_FIELD_NAMES.DCS_DATABASE_IP_ADDRESS]]: {
+                  ansible_host: server[DCS_BLOCK_FIELD_NAMES.DCS_DATABASE_IP_ADDRESS],
+                },
+              }),
+              {},
+            ),
+          },
+        };
+      default:
+        return {
+          etcd_cluster: { hosts: {} },
+          consul_instances: {
+            hosts: {},
+          },
+        };
+    }
+  }
+  return {
+    etcd_cluster: {
+      hosts: values[DATABASE_SERVERS_FIELD_NAMES.DATABASE_SERVERS].reduce(
+        (acc, server) => ({
+          ...acc,
+          [server[DATABASE_SERVERS_FIELD_NAMES.IP_ADDRESS]]: {
+            ansible_host: server[DATABASE_SERVERS_FIELD_NAMES.IP_ADDRESS],
+          },
+        }),
+        {},
+      ),
+    },
+    consul_instances: { hosts: {} },
+  };
+};
+
+const constructBalancersEnvs = (values: ClusterFormValues) => {
+  let balancerHosts = {};
+
+  if (values[LOAD_BALANCERS_FIELD_NAMES.IS_HAPROXY_ENABLED]) {
+    if (IS_EXPERT_MODE && !values[LOAD_BALANCERS_FIELD_NAMES.IS_DEPLOY_TO_DATABASE_SERVERS]) {
+      balancerHosts = values[LOAD_BALANCERS_FIELD_NAMES.DATABASES].reduce(
+        (acc, server) => ({
+          ...acc,
+          [server[LOAD_BALANCERS_FIELD_NAMES.DATABASES_ADDRESS]]: {
+            ansible_host: server[LOAD_BALANCERS_FIELD_NAMES.DATABASES_ADDRESS],
+          },
+        }),
+        {},
+      );
+    }
+    balancerHosts = values[DATABASE_SERVERS_FIELD_NAMES.DATABASE_SERVERS].reduce(
+      (acc, server) => ({
+        ...acc,
+        [server[DATABASE_SERVERS_FIELD_NAMES.IP_ADDRESS]]: {
+          ansible_host: server[DATABASE_SERVERS_FIELD_NAMES.IP_ADDRESS],
+        },
+      }),
+      {},
+    );
+  }
+
+  return {
+    balancers: {
+      hosts: balancerHosts,
+    },
+  };
+};
 
 /**
  * Functions creates an object with envs exclusive to local clusters.
@@ -154,75 +246,8 @@ export const getLocalMachineEnvs = (values: ClusterFormValues, secretId?: number
           : {}),
       },
       children: {
-        balancers: {
-          hosts:
-            (!IS_EXPERT_MODE && values[LOAD_BALANCERS_FIELD_NAMES.IS_HAPROXY_ENABLED]) ||
-            (IS_EXPERT_MODE &&
-              values[LOAD_BALANCERS_FIELD_NAMES.IS_HAPROXY_ENABLED] &&
-              values[LOAD_BALANCERS_FIELD_NAMES.IS_DEPLOY_TO_DATABASE_SERVERS])
-              ? values[CLUSTER_FORM_FIELD_NAMES.DATABASE_SERVERS].reduce(
-                  (acc, server) => ({
-                    ...acc,
-                    [server[CLUSTER_FORM_FIELD_NAMES.IP_ADDRESS]]: {
-                      ansible_host: server[CLUSTER_FORM_FIELD_NAMES.IP_ADDRESS],
-                    },
-                  }),
-                  {},
-                )
-              : IS_EXPERT_MODE && !values[LOAD_BALANCERS_FIELD_NAMES.IS_DEPLOY_TO_DATABASE_SERVERS]
-                ? values[LOAD_BALANCERS_FIELD_NAMES.DATABASES].reduce(
-                    (acc, server) => ({
-                      ...acc,
-                      [server[LOAD_BALANCERS_FIELD_NAMES.DATABASES_ADDRESS]]: {
-                        ansible_host: server[LOAD_BALANCERS_FIELD_NAMES.DATABASES_ADDRESS],
-                      },
-                    }),
-                    {},
-                  )
-                : {},
-        },
-        etcd_cluster: {
-          hosts:
-            !IS_EXPERT_MODE ||
-            (IS_EXPERT_MODE &&
-              values[DCS_BLOCK_FIELD_NAMES.TYPE] === DCS_TYPES[0] &&
-              values[DCS_BLOCK_FIELD_NAMES.IS_DEPLOY_TO_DB_SERVERS])
-              ? values[CLUSTER_FORM_FIELD_NAMES.DATABASE_SERVERS].reduce(
-                  (acc, server) => ({
-                    ...acc,
-                    [server[CLUSTER_FORM_FIELD_NAMES.IP_ADDRESS]]: {
-                      ansible_host: server[CLUSTER_FORM_FIELD_NAMES.IP_ADDRESS],
-                    },
-                  }),
-                  {},
-                )
-              : values[DCS_BLOCK_FIELD_NAMES.DATABASES].reduce(
-                  (acc, server) => ({
-                    ...acc,
-                    [server[DCS_BLOCK_FIELD_NAMES.IP_ADDRESS]]: {
-                      hostname: server[DCS_BLOCK_FIELD_NAMES.DATABASE_HOSTNAME],
-                      ansible_host: server[DCS_BLOCK_FIELD_NAMES.IP_ADDRESS],
-                    },
-                  }),
-                  {},
-                ),
-        },
-        consul_instances: {
-          hosts:
-            IS_EXPERT_MODE &&
-            !values[DCS_BLOCK_FIELD_NAMES.IS_DEPLOY_TO_DB_SERVERS] &&
-            values[DCS_BLOCK_FIELD_NAMES.TYPE] === DCS_TYPES[1]
-              ? values[DCS_BLOCK_FIELD_NAMES.DATABASES].reduce(
-                  (acc, server) => ({
-                    ...acc,
-                    [server[DCS_BLOCK_FIELD_NAMES.IP_ADDRESS]]: {
-                      ansible_host: server[DCS_BLOCK_FIELD_NAMES.IP_ADDRESS],
-                    },
-                  }),
-                  {},
-                )
-              : {},
-        },
+        ...constructBalancersEnvs(values),
+        ...constructDcsEnvs(values),
         master: {
           hosts: {
             [values[DATABASE_SERVERS_FIELD_NAMES.DATABASE_SERVERS][0][DATABASE_SERVERS_FIELD_NAMES.IP_ADDRESS]]: {
@@ -383,32 +408,28 @@ export const getBaseClusterExtraVars = (values: ClusterFormValues) => {
 const convertObjectValueToBase64Format = (object: Record<string, any>) =>
   Object.entries(object).reduce((acc: string[], [key, value]) => [...acc, `${key}=${btoa(JSON.stringify(value))}`], []);
 
-const getRequestCloudParams = (values, secretsInfo, customExtraVars) => {
-  return {
-    envs: convertObjectValueToBase64Format({
-      ...Object.fromEntries(
-        Object.entries({
-          ...secretsInfo,
-        }).filter(([key]) => SECRET_MODAL_CONTENT_BODY_FORM_FIELDS?.[key]),
-      ),
-    }),
-    extra_vars: customExtraVars ?? {
-      ...getBaseClusterExtraVars(values),
-      ...getCloudProviderExtraVars(values),
-    },
-  };
-};
+const getRequestCloudParams = (values, secretsInfo, customExtraVars) => ({
+  envs: convertObjectValueToBase64Format({
+    ...Object.fromEntries(
+      Object.entries({
+        ...secretsInfo,
+      }).filter(([key]) => SECRET_MODAL_CONTENT_BODY_FORM_FIELDS?.[key]),
+    ),
+  }),
+  extra_vars: customExtraVars ?? {
+    ...getBaseClusterExtraVars(values),
+    ...getCloudProviderExtraVars(values),
+  },
+});
 
-const getRequestLocalMachineParams = (values, secretId, customExtraVars) => {
-  return {
-    envs: convertObjectValueToBase64Format(getLocalMachineEnvs(values, secretId)),
-    extra_vars: customExtraVars ?? {
-      ...getBaseClusterExtraVars(values),
-      ...getLocalMachineExtraVars(values, secretId),
-    },
-    existing_cluster: values[DATABASE_SERVERS_FIELD_NAMES.IS_CLUSTER_EXISTS] ?? false,
-  };
-};
+const getRequestLocalMachineParams = (values, secretId, customExtraVars) => ({
+  envs: convertObjectValueToBase64Format(getLocalMachineEnvs(values, secretId)),
+  extra_vars: customExtraVars ?? {
+    ...getBaseClusterExtraVars(values),
+    ...getLocalMachineExtraVars(values, secretId),
+  },
+  existing_cluster: values[DATABASE_SERVERS_FIELD_NAMES.IS_CLUSTER_EXISTS] ?? false,
+});
 
 /**
  * Functions creates an object with fields and values in format required by API.

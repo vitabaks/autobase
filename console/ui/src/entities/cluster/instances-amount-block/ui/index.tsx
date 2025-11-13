@@ -51,7 +51,9 @@ const InstancesAmountBlock: FC = () => {
                   name={INSTANCES_AMOUNT_BLOCK_VALUES.IS_SPOT_INSTANCES}
                   render={({ field }) => (
                     <FormControlLabel
-                      control={<Checkbox {...field} />}
+                      {...field}
+                      checked={!!field.value}
+                      control={<Checkbox />}
                       sx={{
                         marginLeft: 0,
                       }}

@@ -28,15 +28,15 @@ const DcsDatabaseBox: FC<DcsDatabaseBoxProps> = ({ index, remove, fields = [] })
           <Controller
             key={fieldName}
             control={control}
-            name={`${DCS_BLOCK_FIELD_NAMES.DATABASES}.${index}.${fieldName}`}
+            name={`${DCS_BLOCK_FIELD_NAMES.DCS_DATABASES}.${index}.${fieldName}`}
             render={({ field }) => (
               <TextField
                 {...field}
                 required
                 size="small"
                 label={label}
-                error={!!errors[DCS_BLOCK_FIELD_NAMES.DATABASES]?.[index]?.[fieldName]}
-                helperText={errors?.[DCS_BLOCK_FIELD_NAMES.DATABASES]?.[index]?.[fieldName]?.message ?? ' '}
+                error={!!errors[DCS_BLOCK_FIELD_NAMES.DCS_DATABASES]?.[index]?.[fieldName]}
+                helperText={errors?.[DCS_BLOCK_FIELD_NAMES.DCS_DATABASES]?.[index]?.[fieldName]?.message ?? ' '}
               />
             )}
           />

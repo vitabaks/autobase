@@ -34,7 +34,7 @@ const DcsBlock: FC = () => {
 
   const { fields, append, remove } = useFieldArray({
     control,
-    name: DCS_BLOCK_FIELD_NAMES.DATABASES,
+    name: DCS_BLOCK_FIELD_NAMES.DCS_DATABASES,
   });
 
   const watchIsDeployToDcsCluster = useWatch({ name: DCS_BLOCK_FIELD_NAMES.IS_DEPLOY_NEW_CLUSTER });

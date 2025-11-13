@@ -50,6 +50,7 @@ interface ClusterLocalMachineProviderFormValues
       | [SECRET_MODAL_CONTENT_FORM_FIELD_NAMES.PASSWORD]
       | [SECRET_MODAL_CONTENT_FORM_FIELD_NAMES.SSH_PRIVATE_KEY]
     >,
+    LoadBalancersBlockValues,
     DatabaseServerBlockValues,
     DcsBlockFormValues {
   [CLUSTER_FORM_FIELD_NAMES.AUTHENTICATION_METHOD]?: (typeof AUTHENTICATION_METHODS)[keyof typeof AUTHENTICATION_METHODS];
@@ -64,7 +65,6 @@ export interface ClusterFormValues
     SecretFormValues,
     ExtensionsBlockValues,
     DatabasesBlockValues,
-    LoadBalancersBlockValues,
     DataDirectoryFormValues,
     ConnectionPoolBlockValues,
     AdditionalSettingsBlockValues,
