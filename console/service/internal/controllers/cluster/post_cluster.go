@@ -77,11 +77,13 @@ func (h *postClusterHandler) Handle(param cluster.PostClustersParams) middleware
 	ansibleLogEnv := h.getAnsibleLogEnv(param.Body.Name)
 	localLog.Trace().Strs("file_log", ansibleLogEnv).Msg("got file log name")
 
-	// Parse ExtraVars JSON string from request
 	extraVars := map[string]interface{}{}
-	if param.Body.ExtraVars != "" {
-		if err := json.Unmarshal([]byte(param.Body.ExtraVars), &extraVars); err != nil {
-			localLog.Warn().Str("extra_vars_raw", param.Body.ExtraVars).Err(err).Msg("failed to parse extra_vars JSON; using empty object")
+
+	if param.Body.ExtraVars != nil {
+		if m, ok := param.Body.ExtraVars.(map[string]interface{}); ok {
+			extraVars = m
+		} else {
+			localLog.Warn().Interface("extra_vars_raw", param.Body.ExtraVars).Msg("unexpected type for extra_vars, expected map[string]interface{}")
 		}
 	}
 
@@ -150,13 +152,12 @@ func (h *postClusterHandler) Handle(param cluster.PostClustersParams) middleware
 		status = "ready"
 	}
 
-	// Marshal updated extraVars to JSON string for DB / Docker
+	// extraVars
 	extraVarsBytes, mErr := json.Marshal(extraVars)
 	if mErr != nil {
 		localLog.Error().Err(mErr).Msg("failed to marshal extra_vars; falling back to {}")
 		extraVarsBytes = []byte("{}")
 	}
-	extraVarsJSON := string(extraVarsBytes)
 
 	createdCluster, err := h.db.CreateCluster(param.HTTPRequest.Context(), &storage.CreateClusterReq{
 		ProjectID:         param.Body.ProjectID,
@@ -164,7 +165,7 @@ func (h *postClusterHandler) Handle(param cluster.PostClustersParams) middleware
 		Name:              param.Body.Name,
 		Description:       param.Body.Description,
 		SecretID:          secretID,
-		ExtraVars:         extraVarsJSON,
+		ExtraVars:         extraVarsBytes,
 		Location:          getValFromExtraVars(extraVars, LocationExtraVar),
 		ServerCount:       serverCount,
 		PostgreSqlVersion: getIntValFromExtraVars(extraVars, PostgreSqlVersionExtraVar),
@@ -259,7 +260,7 @@ func (h *postClusterHandler) Handle(param cluster.PostClustersParams) middleware
 	var dockerId xdocker.InstanceID
 	dockerId, err = h.dockerManager.ManageCluster(param.HTTPRequest.Context(), &xdocker.ManageClusterConfig{
 		Envs:      param.Body.Envs,
-		ExtraVars: extraVarsJSON,
+		ExtraVars: string(extraVarsBytes),
 		Mounts: []xdocker.Mount{
 			{
 				DockerPath: ansibleLogDir,
