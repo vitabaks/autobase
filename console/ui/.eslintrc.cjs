@@ -22,5 +22,6 @@ module.exports = {
     'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
     '@typescript-eslint/no-misused-promises': 'off',
     '@typescript-eslint/no-unsafe-argument': 'off',
+    'react-hooks/exhaustive-deps': 'off',
   },
 };

@@ -12,7 +12,7 @@ const SidebarItemContent: FC<SidebarItemProps> = ({
   isCollapsed,
 }) => {
   const theme = useTheme();
-  
+
   return (
     <ListItemButton
       sx={{
@@ -39,8 +39,8 @@ const SidebarItemContent: FC<SidebarItemProps> = ({
         {SidebarIcon ? <SidebarIcon width="30px" height="30px" /> : null}
       </ListItemIcon>
       {!isCollapsed ? (
-        <ListItemText 
-          primary={label} 
+        <ListItemText
+          primary={label}
           sx={{
             color: 'text.primary',
             '& .MuiListItemText-primary': {
