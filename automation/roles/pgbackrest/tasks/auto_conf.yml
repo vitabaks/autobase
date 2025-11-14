@@ -153,8 +153,8 @@
         - { option: "log-path", value: "/var/log/pgbackrest" }
         - { option: "repo1-type", value: "s3" }
         - { option: "repo1-path", value: "{{ pgbackrest_repo_path | default('/pgbackrest') }}" }
-        - { option: "repo1-s3-key", value: "{{ pgbackrest_s3_key | default(AWS_ACCESS_KEY_ID | default('')) }}" }
-        - { option: "repo1-s3-key-secret", value: "{{ pgbackrest_s3_key_secret | default(AWS_SECRET_ACCESS_KEY | default('')) }}" }
+        - { option: "repo1-s3-key", value: "{{ pgbackrest_s3_key | default(digital_ocean_spaces_access_key | default(AWS_ACCESS_KEY_ID | default(''))) }}" }
+        - { option: "repo1-s3-key-secret", value: "{{ pgbackrest_s3_key_secret | default(digital_ocean_spaces_secret_key | default(AWS_SECRET_ACCESS_KEY | default(''))) }}" }
         - { option: "repo1-s3-bucket", value: "{{ pgbackrest_s3_bucket | default(digital_ocean_spaces_name | default(patroni_cluster_name + '-backup')) }}" }
         - {
             option: "repo1-s3-endpoint",
