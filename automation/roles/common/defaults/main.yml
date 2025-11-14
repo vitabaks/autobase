@@ -259,7 +259,7 @@ postgresql_home_dir: "{{ '/var/lib/postgresql' if ansible_os_family == 'Debian' 
 # You can specify custom data dir path. Example: "/pgdata/{{ postgresql_version }}/main"
 postgresql_data_dir: "\
   {% if cloud_provider | default('') | length > 0 %}\
-  {{ pg_data_mount_path | default('/pgdata') }}/{{ postgresql_version }}/{{ postgresql_cluster_name }}\
+  {{ postgresql_data_dir_mount_path | default('/pgdata') }}/{{ postgresql_version }}/{{ postgresql_cluster_name }}\
   {% else %}\
   {{ postgresql_home_dir }}/{{ postgresql_version }}/{{ postgresql_cluster_name }}\
   {% endif %}"

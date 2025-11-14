@@ -368,24 +368,23 @@ func getIntValFromExtraVars(m map[string]interface{}, key string) int {
 	if !ok || v == nil {
 		return 0
 	}
-	switch t := v.(type) {
-	case float64:
-		return int(t)
-	case int:
-		return t
-	case int32:
-		return int(t)
-	case int64:
-		return int(t)
-	case string:
-		n, err := strconv.Atoi(t)
-		if err != nil {
-			return 0
-		}
+
+	if num, ok := v.(json.Number); ok {
+		n, _ := strconv.Atoi(num.String())
 		return n
-	default:
-		return 0
 	}
+
+	if f, ok := v.(float64); ok {
+		return int(f)
+	}
+
+	s := fmt.Sprintf("%v", v)
+
+	if fl, err := strconv.ParseFloat(s, 64); err == nil {
+		return int(fl)
+	}
+
+	return 0
 }
 
 type InventoryJson struct {

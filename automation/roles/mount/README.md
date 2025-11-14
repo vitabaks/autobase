@@ -14,8 +14,8 @@ This role configures filesystems and mount points:
 | mount[].fstype | "ext4" | Filesystem type (e.q., ext4, xfs). Use "zfs" to create a zpool and mount it. |
 | mount[].opts | "defaults,noatime" | Mount options (not applicable to zfs creation). |
 | mount[].state | "mounted" | Desired state (mounted, present, absent, etc.). |
-| pg_data_mount_path | "/pgdata" | Default path used when auto-provisioning or for the ZFS mountpoint. |
-| pg_data_mount_fstype | "ext4" | Filesystem type to create when auto-provisioning the first disk. Set to "zfs" to create a zpool. |
+| postgresql_data_dir_mount_path | "/pgdata" | Default path used when auto-provisioning or for the ZFS mountpoint. |
+| postgresql_data_dir_mount_fstype | "ext4" | Filesystem type to create when auto-provisioning the first disk. Set to "zfs" to create a zpool. |
 
 Notes:
 - The role relies on lsblk and jq for disk detection; ensure jq is available (it is installed by the common role by default).
