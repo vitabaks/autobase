@@ -106,8 +106,8 @@
 - name: "Set variable 'wal_g_json' for backup in DigitalOcean Spaces Object Storage"
   ansible.builtin.set_fact:
     wal_g_json:
-      - { option: "AWS_ACCESS_KEY_ID", value: "{{ wal_g_aws_access_key_id | default(AWS_ACCESS_KEY_ID | default('')) }}" }
-      - { option: "AWS_SECRET_ACCESS_KEY", value: "{{ wal_g_aws_secret_access_key | default(AWS_SECRET_ACCESS_KEY | default('')) }}" }
+      - { option: "AWS_ACCESS_KEY_ID", value: "{{ wal_g_aws_access_key_id | default(digital_ocean_spaces_access_key | default(AWS_ACCESS_KEY_ID | default(''))) }}" }
+      - { option: "AWS_SECRET_ACCESS_KEY", value: "{{ wal_g_aws_secret_access_key | default(digital_ocean_spaces_secret_key | default(AWS_SECRET_ACCESS_KEY | default(''))) }}" }
       - {
           option: "AWS_ENDPOINT",
           value: "{{ wal_g_s3_endpoint | default('https://' + (digital_ocean_spaces_region | default(server_location)) + '.digitaloceanspaces.com') }}",

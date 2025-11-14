@@ -10,7 +10,7 @@
 
     - name: Setting kernel parameters
       ansible.posix.sysctl:
-        name: "{{ item.name }}"
+        name: "{{ item.option | default(item.name) }}"
         value: "{{ item.value }}"
         sysctl_set: true
         state: present
