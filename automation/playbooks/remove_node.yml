@@ -216,10 +216,10 @@
   gather_facts: true
   vars:
     target_node: "{{ node_to_remove | default('') }}"
-    consul_http_addr: "{% if consul_tls_enable | default(false) | bool %}https{% else %}http{% endif %}://127.0.0.1:8500"
-    consul_ca_flag: "{% if consul_tls_enable | default(false) | bool %}-ca-file=/etc/consul/tls/ca.crt{% endif %}"
+    consul_http_addr: "{% if consul_tls_enable | default(true) | bool %}https{% else %}http{% endif %}://127.0.0.1:8500"
+    consul_ca_flag: "{% if consul_tls_enable | default(true) | bool %}-ca-file=/etc/consul/tls/ca.crt{% endif %}"
     consul_client_flags: >-
-      {% if consul_tls_enable | default(false) | bool %}
+      {% if consul_tls_enable | default(true) | bool %}
       -client-cert=/etc/consul/tls/server.crt -client-key=/etc/consul/tls/server.key
       {% endif %}
   tasks:
