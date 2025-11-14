@@ -109,58 +109,83 @@ export const getLocalMachineExtraVars = (values: ClusterFormValues, secretId?: n
   ...(IS_EXPERT_MODE
     ? {
         dcs_type: values?.[DCS_BLOCK_FIELD_NAMES.TYPE],
-        ...(!values[DCS_BLOCK_FIELD_NAMES.IS_DEPLOY_NEW_CLUSTER] && values[DCS_BLOCK_FIELD_NAMES.TYPE] === DCS_TYPES[0]
+        ...(!values[DCS_BLOCK_FIELD_NAMES.IS_DEPLOY_NEW_CLUSTER]
           ? {
-              patroni_etcd_hosts: values?.[DCS_BLOCK_FIELD_NAMES.DCS_DATABASES]?.map((database) => ({
-                host: database[DCS_BLOCK_FIELD_NAMES.DCS_DATABASE_IP_ADDRESS],
-                port: database[DCS_BLOCK_FIELD_NAMES.DCS_DATABASE_PORT],
-              })),
+              dcs_exists: true,
+              ...(values[DCS_BLOCK_FIELD_NAMES.TYPE] === DCS_TYPES[0]
+                ? {
+                    patroni_etcd_hosts: values?.[DCS_BLOCK_FIELD_NAMES.DCS_DATABASES]?.map((database) => ({
+                      host: database[DCS_BLOCK_FIELD_NAMES.DCS_DATABASE_IP_ADDRESS],
+                      port: database[DCS_BLOCK_FIELD_NAMES.DCS_DATABASE_PORT],
+                    })),
+                  }
+                : {
+                    consul_join: values?.[DCS_BLOCK_FIELD_NAMES.DCS_DATABASES]?.map(
+                      (database) => database[DCS_BLOCK_FIELD_NAMES.DCS_DATABASE_IP_ADDRESS],
+                    ),
+                    consul_ports_serf_lan: 8301,
+                  }),
             }
-          : !values[DCS_BLOCK_FIELD_NAMES.IS_DEPLOY_NEW_CLUSTER] && values[DCS_BLOCK_FIELD_NAMES.TYPE] === DCS_TYPES[1]
-            ? {
-                consul_join: values?.[DCS_BLOCK_FIELD_NAMES.DCS_DATABASES]?.map(
-                  (database) => database[DCS_BLOCK_FIELD_NAMES.DCS_DATABASE_IP_ADDRESS],
-                ),
-                consul_ports_serf_lan: 8301,
-              }
-            : {}),
+          : {}),
         postgresql_data_dir: values?.[DATA_DIRECTORY_FIELD_NAMES.DATA_DIRECTORY],
       }
     : {}),
 });
 
+const configureDcsHosts = (values: ClusterFormValues) => {
+  return values[DCS_BLOCK_FIELD_NAMES.DCS_DATABASES].reduce(
+    (acc, server) => ({
+      ...acc,
+      [server[DCS_BLOCK_FIELD_NAMES.DCS_DATABASE_IP_ADDRESS]]: {
+        hostname: server[DCS_BLOCK_FIELD_NAMES.DCS_DATABASE_HOSTNAME],
+        ansible_host: server[DCS_BLOCK_FIELD_NAMES.DCS_DATABASE_IP_ADDRESS],
+      },
+    }),
+    {},
+  );
+};
+
+const configureDatabaseServersHosts = (values: ClusterFormValues) => {
+  return values[DATABASE_SERVERS_FIELD_NAMES.DATABASE_SERVERS].reduce(
+    (acc, server) => ({
+      ...acc,
+      [server[DATABASE_SERVERS_FIELD_NAMES.IP_ADDRESS]]: {
+        ansible_host: server[DATABASE_SERVERS_FIELD_NAMES.IP_ADDRESS],
+      },
+    }),
+    {},
+  );
+};
+
 const constructDcsEnvs = (values: ClusterFormValues) => {
-  if (IS_EXPERT_MODE && !values[DCS_BLOCK_FIELD_NAMES.IS_DEPLOY_TO_DB_SERVERS]) {
+  if (!IS_EXPERT_MODE && values[DCS_BLOCK_FIELD_NAMES.IS_DEPLOY_NEW_CLUSTER]) {
+    return {
+      etcd_cluster: {
+        hosts: configureDatabaseServersHosts(values),
+      },
+      consul_instances: { hosts: {} },
+    };
+  }
+  if (values[DCS_BLOCK_FIELD_NAMES.IS_DEPLOY_NEW_CLUSTER]) {
     switch (values[DCS_BLOCK_FIELD_NAMES.TYPE]) {
       case DCS_TYPES[0]:
         return {
           etcd_cluster: {
-            hosts: values[DCS_BLOCK_FIELD_NAMES.DCS_DATABASES].reduce(
-              (acc, server) => ({
-                ...acc,
-                [server[DCS_BLOCK_FIELD_NAMES.DCS_DATABASE_IP_ADDRESS]]: {
-                  hostname: server[DCS_BLOCK_FIELD_NAMES.DCS_DATABASE_HOSTNAME],
-                  ansible_host: server[DCS_BLOCK_FIELD_NAMES.DCS_DATABASE_IP_ADDRESS],
-                },
-              }),
-              {},
-            ),
+            hosts: values[DCS_BLOCK_FIELD_NAMES.IS_DEPLOY_TO_DB_SERVERS]
+              ? configureDatabaseServersHosts(values)
+              : configureDcsHosts(values),
           },
           consul_instances: { hosts: {} },
         };
       case DCS_TYPES[1]:
         return {
-          etcd_cluster: { hosts: {} },
+          etcd_cluster: {
+            hosts: {},
+          },
           consul_instances: {
-            hosts: values[DCS_BLOCK_FIELD_NAMES.DCS_DATABASES].reduce(
-              (acc, server) => ({
-                ...acc,
-                [server[DCS_BLOCK_FIELD_NAMES.DCS_DATABASE_IP_ADDRESS]]: {
-                  ansible_host: server[DCS_BLOCK_FIELD_NAMES.DCS_DATABASE_IP_ADDRESS],
-                },
-              }),
-              {},
-            ),
+            hosts: values[DCS_BLOCK_FIELD_NAMES.IS_DEPLOY_TO_DB_SERVERS]
+              ? configureDatabaseServersHosts(values)
+              : configureDcsHosts(values),
           },
         };
       default:
@@ -172,20 +197,23 @@ const constructDcsEnvs = (values: ClusterFormValues) => {
         };
     }
   }
-  return {
-    etcd_cluster: {
-      hosts: values[DATABASE_SERVERS_FIELD_NAMES.DATABASE_SERVERS].reduce(
-        (acc, server) => ({
-          ...acc,
-          [server[DATABASE_SERVERS_FIELD_NAMES.IP_ADDRESS]]: {
-            ansible_host: server[DATABASE_SERVERS_FIELD_NAMES.IP_ADDRESS],
-          },
-        }),
-        {},
-      ),
-    },
-    consul_instances: { hosts: {} },
-  };
+  if (!values[DCS_BLOCK_FIELD_NAMES.IS_DEPLOY_NEW_CLUSTER]) {
+    if (values[DCS_BLOCK_FIELD_NAMES.TYPE] === DCS_TYPES[1]) {
+      return {
+        consul_instances: {
+          hosts: values[DCS_BLOCK_FIELD_NAMES.DCS_DATABASES].reduce(
+            (acc, server) => ({
+              ...acc,
+              [server[DCS_BLOCK_FIELD_NAMES.DCS_DATABASE_IP_ADDRESS]]: {
+                ansible_host: server[DCS_BLOCK_FIELD_NAMES.DCS_DATABASE_IP_ADDRESS],
+              },
+            }),
+            {},
+          ),
+        },
+      };
+    }
+  }
 };
 
 const constructBalancersEnvs = (values: ClusterFormValues) => {
@@ -202,16 +230,17 @@ const constructBalancersEnvs = (values: ClusterFormValues) => {
         }),
         {},
       );
+    } else {
+      balancerHosts = values[DATABASE_SERVERS_FIELD_NAMES.DATABASE_SERVERS].reduce(
+        (acc, server) => ({
+          ...acc,
+          [server[DATABASE_SERVERS_FIELD_NAMES.IP_ADDRESS]]: {
+            ansible_host: server[DATABASE_SERVERS_FIELD_NAMES.IP_ADDRESS],
+          },
+        }),
+        {},
+      );
     }
-    balancerHosts = values[DATABASE_SERVERS_FIELD_NAMES.DATABASE_SERVERS].reduce(
-      (acc, server) => ({
-        ...acc,
-        [server[DATABASE_SERVERS_FIELD_NAMES.IP_ADDRESS]]: {
-          ansible_host: server[DATABASE_SERVERS_FIELD_NAMES.IP_ADDRESS],
-        },
-      }),
-      {},
-    );
   }
 
   return {
