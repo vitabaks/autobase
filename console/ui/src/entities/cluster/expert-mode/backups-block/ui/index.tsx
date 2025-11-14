@@ -44,7 +44,11 @@ const BackupsBlock: FC = () => {
   };
 
   useEffect(() => {
-    if (watchProvider?.code === PROVIDERS.LOCAL) setValue(BACKUPS_BLOCK_FIELD_NAMES.IS_BACKUPS_ENABLED, false);
+    if (
+      watchProvider?.code === PROVIDERS.LOCAL ||
+      [PROVIDERS.DIGITAL_OCEAN, PROVIDERS.HETZNER].includes(watchProvider?.code)
+    )
+      setValue(BACKUPS_BLOCK_FIELD_NAMES.IS_BACKUPS_ENABLED, false);
   }, [watchProvider]);
 
   return (
@@ -156,6 +160,40 @@ const BackupsBlock: FC = () => {
                 </Stack>
               )}
             />
+            {[PROVIDERS.DIGITAL_OCEAN, PROVIDERS.HETZNER].includes(watchProvider?.code)
+              ? [
+                  {
+                    fieldName: BACKUPS_BLOCK_FIELD_NAMES.ACCESS_KEY,
+                    label: t('accessKey'),
+                  },
+                  {
+                    fieldName: BACKUPS_BLOCK_FIELD_NAMES.SECRET_KEY,
+                    label: t('secretKey'),
+                  },
+                ].map(({ fieldName, label }) => (
+                  <Controller
+                    key={fieldName}
+                    control={control}
+                    name={fieldName}
+                    render={({ field }) => (
+                      <Stack direction="row" alignItems="center">
+                        <Stack direction="row" alignItems="center" gap={1} width="250px">
+                          <Typography>{label}</Typography>
+                        </Stack>
+                        <Stack>
+                          <TextField
+                            {...field}
+                            onChange={handleInputChange(field.onChange)}
+                            size="small"
+                            error={!!errors?.[fieldName]}
+                            helperText={errors?.[fieldName]?.message as string}
+                          />
+                        </Stack>
+                      </Stack>
+                    )}
+                  />
+                ))
+              : null}
             <ConfigureBackupModal />
           </>
         ) : null}

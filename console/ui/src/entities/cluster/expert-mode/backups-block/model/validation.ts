@@ -19,4 +19,6 @@ export const BackupsBlockFormSchema = (t: TFunction) =>
       ),
     [BACKUPS_BLOCK_FIELD_NAMES.BACKUP_START_TIME]: yup.string(),
     [BACKUPS_BLOCK_FIELD_NAMES.BACKUP_RETENTION]: yup.number().typeError(t('onlyNumbers', { ns: 'validation' })),
+    [BACKUPS_BLOCK_FIELD_NAMES.ACCESS_KEY]: yup.string().optional(),
+    [BACKUPS_BLOCK_FIELD_NAMES.SECRET_KEY]: yup.string().optional(),
   });

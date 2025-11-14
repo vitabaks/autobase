@@ -129,5 +129,7 @@
   "isPostgresqlExists": "PostgreSQL exists",
   "isPostgresqlExistsTooltip": "If PostgreSQL is already installed and running, this option lets you transform your existing setup into a fully functional high-availability cluster.",
   "custom": "Custom",
-  "customInstanceTypeInfo": "If the required instance type is not listed, you can specify it here (ensure it follows the format supported by the API)."
+  "customInstanceTypeInfo": "If the required instance type is not listed, you can specify it here (ensure it follows the format supported by the API).",
+  "accessKey": "Access key",
+  "secretKey": "Secret key"
 }

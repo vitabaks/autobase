@@ -132,25 +132,35 @@ export const getLocalMachineExtraVars = (values: ClusterFormValues, secretId?: n
     : {}),
 });
 
-const configureDcsHosts = (values: ClusterFormValues) => {
+const configureDcsHosts = ({
+  values,
+  role,
+  isAddHostname = false,
+}: {
+  values: ClusterFormValues;
+  role?: string;
+  isAddHostname?: boolean;
+}) => {
   return values[DCS_BLOCK_FIELD_NAMES.DCS_DATABASES].reduce(
     (acc, server) => ({
       ...acc,
       [server[DCS_BLOCK_FIELD_NAMES.DCS_DATABASE_IP_ADDRESS]]: {
-        hostname: server[DCS_BLOCK_FIELD_NAMES.DCS_DATABASE_HOSTNAME],
         ansible_host: server[DCS_BLOCK_FIELD_NAMES.DCS_DATABASE_IP_ADDRESS],
+        ...(isAddHostname ? { hostname: server[DCS_BLOCK_FIELD_NAMES.DCS_DATABASE_HOSTNAME] } : {}),
+        ...(role ? { consul_node_role: role } : {}),
       },
     }),
     {},
   );
 };
 
-const configureDatabaseServersHosts = (values: ClusterFormValues) => {
+const configureDatabaseServersHosts = ({ values, role }: { values: ClusterFormValues; role?: string }) => {
   return values[DATABASE_SERVERS_FIELD_NAMES.DATABASE_SERVERS].reduce(
     (acc, server) => ({
       ...acc,
       [server[DATABASE_SERVERS_FIELD_NAMES.IP_ADDRESS]]: {
         ansible_host: server[DATABASE_SERVERS_FIELD_NAMES.IP_ADDRESS],
+        ...(role ? { consul_node_role: role } : {}),
       },
     }),
     {},
@@ -158,58 +168,55 @@ const configureDatabaseServersHosts = (values: ClusterFormValues) => {
 };
 
 const constructDcsEnvs = (values: ClusterFormValues) => {
-  if (!IS_EXPERT_MODE && values[DCS_BLOCK_FIELD_NAMES.IS_DEPLOY_NEW_CLUSTER]) {
-    return {
-      etcd_cluster: {
-        hosts: configureDatabaseServersHosts(values),
-      },
-      consul_instances: { hosts: {} },
-    };
-  }
   if (values[DCS_BLOCK_FIELD_NAMES.IS_DEPLOY_NEW_CLUSTER]) {
-    switch (values[DCS_BLOCK_FIELD_NAMES.TYPE]) {
-      case DCS_TYPES[0]:
-        return {
-          etcd_cluster: {
-            hosts: values[DCS_BLOCK_FIELD_NAMES.IS_DEPLOY_TO_DB_SERVERS]
-              ? configureDatabaseServersHosts(values)
-              : configureDcsHosts(values),
-          },
-          consul_instances: { hosts: {} },
-        };
-      case DCS_TYPES[1]:
-        return {
-          etcd_cluster: {
-            hosts: {},
-          },
-          consul_instances: {
-            hosts: values[DCS_BLOCK_FIELD_NAMES.IS_DEPLOY_TO_DB_SERVERS]
-              ? configureDatabaseServersHosts(values)
-              : configureDcsHosts(values),
-          },
-        };
-      default:
-        return {
-          etcd_cluster: { hosts: {} },
-          consul_instances: {
-            hosts: {},
-          },
-        };
+    if (!IS_EXPERT_MODE) {
+      return {
+        etcd_cluster: {
+          hosts: configureDatabaseServersHosts({ values }),
+        },
+        consul_instances: { hosts: {} },
+      };
+    }
+    if (IS_EXPERT_MODE) {
+      switch (values[DCS_BLOCK_FIELD_NAMES.TYPE]) {
+        case DCS_TYPES[0]:
+          return {
+            etcd_cluster: {
+              hosts: values[DCS_BLOCK_FIELD_NAMES.IS_DEPLOY_TO_DB_SERVERS]
+                ? configureDatabaseServersHosts({ values })
+                : configureDcsHosts({ values, isAddHostname: true }),
+            },
+            consul_instances: { hosts: {} },
+          };
+        case DCS_TYPES[1]:
+          return {
+            etcd_cluster: {
+              hosts: {},
+            },
+            consul_instances: {
+              hosts: values[DCS_BLOCK_FIELD_NAMES.IS_DEPLOY_TO_DB_SERVERS]
+                ? configureDatabaseServersHosts({ values, role: 'server' })
+                : {
+                    ...configureDatabaseServersHosts({ values, role: 'client' }),
+                    ...configureDcsHosts({ values, role: 'server', isAddHostname: true }),
+                  },
+            },
+          };
+        default:
+          return {
+            etcd_cluster: { hosts: {} },
+            consul_instances: {
+              hosts: {},
+            },
+          };
+      }
     }
   }
-  if (!values[DCS_BLOCK_FIELD_NAMES.IS_DEPLOY_NEW_CLUSTER]) {
+  if (IS_EXPERT_MODE && !values[DCS_BLOCK_FIELD_NAMES.IS_DEPLOY_NEW_CLUSTER]) {
     if (values[DCS_BLOCK_FIELD_NAMES.TYPE] === DCS_TYPES[1]) {
       return {
         consul_instances: {
-          hosts: values[DCS_BLOCK_FIELD_NAMES.DCS_DATABASES].reduce(
-            (acc, server) => ({
-              ...acc,
-              [server[DCS_BLOCK_FIELD_NAMES.DCS_DATABASE_IP_ADDRESS]]: {
-                ansible_host: server[DCS_BLOCK_FIELD_NAMES.DCS_DATABASE_IP_ADDRESS],
-              },
-            }),
-            {},
-          ),
+          hosts: configureDcsHosts({ values, role: 'server', isAddHostname: false }),
         },
       };
     }
@@ -378,7 +385,7 @@ export const getBaseClusterExtraVars = (values: ClusterFormValues) => {
             }
           : {}),
         ...(extensions?.length ? { postgresql_extensions: extensions } : {}),
-        ...(values?.[BACKUPS_BLOCK_FIELD_NAMES.BACKUP_METHOD] && values?.[BACKUPS_BLOCK_FIELD_NAMES.IS_BACKUPS_ENABLED]
+        ...(values?.[BACKUPS_BLOCK_FIELD_NAMES.IS_BACKUPS_ENABLED] && values?.[BACKUPS_BLOCK_FIELD_NAMES.BACKUP_METHOD]
           ? values[BACKUPS_BLOCK_FIELD_NAMES.BACKUP_METHOD] === BACKUP_METHODS.PG_BACK_REST
             ? {
                 pgbackrest_install: true,
@@ -392,6 +399,14 @@ export const getBaseClusterExtraVars = (values: ClusterFormValues) => {
                       },
                     }
                   : {}),
+                ...([PROVIDERS.DIGITAL_OCEAN, PROVIDERS.DIGITAL_OCEAN].includes(
+                  values?.[CLUSTER_FORM_FIELD_NAMES.PROVIDER]?.code,
+                )
+                  ? {
+                      pgbackrest_s3_key: values?.[BACKUPS_BLOCK_FIELD_NAMES.ACCESS_KEY],
+                      pgbackrest_s3_key_secret: values?.[BACKUPS_BLOCK_FIELD_NAMES.SECRET_KEY],
+                    }
+                  : {}),
               }
             : {
                 wal_g_install: true,
@@ -400,6 +415,14 @@ export const getBaseClusterExtraVars = (values: ClusterFormValues) => {
                 ...(values?.[BACKUPS_BLOCK_FIELD_NAMES.CONFIG]
                   ? {
                       wal_g_json: convertModalParametersToArray(values?.[BACKUPS_BLOCK_FIELD_NAMES.CONFIG]),
+                    }
+                  : {}),
+                ...([PROVIDERS.DIGITAL_OCEAN, PROVIDERS.DIGITAL_OCEAN].includes(
+                  values?.[CLUSTER_FORM_FIELD_NAMES.PROVIDER]?.code,
+                )
+                  ? {
+                      wal_g_aws_access_key_id: values?.[BACKUPS_BLOCK_FIELD_NAMES.ACCESS_KEY],
+                      wal_g_aws_secret_access_key: values?.[BACKUPS_BLOCK_FIELD_NAMES.SECRET_KEY],
                     }
                   : {}),
               }
