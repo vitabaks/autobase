@@ -424,7 +424,7 @@ export const getBaseClusterExtraVars = (values: ClusterFormValues) => {
                       },
                     }
                   : {}),
-                ...([PROVIDERS.DIGITAL_OCEAN, PROVIDERS.DIGITAL_OCEAN].includes(
+                ...([PROVIDERS.DIGITAL_OCEAN, PROVIDERS.HETZNER].includes(
                   values?.[CLUSTER_FORM_FIELD_NAMES.PROVIDER]?.code,
                 )
                   ? {
@@ -442,7 +442,7 @@ export const getBaseClusterExtraVars = (values: ClusterFormValues) => {
                       wal_g_json: convertModalParametersToArray(values?.[BACKUPS_BLOCK_FIELD_NAMES.CONFIG]),
                     }
                   : {}),
-                ...([PROVIDERS.DIGITAL_OCEAN, PROVIDERS.DIGITAL_OCEAN].includes(
+                ...([PROVIDERS.DIGITAL_OCEAN, PROVIDERS.HETZNER].includes(
                   values?.[CLUSTER_FORM_FIELD_NAMES.PROVIDER]?.code,
                 )
                   ? {
