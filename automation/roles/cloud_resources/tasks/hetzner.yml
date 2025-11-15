@@ -448,8 +448,8 @@
       amazon.aws.s3_bucket:
         endpoint_url: "{{ hetzner_object_storage_endpoint }}"
         ceph: true
-        aws_access_key: "{{ hetzner_object_storage_access_key }}"
-        aws_secret_key: "{{ hetzner_object_storage_secret_key }}"
+        aws_access_key: "{{ hetzner_object_storage_access_key | default(default_access_key, true) }}"
+        aws_secret_key: "{{ hetzner_object_storage_secret_key | default(default_secret_key, true) }}"
         name: "{{ hetzner_object_storage_name }}"
         region: "{{ hetzner_object_storage_region }}"
         requester_pays: false
@@ -457,11 +457,12 @@
       register: s3_bucket_result
       failed_when: s3_bucket_result.failed and not "GetBucketRequestPayment" in s3_bucket_result.msg
       # TODO: https://github.com/ansible-collections/amazon.aws/issues/2447
+      vars:
+        default_access_key: "{{ pgbackrest_s3_key | default(wal_g_aws_access_key_id | default('')) }}"
+        default_secret_key: "{{ pgbackrest_s3_key_secret | default(wal_g_aws_secret_access_key | default('')) }}"
       when:
         - (pgbackrest_install | bool or wal_g_install | bool)
         - hetzner_object_storage_create | bool
-        - hetzner_object_storage_access_key | length > 0
-        - hetzner_object_storage_secret_key | length > 0
 
     # Server and volume
     - name: "Hetzner Cloud: Gather information about servers"

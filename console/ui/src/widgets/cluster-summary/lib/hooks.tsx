@@ -15,10 +15,19 @@ import {
   LocalClustersSummary,
   UseGetSummaryConfigProps,
 } from '@widgets/cluster-summary/model/types.ts';
+import { LOAD_BALANCERS_FIELD_NAMES } from '@/entities/cluster/load-balancers-block/model/const';
+import { STORAGE_BLOCK_FIELDS } from '@entities/cluster/storage-block/model/const.ts';
+import { DATABASE_SERVERS_FIELD_NAMES } from '@entities/cluster/database-servers-block/model/const.ts';
+import { INSTANCES_BLOCK_FIELD_NAMES } from '@entities/cluster/instances-block/model/const.ts';
+import { useWatch } from 'react-hook-form';
+import { DCS_BLOCK_FIELD_NAMES } from '@entities/cluster/expert-mode/dcs-block/model/const.ts';
+import { IS_EXPERT_MODE } from '@shared/model/constants.ts';
 
 const useGetCloudProviderConfig = () => {
   const { t } = useTranslation(['clusters', 'shared']);
   const theme = useTheme();
+
+  const watchInstanceType = useWatch({ name: INSTANCES_BLOCK_FIELD_NAMES.INSTANCE_TYPE });
 
   return (data: CloudProviderClustersSummary) => {
     const defaultVolume = data[CLUSTER_FORM_FIELD_NAMES.PROVIDER]?.volumes?.find((volume) => volume?.is_default) ?? {};
@@ -61,21 +70,30 @@ const useGetCloudProviderConfig = () => {
       },
       {
         title: t('instanceType'),
-        children: (
-          <Stack direction={'column'}>
-            <Typography>{data[CLUSTER_FORM_FIELD_NAMES.INSTANCE_CONFIG]?.code}</Typography>
-            <Stack direction={'row'} spacing={1} alignItems="center">
-              <Stack direction={'row'} spacing={0.5} alignItems="center">
-                <CpuIcon height="24px" width="24px" style={{ fill: theme.palette.text.primary }} />
-                <Typography>{data[CLUSTER_FORM_FIELD_NAMES.INSTANCE_CONFIG]?.cpu} CPU</Typography>
-              </Stack>
-              <Stack direction={'row'} spacing={0.5} alignItems="center">
-                <RamIcon height="24px" width="24px" style={{ fill: theme.palette.text.primary }} />
-                <Typography>{data[CLUSTER_FORM_FIELD_NAMES.INSTANCE_CONFIG]?.ram} GB RAM</Typography>
+        children:
+          watchInstanceType !== 'custom' ? (
+            <Stack direction={'column'}>
+              <Typography>{data[CLUSTER_FORM_FIELD_NAMES.INSTANCE_CONFIG]?.code}</Typography>
+              <Stack direction={'row'} spacing={1} alignItems="center">
+                <Stack direction={'row'} spacing={0.5} alignItems="center">
+                  <CpuIcon height="24px" width="24px" style={{ fill: theme.palette.text.primary }} />
+                  <Typography>{data[CLUSTER_FORM_FIELD_NAMES.INSTANCE_CONFIG]?.cpu} CPU</Typography>
+                </Stack>
+                <Stack direction={'row'} spacing={0.5} alignItems="center">
+                  <RamIcon height="24px" width="24px" style={{ fill: theme.palette.text.primary }} />
+                  <Typography>{data[CLUSTER_FORM_FIELD_NAMES.INSTANCE_CONFIG]?.ram} GB RAM</Typography>
+                </Stack>
               </Stack>
             </Stack>
-          </Stack>
-        ),
+          ) : (
+            <Typography
+              sx={{
+                width: '100%',
+                wordWrap: 'anywhere', // wrap words to prevent text squeezing outside of summary card
+              }}>
+              {data?.[INSTANCES_BLOCK_FIELD_NAMES.SERVER_TYPE] ?? ''}
+            </Typography>
+          ),
       },
       {
         title: t('numberOfInstances'),
@@ -91,7 +109,7 @@ const useGetCloudProviderConfig = () => {
         children: (
           <Stack direction={'row'} spacing={0.5} alignItems="center" minHeight="20px">
             <StorageIcon height="24px" width="24px" style={{ fill: theme.palette.text.primary }} />
-            <Typography>{data[CLUSTER_FORM_FIELD_NAMES.STORAGE_AMOUNT]} GB</Typography>
+            <Typography>{data[STORAGE_BLOCK_FIELDS.STORAGE_AMOUNT]} GB</Typography>
           </Stack>
         ),
       },
@@ -99,28 +117,34 @@ const useGetCloudProviderConfig = () => {
         title: `${t('estimatedMonthlyPrice')}*`,
         children: (
           <>
-            <Typography variant="h5" fontWeight="bold">
-              ~
-              {`${data[CLUSTER_FORM_FIELD_NAMES.INSTANCE_CONFIG]?.currency}${(
-                data[CLUSTER_FORM_FIELD_NAMES.INSTANCE_CONFIG]?.price_monthly *
-                  data[CLUSTER_FORM_FIELD_NAMES.INSTANCES_AMOUNT] +
-                defaultVolume?.price_monthly *
-                  data[CLUSTER_FORM_FIELD_NAMES.STORAGE_AMOUNT] *
-                  data[CLUSTER_FORM_FIELD_NAMES.INSTANCES_AMOUNT]
-              )?.toFixed(2)}/${t('month', { ns: 'shared' })}`}
-            </Typography>
-            <Stack direction="row" gap={1}>
-              <Typography>
-                ~
-                {`${data[CLUSTER_FORM_FIELD_NAMES.INSTANCE_CONFIG]?.currency}${data[
-                  CLUSTER_FORM_FIELD_NAMES.INSTANCE_CONFIG
-                ]?.price_monthly.toFixed(2)}/${t('perServer', { ns: 'clusters' })}`}
-                , ~
-                {`${defaultVolume?.currency}${(
-                  defaultVolume?.price_monthly * data[CLUSTER_FORM_FIELD_NAMES.STORAGE_AMOUNT]
-                )?.toFixed(2)}/${t('perDisk', { ns: 'clusters' })}`}
-              </Typography>
-            </Stack>
+            {watchInstanceType !== 'custom' ? (
+              <>
+                <Typography variant="h5" fontWeight="bold">
+                  ~
+                  {`${data[CLUSTER_FORM_FIELD_NAMES.INSTANCE_CONFIG]?.currency}${(
+                    data[CLUSTER_FORM_FIELD_NAMES.INSTANCE_CONFIG]?.price_monthly *
+                      data[CLUSTER_FORM_FIELD_NAMES.INSTANCES_AMOUNT] +
+                    defaultVolume?.price_monthly *
+                      data[STORAGE_BLOCK_FIELDS.STORAGE_AMOUNT] *
+                      data[CLUSTER_FORM_FIELD_NAMES.INSTANCES_AMOUNT]
+                  )?.toFixed(2)}/${t('month', { ns: 'shared' })}`}
+                </Typography>
+                <Stack direction="row" gap={1}>
+                  <Typography>
+                    ~
+                    {`${data[CLUSTER_FORM_FIELD_NAMES.INSTANCE_CONFIG]?.currency}${data[
+                      CLUSTER_FORM_FIELD_NAMES.INSTANCE_CONFIG
+                    ]?.price_monthly.toFixed(2)}/${t('perServer', { ns: 'clusters' })}`}
+                    , ~
+                    {`${defaultVolume?.currency}${(
+                      defaultVolume?.price_monthly * data[STORAGE_BLOCK_FIELDS.STORAGE_AMOUNT]
+                    )?.toFixed(2)}/${t('perDisk', { ns: 'clusters' })}`}
+                  </Typography>
+                </Stack>
+              </>
+            ) : (
+              <Typography>N/A</Typography>
+            )}
             <Typography color="text.secondary" variant="caption" whiteSpace="pre-line">
               <Trans i18nKey="estimatedCostAdditionalInfo" t={t}>
                 <Link
@@ -140,6 +164,24 @@ const useGetCloudProviderConfig = () => {
 const useGetLocalMachineConfig = () => {
   const { t } = useTranslation(['clusters', 'shared']);
   const theme = useTheme();
+
+  const isHighAvailability = (data: LocalClustersSummary) => {
+    if (
+      (IS_EXPERT_MODE &&
+        !data[DCS_BLOCK_FIELD_NAMES.IS_DEPLOY_NEW_CLUSTER] &&
+        data[DCS_BLOCK_FIELD_NAMES.DCS_DATABASES]?.length >= 3) ||
+      (IS_EXPERT_MODE &&
+        data[DCS_BLOCK_FIELD_NAMES.IS_DEPLOY_NEW_CLUSTER] &&
+        !data[DCS_BLOCK_FIELD_NAMES.IS_DEPLOY_TO_DB_SERVERS] &&
+        data[DCS_BLOCK_FIELD_NAMES.DCS_DATABASES]?.length >= 3) ||
+      (IS_EXPERT_MODE &&
+        data[DCS_BLOCK_FIELD_NAMES.IS_DEPLOY_NEW_CLUSTER] &&
+        data[DCS_BLOCK_FIELD_NAMES.IS_DEPLOY_TO_DB_SERVERS] &&
+        data[DATABASE_SERVERS_FIELD_NAMES.DATABASE_SERVERS]?.length >= 3) ||
+      (!IS_EXPERT_MODE && data[DATABASE_SERVERS_FIELD_NAMES.DATABASE_SERVERS]?.length >= 3)
+    )
+      return true;
+  };
 
   return (data: LocalClustersSummary) => [
     {
@@ -165,7 +207,7 @@ const useGetLocalMachineConfig = () => {
         <Stack direction={'row'} spacing={0.5} alignItems="center">
           <LanIcon height="24px" width="24px" style={{ fill: theme.palette.text.primary }} />
           <Typography>
-            {data[CLUSTER_FORM_FIELD_NAMES.IS_HAPROXY_LOAD_BALANCER]
+            {data[LOAD_BALANCERS_FIELD_NAMES.IS_HAPROXY_ENABLED]
               ? t('on', { ns: 'shared' })
               : t('off', { ns: 'shared' })}
           </Typography>
@@ -177,16 +219,12 @@ const useGetLocalMachineConfig = () => {
       children: (
         <Stack direction="column" spacing={0.5}>
           <Stack direction="row" spacing={0.5} alignItems="center">
-            {data[CLUSTER_FORM_FIELD_NAMES.DATABASE_SERVERS]?.length >= 3 ? (
+            {isHighAvailability(data) ? (
               <CheckIcon width="24px" height="24px" style={{ fill: theme.palette.text.primary }} />
             ) : (
               <WarningAmberOutlinedIcon />
             )}
-            <Typography>
-              {data[CLUSTER_FORM_FIELD_NAMES.DATABASE_SERVERS]?.length >= 3
-                ? t('on', { ns: 'shared' })
-                : t('off', { ns: 'shared' })}
-            </Typography>
+            <Typography>{isHighAvailability(data) ? t('on', { ns: 'shared' }) : t('off', { ns: 'shared' })}</Typography>
           </Stack>
           <Typography variant="caption" color="text.secondary">
             {t('highAvailabilityInfo')}

@@ -5,7 +5,7 @@ import "context"
 type InstanceID string
 type ManageClusterConfig struct {
 	Envs      []string
-	ExtraVars []string
+	ExtraVars string // JSON string
 	Mounts    []Mount
 }
 

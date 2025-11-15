@@ -16,9 +16,9 @@
 
 # if dcs_exists: false and dcs_type: "consul"
 [consul_instances]  # recommendation: 3 or 5-7 nodes
-#10.128.64.140 consul_node_role=server consul_bootstrap_expect=true consul_datacenter=dc1
-#10.128.64.142 consul_node_role=server consul_bootstrap_expect=true consul_datacenter=dc1
-#10.128.64.143 consul_node_role=server consul_bootstrap_expect=true consul_datacenter=dc1
+#10.128.64.140 consul_node_role=server consul_datacenter=dc1
+#10.128.64.142 consul_node_role=server consul_datacenter=dc1
+#10.128.64.143 consul_node_role=server consul_datacenter=dc1
 #10.128.64.144 consul_node_role=client consul_datacenter=dc2
 #10.128.64.145 consul_node_role=client consul_datacenter=dc2
 

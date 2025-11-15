@@ -26,14 +26,14 @@
       when: lsblk_disk.stdout is defined and lsblk_disk.stdout | length < 1
 
     # Filesystem
-    - name: Create "{{ pg_data_mount_fstype | default('ext4') }}" filesystem on the disk "/dev/{{ lsblk_disk.stdout | default('') }}"
+    - name: Create "{{ postgresql_data_dir_mount_fstype | default('ext4') }}" filesystem on the disk "/dev/{{ lsblk_disk.stdout | default('') }}"
       community.general.filesystem:
         dev: "/dev/{{ lsblk_disk.stdout }}"
-        fstype: "{{ pg_data_mount_fstype | default('ext4') }}"
+        fstype: "{{ postgresql_data_dir_mount_fstype | default('ext4') }}"
       when:
         - (lsblk_disk.stdout is defined and lsblk_disk.stdout | length > 0)
-        - ((pg_data_mount_fstype is defined and pg_data_mount_fstype != 'zfs') or
-          (pg_data_mount_fstype is not defined and mount[0].fstype != 'zfs'))
+        - ((postgresql_data_dir_mount_fstype is defined and postgresql_data_dir_mount_fstype != 'zfs') or
+          (postgresql_data_dir_mount_fstype is not defined and mount[0].fstype != 'zfs'))
 
     # UUID
     - name: Get UUID of the disk "/dev/{{ lsblk_disk.stdout | default('') }}"
@@ -46,15 +46,15 @@
       changed_when: false
       when:
         - (lsblk_disk.stdout is defined and lsblk_disk.stdout | length > 0)
-        - ((pg_data_mount_fstype is defined and pg_data_mount_fstype != 'zfs') or
-          (pg_data_mount_fstype is not defined and mount[0].fstype != 'zfs'))
+        - ((postgresql_data_dir_mount_fstype is defined and postgresql_data_dir_mount_fstype != 'zfs') or
+          (postgresql_data_dir_mount_fstype is not defined and mount[0].fstype != 'zfs'))
 
     - name: "Set mount variables"
       ansible.builtin.set_fact:
         mount:
           - src: "UUID={{ lsblk_uuid.stdout }}"
-            path: "{{ pg_data_mount_path | default('/pgdata', true) }}"
-            fstype: "{{ pg_data_mount_fstype | default('ext4', true) }}"
+            path: "{{ postgresql_data_dir_mount_path | default('/pgdata', true) }}"
+            fstype: "{{ postgresql_data_dir_mount_fstype | default('ext4', true) }}"
       when: lsblk_uuid.stdout is defined
 
     # Mount
@@ -62,14 +62,14 @@
       ansible.posix.mount:
         path: "{{ item.path }}"
         src: "{{ item.src }}"
-        fstype: "{{ item.fstype | default(pg_data_mount_fstype | default('ext4', true), true) }}"
+        fstype: "{{ item.fstype | default(postgresql_data_dir_mount_fstype | default('ext4', true), true) }}"
         opts: "{{ item.opts | default('defaults,noatime') }}"
         state: "{{ item.state | default('mounted') }}"
       loop: "{{ mount }}"
       when:
         - (item.src | length > 0 and item.path | length > 0)
-        - ((pg_data_mount_fstype is defined and pg_data_mount_fstype != 'zfs') or
-          (pg_data_mount_fstype is not defined and item.fstype != 'zfs'))
+        - ((postgresql_data_dir_mount_fstype is defined and postgresql_data_dir_mount_fstype != 'zfs') or
+          (postgresql_data_dir_mount_fstype is not defined and item.fstype != 'zfs'))
 
     # ZFS Pool (if fstype is 'zfs')
     - block:
@@ -150,10 +150,10 @@
             -O atime=off
             -O recordsize=128k
             -O logbias=throughput
-            -m {{ pg_data_mount_path | default(mount[0].path | default('/pgdata', true), true) }}
+            -m {{ postgresql_data_dir_mount_path | default(mount[0].path | default('/pgdata', true), true) }}
             pgdata {{ mount[0].src | default("/dev/" + lsblk_disk.stdout, true) }}
       when:
         - (mount[0].src | length > 0 or lsblk_disk.stdout | default('') | length > 0)
-        - ((pg_data_mount_fstype is defined and pg_data_mount_fstype == 'zfs') or
-          (pg_data_mount_fstype is not defined and mount[0].fstype == 'zfs'))
+        - ((postgresql_data_dir_mount_fstype is defined and postgresql_data_dir_mount_fstype == 'zfs') or
+          (postgresql_data_dir_mount_fstype is not defined and mount[0].fstype == 'zfs'))
   tags: mount, zpool

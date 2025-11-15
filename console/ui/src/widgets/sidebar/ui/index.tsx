@@ -17,7 +17,7 @@ const Sidebar = () => {
   const toggleSidebarCollapse = () => {
     setIsCollapsed((prev) => {
       const newValue = !prev;
-      localStorage.setItem('isSidebarCollapsed', newValue);
+      localStorage.setItem('isSidebarCollapsed', String(newValue));
       return newValue;
     });
   };
@@ -30,25 +30,13 @@ const Sidebar = () => {
     if ((!isCollapsed && isLesserThan1600) || (isCollapsed && !isLesserThan1600)) toggleSidebarCollapse();
   }, [isLesserThan1600]);
 
-  const sidebarItems = sidebarData(t).map((item) => (
-    <SidebarItem
-      key={item.label + item.path}
-      {...item}
-      isActive={isActive(item.path)} //TODO: fix
-      isCollapsed={isCollapsed}
-    />
-  ));
-
-  const sidebarLowIcons = sidebarLowData(t).map((item) => (
-    <SidebarItem key={item.label + item.path} isCollapsed={isCollapsed} target="_blank" {...item} />
-  ));
-
   return (
     <Drawer
       variant="permanent"
       sx={{
         width: isCollapsed ? COLLAPSED_SIDEBAR_WIDTH : OPEN_SIDEBAR_WIDTH,
         flexShrink: 0,
+        overflow: 'auto',
         [`& .MuiDrawer-paper`]: {
           width: isCollapsed ? COLLAPSED_SIDEBAR_WIDTH : OPEN_SIDEBAR_WIDTH,
           boxSizing: 'border-box',
@@ -56,17 +44,24 @@ const Sidebar = () => {
         },
       }}>
       <Toolbar />
-      <Stack
-        direction="column"
-        height="100%"
-        width="100%"
-        overflow="auto"
-        alignItems="flex-start"
-        justifyContent="center">
-        <List sx={{ width: '100%' }}>{sidebarItems}</List>
+      <Stack direction="column" height="100%" width="100%" alignItems="flex-start" justifyContent="center">
+        <List sx={{ width: '100%' }}>
+          {sidebarData(t).map((item) => (
+            <SidebarItem
+              key={item.label + item.path}
+              {...item}
+              isActive={isActive(item.path)}
+              isCollapsed={isCollapsed}
+            />
+          ))}
+        </List>
         <Box sx={{ height: '100%' }} />
         <Divider flexItem />
-        <List sx={{ width: '100%', padding: '8px 0 8px 0' }}>{sidebarLowIcons}</List>
+        <List sx={{ width: '100%', padding: '8px 0 8px 0' }}>
+          {sidebarLowData(t).map((item) => (
+            <SidebarItem key={item.label + item.path} isCollapsed={isCollapsed} target="_blank" {...item} />
+          ))}
+        </List>
         <Divider flexItem />
         <IconButton
           sx={{

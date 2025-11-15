@@ -4,7 +4,7 @@ export interface SidebarItemProps {
   path: string;
   label: string;
   icon?: ComponentType<SVGProps<SVGSVGElement>>;
-  isActive?: string;
+  isActive?: boolean;
   isCollapsed?: boolean;
   target?: string;
 }

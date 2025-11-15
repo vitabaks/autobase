@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/consistent-type-definitions */
+
 import { baseApi as api } from '../baseApi.ts';
 
 const injectedRtkApi = api.injectEndpoints({

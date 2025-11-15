@@ -17,7 +17,6 @@
         dcs_type: "{{ 'etcd' if ansible_distribution_major_version in ['10'] or ansible_distribution_release in ['trixie']
           else (['etcd', 'consul'] | random) }}" # TODO: Consul support for RHEL 10, Debian 13
         consul_node_role: server # if dcs_type: "consul"
-        consul_bootstrap_expect: true # if dcs_type: "consul"
         postgresql_version: 17 # redefine the version to install for the upgrade test
         pgbouncer_processes: 4 # Test multiple pgbouncer processes (so_reuseport)
         cacheable: true
@@ -27,7 +26,7 @@
     # Extension Auto-Setup
     - name: Set variables for Extensions test
       ansible.builtin.set_fact:
-        enable_timescale: false # TODO: not available for PostgreSQL 18
+        enable_timescale: "{{ true if ansible_distribution_major_version != '10' else false }}" # TODO: not available for PostgreSQL 18 on RHEL 10
         enable_pg_repack: true
         enable_pg_cron: true
         enable_pgaudit: true
@@ -35,9 +34,9 @@
         enable_postgis: true
         enable_pgrouting: true
         enable_pg_wait_sampling: true
-        enable_pg_stat_kcache: false # TODO: not available for PostgreSQL 18
-        enable_pg_partman: false # TODO: not available for PostgreSQL 18
-        enable_pgvectorscale: false # TODO: not available for PostgreSQL 18
+        enable_pg_stat_kcache: true
+        enable_pg_partman: true
+        enable_pgvectorscale: "{{ true if ansible_os_family == 'Debian' else false }}" # pgvectorscale packages are available only for Debian-based disros.
         # create extension
         postgresql_extensions:
           - { ext: "vector", db: "postgres" }

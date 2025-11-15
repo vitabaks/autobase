@@ -10,6 +10,7 @@ import (
 	"postgresql-cluster-console/internal/xdocker"
 	"postgresql-cluster-console/pkg/tracer"
 	"postgresql-cluster-console/restapi/operations/cluster"
+	"strings"
 
 	"github.com/go-openapi/runtime/middleware"
 	"github.com/rs/zerolog"
@@ -41,13 +42,16 @@ func (h *removeClusterHandler) Handle(param cluster.PostClustersIDRemoveParams) 
 		return cluster.NewPostClustersIDRemoveBadRequest().WithPayload(controllers.MakeErrorPayload(err, controllers.BaseError))
 	}
 
-	var extraVars []string
-
-	err = json.Unmarshal(clusterInfo.ExtraVars, &extraVars)
-	if err != nil {
-		return cluster.NewPostClustersIDRemoveBadRequest().WithPayload(controllers.MakeErrorPayload(err, controllers.BaseError))
+	// Parse extra_vars JSON from DB
+	extraVarsMap := map[string]interface{}{}
+	if len(clusterInfo.ExtraVars) != 0 {
+		if err := json.Unmarshal(clusterInfo.ExtraVars, &extraVarsMap); err != nil {
+			return cluster.NewPostClustersIDRemoveBadRequest().WithPayload(controllers.MakeErrorPayload(err, controllers.BaseError))
+		}
 	}
-	extraVars = append(extraVars, "state=absent")
+
+	// Add removal state
+	extraVarsMap["state"] = "absent"
 
 	var (
 		envs          []string
@@ -59,18 +63,30 @@ func (h *removeClusterHandler) Handle(param cluster.PostClustersIDRemoveParams) 
 			return cluster.NewPostClustersIDRemoveBadRequest().WithPayload(controllers.MakeErrorPayload(err, controllers.BaseError))
 		}
 		if paramLocation == ExtraVarsParamLocation {
-			extraVars = append(extraVars, envs...)
+			for _, kv := range envs {
+				parts := strings.SplitN(kv, "=", 2)
+				if len(parts) == 2 {
+					extraVarsMap[parts[0]] = parts[1]
+				}
+			}
 		}
 	}
+
 	envs = append(envs, "patroni_cluster_name="+clusterInfo.Name)
 	if len(clusterInfo.Inventory) != 0 {
 		envs = append(envs, "ANSIBLE_INVENTORY_JSON="+base64.StdEncoding.EncodeToString(clusterInfo.Inventory))
 	}
 	localLog.Trace().Strs("envs", envs).Msg("got envs")
 
+	// Marshal extra vars map to JSON string for docker
+	extraVarsJSON, err := json.Marshal(extraVarsMap)
+	if err != nil {
+		return cluster.NewPostClustersIDRemoveBadRequest().WithPayload(controllers.MakeErrorPayload(err, controllers.BaseError))
+	}
+
 	dockerId, err := h.dockerManager.ManageCluster(param.HTTPRequest.Context(), &xdocker.ManageClusterConfig{
 		Envs:      envs,
-		ExtraVars: extraVars,
+		ExtraVars: string(extraVarsJSON),
 	})
 	if err != nil {
 		return cluster.NewPostClustersIDRemoveBadRequest().WithPayload(controllers.MakeErrorPayload(err, controllers.BaseError))

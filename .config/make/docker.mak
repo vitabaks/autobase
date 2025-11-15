@@ -11,7 +11,7 @@ docker-lint: docker-lint-automation docker-lint-console-ui docker-lint-console-a
 docker-lint-automation: ## Lint automation Dockerfile
 	@echo "Lint automation container Dockerfile"
 	docker run --rm -i -v $(PWD)/automation/Dockerfile:/Dockerfile \
-	hadolint/hadolint hadolint --ignore DL3002 --ignore DL3008 --ignore DL3059 /Dockerfile
+	hadolint/hadolint hadolint --ignore DL3002 --ignore DL3008 --ignore DL3013 --ignore DL3059 /Dockerfile
 
 docker-lint-console-ui: ## Lint console ui Dockerfile
 	@echo "Lint console ui container Dockerfile"

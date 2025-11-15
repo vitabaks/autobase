@@ -207,7 +207,7 @@ type CreateClusterReq struct {
 	Name              string
 	Description       string
 	SecretID          *int64
-	ExtraVars         []string
+	ExtraVars         []byte
 	Location          string
 	ServerCount       int
 	PostgreSqlVersion int

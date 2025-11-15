@@ -1145,9 +1145,9 @@ definitions:
         items:
           type: string
       extra_vars:
-        type: array
-        items:
-          type: string
+        type: object
+        description: "Ansible extra vars (arbitrary JSON object)"
+        additionalProperties: true
       existing_cluster:
         type: boolean
         default: false
@@ -1230,9 +1230,7 @@ definitions:
       connection_info:
         type: object
       extra_vars:
-        type: array
-        items:
-          type: string
+        type: string
         description: "Ansible variables"
       inventory:
         type: string

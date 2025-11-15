@@ -11,34 +11,33 @@ import (
 )
 
 func (m *dockerManager) pullImage(ctx context.Context, dockerImage string) error {
+	dockerImage = strings.TrimSpace(dockerImage)
 	localLog := m.log.With().Str("cid", ctx.Value(tracer.CtxCidKey{}).(string)).Logger()
+
 	inspectRes, _, err := m.cli.ImageInspectWithRaw(ctx, dockerImage)
 	if err != nil {
-		if _, ok := err.(errdefs.ErrNotFound); !ok {
-			localLog.Error().Err(err).Msg("failed to inspect docker image")
-
+		if !errdefs.IsNotFound(err) {
+			localLog.Error().Err(err).Str("docker_image", dockerImage).Msg("failed to inspect docker image")
 			return err
 		}
+	} else if inspectRes.ID != "" {
+		localLog.Info().Str("docker_image", dockerImage).Msg("docker image already present locally")
+		return nil
 	}
-	if err == nil && inspectRes.ID != "" {
-		return nil // already has locally
-	}
+
 	out, err := m.cli.ImagePull(ctx, dockerImage, image.PullOptions{})
 	if err != nil {
 		localLog.Error().Err(err).Str("docker_image", dockerImage).Msg("failed to pull docker image")
-
 		return err
 	}
-	defer func() {
-		err = out.Close()
-		if err != nil {
-			localLog.Warn().Err(err).Msg("failed to close image_pull output")
+	defer func(rc io.ReadCloser) {
+		if cerr := rc.Close(); cerr != nil {
+			localLog.Warn().Err(cerr).Msg("failed to close image_pull output")
 		}
-	}()
+	}(out)
 
-	buf := strings.Builder{}
-	_, _ = io.Copy(&buf, out)
-	localLog.Trace().Str("log", buf.String()).Msg("pull image")
+	_, _ = io.Copy(io.Discard, out)
+	localLog.Info().Str("docker_image", dockerImage).Msg("docker image successfully pulled")
 
 	return nil
 }

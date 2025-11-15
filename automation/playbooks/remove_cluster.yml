@@ -29,7 +29,7 @@
             default_postgresql_cluster_name: "{{ 'main' if ansible_os_family == 'Debian' else 'data' }}"
             default_postgresql_data_dir: "\
               {% if cloud_provider | default('') | length > 0 %}\
-              {{ pg_data_mount_path | default('/pgdata') }}/{{ default_postgresql_version }}/{{ default_postgresql_cluster_name }}\
+              {{ postgresql_data_dir_mount_path | default('/pgdata') }}/{{ default_postgresql_version }}/{{ default_postgresql_cluster_name }}\
               {% else %}\
               {{ default_postgresql_home_dir }}/{{ default_postgresql_version }}/{{ default_postgresql_cluster_name }}\
               {% endif %}"
