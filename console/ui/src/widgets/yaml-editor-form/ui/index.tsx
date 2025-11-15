@@ -13,7 +13,7 @@ import {
 } from '@widgets/yaml-editor-form/modal/const.ts';
 import { YamlEditorFormValues } from '@widgets/yaml-editor-form/modal/types.ts';
 import { RequestClusterCreate, usePostClustersMutation } from '@/shared/api/api/clusters';
-import { Box, Stack } from '@mui/material';
+import { Box, Stack, useTheme } from '@mui/material';
 import { toast } from 'react-toastify';
 import * as YAML from 'yaml';
 import ErrorBox from '@shared/ui/error-box/ui';
@@ -25,6 +25,7 @@ import { selectCurrentProject } from '@app/redux/slices/projectSlice/projectSele
 import IStandaloneCodeEditor = editor.IStandaloneCodeEditor;
 
 const YamlEditorForm: FC = () => {
+  const theme = useTheme();
   const { t } = useTranslation('clusters');
   const editorRef = useRef<IStandaloneCodeEditor | null>(null);
   const navigate = useNavigate();
@@ -85,7 +86,7 @@ const YamlEditorForm: FC = () => {
                   defaultLanguage="yaml"
                   height="75vh"
                   onMount={handleEditorDidMount}
-                  theme="vs-dark"
+                  theme={theme.palette.mode === 'light' ? 'vs' : 'vs-dark'}
                 />
               )}
             />
