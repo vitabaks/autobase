@@ -460,8 +460,6 @@
       when:
         - (pgbackrest_install | bool or wal_g_install | bool)
         - hetzner_object_storage_create | bool
-        - hetzner_object_storage_access_key | length > 0
-        - hetzner_object_storage_secret_key | length > 0
 
     # Server and volume
     - name: "Hetzner Cloud: Gather information about servers"
