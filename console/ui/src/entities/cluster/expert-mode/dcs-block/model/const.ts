@@ -14,7 +14,7 @@ export const DCS_DATABASES_DEFAULT_VALUES = Object.freeze({
   [DCS_BLOCK_FIELD_NAMES.DCS_DATABASE_PORT]: '2379',
 });
 
-export const DCS_TYPES = Object.freeze(['etcd', 'consul']);
+export const DCS_TYPES = Object.freeze({ ETCD: 'etcd', CONSUL: 'consul' });
 
 export const getCorrectFields = ({ watchIsDeployToDcsCluster, watchIsDeployToDbServers, watchDcsType, t }) => {
   const fields = [];
@@ -24,7 +24,7 @@ export const getCorrectFields = ({ watchIsDeployToDcsCluster, watchIsDeployToDbS
       fieldName: DCS_BLOCK_FIELD_NAMES.DCS_DATABASE_IP_ADDRESS,
       label: t('ipAddress'),
     });
-    if (watchDcsType === DCS_TYPES[0]) {
+    if (watchDcsType === DCS_TYPES.ETCD) {
       fields.push({ fieldName: DCS_BLOCK_FIELD_NAMES.DCS_DATABASE_PORT, label: t('port') });
     }
   }

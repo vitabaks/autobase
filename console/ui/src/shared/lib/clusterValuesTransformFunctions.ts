@@ -112,7 +112,7 @@ export const getLocalMachineExtraVars = (values: ClusterFormValues, secretId?: n
         ...(!values[DCS_BLOCK_FIELD_NAMES.IS_DEPLOY_NEW_CLUSTER]
           ? {
               dcs_exists: true,
-              ...(values[DCS_BLOCK_FIELD_NAMES.TYPE] === DCS_TYPES[0]
+              ...(values[DCS_BLOCK_FIELD_NAMES.TYPE] === DCS_TYPES.ETCD
                 ? {
                     patroni_etcd_hosts: values?.[DCS_BLOCK_FIELD_NAMES.DCS_DATABASES]?.map((database) => ({
                       host: database[DCS_BLOCK_FIELD_NAMES.DCS_DATABASE_IP_ADDRESS],
@@ -132,21 +132,43 @@ export const getLocalMachineExtraVars = (values: ClusterFormValues, secretId?: n
     : {}),
 });
 
-const configureDcsHosts = ({
+/**
+ * Function maps a field array into correct request format for DCS config.
+ * @param values - Filled form values.
+ * @param role - Optional role for Consul instances.
+ * @param shouldAddHostname - An optional flag determines if field 'hostname' should be added. True by default.
+ * @param isDbServers - An optional flag determines which db servers are mapping - Database servers or DCS. True by default.
+ */
+const configureHosts = ({
   values,
   role,
-  isAddHostname = false,
+  shouldAddHostname = false,
+  isDbServers = true,
 }: {
   values: ClusterFormValues;
   role?: string;
-  isAddHostname?: boolean;
+  shouldAddHostname?: boolean;
+  isDbServers?: boolean;
 }) => {
-  return values[DCS_BLOCK_FIELD_NAMES.DCS_DATABASES].reduce(
+  const dbServersKeys = {
+    servers: DATABASE_SERVERS_FIELD_NAMES.DATABASE_SERVERS,
+    ipAddress: DATABASE_SERVERS_FIELD_NAMES.DATABASE_IP_ADDRESS,
+  };
+
+  const dcsHostsKeys = {
+    servers: DCS_BLOCK_FIELD_NAMES.DCS_DATABASES,
+    ipAddress: DCS_BLOCK_FIELD_NAMES.DCS_DATABASE_IP_ADDRESS,
+    hostname: DCS_BLOCK_FIELD_NAMES.DCS_DATABASE_HOSTNAME,
+  };
+
+  const usedKeys = isDbServers ? dbServersKeys : dcsHostsKeys;
+
+  return values[usedKeys.servers].reduce(
     (acc, server) => ({
       ...acc,
-      [server[DCS_BLOCK_FIELD_NAMES.DCS_DATABASE_IP_ADDRESS]]: {
-        ansible_host: server[DCS_BLOCK_FIELD_NAMES.DCS_DATABASE_IP_ADDRESS],
-        ...(isAddHostname ? { hostname: server[DCS_BLOCK_FIELD_NAMES.DCS_DATABASE_HOSTNAME] } : {}),
+      [server[usedKeys.ipAddress]]: {
+        ansible_host: server[usedKeys.ipAddress],
+        ...(shouldAddHostname && usedKeys?.hostname ? { hostname: server[usedKeys.hostname] } : {}),
         ...(role ? { consul_node_role: role } : {}),
       },
     }),
@@ -154,51 +176,44 @@ const configureDcsHosts = ({
   );
 };
 
-const configureDatabaseServersHosts = ({ values, role }: { values: ClusterFormValues; role?: string }) => {
-  return values[DATABASE_SERVERS_FIELD_NAMES.DATABASE_SERVERS].reduce(
-    (acc, server) => ({
-      ...acc,
-      [server[DATABASE_SERVERS_FIELD_NAMES.IP_ADDRESS]]: {
-        ansible_host: server[DATABASE_SERVERS_FIELD_NAMES.IP_ADDRESS],
-        ...(role ? { consul_node_role: role } : {}),
-      },
-    }),
-    {},
-  );
-};
-
+/**
+ * Function maps DCS fields into the correct request format.
+ * @param values - Filled form values.
+ */
 const constructDcsEnvs = (values: ClusterFormValues) => {
   if (values[DCS_BLOCK_FIELD_NAMES.IS_DEPLOY_NEW_CLUSTER]) {
     if (!IS_EXPERT_MODE) {
       return {
         etcd_cluster: {
-          hosts: configureDatabaseServersHosts({ values }),
+          hosts: configureHosts({ values }),
         },
         consul_instances: { hosts: {} },
       };
     }
     if (IS_EXPERT_MODE) {
       switch (values[DCS_BLOCK_FIELD_NAMES.TYPE]) {
-        case DCS_TYPES[0]:
+        case DCS_TYPES.ETCD:
           return {
             etcd_cluster: {
-              hosts: values[DCS_BLOCK_FIELD_NAMES.IS_DEPLOY_TO_DB_SERVERS]
-                ? configureDatabaseServersHosts({ values })
-                : configureDcsHosts({ values, isAddHostname: true }),
+              hosts: configureHosts({
+                values,
+                isDbServers: values[DCS_BLOCK_FIELD_NAMES.IS_DEPLOY_TO_DB_SERVERS],
+                shouldAddHostname: !values[DCS_BLOCK_FIELD_NAMES.IS_DEPLOY_TO_DB_SERVERS],
+              }),
             },
             consul_instances: { hosts: {} },
           };
-        case DCS_TYPES[1]:
+        case DCS_TYPES.CONSUL:
           return {
             etcd_cluster: {
               hosts: {},
             },
             consul_instances: {
               hosts: values[DCS_BLOCK_FIELD_NAMES.IS_DEPLOY_TO_DB_SERVERS]
-                ? configureDatabaseServersHosts({ values, role: 'server' })
+                ? configureHosts({ values, role: 'server' })
                 : {
-                    ...configureDatabaseServersHosts({ values, role: 'client' }),
-                    ...configureDcsHosts({ values, role: 'server', isAddHostname: true }),
+                    ...configureHosts({ values, role: 'client' }),
+                    ...configureHosts({ values, role: 'server', isDbServers: false, shouldAddHostname: true }),
                   },
             },
           };
@@ -213,16 +228,20 @@ const constructDcsEnvs = (values: ClusterFormValues) => {
     }
   }
   if (IS_EXPERT_MODE && !values[DCS_BLOCK_FIELD_NAMES.IS_DEPLOY_NEW_CLUSTER]) {
-    if (values[DCS_BLOCK_FIELD_NAMES.TYPE] === DCS_TYPES[1]) {
+    if (values[DCS_BLOCK_FIELD_NAMES.TYPE] === DCS_TYPES.CONSUL) {
       return {
         consul_instances: {
-          hosts: configureDcsHosts({ values, role: 'server', isAddHostname: false }),
+          hosts: configureHosts({ values, role: 'server', isDbServers: false }),
         },
       };
     }
   }
 };
 
+/**
+ * Function maps Load Balancers block form values into correct request format.
+ * @param values - Filled form values.
+ */
 const constructBalancersEnvs = (values: ClusterFormValues) => {
   let balancerHosts = {};
 
@@ -241,8 +260,8 @@ const constructBalancersEnvs = (values: ClusterFormValues) => {
       balancerHosts = values[DATABASE_SERVERS_FIELD_NAMES.DATABASE_SERVERS].reduce(
         (acc, server) => ({
           ...acc,
-          [server[DATABASE_SERVERS_FIELD_NAMES.IP_ADDRESS]]: {
-            ansible_host: server[DATABASE_SERVERS_FIELD_NAMES.IP_ADDRESS],
+          [server[DATABASE_SERVERS_FIELD_NAMES.DATABASE_IP_ADDRESS]]: {
+            ansible_host: server[DATABASE_SERVERS_FIELD_NAMES.DATABASE_IP_ADDRESS],
           },
         }),
         {},
@@ -286,15 +305,21 @@ export const getLocalMachineEnvs = (values: ClusterFormValues, secretId?: number
         ...constructDcsEnvs(values),
         master: {
           hosts: {
-            [values[DATABASE_SERVERS_FIELD_NAMES.DATABASE_SERVERS][0][DATABASE_SERVERS_FIELD_NAMES.IP_ADDRESS]]: {
+            [values[DATABASE_SERVERS_FIELD_NAMES.DATABASE_SERVERS][0][
+              DATABASE_SERVERS_FIELD_NAMES.DATABASE_IP_ADDRESS
+            ]]: {
               hostname:
                 values[DATABASE_SERVERS_FIELD_NAMES.DATABASE_SERVERS][0][
                   DATABASE_SERVERS_FIELD_NAMES.DATABASE_HOSTNAME
                 ],
               ansible_host:
-                values[DATABASE_SERVERS_FIELD_NAMES.DATABASE_SERVERS][0][DATABASE_SERVERS_FIELD_NAMES.IP_ADDRESS],
+                values[DATABASE_SERVERS_FIELD_NAMES.DATABASE_SERVERS][0][
+                  DATABASE_SERVERS_FIELD_NAMES.DATABASE_IP_ADDRESS
+                ],
               server_location:
-                values[DATABASE_SERVERS_FIELD_NAMES.DATABASE_SERVERS]?.[0]?.[DATABASE_SERVERS_FIELD_NAMES.LOCATION],
+                values[DATABASE_SERVERS_FIELD_NAMES.DATABASE_SERVERS]?.[0]?.[
+                  DATABASE_SERVERS_FIELD_NAMES.DATABASE_LOCATION
+                ],
               postgresql_exists: IS_EXPERT_MODE
                 ? values[DATABASE_SERVERS_FIELD_NAMES.DATABASE_SERVERS]?.[0]?.[
                     DATABASE_SERVERS_FIELD_NAMES.IS_POSTGRESQL_EXISTS
@@ -309,10 +334,10 @@ export const getLocalMachineEnvs = (values: ClusterFormValues, secretId?: number
                 hosts: values[DATABASE_SERVERS_FIELD_NAMES.DATABASE_SERVERS].slice(1).reduce(
                   (acc, server) => ({
                     ...acc,
-                    [server[DATABASE_SERVERS_FIELD_NAMES.IP_ADDRESS]]: {
+                    [server[DATABASE_SERVERS_FIELD_NAMES.DATABASE_IP_ADDRESS]]: {
                       hostname: server?.[DATABASE_SERVERS_FIELD_NAMES.DATABASE_HOSTNAME],
-                      ansible_host: server?.[DATABASE_SERVERS_FIELD_NAMES.IP_ADDRESS],
-                      server_location: server?.[DATABASE_SERVERS_FIELD_NAMES.LOCATION],
+                      ansible_host: server?.[DATABASE_SERVERS_FIELD_NAMES.DATABASE_IP_ADDRESS],
+                      server_location: server?.[DATABASE_SERVERS_FIELD_NAMES.DATABASE_LOCATION],
                       postgresql_exists: IS_EXPERT_MODE
                         ? server?.[DATABASE_SERVERS_FIELD_NAMES.IS_POSTGRESQL_EXISTS]
                         : (values[DATABASE_SERVERS_FIELD_NAMES.IS_CLUSTER_EXISTS] ?? false),

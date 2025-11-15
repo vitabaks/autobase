@@ -16,13 +16,13 @@ export const databaseServersBlockValidation = (t: TFunction) =>
                 [DATABASE_SERVERS_FIELD_NAMES.DATABASE_HOSTNAME]: yup
                   .string()
                   .required(t('requiredField', { ns: 'validation' })),
-                [DATABASE_SERVERS_FIELD_NAMES.IP_ADDRESS]: yup
+                [DATABASE_SERVERS_FIELD_NAMES.DATABASE_IP_ADDRESS]: yup
                   .string()
                   .required(t('requiredField', { ns: 'validation' }))
                   .test('should be a correct IP', t('shouldBeACorrectV4Ip', { ns: 'validation' }), (value) =>
                     ipRegex.v4({ exact: true }).test(value),
                   ),
-                [DATABASE_SERVERS_FIELD_NAMES.LOCATION]: yup.string(),
+                [DATABASE_SERVERS_FIELD_NAMES.DATABASE_LOCATION]: yup.string(),
               }),
             )
           : schema.notRequired(),

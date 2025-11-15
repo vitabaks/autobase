@@ -49,7 +49,7 @@ const DatabaseServerBox: FC<DatabaseServerBlockProps> = ({ index, remove }) => {
         />
         <Controller
           control={control}
-          name={`${DATABASE_SERVERS_FIELD_NAMES.DATABASE_SERVERS}.${index}.${DATABASE_SERVERS_FIELD_NAMES.IP_ADDRESS}`}
+          name={`${DATABASE_SERVERS_FIELD_NAMES.DATABASE_SERVERS}.${index}.${DATABASE_SERVERS_FIELD_NAMES.DATABASE_IP_ADDRESS}`}
           render={({ field: { value, onChange } }) => (
             <TextField
               required
@@ -59,12 +59,12 @@ const DatabaseServerBox: FC<DatabaseServerBlockProps> = ({ index, remove }) => {
               label={t('ipAddress', { ns: 'clusters' })}
               error={
                 !!errors[DATABASE_SERVERS_FIELD_NAMES.DATABASE_SERVERS]?.[index]?.[
-                  DATABASE_SERVERS_FIELD_NAMES.IP_ADDRESS
+                  DATABASE_SERVERS_FIELD_NAMES.DATABASE_IP_ADDRESS
                 ]
               }
               helperText={
                 errors?.[DATABASE_SERVERS_FIELD_NAMES.DATABASE_SERVERS]?.[index]?.[
-                  DATABASE_SERVERS_FIELD_NAMES.IP_ADDRESS
+                  DATABASE_SERVERS_FIELD_NAMES.DATABASE_IP_ADDRESS
                 ]?.message ?? ' '
               }
             />
@@ -72,7 +72,7 @@ const DatabaseServerBox: FC<DatabaseServerBlockProps> = ({ index, remove }) => {
         />
         <Controller
           control={control}
-          name={`${DATABASE_SERVERS_FIELD_NAMES.DATABASE_SERVERS}.${index}.${DATABASE_SERVERS_FIELD_NAMES.LOCATION}`}
+          name={`${DATABASE_SERVERS_FIELD_NAMES.DATABASE_SERVERS}.${index}.${DATABASE_SERVERS_FIELD_NAMES.DATABASE_LOCATION}`}
           render={({ field: { value, onChange } }) => (
             <TextField
               value={value}

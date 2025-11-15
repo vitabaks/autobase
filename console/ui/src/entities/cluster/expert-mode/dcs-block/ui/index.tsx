@@ -62,7 +62,7 @@ const DcsBlock: FC = () => {
             <FormControl fullWidth size="small">
               <InputLabel size="small">{t('dcsType')}</InputLabel>
               <Select {...field} size="small" label={t('dcsType')} error={!!errors[DCS_BLOCK_FIELD_NAMES.TYPE]}>
-                {DCS_TYPES.map((mode) => (
+                {Object.values(DCS_TYPES).map((mode) => (
                   <MenuItem key={mode} value={mode}>
                     {mode}
                   </MenuItem>
