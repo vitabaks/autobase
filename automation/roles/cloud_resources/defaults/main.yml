@@ -69,7 +69,7 @@ digital_ocean_spaces_absent: false # Allow to delete Spaces Object Storage when 
 
 hetzner_object_storage_create: true # if 'cloud_provider=hetzner'
 hetzner_object_storage_name: "{{ patroni_cluster_name }}-backup" # Name of the Object Storage (S3 bucket).
-hetzner_object_storage_region: "{{ server_location }}" # The region where the Object Storage (S3 bucket) will be created.
+hetzner_object_storage_region: "{{ (server_location in ['hel1', 'fsn1', 'nbg1']) | ternary(server_location, 'nbg1') }}" # The region where the Object Storage (S3 bucket) will be created.
 hetzner_object_storage_endpoint: "https://{{ hetzner_object_storage_region }}.your-objectstorage.com"
 hetzner_object_storage_access_key: "" # (required) Object Storage ACCESS KEY
 hetzner_object_storage_secret_key: "" # (required) Object Storage SECRET KEY
