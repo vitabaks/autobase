@@ -620,9 +620,12 @@
         oauth_token: "{{ lookup('ansible.builtin.env', 'DO_API_TOKEN') }}"
         name: "{{ digital_ocean_spaces_name }}"
         region: "{{ digital_ocean_spaces_region }}"
-        aws_access_key_id: "{{ AWS_ACCESS_KEY_ID }}"
-        aws_secret_access_key: "{{ AWS_SECRET_ACCESS_KEY }}"
+        aws_access_key_id: "{{ digital_ocean_spaces_access_key | default(AWS_ACCESS_KEY_ID | default(default_access_key), true) }}"
+        aws_secret_access_key: "{{ digital_ocean_spaces_secret_key | default(AWS_SECRET_ACCESS_KEY | default(default_secret_key), true) }}"
         state: present
+      vars:
+        default_access_key: "{{ pgbackrest_s3_key | default(wal_g_aws_access_key_id | default('')) }}"
+        default_secret_key: "{{ pgbackrest_s3_key_secret | default(wal_g_aws_secret_access_key | default('')) }}"
       when:
         - (pgbackrest_install | bool or wal_g_install | bool)
         - digital_ocean_spaces_create | bool
