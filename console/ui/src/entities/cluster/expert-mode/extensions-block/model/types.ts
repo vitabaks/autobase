@@ -15,5 +15,5 @@ export interface ExtensionsSwiperProps extends Pick<ExtensionBoxProps, 'extensio
 }
 
 export interface ExtensionsBlockValues {
-  [EXTENSION_BLOCK_FIELD_NAMES.EXTENSIONS]?: ResponseDatabaseExtension[];
+  [EXTENSION_BLOCK_FIELD_NAMES.EXTENSIONS]?: Record<string, { db: string[]; isThirdParty: boolean }>;
 }

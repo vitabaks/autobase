@@ -364,16 +364,26 @@ export const getLocalMachineEnvs = (values: ClusterFormValues, secretId?: number
  * @param values - Filled form values.
  */
 const getExtensions = (values: ClusterFormValues) =>
-  Object.entries(values?.[EXTENSION_BLOCK_FIELD_NAMES.EXTENSIONS])?.reduce((acc, [key, value]) => {
-    if (value?.length) {
-      const convertedToReqFormat = value.map((item) => ({
-        ext: key,
-        db: values[DATABASES_BLOCK_FIELD_NAMES.NAMES][item],
-      }));
-      return [...acc, ...convertedToReqFormat];
-    }
-    return acc;
-  }, []) ?? [];
+  Object.entries(values?.[EXTENSION_BLOCK_FIELD_NAMES.EXTENSIONS])?.reduce(
+    (acc, [key, value]) => {
+      if (value?.db?.length) {
+        const convertedToReqFormat = value.db.map((item) => ({
+          // convert extension values into [{ext:"", db:""}] format, accepted for API call
+          ext: key,
+          db: values[DATABASES_BLOCK_FIELD_NAMES.NAMES][item],
+        }));
+        const convertedToExtraVars = value?.isThirdParty // transform third party extensions in {enable_name: true} format. This object should be passed as extra_vars to enable them
+          ? {
+              ...acc.extraVars,
+              [`enable_${key}`]: true,
+            }
+          : acc.extraVars;
+        return { db: [...acc.db, ...convertedToReqFormat], extraVars: convertedToExtraVars };
+      }
+      return acc;
+    },
+    { db: [], extraVars: {} },
+  ) ?? { db: [], extraVars: {} };
 
 /**
  * Functions creates an object with base cluster extra_vars shared between cloud and local clusters.
@@ -409,7 +419,8 @@ export const getBaseClusterExtraVars = (values: ClusterFormValues) => {
               })),
             }
           : {}),
-        ...(extensions?.length ? { postgresql_extensions: extensions } : {}),
+        ...(extensions?.db?.length ? { postgresql_extensions: extensions?.db } : {}),
+        ...extensions?.extraVars,
         ...(values?.[BACKUPS_BLOCK_FIELD_NAMES.IS_BACKUPS_ENABLED] && values?.[BACKUPS_BLOCK_FIELD_NAMES.BACKUP_METHOD]
           ? values[BACKUPS_BLOCK_FIELD_NAMES.BACKUP_METHOD] === BACKUP_METHODS.PG_BACK_REST
             ? {
@@ -527,7 +538,7 @@ export const mapFormValuesToRequestFields = ({
   secretId?: number;
   projectId: number;
   secretsInfo?: object;
-  customExtraVars?: Record<string, any>;
+  customExtraVars?: Record<string, never>;
 }): RequestClusterCreate => {
   const baseObject = {
     name: values[CLUSTER_FORM_FIELD_NAMES.CLUSTER_NAME],

@@ -26,17 +26,23 @@ const ExtensionSelector: FC<ExtensionSelectorProps> = ({ extension }) => {
 
   const handleChange = (onChange) => (e: ChangeEvent<HTMLInputElement>) => {
     setIsChecked(!!e.target.value?.length);
-    onChange(e);
+    onChange({
+      db: e.target.value,
+      isThirdParty: !extension?.contrib,
+    });
   };
 
   useEffect(() => {
     if (watchSelectedExtensions?.[extension.name]) {
       const intersected = intersection(
-        watchSelectedExtensions[extension.name],
+        watchSelectedExtensions[extension.name]?.db,
         watchAvailableNames ? Object.keys(watchAvailableNames) : [],
       ); // remove db from selected if db removed
-      setValue(`${EXTENSION_BLOCK_FIELD_NAMES.EXTENSIONS}.${extension.name}`, intersected);
-      intersected?.length ? setIsChecked(true) : setIsChecked(false);
+      setValue(`${EXTENSION_BLOCK_FIELD_NAMES.EXTENSIONS}.${extension.name}`, {
+        db: intersected,
+        isThirdParty: !extension?.contrib,
+      });
+      setIsChecked(intersected?.length);
     }
   }, [watchAvailableNames]);
 
@@ -68,7 +74,7 @@ const ExtensionSelector: FC<ExtensionSelectorProps> = ({ extension }) => {
                   fullWidth
                   multiple
                   onChange={handleChange(onChange)}
-                  value={value ?? []}
+                  value={value?.db ?? []}
                   sx={{
                     height: 0,
                     visibility: 'hidden',
@@ -82,7 +88,7 @@ const ExtensionSelector: FC<ExtensionSelectorProps> = ({ extension }) => {
                   {watchAvailableNames
                     ? Object.entries(watchAvailableNames).map((db) => (
                         <MenuItem key={db[0]} value={db[0]}>
-                          <Checkbox checked={value?.includes(db[0]) ?? false} />
+                          <Checkbox checked={value?.db?.includes(db[0]) ?? false} />
                           <ListItemText primary={db[1]} />
                         </MenuItem>
                       ))
