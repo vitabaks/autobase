@@ -1,4 +1,4 @@
-import { FC, useEffect, useState } from 'react';
+import { FC, startTransition, useEffect, useState } from 'react';
 import { Controller, useFormContext, useWatch } from 'react-hook-form';
 import { Card, IconButton, InputAdornment, Stack, TextField, Typography } from '@mui/material';
 import { useTranslation } from 'react-i18next';
@@ -7,7 +7,6 @@ import { DatabasesBlockProps } from '@entities/cluster/expert-mode/databases-blo
 import { DATABASES_BLOCK_FIELD_NAMES } from '@entities/cluster/expert-mode/databases-block/model/const.ts';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
-import { debounce } from 'lodash';
 
 const DatabaseBox: FC<DatabasesBlockProps> = ({ index, remove }) => {
   const { t } = useTranslation(['clusters', 'shared']);
@@ -31,10 +30,6 @@ const DatabaseBox: FC<DatabasesBlockProps> = ({ index, remove }) => {
 
   const watchNames = useWatch({ name: DATABASES_BLOCK_FIELD_NAMES.NAMES });
 
-  const debouncedSetNames = debounce((newNames) => {
-    setValue(DATABASES_BLOCK_FIELD_NAMES.NAMES, newNames);
-  }, 1000);
-
   useEffect(() => {
     // update names on change
     const newNames = { ...watchNames };
@@ -43,9 +38,7 @@ const DatabaseBox: FC<DatabasesBlockProps> = ({ index, remove }) => {
       `${DATABASES_BLOCK_FIELD_NAMES.DATABASES}.${index}.${DATABASES_BLOCK_FIELD_NAMES.USER_NAME}`,
       `${watchDbName}-user`,
     );
-    debouncedSetNames(newNames);
-
-    return () => debouncedSetNames.cancel();
+    startTransition(() => setValue(DATABASES_BLOCK_FIELD_NAMES.NAMES, newNames));
   }, [watchDbName]);
 
   const deleteItem = () => {
