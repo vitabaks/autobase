@@ -424,7 +424,7 @@ export const getBaseClusterExtraVars = (values: ClusterFormValues) => {
                       },
                     }
                   : {}),
-                ...([PROVIDERS.DIGITAL_OCEAN, PROVIDERS.DIGITAL_OCEAN].includes(
+                ...([PROVIDERS.DIGITAL_OCEAN, PROVIDERS.HETZNER].includes(
                   values?.[CLUSTER_FORM_FIELD_NAMES.PROVIDER]?.code,
                 )
                   ? {

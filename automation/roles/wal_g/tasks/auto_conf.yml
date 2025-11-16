@@ -110,9 +110,9 @@
       - { option: "AWS_SECRET_ACCESS_KEY", value: "{{ wal_g_aws_secret_access_key | default(digital_ocean_spaces_secret_key | default(AWS_SECRET_ACCESS_KEY | default(''))) }}" }
       - {
           option: "AWS_ENDPOINT",
-          value: "{{ wal_g_s3_endpoint | default('https://' + (digital_ocean_spaces_region | default(server_location)) + '.digitaloceanspaces.com') }}",
+          value: "{{ wal_g_s3_endpoint | default('https://' + (digital_ocean_spaces_region | default(default_region)) + '.digitaloceanspaces.com') }}",
         }
-      - { option: "AWS_REGION", value: "{{ wal_g_s3_region | default(digital_ocean_spaces_region | default(server_location)) }}" }
+      - { option: "AWS_REGION", value: "{{ wal_g_s3_region | default(digital_ocean_spaces_region | default(default_region)) }}" }
       - { option: "AWS_S3_FORCE_PATH_STYLE", value: "{{ AWS_S3_FORCE_PATH_STYLE | default(true) }}" }
       - { option: "WALG_S3_PREFIX", value: "{{ wal_g_s3_prefix | default('s3://' + (digital_ocean_spaces_name | default(patroni_cluster_name + '-backup'))) }}" }
       - { option: "WALG_COMPRESSION_METHOD", value: "{{ wal_g_compression_method | default('brotli') }}" }
@@ -125,6 +125,8 @@
       - { option: "PGHOST", value: "{{ postgresql_unix_socket_dir | default('/var/run/postgresql') }}" }
       - { option: "PGPORT", value: "{{ postgresql_port | default('5432') }}" }
       - { option: "PGUSER", value: "{{ patroni_superuser_username | default('postgres') }}" }
+  vars:
+    default_region: "{{ (server_location in ['nyc1', 'nyc2']) | ternary('nyc3', server_location) }}"
   no_log: true # do not output contents to the ansible log
   when: cloud_provider | default('') | lower == 'digitalocean'
 
@@ -136,10 +138,10 @@
       - { option: "AWS_SECRET_ACCESS_KEY", value: "{{ wal_g_aws_secret_access_key | default(hetzner_object_storage_secret_key | default('')) }}" }
       - {
           option: "AWS_ENDPOINT",
-          value: "{{ wal_g_s3_endpoint | default(hetzner_object_storage_endpoint | default('https://' + (hetzner_object_storage_region | default(server_location)) + '.your-objectstorage.com')) }}",
+          value: "{{ wal_g_s3_endpoint | default(hetzner_object_storage_endpoint | default('https://' + (hetzner_object_storage_region | default(default_region)) + '.your-objectstorage.com')) }}",
         }
       - { option: "AWS_S3_FORCE_PATH_STYLE", value: "{{ AWS_S3_FORCE_PATH_STYLE | default(true) }}" }
-      - { option: "AWS_REGION", value: "{{ wal_g_s3_region | default(hetzner_object_storage_region | default(server_location)) }}" }
+      - { option: "AWS_REGION", value: "{{ wal_g_s3_region | default(hetzner_object_storage_region | default(default_region)) }}" }
       - {
           option: "WALG_S3_PREFIX",
           value: "{{ wal_g_s3_prefix | default('s3://' + (hetzner_object_storage_name | default(patroni_cluster_name + '-backup'))) }}",
@@ -154,6 +156,8 @@
       - { option: "PGHOST", value: "{{ postgresql_unix_socket_dir | default('/var/run/postgresql') }}" }
       - { option: "PGPORT", value: "{{ postgresql_port | default('5432') }}" }
       - { option: "PGUSER", value: "{{ patroni_superuser_username | default('postgres') }}" }
+  vars:
+    default_region: "{{ (server_location in ['hel1', 'fsn1', 'nbg1']) | ternary(server_location, 'nbg1') }}"
   delegate_to: localhost
   run_once: true # noqa run-once
   no_log: true # do not output contents to the ansible log

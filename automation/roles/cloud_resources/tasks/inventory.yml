@@ -78,6 +78,7 @@
   ansible.builtin.add_host:
     name: "{{ item.private_ip }}"
     group: consul_instances
+    consul_node_role: "{{ 'server' if not dcs_exists | default(false) else 'client' }}"
     ansible_ssh_host: "{{ item[server_public_ip | bool | ternary('public_ip', 'private_ip')] }}"
     ansible_ssh_private_key_file: "{{ ssh_private_key_file | default(None) }}"
     new_node: "{{ item.new_node | default(omit) }}"

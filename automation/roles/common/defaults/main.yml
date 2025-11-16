@@ -156,13 +156,14 @@ consul_config_path: "/etc/consul"
 consul_configd_path: "{{ consul_config_path }}/conf.d"
 consul_data_path: "/var/lib/consul"
 consul_domain: "consul" # Consul domain name
-consul_datacenter: "dc1" # Datacenter label (can be specified for each host in the inventory)
+consul_datacenter: "{{ server_location | default('dc1') }}" # Datacenter label (can be specified for each host in the inventory)
 consul_disable_update_check: true # Disables automatic checking for security bulletins and new version releases
 consul_enable_script_checks: true # This controls whether health checks that execute scripts are enabled on this agent
 consul_enable_local_script_checks: true # Enable them when they are defined in the local configuration files
 consul_ui: false # Enable the consul UI?
 consul_syslog_enable: true # Enable logging to syslog
 consul_client_address: "127.0.0.1" # Client address. Affects DNS, HTTP, HTTPS, and gRPC client interfaces.
+consul_bootstrap_expect: "{{ true if consul_node_role == 'server' else false }}"
 consul_on_dedicated_nodes: "{{ groups['consul_instances'] | difference(groups['postgres_cluster']) | length > 0 }}" # 'true' or 'false'
 # TLS
 # Enables TLS encryption with a self-signed certificate if 'tls_cert_generate' is true.
