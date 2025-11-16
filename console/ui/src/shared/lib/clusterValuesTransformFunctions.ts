@@ -231,7 +231,7 @@ const constructDcsEnvs = (values: ClusterFormValues) => {
     if (values[DCS_BLOCK_FIELD_NAMES.TYPE] === DCS_TYPES.CONSUL) {
       return {
         consul_instances: {
-          hosts: configureHosts({ values, role: 'server', isDbServers: false }),
+          hosts: configureHosts({ values, role: 'client' }),
         },
       };
     }
@@ -442,7 +442,7 @@ export const getBaseClusterExtraVars = (values: ClusterFormValues) => {
                       wal_g_json: convertModalParametersToArray(values?.[BACKUPS_BLOCK_FIELD_NAMES.CONFIG]),
                     }
                   : {}),
-                ...([PROVIDERS.DIGITAL_OCEAN, PROVIDERS.DIGITAL_OCEAN].includes(
+                ...([PROVIDERS.DIGITAL_OCEAN, PROVIDERS.HETZNER].includes(
                   values?.[CLUSTER_FORM_FIELD_NAMES.PROVIDER]?.code,
                 )
                   ? {

@@ -36,7 +36,7 @@ const LoadBalancersDatabaseBox: FC<LoadBalancersDatabaseBoxProps> = ({ index, re
               }
               helperText={
                 errors?.[LOAD_BALANCERS_FIELD_NAMES.DATABASES]?.[index]?.[LOAD_BALANCERS_FIELD_NAMES.DATABASES_HOSTNAME]
-                  ?.message ?? ' '
+                  ?.message as string
               }
             />
           )}
@@ -55,7 +55,7 @@ const LoadBalancersDatabaseBox: FC<LoadBalancersDatabaseBoxProps> = ({ index, re
               }
               helperText={
                 errors?.[LOAD_BALANCERS_FIELD_NAMES.DATABASES]?.[index]?.[LOAD_BALANCERS_FIELD_NAMES.DATABASES_ADDRESS]
-                  ?.message ?? ''
+                  ?.message as string
               }
             />
           )}

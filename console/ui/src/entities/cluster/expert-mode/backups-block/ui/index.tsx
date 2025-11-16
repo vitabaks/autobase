@@ -44,12 +44,16 @@ const BackupsBlock: FC = () => {
   };
 
   useEffect(() => {
-    if (
-      watchProvider?.code === PROVIDERS.LOCAL ||
-      [PROVIDERS.DIGITAL_OCEAN, PROVIDERS.HETZNER].includes(watchProvider?.code)
-    )
+    // set checkbox if user changes provider
+    if ([PROVIDERS.DIGITAL_OCEAN, PROVIDERS.HETZNER, PROVIDERS.LOCAL].includes(watchProvider?.code)) {
       setValue(BACKUPS_BLOCK_FIELD_NAMES.IS_BACKUPS_ENABLED, false);
+    }
   }, [watchProvider]);
+
+  useEffect(() => {
+    // set checkbox if user returns from YAML editor tab
+    setValue(BACKUPS_BLOCK_FIELD_NAMES.IS_BACKUPS_ENABLED, watchIsBackupsEnabled);
+  }, []);
 
   return (
     <Stack>
@@ -83,7 +87,7 @@ const BackupsBlock: FC = () => {
                     {...field}
                     row
                     onChange={(e) => {
-                      resetField(BACKUPS_BLOCK_FIELD_NAMES.CONFIG);
+                      resetField(BACKUPS_BLOCK_FIELD_NAMES.CONFIG, { keepDirty: true });
                       field.onChange(e);
                     }}>
                     {[
@@ -176,13 +180,14 @@ const BackupsBlock: FC = () => {
                     control={control}
                     name={fieldName}
                     render={({ field }) => (
-                      <Stack direction="row" alignItems="center">
+                      <Stack direction="row" alignItems="baseline">
                         <Stack direction="row" alignItems="center" gap={1} width="250px">
-                          <Typography>{label}</Typography>
+                          <Typography>{label}*</Typography>
                         </Stack>
                         <Stack>
                           <TextField
                             {...field}
+                            required
                             onChange={handleInputChange(field.onChange)}
                             size="small"
                             error={!!errors?.[fieldName]}

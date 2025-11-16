@@ -5,6 +5,17 @@ import { configValidationSchema } from '@shared/model/validation.ts';
 import { CLUSTER_FORM_FIELD_NAMES } from '@widgets/cluster-form/model/constants.ts';
 import { PROVIDERS } from '@shared/config/constants.ts';
 
+const backupKeysSchema = (t: TFunction) =>
+  yup
+    .mixed()
+    .when(
+      [CLUSTER_FORM_FIELD_NAMES.PROVIDER, BACKUPS_BLOCK_FIELD_NAMES.IS_BACKUPS_ENABLED],
+      ([provider, isBackupsEnabled]) =>
+        [PROVIDERS.DIGITAL_OCEAN, PROVIDERS.HETZNER].includes(provider?.code) && isBackupsEnabled
+          ? yup.string().required(t('requiredField', { ns: 'validation' }))
+          : yup.mixed().optional(),
+    );
+
 export const BackupsBlockFormSchema = (t: TFunction) =>
   yup.object({
     [BACKUPS_BLOCK_FIELD_NAMES.IS_BACKUPS_ENABLED]: yup.boolean(),
@@ -19,6 +30,6 @@ export const BackupsBlockFormSchema = (t: TFunction) =>
       ),
     [BACKUPS_BLOCK_FIELD_NAMES.BACKUP_START_TIME]: yup.string(),
     [BACKUPS_BLOCK_FIELD_NAMES.BACKUP_RETENTION]: yup.number().typeError(t('onlyNumbers', { ns: 'validation' })),
-    [BACKUPS_BLOCK_FIELD_NAMES.ACCESS_KEY]: yup.string().optional(),
-    [BACKUPS_BLOCK_FIELD_NAMES.SECRET_KEY]: yup.string().optional(),
+    [BACKUPS_BLOCK_FIELD_NAMES.ACCESS_KEY]: backupKeysSchema(t),
+    [BACKUPS_BLOCK_FIELD_NAMES.SECRET_KEY]: backupKeysSchema(t),
   });
