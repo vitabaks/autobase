@@ -276,11 +276,13 @@
                 ebs:
                   volume_type: "{{ system_volume_type | default('gp3', true) }}"
                   volume_size: "{{ system_volume_size | default(80) | int }}"
+                  iops: "{{ system_volume_iops | default(3000) | int if system_volume_type | default('gp3', true) in ['gp3', 'io1', 'io2'] else omit }}"
                   delete_on_termination: true
               - device_name: /dev/sdb
                 ebs:
                   volume_type: "{{ volume_type | default('gp3', true) }}"
                   volume_size: "{{ volume_size | int }}"
+                  iops: "{{ volume_iops | default(3000) | int if volume_type | default('gp3', true) in ['gp3', 'io1', 'io2'] else omit }}"
                   delete_on_termination: true
             tags:
               Name: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}"
@@ -335,11 +337,15 @@
                   ebs:
                     volume_type: "{{ volume_type | default('gp3', true) }}"
                     volume_size: 100 # TODO: use 'system_volume_size' variable (https://github.com/ansible-collections/amazon.aws/issues/1949)
+                    iops: "{{ system_volume_iops | default(3000) | int if system_volume_type | default('gp3', true) in ['gp3', 'io1', 'io2'] else omit }}"
+                    throughput: "{{ (system_volume_throughput | default(125) | int) if (system_volume_type | default('gp3', true)) == 'gp3' else omit }}"
                     delete_on_termination: true
                 - device_name: /dev/sdb
                   ebs:
                     volume_type: "{{ volume_type | default('gp3', true) }}"
                     volume_size: 100 # TODO: use 'volume_size' variable (https://github.com/ansible-collections/amazon.aws/issues/1949)
+                    iops: "{{ volume_iops | default(3000) | int if volume_type | default('gp3', true) in ['gp3', 'io1', 'io2'] else omit }}"
+                    throughput: "{{ (volume_throughput | default(125) | int) if (volume_type | default('gp3', true)) == 'gp3' else omit }}"
                     delete_on_termination: true
             tags:
               Name: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}"
