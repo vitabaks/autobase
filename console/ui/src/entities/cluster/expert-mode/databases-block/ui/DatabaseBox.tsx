@@ -36,7 +36,7 @@ const DatabaseBox: FC<DatabasesBlockProps> = ({ index, remove }) => {
     newNames[watchDbId] = watchDbName;
     setValue(
       `${DATABASES_BLOCK_FIELD_NAMES.DATABASES}.${index}.${DATABASES_BLOCK_FIELD_NAMES.USER_NAME}`,
-      `${watchDbName}-user`,
+      `${watchDbName}_user`,
     );
     startTransition(() => setValue(DATABASES_BLOCK_FIELD_NAMES.NAMES, newNames));
   }, [watchDbName]);

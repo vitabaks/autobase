@@ -1,13 +1,16 @@
 [global]
-{% for global in pgbackrest_conf.global %}
+{% for global in pgbackrest_conf.global | default([]) %}
 {{ global.option }}={{ global.value }}
 {% endfor %}
 
 [{{ pgbackrest_stanza }}]
-{% for stanza in pgbackrest_conf.stanza %}
+{% for stanza in pgbackrest_conf.stanza | default([]) %}
 {{ stanza.option }}={{ stanza.value }}
 {% endfor %}
-{% if pgbackrest_conf.global | selectattr('option', 'equalto', 'backup-standby') | map(attribute='value') | list | last | default('') == 'y' %}
+{% if pgbackrest_conf.stanza | default([]) | selectattr('option', 'equalto', 'pg1-path') | list | length == 0 %}
+pg1-path={{ postgresql_data_dir }}
+{% endif %}
+{% if pgbackrest_conf.global | default([]) | selectattr('option', 'equalto', 'backup-standby') | map(attribute='value') | list | last | default('') == 'y' %}
 {% set pg_standby_hosts = groups['postgres_cluster'] | reject('equalto', inventory_hostname) | list %}
 {% for host in pg_standby_hosts %}
 pg{{ loop.index + 1 }}-host={{ hostvars[host]['patroni_bind_address'] | default(hostvars[host]['bind_address'], true) }}
