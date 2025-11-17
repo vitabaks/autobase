@@ -24,7 +24,7 @@ const LoadBalancersDatabaseBox: FC<LoadBalancersDatabaseBoxProps> = ({ index, re
         <Typography fontWeight="bold">{`${t('server')} ${index + 1}`}</Typography>
         <Controller
           control={control}
-          name={`${LOAD_BALANCERS_FIELD_NAMES.DATABASES}.${index}.${LOAD_BALANCERS_FIELD_NAMES.DATABASES_HOSTNAME}`}
+          name={`${LOAD_BALANCERS_FIELD_NAMES.LOAD_BALANCER_DATABASES}.${index}.${LOAD_BALANCERS_FIELD_NAMES.LOAD_BALANCER_DATABASES_HOSTNAME}`}
           render={({ field }) => (
             <TextField
               {...field}
@@ -32,18 +32,21 @@ const LoadBalancersDatabaseBox: FC<LoadBalancersDatabaseBoxProps> = ({ index, re
               size="small"
               label={t('hostname')}
               error={
-                !!errors[LOAD_BALANCERS_FIELD_NAMES.DATABASES]?.[index]?.[LOAD_BALANCERS_FIELD_NAMES.DATABASES_HOSTNAME]
+                !!errors[LOAD_BALANCERS_FIELD_NAMES.LOAD_BALANCER_DATABASES]?.[index]?.[
+                  LOAD_BALANCERS_FIELD_NAMES.LOAD_BALANCER_DATABASES_HOSTNAME
+                ]
               }
               helperText={
-                errors?.[LOAD_BALANCERS_FIELD_NAMES.DATABASES]?.[index]?.[LOAD_BALANCERS_FIELD_NAMES.DATABASES_HOSTNAME]
-                  ?.message as string
+                errors?.[LOAD_BALANCERS_FIELD_NAMES.LOAD_BALANCER_DATABASES]?.[index]?.[
+                  LOAD_BALANCERS_FIELD_NAMES.LOAD_BALANCER_DATABASES_HOSTNAME
+                ]?.message as string
               }
             />
           )}
         />
         <Controller
           control={control}
-          name={`${LOAD_BALANCERS_FIELD_NAMES.DATABASES}.${index}.${LOAD_BALANCERS_FIELD_NAMES.DATABASES_ADDRESS}`}
+          name={`${LOAD_BALANCERS_FIELD_NAMES.LOAD_BALANCER_DATABASES}.${index}.${LOAD_BALANCERS_FIELD_NAMES.LOAD_BALANCER_DATABASES_IP_ADDRESS}`}
           render={({ field }) => (
             <TextField
               {...field}
@@ -51,11 +54,14 @@ const LoadBalancersDatabaseBox: FC<LoadBalancersDatabaseBoxProps> = ({ index, re
               size="small"
               label={t('ipAddress')}
               error={
-                !!errors[LOAD_BALANCERS_FIELD_NAMES.DATABASES]?.[index]?.[LOAD_BALANCERS_FIELD_NAMES.DATABASES_ADDRESS]
+                !!errors[LOAD_BALANCERS_FIELD_NAMES.LOAD_BALANCER_DATABASES]?.[index]?.[
+                  LOAD_BALANCERS_FIELD_NAMES.LOAD_BALANCER_DATABASES_IP_ADDRESS
+                ]
               }
               helperText={
-                errors?.[LOAD_BALANCERS_FIELD_NAMES.DATABASES]?.[index]?.[LOAD_BALANCERS_FIELD_NAMES.DATABASES_ADDRESS]
-                  ?.message as string
+                errors?.[LOAD_BALANCERS_FIELD_NAMES.LOAD_BALANCER_DATABASES]?.[index]?.[
+                  LOAD_BALANCERS_FIELD_NAMES.LOAD_BALANCER_DATABASES_IP_ADDRESS
+                ]?.message as string
               }
             />
           )}

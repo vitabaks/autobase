@@ -20,7 +20,7 @@ const LoadBalancersBlock: FC = () => {
 
   const { fields, append, remove } = useFieldArray({
     control,
-    name: LOAD_BALANCERS_FIELD_NAMES.DATABASES,
+    name: LOAD_BALANCERS_FIELD_NAMES.LOAD_BALANCER_DATABASES,
   });
 
   const removeServer = (index: number) => () => remove(index);

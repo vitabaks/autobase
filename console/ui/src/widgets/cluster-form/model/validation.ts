@@ -13,11 +13,13 @@ import { KernelParametersBlockFormSchema } from '@entities/cluster/expert-mode/k
 import { AdditionalSettingsBlockFormSchema } from '@entities/cluster/expert-mode/additional-settings-block/model/validation.ts';
 import { INSTANCES_BLOCK_FIELD_NAMES } from '@entities/cluster/instances-block/model/const.ts';
 import { STORAGE_BLOCK_FIELDS } from '@entities/cluster/storage-block/model/const.ts';
-import { databaseServersBlockValidation } from '@entities/cluster/database-servers-block/model/validation.ts';
+import { DatabaseServersBlockSchema } from '@entities/cluster/database-servers-block/model/validation.ts';
 import { SSH_KEY_BLOCK_FIELD_NAMES } from '@entities/cluster/ssh-key-block/model/const.ts';
+import { LoadBalancerBlockSchema } from '@entities/cluster/load-balancers-block/model/validation.ts';
+import { DcsBlockSchema } from '@entities/cluster/expert-mode/dcs-block/model/validation.ts';
 
-const CloudFormSchema = (t: TFunction) => {
-  const defaultClusterFormSchema = yup.object({
+const CloudFormSchema = (t: TFunction) =>
+  yup.object({
     [CLUSTER_FORM_FIELD_NAMES.REGION]: yup
       .mixed()
       .when(CLUSTER_FORM_FIELD_NAMES.PROVIDER, ([provider], schema) =>
@@ -76,11 +78,8 @@ const CloudFormSchema = (t: TFunction) => {
       ),
   });
 
-  return IS_EXPERT_MODE ? defaultClusterFormSchema : defaultClusterFormSchema;
-};
-
-export const LocalFormSchema = (t: TFunction) => {
-  const defaultLocalFormSchema = yup
+export const LocalFormSchema = (t: TFunction) =>
+  yup
     .object({
       [CLUSTER_FORM_FIELD_NAMES.AUTHENTICATION_METHOD]: yup
         .mixed()
@@ -176,10 +175,9 @@ export const LocalFormSchema = (t: TFunction) => {
               : schema.notRequired(),
         ),
     })
-    .concat(databaseServersBlockValidation(t));
-
-  return IS_EXPERT_MODE ? defaultLocalFormSchema : defaultLocalFormSchema;
-};
+    .concat(DatabaseServersBlockSchema(t))
+    .concat(LoadBalancerBlockSchema(t))
+    .concat(DcsBlockSchema(t));
 
 export const ClusterFormSchema = (t: TFunction) => {
   const defaultSchema = yup

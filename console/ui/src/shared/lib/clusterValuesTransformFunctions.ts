@@ -247,11 +247,11 @@ const constructBalancersEnvs = (values: ClusterFormValues) => {
 
   if (values[LOAD_BALANCERS_FIELD_NAMES.IS_HAPROXY_ENABLED]) {
     if (IS_EXPERT_MODE && !values[LOAD_BALANCERS_FIELD_NAMES.IS_DEPLOY_TO_DATABASE_SERVERS]) {
-      balancerHosts = values[LOAD_BALANCERS_FIELD_NAMES.DATABASES].reduce(
+      balancerHosts = values[LOAD_BALANCERS_FIELD_NAMES.LOAD_BALANCER_DATABASES].reduce(
         (acc, server) => ({
           ...acc,
-          [server[LOAD_BALANCERS_FIELD_NAMES.DATABASES_ADDRESS]]: {
-            ansible_host: server[LOAD_BALANCERS_FIELD_NAMES.DATABASES_ADDRESS],
+          [server[LOAD_BALANCERS_FIELD_NAMES.LOAD_BALANCER_DATABASES_IP_ADDRESS]]: {
+            ansible_host: server[LOAD_BALANCERS_FIELD_NAMES.LOAD_BALANCER_DATABASES_IP_ADDRESS],
           },
         }),
         {},

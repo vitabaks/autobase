@@ -5,7 +5,7 @@ import ipRegex from 'ip-regex';
 import { TFunction } from 'i18next';
 import { DATABASE_SERVERS_FIELD_NAMES } from '@entities/cluster/database-servers-block/model/const.ts';
 
-export const databaseServersBlockValidation = (t: TFunction) =>
+export const DatabaseServersBlockSchema = (t: TFunction) =>
   yup.object({
     [DATABASE_SERVERS_FIELD_NAMES.DATABASE_SERVERS]: yup
       .mixed()
