@@ -3,13 +3,13 @@ module postgresql-cluster-console
 go 1.24
 
 require (
-	github.com/docker/docker v28.5.1+incompatible
+	github.com/docker/docker v28.5.2+incompatible
 	github.com/docker/go-connections v0.6.0
 	github.com/gdex-lab/go-render v1.0.1
-	github.com/go-openapi/errors v0.22.3
-	github.com/go-openapi/loads v0.23.1
-	github.com/go-openapi/runtime v0.29.0
-	github.com/go-openapi/strfmt v0.24.0
+	github.com/go-openapi/errors v0.22.4
+	github.com/go-openapi/loads v0.23.2
+	github.com/go-openapi/runtime v0.29.2
+	github.com/go-openapi/strfmt v0.25.0
 	github.com/google/uuid v1.6.0
 	github.com/goombaio/namegenerator v0.0.0-20181006234301-989e774b106e
 	github.com/jackc/pgx/v5 v5.7.6
@@ -20,7 +20,7 @@ require (
 	github.com/rs/zerolog v1.34.0
 	github.com/segmentio/asm v1.2.1
 	go.openly.dev/pointy v1.3.0
-	golang.org/x/sync v0.17.0
+	golang.org/x/sync v0.18.0
 	gotest.tools/v3 v3.5.2
 )
 
