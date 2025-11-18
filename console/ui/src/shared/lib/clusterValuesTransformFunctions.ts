@@ -464,7 +464,11 @@ export const getBaseClusterExtraVars = (values: ClusterFormValues) => {
                     }
                   : {}),
               }
-          : {}),
+          : {
+              // backups disabled explicitly
+              pgbackrest_install: false,
+              pgbackrest_auto_conf: false,
+            }),
         ...(values?.[POSTGRES_PARAMETERS_FIELD_NAMES.POSTGRES_PARAMETERS]
           ? {
               local_postgresql_parameters: convertModalParametersToArray(
