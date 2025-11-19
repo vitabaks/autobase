@@ -3,7 +3,7 @@
   become: true
   become_user: postgres
   community.postgresql.postgresql_ext:
-    name: "{{ item.ext }}"
+    name: "{{ item.ext | regex_replace('^pgvector', 'vector') }}"
     schema: "{{ item.schema | default(default_schema) }}"
     cascade: "{{ item.cascade | default(true) }}"
     login_db: "{{ item.db }}"
