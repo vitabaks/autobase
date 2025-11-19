@@ -73,4 +73,8 @@ set
 where
   extension_name in ('pg_cron', 'pg_partman', 'pg_repack', 'pgvector');
 
+-- Remove citus extension
+delete from public.extensions
+where extension_name = 'citus';
+
 -- +goose Down
