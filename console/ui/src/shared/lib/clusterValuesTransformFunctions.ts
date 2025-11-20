@@ -1,5 +1,5 @@
 import { ClusterFormValues } from '@features/cluster-secret-modal/model/types.ts';
-import { CLUSTER_FORM_FIELD_NAMES } from '@widgets/cluster-form/model/constants.ts';
+import { CLUSTER_CREATION_TYPES, CLUSTER_FORM_FIELD_NAMES } from '@widgets/cluster-form/model/constants.ts';
 import { INSTANCES_BLOCK_FIELD_NAMES } from '@entities/cluster/instances-block/model/const.ts';
 import { STORAGE_BLOCK_FIELDS } from '@entities/cluster/storage-block/model/const.ts';
 import { PROVIDER_CODE_TO_ANSIBLE_USER_MAP } from '@features/cluster-secret-modal/model/constants.ts';
@@ -26,7 +26,7 @@ import { KERNEL_PARAMETERS_FIELD_NAMES } from '@entities/cluster/expert-mode/ker
 import { RequestClusterCreate } from '@shared/api/api/clusters.ts';
 
 /**
- * Get value from modal form (postgres or kernel params) and convert to correct format.
+ * Get value from model form (postgres or kernel params) and convert to correct format.
  * @param value - Form value.
  */
 export const convertModalParametersToArray = (value?: string) =>
@@ -550,7 +550,10 @@ export const mapFormValuesToRequestFields = ({
 
   return {
     ...baseObject,
-    ...(values[CLUSTER_FORM_FIELD_NAMES.PROVIDER].code !== PROVIDERS.LOCAL
+    ...((values[CLUSTER_FORM_FIELD_NAMES.CREATION_TYPE] === CLUSTER_CREATION_TYPES.YAML &&
+      customExtraVars?.cloud_provider) ||
+    (values[CLUSTER_FORM_FIELD_NAMES.CREATION_TYPE] === CLUSTER_CREATION_TYPES.FORM &&
+      values?.[CLUSTER_FORM_FIELD_NAMES.PROVIDER]?.code !== PROVIDERS.LOCAL)
       ? getRequestCloudParams(values, secretsInfo, customExtraVars)
       : getRequestLocalMachineParams(values, secretId, customExtraVars)),
   };

@@ -22,10 +22,12 @@ import { ConnectionPoolBlockValues } from '@entities/cluster/expert-mode/connect
 import { AdditionalSettingsBlockValues } from '@entities/cluster/expert-mode/additional-settings-block/model/types.ts';
 import { PostgresParametersBlockValues } from '@entities/cluster/expert-mode/postgres-parameters-block/model/types.ts';
 import { KernelParametersBlockValues } from '@entities/cluster/expert-mode/kernel-parameters-block/model/types.ts';
+import { YamlEditorFormValues } from '@widgets/yaml-editor-form/model/types.ts';
 
 export interface ClusterSecretModalProps {
   isClusterFormSubmitting?: boolean;
   isClusterFormDisabled?: boolean;
+  yamlEditorValues?: YamlEditorFormValues;
 }
 
 export interface ClusterSecretModalFormValues extends SecretFormValues {
@@ -69,7 +71,8 @@ export interface ClusterFormValues
     ConnectionPoolBlockValues,
     AdditionalSettingsBlockValues,
     PostgresParametersBlockValues,
-    KernelParametersBlockValues {
+    KernelParametersBlockValues,
+    YamlEditorFormValues {
   [CLUSTER_FORM_FIELD_NAMES.CREATION_TYPE]: string;
   [CLUSTER_FORM_FIELD_NAMES.PROVIDER]: ResponseDeploymentInfo;
   [CLUSTER_FORM_FIELD_NAMES.ENVIRONMENT_ID]: number;
