@@ -98,11 +98,12 @@ export const useFormSubmit: ({
     values: ClusterFormValues;
     customExtraVars?: Record<string, never>;
   }) => {
+    const creationType = values[CLUSTER_FORM_FIELD_NAMES.CREATION_TYPE];
+
     try {
       if (
-        (values[CLUSTER_FORM_FIELD_NAMES.CREATION_TYPE] === CLUSTER_CREATION_TYPES.YAML &&
-          customExtraVars?.cloud_provider) ||
-        (values[CLUSTER_FORM_FIELD_NAMES.CREATION_TYPE] === CLUSTER_CREATION_TYPES.FORM &&
+        (creationType === CLUSTER_CREATION_TYPES.YAML && customExtraVars?.cloud_provider) ||
+        (creationType === CLUSTER_CREATION_TYPES.FORM &&
           values?.[CLUSTER_FORM_FIELD_NAMES.PROVIDER]?.code !== PROVIDERS.LOCAL)
       )
         await submitCloudCluster({
@@ -121,7 +122,10 @@ export const useFormSubmit: ({
             : 'clusterSuccessfullyCreated',
           {
             ns: 'toasts',
-            clusterName: values[CLUSTER_FORM_FIELD_NAMES.CLUSTER_NAME],
+            clusterName:
+              creationType === CLUSTER_CREATION_TYPES.YAML
+                ? customExtraVars?.patroni_cluster_name
+                : values[CLUSTER_FORM_FIELD_NAMES.CLUSTER_NAME],
           },
         ),
       );
