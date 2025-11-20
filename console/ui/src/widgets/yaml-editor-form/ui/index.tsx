@@ -18,9 +18,8 @@ import ErrorBox from '@shared/ui/error-box/ui';
 import { ErrorBoundary } from 'react-error-boundary';
 import { mapFormValuesToYamlEditor } from '@widgets/yaml-editor-form/lib/functions.ts';
 import { CLUSTER_FORM_FIELD_NAMES } from '@widgets/cluster-form/model/constants.ts';
-import { PROVIDERS } from '@shared/config/constants.ts';
 import ClusterSecretModal from '@features/cluster-secret-modal';
-import { useFormSubmit } from '@widgets/yaml-editor-form/lib/hooks.tsx';
+import { useClusterFormSubmit } from '@widgets/yaml-editor-form/lib/hooks.tsx';
 import { useGetSecretsQuery } from '@shared/api/api/secrets.ts';
 import { useAppSelector } from '@app/redux/store/hooks.ts';
 import { selectCurrentProject } from '@app/redux/slices/projectSlice/projectSelectors.ts';
@@ -50,7 +49,7 @@ const YamlEditorForm: FC = () => {
     projectId: currentProject,
   });
 
-  const [isFormSubmitting, submit] = useFormSubmit({ secrets: secrets.data });
+  const [isFormSubmitting, submit] = useClusterFormSubmit({ secrets: secrets.data });
 
   function handleEditorDidMount(editor: IStandaloneCodeEditor) {
     editorRef.current = editor;
@@ -58,8 +57,6 @@ const YamlEditorForm: FC = () => {
   }
 
   const cancelHandler = () => navigate(generateAbsoluteRouterPath(RouterPaths.clusters.absolutePath));
-
-  const { isValid, isSubmitting } = formState;
 
   useEffect(() => {
     setValue(
@@ -83,15 +80,14 @@ const YamlEditorForm: FC = () => {
       customExtraVars: parsedYamlEditorValues,
     });
 
+  const shouldRenderModal = parsedYamlEditorValues?.cloud_provider && secrets.data?.data?.length !== 1;
+
+  const { isValid, isSubmitting } = formState;
+
   return (
     <ErrorBoundary fallback={<ErrorBox />}>
       <Box width="100%">
-        <form
-          onSubmit={
-            watchUiValues[CLUSTER_FORM_FIELD_NAMES.PROVIDER]?.code !== PROVIDERS.LOCAL && secrets?.data?.length !== 1
-              ? undefined
-              : handleSubmit(submitHandler)
-          }>
+        <form onSubmit={shouldRenderModal ? undefined : handleSubmit(submitHandler)}>
           <Stack gap={2}>
             <Controller
               control={control}
@@ -106,9 +102,7 @@ const YamlEditorForm: FC = () => {
                 />
               )}
             />
-            {(watchUiValues[CLUSTER_FORM_FIELD_NAMES.PROVIDER]?.code !== PROVIDERS.LOCAL ||
-              parsedYamlEditorValues?.cloud_provider) &&
-            secrets?.data?.length !== 1 ? (
+            {shouldRenderModal ? (
               <ClusterSecretModal isClusterFormDisabled={!isValid} yamlEditorValues={parsedYamlEditorValues} />
             ) : (
               <DefaultFormButtons

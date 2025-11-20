@@ -16,7 +16,7 @@ import { selectCurrentProject } from '@app/redux/slices/projectSlice/projectSele
 import { useRef } from 'react';
 import { usePostClustersMutation } from '@shared/api/api/clusters.ts';
 
-export const useFormSubmit: ({
+export const useClusterFormSubmit: ({
   secrets,
 }: {
   secrets: GetSecretsApiResponse;
