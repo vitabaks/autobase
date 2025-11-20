@@ -3,8 +3,9 @@
   become: true
   become_user: postgres
   community.postgresql.postgresql_ext:
-    name: "{{ item.ext }}"
-    schema: "{{ item.schema | default('public') }}"
+    name: "{{ item.ext | regex_replace('^pgvector', 'vector') }}"
+    schema: "{{ item.schema | default(default_schema) }}"
+    cascade: "{{ item.cascade | default(true) }}"
     login_db: "{{ item.db }}"
     login_host: "127.0.0.1"
     login_port: "{{ postgresql_port }}"
@@ -13,6 +14,8 @@
     state: present
   ignore_errors: true
   loop: "{{ postgresql_extensions | flatten(1) }}"
+  vars:
+    default_schema: "{{ 'pg_catalog' if item.ext == 'pg_cron' else 'public' }}"
   when:
     - postgresql_extensions | default('') | length > 0
     - patroni_standby_cluster.host | default('') | length < 1 # do not perform on the Standby Cluster

@@ -430,6 +430,7 @@ export const getBaseClusterExtraVars = (values: ClusterFormValues) => {
                 pgbackrest_retention_archive: values?.[BACKUPS_BLOCK_FIELD_NAMES.BACKUP_RETENTION],
                 ...(values?.[BACKUPS_BLOCK_FIELD_NAMES.CONFIG]
                   ? {
+                      pgbackrest_auto_conf: false,
                       pgbackrest_conf: {
                         global: convertModalParametersToArray(values?.[BACKUPS_BLOCK_FIELD_NAMES.CONFIG]),
                       },
@@ -450,6 +451,7 @@ export const getBaseClusterExtraVars = (values: ClusterFormValues) => {
                 wal_g_retention_full: values?.[BACKUPS_BLOCK_FIELD_NAMES.BACKUP_RETENTION],
                 ...(values?.[BACKUPS_BLOCK_FIELD_NAMES.CONFIG]
                   ? {
+                      wal_g_auto_conf: false,
                       wal_g_json: convertModalParametersToArray(values?.[BACKUPS_BLOCK_FIELD_NAMES.CONFIG]),
                     }
                   : {}),
@@ -462,7 +464,11 @@ export const getBaseClusterExtraVars = (values: ClusterFormValues) => {
                     }
                   : {}),
               }
-          : {}),
+          : {
+              // backups disabled explicitly
+              pgbackrest_install: false,
+              pgbackrest_auto_conf: false,
+            }),
         ...(values?.[POSTGRES_PARAMETERS_FIELD_NAMES.POSTGRES_PARAMETERS]
           ? {
               local_postgresql_parameters: convertModalParametersToArray(

@@ -24,53 +24,22 @@
   when: cloud_provider | default('') | lower == 'aws'
 
 # GCS Bucket (if 'cloud_provider=gcp')
-- block:
-    - name: "Set variable 'wal_g_json' for backup in GCS Bucket"
-      ansible.builtin.set_fact:
-        wal_g_json:
-          - { option: "GOOGLE_APPLICATION_CREDENTIALS", value: "{{ wal_g_gs_key | default(postgresql_home_dir + '/gcs-key.json') }}" }
-          - { option: "WALG_GS_PREFIX", value: "{{ wal_g_gs_prefix | default('gs://' + (gcp_bucket_name | default(patroni_cluster_name + '-backup'))) }}" }
-          - { option: "WALG_COMPRESSION_METHOD", value: "{{ wal_g_compression_method | default('brotli') }}" }
-          - { option: "WALG_DELTA_MAX_STEPS", value: "{{ wal_g_delta_max_steps | default('6') }}" }
-          - { option: "WALG_DOWNLOAD_CONCURRENCY", value: "{{ wal_g_download_concurrency | default([ansible_processor_vcpus | int // 2, 1] | max) }}" }
-          - { option: "WALG_PREFETCH_DIR", value: "{{ wal_g_prefetch_dir_path | default(postgresql_home_dir + '/wal-g-prefetch') }}" }
-          - { option: "WALG_UPLOAD_CONCURRENCY", value: "{{ wal_g_upload_concurrency | default([ansible_processor_vcpus | int // 2, 1] | max) }}" }
-          - { option: "WALG_UPLOAD_DISK_CONCURRENCY", value: "{{ wal_g_upload_disk_concurrency | default([ansible_processor_vcpus | int // 2, 1] | max) }}" }
-          - { option: "PGDATA", value: "{{ postgresql_data_dir }}" }
-          - { option: "PGHOST", value: "{{ postgresql_unix_socket_dir | default('/var/run/postgresql') }}" }
-          - { option: "PGPORT", value: "{{ postgresql_port | default('5432') }}" }
-          - { option: "PGUSER", value: "{{ patroni_superuser_username | default('postgres') }}" }
-      no_log: true # do not output contents to the ansible log
-
-    # if 'gcs_key_file' is not defined, copy GCS key file from GCP_SERVICE_ACCOUNT_CONTENTS environment variable.
-    - block:
-        - name: "Get GCP service account contents from localhost"
-          ansible.builtin.set_fact:
-            gcp_service_account_contents: "{{ lookup('ansible.builtin.env', 'GCP_SERVICE_ACCOUNT_CONTENTS') }}"
-          delegate_to: localhost
-          run_once: true # noqa run-once
-          no_log: true # do not output GCP service account contents to the ansible log
-
-        - name: "Copy GCP service account contents to {{ WALG_GS_KEY | default((postgresql_home_dir | default('')) ~ '/gcs-key.json') }}"
-          ansible.builtin.copy:
-            content: "{{ gcp_service_account_contents }}"
-            dest: "{{ WALG_GS_KEY | default(postgresql_home_dir + '/gcs-key.json') }}"
-            mode: "0600"
-            owner: "postgres"
-            group: "postgres"
-          no_log: true # do not output GCP service account contents to the ansible log
-      when: gcs_key_file is not defined
-
-    # if 'gcs_key_file' is defined, copy this GCS key file.
-    - name: "Copy GCS key file to {{ WALG_GS_KEY | default((postgresql_home_dir | default('')) ~ '/gcs-key.json') }}"
-      ansible.builtin.copy:
-        src: "{{ gcs_key_file }}"
-        dest: "{{ WALG_GS_KEY | default(postgresql_home_dir + '/gcs-key.json') }}"
-        mode: "0600"
-        owner: "postgres"
-        group: "postgres"
-      no_log: true # do not output GCP service account contents to the ansible log
-      when: gcs_key_file is defined and gcs_key_file | length > 0
+- name: "Set variable 'wal_g_json' for backup in GCS Bucket"
+  ansible.builtin.set_fact:
+    wal_g_json:
+      - { option: "GOOGLE_APPLICATION_CREDENTIALS", value: "{{ wal_g_gs_key | default(postgresql_home_dir + '/gcs-key.json') }}" }
+      - { option: "WALG_GS_PREFIX", value: "{{ wal_g_gs_prefix | default('gs://' + (gcp_bucket_name | default(patroni_cluster_name + '-backup'))) }}" }
+      - { option: "WALG_COMPRESSION_METHOD", value: "{{ wal_g_compression_method | default('brotli') }}" }
+      - { option: "WALG_DELTA_MAX_STEPS", value: "{{ wal_g_delta_max_steps | default('6') }}" }
+      - { option: "WALG_DOWNLOAD_CONCURRENCY", value: "{{ wal_g_download_concurrency | default([ansible_processor_vcpus | int // 2, 1] | max) }}" }
+      - { option: "WALG_PREFETCH_DIR", value: "{{ wal_g_prefetch_dir_path | default(postgresql_home_dir + '/wal-g-prefetch') }}" }
+      - { option: "WALG_UPLOAD_CONCURRENCY", value: "{{ wal_g_upload_concurrency | default([ansible_processor_vcpus | int // 2, 1] | max) }}" }
+      - { option: "WALG_UPLOAD_DISK_CONCURRENCY", value: "{{ wal_g_upload_disk_concurrency | default([ansible_processor_vcpus | int // 2, 1] | max) }}" }
+      - { option: "PGDATA", value: "{{ postgresql_data_dir }}" }
+      - { option: "PGHOST", value: "{{ postgresql_unix_socket_dir | default('/var/run/postgresql') }}" }
+      - { option: "PGPORT", value: "{{ postgresql_port | default('5432') }}" }
+      - { option: "PGUSER", value: "{{ patroni_superuser_username | default('postgres') }}" }
+  no_log: true # do not output contents to the ansible log
   when: cloud_provider | default('') | lower == 'gcp'
 
 # Azure Blob Storage (if 'cloud_provider=azure')

@@ -4,10 +4,8 @@
   gather_facts: true
   any_errors_fatal: true
   pre_tasks:
-    # set_fact: 'pgbackrest_install' to configure Postgres backups (TODO: Add the ability to configure backups in the UI)
-    # Note: Applicable only for "aws", "gcp", "azure", because:
-    # "digitalocean" - requires the Spaces access keys ("AWS_ACCESS_KEY_ID" and "AWS_SECRET_ACCESS_KEY" variables)
-    # "hetzner" - requires the S3 credentials ("hetzner_object_storage_access_key" and "hetzner_object_storage_secret_key" variables).
+    # set_fact: 'pgbackrest_install' to configure Postgres backups if not disabled explicitly.
+    # Note: Applicable only for "aws", "gcp", "azure".
     - name: "Set variable: 'pgbackrest_install' to configure Postgres backups"
       ansible.builtin.set_fact:
         pgbackrest_install: true
