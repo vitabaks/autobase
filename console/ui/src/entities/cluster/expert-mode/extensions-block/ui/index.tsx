@@ -52,7 +52,7 @@ const ExtensionsBlock: FC = () => {
       const filteredExtensions = filterValues(
         searchValue,
         isShowOnlyEnabled
-          ? (extensions.data?.data?.filter((extension) => watchEnabledExtensions?.[extension?.name]?.length) ?? []) // filter to pass only enabled extensions
+          ? (extensions.data?.data?.filter((extension) => watchEnabledExtensions?.[extension?.name]?.db?.length) ?? []) // filter to pass only enabled extensions
           : (extensions.data?.data ?? []),
       );
       if (extensions.data?.data) {
