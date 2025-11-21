@@ -393,8 +393,14 @@ const getExtensions = (values: ClusterFormValues) =>
 export const getBaseClusterExtraVars = (values: ClusterFormValues) => {
   const extensions = IS_EXPERT_MODE ? getExtensions(values) : [];
 
+  const baseExtraVars = {
+    environment_id: values[CLUSTER_FORM_FIELD_NAMES.ENVIRONMENT_ID],
+    description: values[CLUSTER_FORM_FIELD_NAMES.DESCRIPTION],
+  };
+
   return IS_EXPERT_MODE
     ? {
+        ...baseExtraVars,
         postgresql_databases: values[DATABASES_BLOCK_FIELD_NAMES.DATABASES]?.map((db) => ({
           db: db?.[DATABASES_BLOCK_FIELD_NAMES.DATABASE_NAME],
           owner: db?.[DATABASES_BLOCK_FIELD_NAMES.USER_NAME],
@@ -497,7 +503,7 @@ export const getBaseClusterExtraVars = (values: ClusterFormValues) => {
             }
           : {}),
       }
-    : {};
+    : baseExtraVars;
 };
 
 const convertObjectValueToBase64Format = (object: Record<string, any>) =>
@@ -551,15 +557,22 @@ export const mapFormValuesToRequestFields = ({
   customExtraVars?: Record<string, never>;
 }): RequestClusterCreate => {
   const baseObject = {
-    name:
-      values[CLUSTER_FORM_FIELD_NAMES.CREATION_TYPE] === CLUSTER_CREATION_TYPES.YAML
-        ? customExtraVars?.patroni_cluster_name
-        : values[CLUSTER_FORM_FIELD_NAMES.CLUSTER_NAME],
-    environment_id: values[CLUSTER_FORM_FIELD_NAMES.ENVIRONMENT_ID],
-    description: values[CLUSTER_FORM_FIELD_NAMES.DESCRIPTION],
+    ...(values[CLUSTER_FORM_FIELD_NAMES.CREATION_TYPE] === CLUSTER_CREATION_TYPES.YAML
+      ? {
+          name: customExtraVars?.patroni_cluster_name,
+          environment_id: customExtraVars?.environment_id,
+          description: customExtraVars?.description,
+        }
+      : {
+          name: values[CLUSTER_FORM_FIELD_NAMES.CLUSTER_NAME],
+          environment_id: values[CLUSTER_FORM_FIELD_NAMES.ENVIRONMENT_ID],
+          description: values[CLUSTER_FORM_FIELD_NAMES.DESCRIPTION],
+        }),
     ...(secretId ? { auth_info: { secret_id: secretId } } : {}),
     project_id: projectId,
   };
+
+  const { environment_id, description, ...modifiedExtraVars } = customExtraVars;
 
   return {
     ...baseObject,
@@ -567,7 +580,7 @@ export const mapFormValuesToRequestFields = ({
       customExtraVars?.cloud_provider) ||
     (values[CLUSTER_FORM_FIELD_NAMES.CREATION_TYPE] === CLUSTER_CREATION_TYPES.FORM &&
       values?.[CLUSTER_FORM_FIELD_NAMES.PROVIDER]?.code !== PROVIDERS.LOCAL)
-      ? getRequestCloudParams(values, secretsInfo, customExtraVars)
-      : getRequestLocalMachineParams(values, secretId, customExtraVars)),
+      ? getRequestCloudParams(values, secretsInfo, modifiedExtraVars)
+      : getRequestLocalMachineParams(values, secretId, modifiedExtraVars)),
   };
 };
