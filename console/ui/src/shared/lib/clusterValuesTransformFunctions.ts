@@ -551,7 +551,10 @@ export const mapFormValuesToRequestFields = ({
   customExtraVars?: Record<string, never>;
 }): RequestClusterCreate => {
   const baseObject = {
-    name: values[CLUSTER_FORM_FIELD_NAMES.CLUSTER_NAME],
+    name:
+      values[CLUSTER_FORM_FIELD_NAMES.CREATION_TYPE] === CLUSTER_CREATION_TYPES.YAML
+        ? customExtraVars?.patroni_cluster_name
+        : values[CLUSTER_FORM_FIELD_NAMES.CLUSTER_NAME],
     environment_id: values[CLUSTER_FORM_FIELD_NAMES.ENVIRONMENT_ID],
     description: values[CLUSTER_FORM_FIELD_NAMES.DESCRIPTION],
     ...(secretId ? { auth_info: { secret_id: secretId } } : {}),
