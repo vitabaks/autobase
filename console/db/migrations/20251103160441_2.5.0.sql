@@ -77,4 +77,28 @@ where
 delete from public.extensions
 where extension_name = 'citus';
 
+-- Update AWS volumes
+update
+  public.cloud_volumes
+set
+  volume_description = 'Throughput Optimized HDD (Max throughput: 500 MiB/s, Max IOPS: 500)'
+where
+  cloud_provider = 'aws' and volume_type = 'st1';
+
+update
+  public.cloud_volumes
+set
+  volume_description = 'General Purpose SSD (Max throughput: 2,000 MiB/s, Max IOPS: 80,000)',
+  volume_max_size = '64000'
+where
+  cloud_provider = 'aws' and volume_type = 'gp3';
+
+update
+  public.cloud_volumes
+set
+  volume_description = 'Provisioned IOPS SSD (Max throughput: 4,000 MiB/s, Max IOPS: 256,000)',
+  volume_max_size = '64000'
+where
+  cloud_provider = 'aws' and volume_type = 'io2';
+
 -- +goose Down
