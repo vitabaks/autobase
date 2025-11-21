@@ -14,8 +14,12 @@ server_public_ip: true # Determines if a public IP should be assigned to the cre
 
 volume_type: "" # Volume type. Defaults: 'gp3' for AWS, 'pd-ssd' for GCP, 'StandardSSD_LRS' for Azure.
 volume_size: 100 # Storage size for the data directory (in gigabytes).
+volume_iops: 3000 # Volume IOPS. Applicable for AWS if volume_type is 'io1', 'io2' or 'gp3'.
+volume_throughput: 125 # Volume throughput (in MiB/s). Applicable for AWS if volume_type is 'gp3'.
 system_volume_type: "" # System volume type. Defaults: 'gp3' for AWS, 'pd-ssd' for GCP, 'StandardSSD_LRS' for Azure.
 system_volume_size: 100 # System volume size (in gigabytes). Applicable for AWS, GCP, Azure.
+system_volume_iops: 3000 # System volume IOPS. Applicable for AWS if system_volume_type is 'io1', 'io2' or 'gp3'.
+system_volume_throughput: 125 # System volume throughput (in MiB/s). Applicable for AWS if system_volume_type is 'gp3'.
 
 ssh_key_name: "" # Name of the SSH key to be added to the server. Note: If not provided, all cloud available SSH keys will be added (applicable to DigitalOcean, Hetzner).
 ssh_key_content: "" # (optional) If provided, the public key content will be added to the cloud (directly to the server for GCP).
