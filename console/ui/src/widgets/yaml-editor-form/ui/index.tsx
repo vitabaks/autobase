@@ -17,7 +17,6 @@ import * as YAML from 'yaml';
 import ErrorBox from '@shared/ui/error-box/ui';
 import { ErrorBoundary } from 'react-error-boundary';
 import { mapFormValuesToYamlEditor } from '@widgets/yaml-editor-form/lib/functions.ts';
-import { CLUSTER_FORM_FIELD_NAMES } from '@widgets/cluster-form/model/constants.ts';
 import ClusterSecretModal from '@features/cluster-secret-modal';
 import { useClusterFormSubmit } from '@widgets/yaml-editor-form/lib/hooks.tsx';
 import { useGetSecretsQuery } from '@shared/api/api/secrets.ts';
@@ -25,6 +24,7 @@ import { useAppSelector } from '@app/redux/store/hooks.ts';
 import { selectCurrentProject } from '@app/redux/slices/projectSlice/projectSelectors.ts';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { yamlFormSchema } from '@widgets/yaml-editor-form/model/validation.ts';
+import { PROVIDERS } from '@shared/config/constants.ts';
 import IStandaloneCodeEditor = editor.IStandaloneCodeEditor;
 
 const YamlEditorForm: FC = () => {
@@ -45,7 +45,7 @@ const YamlEditorForm: FC = () => {
   const watchYamlFormValues = useWatch({ control });
 
   const secrets = useGetSecretsQuery({
-    type: watchUiValues[CLUSTER_FORM_FIELD_NAMES.PROVIDER]?.code,
+    type: parsedYamlEditorValues?.cloud_provider ?? PROVIDERS.LOCAL,
     projectId: currentProject,
   });
 
