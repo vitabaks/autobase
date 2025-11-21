@@ -15,6 +15,7 @@ import { useAppSelector } from '@app/redux/store/hooks.ts';
 import { selectCurrentProject } from '@app/redux/slices/projectSlice/projectSelectors.ts';
 import { useRef } from 'react';
 import { usePostClustersMutation } from '@shared/api/api/clusters.ts';
+import { isEmpty } from 'lodash';
 
 export const useClusterFormSubmit: ({
   secrets,
@@ -69,7 +70,7 @@ export const useClusterFormSubmit: ({
         secretId: createSecretResultRef.current?.id ?? Number(values[CLUSTER_FORM_FIELD_NAMES.SECRET_ID]),
         projectId: Number(currentProject),
         values,
-        ...(customExtraVars ? { customExtraVars } : {}),
+        ...(!isEmpty(customExtraVars) ? { customExtraVars } : {}),
       }),
     }).unwrap();
   };
@@ -86,7 +87,7 @@ export const useClusterFormSubmit: ({
         secretId: secrets?.data?.[0]?.id,
         projectId: Number(currentProject),
         values,
-        ...(customExtraVars ? { customExtraVars } : {}),
+        ...(!isEmpty(customExtraVars) ? { customExtraVars } : {}),
       }),
     }).unwrap();
   };
@@ -108,12 +109,12 @@ export const useClusterFormSubmit: ({
       )
         await submitCloudCluster({
           values,
-          ...(customExtraVars ? { customExtraVars } : {}),
+          ...(!isEmpty(customExtraVars) ? { customExtraVars } : {}),
         });
       else
         await submitLocalCluster({
           values,
-          ...(customExtraVars ? { customExtraVars } : {}),
+          ...(!isEmpty(customExtraVars) ? { customExtraVars } : {}),
         });
       toast.info(
         t(

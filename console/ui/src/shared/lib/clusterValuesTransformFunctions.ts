@@ -24,6 +24,7 @@ import { BACKUP_METHODS, BACKUPS_BLOCK_FIELD_NAMES } from '@entities/cluster/exp
 import { POSTGRES_PARAMETERS_FIELD_NAMES } from '@entities/cluster/expert-mode/postgres-parameters-block/model/const.ts';
 import { KERNEL_PARAMETERS_FIELD_NAMES } from '@entities/cluster/expert-mode/kernel-parameters-block/model/const.ts';
 import { RequestClusterCreate } from '@shared/api/api/clusters.ts';
+import { isEmpty } from 'lodash';
 
 /**
  * Get value from model form (postgres or kernel params) and convert to correct format.
@@ -572,7 +573,9 @@ export const mapFormValuesToRequestFields = ({
     project_id: projectId,
   };
 
-  const { environment_id, description, ...modifiedExtraVars } = customExtraVars;
+  ['environment_id', 'description'].forEach((field) => {
+    if (!isEmpty(customExtraVars)) delete customExtraVars[field];
+  });
 
   return {
     ...baseObject,
@@ -580,7 +583,7 @@ export const mapFormValuesToRequestFields = ({
       customExtraVars?.cloud_provider) ||
     (values[CLUSTER_FORM_FIELD_NAMES.CREATION_TYPE] === CLUSTER_CREATION_TYPES.FORM &&
       values?.[CLUSTER_FORM_FIELD_NAMES.PROVIDER]?.code !== PROVIDERS.LOCAL)
-      ? getRequestCloudParams(values, secretsInfo, modifiedExtraVars)
-      : getRequestLocalMachineParams(values, secretId, modifiedExtraVars)),
+      ? getRequestCloudParams(values, secretsInfo, customExtraVars)
+      : getRequestLocalMachineParams(values, secretId, customExtraVars)),
   };
 };

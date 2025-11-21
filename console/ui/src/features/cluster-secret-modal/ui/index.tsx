@@ -38,6 +38,7 @@ import { getSecretBodyFromValues } from '@entities/secret-form-block/lib/functio
 import { DATABASE_SERVERS_FIELD_NAMES } from '@entities/cluster/database-servers-block/model/const.ts';
 import { mapFormValuesToRequestFields } from '@shared/lib/clusterValuesTransformFunctions.ts';
 import { PROVIDERS } from '@shared/config/constants.ts';
+import { isEmpty } from 'lodash';
 
 const ClusterSecretModal: FC<ClusterSecretModalProps> = ({ isClusterFormDisabled = false, customExtraVars = {} }) => {
   const { t } = useTranslation(['clusters', 'shared', 'toasts']);
@@ -102,7 +103,7 @@ const ClusterSecretModal: FC<ClusterSecretModalProps> = ({ isClusterFormDisabled
           values: watchClusterFormValues as ClusterFormValues,
           secretsInfo: secretsFields,
           projectId: Number(currentProject),
-          ...(customExtraVars ? { customExtraVars } : {}),
+          ...(!isEmpty(customExtraVars) ? { customExtraVars } : {}),
           ...(!secrets.data?.data?.length && !createSecretResultRef?.current?.id
             ? {
                 secretsInfo: secretsFields,
@@ -120,13 +121,13 @@ const ClusterSecretModal: FC<ClusterSecretModalProps> = ({ isClusterFormDisabled
           {
             ns: 'toasts',
             clusterName:
-              creationType === CLUSTER_CREATION_TYPES.YAML
+              watchClusterFormValues[CLUSTER_FORM_FIELD_NAMES.CREATION_TYPE] === CLUSTER_CREATION_TYPES.YAML
                 ? customExtraVars?.patroni_cluster_name
-                : values[CLUSTER_FORM_FIELD_NAMES.CLUSTER_NAME],
+                : watchClusterFormValues[CLUSTER_FORM_FIELD_NAMES.CLUSTER_NAME],
           },
         ),
       );
-      navigate(generateAbsoluteRouterPath(RouterPaths.clusters.absolutePath));
+      await navigate(generateAbsoluteRouterPath(RouterPaths.clusters.absolutePath));
     } catch (e) {
       handleRequestErrorCatch(e);
     } finally {
