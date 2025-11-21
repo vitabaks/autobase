@@ -790,7 +790,7 @@ pgbackrest_cron_jobs:
     file: "/etc/cron.d/pgbackrest-{{ patroni_cluster_name }}"
     user: "postgres"
     minute: "00"
-    hour: "3"
+    hour: "{{ pgbackrest_backup_hour | default('3') }}"
     day: "*"
     month: "*"
     weekday: "1-6"
