@@ -17,9 +17,8 @@
             value: "{{ pgbackrest_s3_endpoint | default('s3.' + (aws_s3_bucket_region | default(server_location)) + '.amazonaws.com') }}",
           }
         - { option: "repo1-s3-region", value: "{{ pgbackrest_s3_region | default(aws_s3_bucket_region | default(server_location)) }}" }
-        - { option: "repo1-retention-full", value: "{{ pgbackrest_retention_full | default('4') }}" }
-        - { option: "repo1-retention-archive", value: "{{ pgbackrest_retention_archive | default('4') }}" }
-        - { option: "repo1-retention-archive-type", value: "{{ pgbackrest_retention_archive_type | default('full') }}" }
+        - { option: "repo1-retention-full", value: "{{ pgbackrest_retention_full | default('30') }}" }
+        - { option: "repo1-retention-full-type", value: "{{ pgbackrest_retention_full_type | default('time') }}" }
         - { option: "repo1-bundle", value: "y" }
         - { option: "repo1-block", value: "y" }
         - { option: "start-fast", value: "y" }
@@ -51,9 +50,8 @@
         - { option: "repo1-path", value: "{{ pgbackrest_repo_path | default('/pgbackrest') }}" }
         - { option: "repo1-gcs-key", value: "{{ pgbackrest_gcs_key | default(postgresql_home_dir + '/gcs-key.json') }}" }
         - { option: "repo1-gcs-bucket", value: "{{ pgbackrest_gcs_bucket | default(gcp_bucket_name | default(patroni_cluster_name + '-backup')) }}" }
-        - { option: "repo1-retention-full", value: "{{ pgbackrest_retention_full | default('4') }}" }
-        - { option: "repo1-retention-archive", value: "{{ pgbackrest_retention_archive | default('4') }}" }
-        - { option: "repo1-retention-archive-type", value: "{{ pgbackrest_retention_archive_type | default('full') }}" }
+        - { option: "repo1-retention-full", value: "{{ pgbackrest_retention_full | default('30') }}" }
+        - { option: "repo1-retention-full-type", value: "{{ pgbackrest_retention_full_type | default('time') }}" }
         - { option: "repo1-bundle", value: "y" }
         - { option: "repo1-block", value: "y" }
         - { option: "start-fast", value: "y" }
@@ -91,9 +89,8 @@
             option: "repo1-azure-container",
             value: "{{ pgbackrest_azure_container | default(azure_blob_storage_name | default(patroni_cluster_name + '-backup')) }}",
           }
-        - { option: "repo1-retention-full", value: "{{ pgbackrest_retention_full | default('4') }}" }
-        - { option: "repo1-retention-archive", value: "{{ pgbackrest_retention_archive | default('4') }}" }
-        - { option: "repo1-retention-archive-type", value: "{{ pgbackrest_retention_archive_type | default('full') }}" }
+        - { option: "repo1-retention-full", value: "{{ pgbackrest_retention_full | default('30') }}" }
+        - { option: "repo1-retention-full-type", value: "{{ pgbackrest_retention_full_type | default('time') }}" }
         - { option: "repo1-bundle", value: "y" }
         - { option: "repo1-block", value: "y" }
         - { option: "start-fast", value: "y" }
@@ -131,9 +128,8 @@
           }
         - { option: "repo1-s3-region", value: "{{ pgbackrest_s3_region | default(digital_ocean_spaces_region | default(default_region)) }}" }
         - { option: "repo1-s3-uri-style", value: "{{ pgbackrest_s3_uri_style | default('path') }}" }
-        - { option: "repo1-retention-full", value: "{{ pgbackrest_retention_full | default('4') }}" }
-        - { option: "repo1-retention-archive", value: "{{ pgbackrest_retention_archive | default('4') }}" }
-        - { option: "repo1-retention-archive-type", value: "{{ pgbackrest_retention_archive_type | default('full') }}" }
+        - { option: "repo1-retention-full", value: "{{ pgbackrest_retention_full | default('30') }}" }
+        - { option: "repo1-retention-full-type", value: "{{ pgbackrest_retention_full_type | default('time') }}" }
         - { option: "repo1-bundle", value: "y" }
         - { option: "repo1-block", value: "y" }
         - { option: "start-fast", value: "y" }
@@ -172,9 +168,8 @@
           }
         - { option: "repo1-s3-region", value: "{{ pgbackrest_s3_region | default(hetzner_object_storage_region | default(default_region)) }}" }
         - { option: "repo1-s3-uri-style", value: "{{ pgbackrest_s3_uri_style | default('path') }}" }
-        - { option: "repo1-retention-full", value: "{{ pgbackrest_retention_full | default('4') }}" }
-        - { option: "repo1-retention-archive", value: "{{ pgbackrest_retention_archive | default('4') }}" }
-        - { option: "repo1-retention-archive-type", value: "{{ pgbackrest_retention_archive_type | default('full') }}" }
+        - { option: "repo1-retention-full", value: "{{ pgbackrest_retention_full | default('30') }}" }
+        - { option: "repo1-retention-full-type", value: "{{ pgbackrest_retention_full_type | default('time') }}" }
         - { option: "repo1-bundle", value: "y" }
         - { option: "repo1-block", value: "y" }
         - { option: "start-fast", value: "y" }

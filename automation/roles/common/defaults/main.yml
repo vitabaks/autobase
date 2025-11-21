@@ -725,8 +725,8 @@ pgbackrest_conf:
     #    - { option: "repo1-host", value: "{{ pgbackrest_repo_host }}" }
     #    - { option: "repo1-host-user", value: "{{ pgbackrest_repo_user }}" }
     - { option: "repo1-path", value: "/var/lib/pgbackrest" }
-    - { option: "repo1-retention-full", value: "4" }
-    - { option: "repo1-retention-archive", value: "4" }
+    - { option: "repo1-retention-full", value: "{{ pgbackrest_retention_full | default('30') }}" }
+    - { option: "repo1-retention-full-type", value: "{{ pgbackrest_retention_full_type | default('time') }}" }
     - { option: "repo1-bundle", value: "y" }
     - { option: "repo1-block", value: "y" }
     - { option: "start-fast", value: "y" }
@@ -754,8 +754,8 @@ pgbackrest_server_conf:
     - { option: "log-path", value: "/var/log/pgbackrest" }
     - { option: "repo1-type", value: "{{ pgbackrest_repo_type | lower }}" }
     - { option: "repo1-path", value: "/var/lib/pgbackrest" }
-    - { option: "repo1-retention-full", value: "4" }
-    - { option: "repo1-retention-archive", value: "4" }
+    - { option: "repo1-retention-full", value: "{{ pgbackrest_retention_full | default('30') }}" }
+    - { option: "repo1-retention-full-type", value: "{{ pgbackrest_retention_full_type | default('time') }}" }
     - { option: "repo1-bundle", value: "y" }
     - { option: "repo1-block", value: "y" }
     - { option: "archive-check", value: "y" }
