@@ -428,7 +428,7 @@ export const getBaseClusterExtraVars = (values: ClusterFormValues) => {
                 pgbackrest_install: true,
                 pgbackrest_backup_hour: values?.[BACKUPS_BLOCK_FIELD_NAMES.BACKUP_START_TIME],
                 pgbackrest_retention_full: values?.[BACKUPS_BLOCK_FIELD_NAMES.BACKUP_RETENTION],
-                pgbackrest_retention_archive: values?.[BACKUPS_BLOCK_FIELD_NAMES.BACKUP_RETENTION],
+                pgbackrest_retention_full_type: 'time',
                 ...(values?.[BACKUPS_BLOCK_FIELD_NAMES.CONFIG]
                   ? {
                       pgbackrest_auto_conf: false,
