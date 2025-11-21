@@ -29,7 +29,7 @@ export const useClusterFormSubmit: ({
     values: ClusterFormValues;
     customExtraVars?: Record<string, never>;
   }) => Promise<void>,
-] = (secrets) => {
+] = ({ secrets }) => {
   const { t } = useTranslation('clusters');
   const navigate = useNavigate();
   const currentProject = useAppSelector(selectCurrentProject);

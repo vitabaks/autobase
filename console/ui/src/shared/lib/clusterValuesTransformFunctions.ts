@@ -98,6 +98,7 @@ export const getLocalMachineExtraVars = (values: ClusterFormValues, secretId?: n
     ? { cluster_vip: values[CLUSTER_FORM_FIELD_NAMES.CLUSTER_VIP_ADDRESS] }
     : {}),
   ...(values[LOAD_BALANCERS_FIELD_NAMES.IS_HAPROXY_ENABLED] ? { with_haproxy_load_balancing: true } : {}),
+  ...(values[CLUSTER_FORM_FIELD_NAMES.IS_CLUSTER_EXISTS] ? { existing_cluster: true } : {}),
   ...(!secretId &&
   !values[CLUSTER_FORM_FIELD_NAMES.IS_USE_DEFINED_SECRET] &&
   values[CLUSTER_FORM_FIELD_NAMES.AUTHENTICATION_METHOD] === AUTHENTICATION_METHODS.PASSWORD
@@ -507,7 +508,7 @@ const getRequestCloudParams = (values, secretsInfo, customExtraVars) => ({
     ...Object.fromEntries(
       Object.entries({
         ...secretsInfo,
-      }).filter(([key]) => SECRET_MODAL_CONTENT_BODY_FORM_FIELDS?.[key]),
+      }).filter(([key, value]) => SECRET_MODAL_CONTENT_BODY_FORM_FIELDS?.[key] && value),
     ),
   }),
   extra_vars: customExtraVars ?? {
@@ -522,7 +523,10 @@ const getRequestLocalMachineParams = (values, secretId, customExtraVars) => ({
     ...getBaseClusterExtraVars(values),
     ...getLocalMachineExtraVars(values, secretId),
   },
-  existing_cluster: values[DATABASE_SERVERS_FIELD_NAMES.IS_CLUSTER_EXISTS] ?? false,
+  existing_cluster:
+    values[CLUSTER_FORM_FIELD_NAMES.CREATION_TYPE] === CLUSTER_CREATION_TYPES.YAML
+      ? customExtraVars?.existing_cluster?.toString() === 'true'
+      : !!values?.[DATABASE_SERVERS_FIELD_NAMES.IS_CLUSTER_EXISTS],
 });
 
 /**

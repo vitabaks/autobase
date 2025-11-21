@@ -27,7 +27,7 @@ import { YamlEditorFormValues } from '@widgets/yaml-editor-form/model/types.ts';
 export interface ClusterSecretModalProps {
   isClusterFormSubmitting?: boolean;
   isClusterFormDisabled?: boolean;
-  yamlEditorValues?: YamlEditorFormValues;
+  customExtraVars?: Record<string, never>;
 }
 
 export interface ClusterSecretModalFormValues extends SecretFormValues {

@@ -80,7 +80,7 @@ const YamlEditorForm: FC = () => {
       customExtraVars: parsedYamlEditorValues,
     });
 
-  const shouldRenderModal = parsedYamlEditorValues?.cloud_provider && secrets.data?.data?.length !== 1;
+  const shouldRenderModal = secrets.data?.data?.length !== 1;
 
   const { isValid, isSubmitting } = formState;
 
@@ -103,7 +103,7 @@ const YamlEditorForm: FC = () => {
               )}
             />
             {shouldRenderModal ? (
-              <ClusterSecretModal isClusterFormDisabled={!isValid} yamlEditorValues={parsedYamlEditorValues} />
+              <ClusterSecretModal isClusterFormDisabled={!isValid} customExtraVars={parsedYamlEditorValues} />
             ) : (
               <DefaultFormButtons
                 isDisabled={!isValid}
