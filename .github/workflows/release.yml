@@ -56,6 +56,14 @@ jobs:
           sed -i "s/autobase\/console_db:${VERSION_PATTERN}/autobase\/console_db:${TAG}/g" \
             console/docker-compose.yml
 
+          # Update console docker-compose.caddy.yml image tags
+          sed -i "s/autobase\/console_api:${VERSION_PATTERN}/autobase\/console_api:${TAG}/g" \
+            console/docker-compose.caddy.yml
+          sed -i "s/autobase\/console_ui:${VERSION_PATTERN}/autobase\/console_ui:${TAG}/g" \
+            console/docker-compose.caddy.yml
+          sed -i "s/autobase\/console_db:${VERSION_PATTERN}/autobase\/console_db:${TAG}/g" \
+            console/docker-compose.caddy.yml
+
           # Update console service VERSION file
           echo "${TAG}" > console/service/VERSION
 
