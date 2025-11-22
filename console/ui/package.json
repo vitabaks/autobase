@@ -69,7 +69,7 @@
     "@vitejs/plugin-react": "^5.1.0",
     "@vitejs/plugin-react-swc": "^4.2.0",
     "autoprefixer": "^10.4.21",
-    "esbuild": "^0.25.12",
+    "esbuild": "^0.27.0",
     "esbuild-plugin-react-virtualized": "^1.0.5",
     "esbuild-runner": "^2.2.2",
     "eslint": "^9.39.1",
