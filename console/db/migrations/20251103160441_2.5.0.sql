@@ -40,6 +40,32 @@ delete from public.cloud_instances
 where cloud_provider = 'gcp'
 and instance_name like 'n2%';
 
+-- Update hetzner instances
+delete from public.cloud_instances
+where cloud_provider = 'hetzner';
+
+-- The price is approximate because it is specified for Germany (incl. 19 % VAT) and may differ in other locations.
+insert into public.cloud_instances (cloud_provider, instance_group, instance_name, arch, cpu, ram, price_hourly, price_monthly, currency, updated_at, shared_cpu)
+  values ('hetzner', 'Small Size', 'CX23', 'amd64', 2, 4, 0.0079, 4.87, '$', '2025-11-22', true),
+  ('hetzner', 'Small Size', 'CX33', 'amd64', 4, 8, 0.0126, 7.84, '$', '2025-11-22', true),
+  ('hetzner', 'Medium Size', 'CX43', 'amd64', 8, 16, 0.0200, 12.60, '$', '2025-11-22', true),
+  ('hetzner', 'Medium Size', 'CX53', 'amd64', 16, 32, 0.0374, 23.31, '$', '2025-11-22', true),
+  ('hetzner', 'Small Size', 'CAX11', 'arm64', 2, 4, 0.0088, 5.46, '$', '2025-11-22', true),
+  ('hetzner', 'Small Size', 'CAX21', 'arm64', 4, 8, 0.0145, 9.03, '$', '2025-11-22', true),
+  ('hetzner', 'Medium Size', 'CAX31', 'arm64', 8, 16, 0.0269, 16.77, '$', '2025-11-22', true),
+  ('hetzner', 'Medium Size', 'CAX41', 'arm64', 16, 32, 0.0527, 32.83, '$', '2025-11-22', true),
+  ('hetzner', 'Small Size', 'CPX22', 'amd64', 2, 4, 0.0145, 9.03, '$', '2025-11-22', true),
+  ('hetzner', 'Small Size', 'CPX32', 'amd64', 4, 8, 0.024, 14.98, '$', '2025-11-22', true),
+  ('hetzner', 'Medium Size', 'CPX42', 'amd64', 8, 16, 0.0431, 26.88, '$', '2025-11-22', true),
+  ('hetzner', 'Medium Size', 'CPX52', 'amd64', 12, 24, 0.0613, 38.19, '$', '2025-11-22', true),
+  ('hetzner', 'Medium Size', 'CPX62', 'amd64', 16, 32, 0.0832, 51.87, '$', '2025-11-22', true),
+  ('hetzner', 'Small Size', 'CCX13', 'amd64', 2, 8, 0.0269, 16.77, '$', '2025-11-22', false),
+  ('hetzner', 'Small Size', 'CCX23', 'amd64', 4, 16, 0.0518, 32.24, '$', '2025-11-22', false),
+  ('hetzner', 'Medium Size', 'CCX33', 'amd64', 8, 32, 0.1032, 64.37, '$', '2025-11-22', false),
+  ('hetzner', 'Medium Size', 'CCX43', 'amd64', 16, 64, 0.2053, 128.03, '$', '2025-11-22', false),
+  ('hetzner', 'Medium Size', 'CCX53', 'amd64', 32, 128, 0.4083, 254.77, '$', '2025-11-22', false),
+  ('hetzner', 'Medium Size', 'CCX63', 'amd64', 48, 192, 0.6114, 381.50, '$', '2025-11-22', false);
+
 -- Update PostgreSQL max version for third-party extensions
 update
   public.extensions
