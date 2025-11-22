@@ -1,8 +1,18 @@
 import React, { useEffect } from 'react';
-import { Box, Checkbox, FormControlLabel, MenuItem, Radio, Stack, TextField, Typography, useTheme } from '@mui/material';
+import {
+  Box,
+  Checkbox,
+  FormControlLabel,
+  MenuItem,
+  Radio,
+  Stack,
+  TextField,
+  Typography,
+  useTheme,
+} from '@mui/material';
 import { authenticationMethods } from '@entities/authentification-method-form-block/model/constants.ts';
 import { useTranslation } from 'react-i18next';
-import { Controller, useFormContext } from 'react-hook-form';
+import { Controller, useFormContext, useWatch } from 'react-hook-form';
 import { CLUSTER_FORM_FIELD_NAMES } from '@widgets/cluster-form/model/constants.ts';
 import { useGetSecretsQuery } from '@shared/api/api/secrets.ts';
 import { useAppSelector } from '@app/redux/store/hooks.ts';
@@ -17,7 +27,6 @@ const AuthenticationMethodFormBlock: React.FC = () => {
 
   const {
     control,
-    watch,
     resetField,
     setValue,
     formState: { errors },
@@ -25,9 +34,9 @@ const AuthenticationMethodFormBlock: React.FC = () => {
 
   const currentProject = useAppSelector(selectCurrentProject);
 
-  const watchAuthenticationMethod = watch(CLUSTER_FORM_FIELD_NAMES.AUTHENTICATION_METHOD);
-  const watchIsSaveToConsole = watch(CLUSTER_FORM_FIELD_NAMES.AUTHENTICATION_IS_SAVE_TO_CONSOLE);
-  const watchIsUseDefinedSecret = watch(CLUSTER_FORM_FIELD_NAMES.IS_USE_DEFINED_SECRET);
+  const watchAuthenticationMethod = useWatch({ name: CLUSTER_FORM_FIELD_NAMES.AUTHENTICATION_METHOD });
+  const watchIsSaveToConsole = useWatch({ name: CLUSTER_FORM_FIELD_NAMES.AUTHENTICATION_IS_SAVE_TO_CONSOLE });
+  const watchIsUseDefinedSecret = useWatch({ name: CLUSTER_FORM_FIELD_NAMES.IS_USE_DEFINED_SECRET });
 
   const secrets = useGetSecretsQuery({ type: watchAuthenticationMethod, projectId: currentProject });
 
@@ -45,27 +54,28 @@ const AuthenticationMethodFormBlock: React.FC = () => {
         {t('authenticationMethod', { ns: 'clusters' })}
       </Typography>
       <Stack direction="column" gap="16px">
-        <Stack direction="row" gap="24px">
+        <Stack direction="row" gap="24px" flexWrap="wrap">
           <Controller
             control={control}
             name={CLUSTER_FORM_FIELD_NAMES.AUTHENTICATION_METHOD}
             render={({ field: { value, onChange } }) => (
               <>
-                {authenticationMethods(t).map((method: any) => (
+                {authenticationMethods(t).map(({ id, name, description }) => (
                   <Stack
-                    key={method.id}
+                    key={id}
+                    flexGrow={1}
                     sx={{
                       padding: '8px',
                       border: `1px solid ${theme.palette.divider}`,
                       borderRadius: '8px',
                       cursor: 'pointer',
                       minWidth: 'max-content',
-                      width: '100%',
-                      backgroundColor: value === method.id
-                        ? theme.palette.mode === 'light'
-                          ? 'rgba(51, 103, 214, 0.04)'
-                          : 'rgba(90, 141, 238, 0.08)'
-                        : 'transparent',
+                      backgroundColor:
+                        value === id
+                          ? theme.palette.mode === 'light'
+                            ? 'rgba(51, 103, 214, 0.04)'
+                            : 'rgba(90, 141, 238, 0.08)'
+                          : 'transparent',
                       '&:hover': {
                         borderColor: theme.palette.primary.main,
                         backgroundColor: theme.palette.action.hover,
@@ -73,11 +83,11 @@ const AuthenticationMethodFormBlock: React.FC = () => {
                       transition: 'all 0.2s ease-in-out',
                     }}
                     direction="row"
-                    onClick={() => onChange(method.id)}>
-                    <Radio checked={value === method.id} />
+                    onClick={() => onChange(id)}>
+                    <Radio checked={value === id} />
                     <Stack>
-                      <Typography fontWeight="bold">{method.name}</Typography>
-                      <Typography>{method.description}</Typography>
+                      <Typography fontWeight="bold">{name}</Typography>
+                      <Typography>{description}</Typography>
                     </Stack>
                   </Stack>
                 ))}
@@ -102,7 +112,8 @@ const AuthenticationMethodFormBlock: React.FC = () => {
                   helperText={errors[CLUSTER_FORM_FIELD_NAMES.IS_USE_DEFINED_SECRET]?.message as string}>
                   {/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
                   {[t('yes', { ns: 'shared' }), t('no', { ns: 'shared' })].map((option) => (
-                    // @ts-ignore
+                    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                    // @ts-expect-error
                     <MenuItem key={option} value={option === t('yes', { ns: 'shared' })}>
                       {option}
                     </MenuItem>

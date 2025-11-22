@@ -80,7 +80,7 @@
       when: extracted_package is defined and extracted_package.files | default([]) | length == 0
   when:
     - github_package_url | length > 0
-    - github_package_url | regex_search('\.(zip|tar\.gz)$')
+    - github_package_url is regex('\.(zip|tar\.gz)$')
 
 # Install
 - block:

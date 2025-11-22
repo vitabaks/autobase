@@ -1,4 +1,4 @@
-import React, { FC, useState } from 'react';
+import { FC, useState } from 'react';
 import { Button, Card, CircularProgress, Modal, Stack, TextField, Typography } from '@mui/material';
 import { Controller, useForm } from 'react-hook-form';
 import AddBoxOutlinedIcon from '@mui/icons-material/AddBoxOutlined';
@@ -104,8 +104,7 @@ const SettingsAddEntity: FC<SettingsAddEntityProps> = ({
                 type="submit"
                 variant="contained"
                 disabled={!isValid || isSubmitting || isLoading}
-                startIcon={isSubmitting || isLoading ? <CircularProgress size={16} /> : undefined}
-              >
+                startIcon={isSubmitting || isLoading ? <CircularProgress size={16} /> : undefined}>
                 {submitButtonLabel ?? t('add')}
               </Button>
             </Stack>

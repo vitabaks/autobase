@@ -156,13 +156,14 @@ consul_config_path: "/etc/consul"
 consul_configd_path: "{{ consul_config_path }}/conf.d"
 consul_data_path: "/var/lib/consul"
 consul_domain: "consul" # Consul domain name
-consul_datacenter: "dc1" # Datacenter label (can be specified for each host in the inventory)
+consul_datacenter: "{{ server_location | default('dc1') }}" # Datacenter label (can be specified for each host in the inventory)
 consul_disable_update_check: true # Disables automatic checking for security bulletins and new version releases
 consul_enable_script_checks: true # This controls whether health checks that execute scripts are enabled on this agent
 consul_enable_local_script_checks: true # Enable them when they are defined in the local configuration files
 consul_ui: false # Enable the consul UI?
 consul_syslog_enable: true # Enable logging to syslog
 consul_client_address: "127.0.0.1" # Client address. Affects DNS, HTTP, HTTPS, and gRPC client interfaces.
+consul_bootstrap_expect: "{{ true if consul_node_role == 'server' else false }}"
 consul_on_dedicated_nodes: "{{ groups['consul_instances'] | difference(groups['postgres_cluster']) | length > 0 }}" # 'true' or 'false'
 # TLS
 # Enables TLS encryption with a self-signed certificate if 'tls_cert_generate' is true.
@@ -259,7 +260,7 @@ postgresql_home_dir: "{{ '/var/lib/postgresql' if ansible_os_family == 'Debian' 
 # You can specify custom data dir path. Example: "/pgdata/{{ postgresql_version }}/main"
 postgresql_data_dir: "\
   {% if cloud_provider | default('') | length > 0 %}\
-  {{ pg_data_mount_path | default('/pgdata') }}/{{ postgresql_version }}/{{ postgresql_cluster_name }}\
+  {{ postgresql_data_dir_mount_path | default('/pgdata') }}/{{ postgresql_version }}/{{ postgresql_cluster_name }}\
   {% else %}\
   {{ postgresql_home_dir }}/{{ postgresql_version }}/{{ postgresql_cluster_name }}\
   {% endif %}"
@@ -649,11 +650,11 @@ wal_g_version: 3.0.7
 wal_g_installation_method: "binary" # or "src" to build from source code
 wal_g_path: "/usr/local/bin/wal-g --config {{ postgresql_home_dir }}/.walg.json"
 wal_g_json: # config https://github.com/wal-g/wal-g#configuration
-  - { option: "AWS_ACCESS_KEY_ID", value: "{{ AWS_ACCESS_KEY_ID | default('') }}" } # define values or pass via --extra-vars
-  - { option: "AWS_SECRET_ACCESS_KEY", value: "{{ AWS_SECRET_ACCESS_KEY | default('') }}" } # define values or pass via --extra-vars
-  - { option: "WALG_S3_PREFIX", value: "{{ WALG_S3_PREFIX | default('s3://' + patroni_cluster_name) }}" } # define values or pass via --extra-vars
-  - { option: "WALG_COMPRESSION_METHOD", value: "{{ WALG_COMPRESSION_METHOD | default('brotli') }}" } # or "lz4", "lzma", "zstd"
-  - { option: "WALG_DELTA_MAX_STEPS", value: "{{ WALG_DELTA_MAX_STEPS | default('6') }}" } # determines how many delta backups can be between full backups
+  - { option: "AWS_ACCESS_KEY_ID", value: "{{ wal_g_aws_access_key_id | default('') }}" } # define values or pass via --extra-vars
+  - { option: "AWS_SECRET_ACCESS_KEY", value: "{{ wal_g_aws_secret_access_key | default('') }}" } # define values or pass via --extra-vars
+  - { option: "WALG_S3_PREFIX", value: "{{ wal_g_s3_prefix | default('s3://' + patroni_cluster_name) }}" } # define values or pass via --extra-vars
+  - { option: "WALG_COMPRESSION_METHOD", value: "{{ wal_g_compression_method | default('brotli') }}" } # or "lz4", "lzma", "zstd"
+  - { option: "WALG_DELTA_MAX_STEPS", value: "{{ wal_g_delta_max_steps | default('6') }}" } # determines how many delta backups can be between full backups
   - { option: "WALG_PREFETCH_DIR", value: "{{ wal_g_prefetch_dir_path }}" } # prevent pg_rewind failures by setting non-default prefetch directory
   - { option: "PGDATA", value: "{{ postgresql_data_dir }}" }
   - { option: "PGHOST", value: "{{ postgresql_unix_socket_dir }}" }
@@ -685,14 +686,14 @@ wal_g_delete_command:
   - " {{ patroni_restapi_protocol }}://{{ patroni_restapi_connect_addr | default(patroni_bind_address | default(bind_address, true), true) }}"
   - ":{{ patroni_restapi_port }}"
   - " | grep 200"
-  - " && {{ wal_g_path }} delete retain FULL {{ WAL_G_RETENTION_FULL | default (4) }} --confirm > {{ postgresql_log_dir }}/walg_delete.log 2>&1"
+  - " && {{ wal_g_path }} delete retain FULL {{ wal_g_retention_full | default (4) }} --confirm > {{ postgresql_log_dir }}/walg_delete.log 2>&1"
 
 wal_g_cron_jobs:
   - name: "WAL-G: Create daily backup"
     user: "postgres"
     file: /etc/cron.d/walg
     minute: "00"
-    hour: "{{ WALG_BACKUP_HOUR | default('3') }}"
+    hour: "{{ wal_g_backup_hour | default('3') }}"
     day: "*"
     month: "*"
     weekday: "*"
@@ -724,8 +725,8 @@ pgbackrest_conf:
     #    - { option: "repo1-host", value: "{{ pgbackrest_repo_host }}" }
     #    - { option: "repo1-host-user", value: "{{ pgbackrest_repo_user }}" }
     - { option: "repo1-path", value: "/var/lib/pgbackrest" }
-    - { option: "repo1-retention-full", value: "4" }
-    - { option: "repo1-retention-archive", value: "4" }
+    - { option: "repo1-retention-full", value: "{{ pgbackrest_retention_full | default('30') }}" }
+    - { option: "repo1-retention-full-type", value: "{{ pgbackrest_retention_full_type | default('time') }}" }
     - { option: "repo1-bundle", value: "y" }
     - { option: "repo1-block", value: "y" }
     - { option: "start-fast", value: "y" }
@@ -753,8 +754,8 @@ pgbackrest_server_conf:
     - { option: "log-path", value: "/var/log/pgbackrest" }
     - { option: "repo1-type", value: "{{ pgbackrest_repo_type | lower }}" }
     - { option: "repo1-path", value: "/var/lib/pgbackrest" }
-    - { option: "repo1-retention-full", value: "4" }
-    - { option: "repo1-retention-archive", value: "4" }
+    - { option: "repo1-retention-full", value: "{{ pgbackrest_retention_full | default('30') }}" }
+    - { option: "repo1-retention-full-type", value: "{{ pgbackrest_retention_full_type | default('time') }}" }
     - { option: "repo1-bundle", value: "y" }
     - { option: "repo1-block", value: "y" }
     - { option: "archive-check", value: "y" }
@@ -779,7 +780,7 @@ pgbackrest_cron_jobs:
     file: "/etc/cron.d/pgbackrest-{{ patroni_cluster_name }}"
     user: "postgres"
     minute: "00"
-    hour: "{{ PGBACKREST_BACKUP_HOUR | default('3') }}"
+    hour: "{{ pgbackrest_backup_hour | default('3') }}"
     day: "*"
     month: "*"
     weekday: "0"
@@ -789,7 +790,7 @@ pgbackrest_cron_jobs:
     file: "/etc/cron.d/pgbackrest-{{ patroni_cluster_name }}"
     user: "postgres"
     minute: "00"
-    hour: "3"
+    hour: "{{ pgbackrest_backup_hour | default('3') }}"
     day: "*"
     month: "*"
     weekday: "1-6"

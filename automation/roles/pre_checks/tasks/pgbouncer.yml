@@ -16,15 +16,23 @@
 # The calculated pool size is then added to the total 'pgbouncer_pool_size'.
 - name: PgBouncer | Calculate pool_size
   ansible.builtin.set_fact:
-    pgbouncer_pool_size: "{{
-      (pgbouncer_pool_size | default(0) | int)
-      +
-      (pool_item.pool_parameters
-      | regex_search('pool_size=(\\d+)', multiline=False)
-      | regex_replace('[^0-9]', '')
-      | default(pgbouncer_default_pool_size | default(0), true)
-      | int)
-      }}"
+    pgbouncer_pool_size: >-
+      {{
+        (pgbouncer_pool_size | default(0) | int)
+        +
+        (
+          (
+            pool_item.pool_parameters.pool_size
+            if pool_item.pool_parameters is mapping
+            else (
+              pool_item.pool_parameters
+              | regex_search('pool_size\s*=?\s*(\d+)', multiline=False)
+            )
+          )
+          | default(pgbouncer_default_pool_size | default(0), true)
+          | int
+        )
+      }}
   loop: "{{ pgbouncer_pools | default([]) }}"
   loop_control:
     loop_var: pool_item

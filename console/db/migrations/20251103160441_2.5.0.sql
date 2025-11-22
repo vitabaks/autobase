@@ -18,8 +18,6 @@ values
   ('aws', 'Large Size', 'r7i.16xlarge', 64, 512, 4.2336, 3090.528, '$', '2025-11-03'),
   ('aws', 'Large Size', 'm7i.24xlarge', 96, 384, 4.8384, 3532.032, '$', '2025-11-03'),
   ('aws', 'Large Size', 'r7i.24xlarge', 96, 768, 6.3504, 4635.792, '$', '2025-11-03'),
-  ('aws', 'Large Size', 'm7i.48xlarge', 192, 768, 9.6768, 7064.064, '$', '2025-11-03'),
-  ('aws', 'Large Size', 'r7i.48xlarge', 192, 1536, 12.7008, 9271.584, '$', '2025-11-03'),
   ('gcp', 'Small Size', 'c3-standard-4', 4, 16, 0.201608, 147.17384, '$', '2025-11-03'),
   ('gcp', 'Small Size', 'c3-highmem-4', 4, 32, 0.264616, 193.16968, '$', '2025-11-03'),
   ('gcp', 'Small Size', 'c3-standard-8', 8, 32, 0.403216, 294.34768, '$', '2025-11-03'),
@@ -30,8 +28,6 @@ values
   ('gcp', 'Medium Size', 'c3-highmem-44', 44, 352, 2.910776, 2124.86648, '$', '2025-11-03'),
   ('gcp', 'Medium Size', 'c3-standard-88', 88, 352, 4.435376, 3237.82448, '$', '2025-11-03'),
   ('gcp', 'Medium Size', 'c3-highmem-88', 88, 704, 5.821552, 4249.73296, '$', '2025-11-03'),
-  ('gcp', 'Large Size', 'c3-standard-176', 176, 704, 8.870752, 6475.64896, '$', '2025-11-03'),
-  ('gcp', 'Large Size', 'c3-highmem-176', 176, 1408, 11.643104, 8499.46592, '$', '2025-11-03'),
   ('gcp', 'Large Size', 'c3-standard-192-metal', 192, 768, 9.677184, 7064.34432, '$', '2025-11-03'),
   ('gcp', 'Large Size', 'c3-highmem-192-metal', 192, 1536, 12.701568, 9272.14464, '$', '2025-11-03');
 
@@ -43,5 +39,66 @@ and (instance_name like 'm6i%' or instance_name like 'r6i%');
 delete from public.cloud_instances
 where cloud_provider = 'gcp'
 and instance_name like 'n2%';
+
+-- Update PostgreSQL max version for third-party extensions
+update
+  public.extensions
+set
+  postgres_max_version = '18'
+where
+  extension_name in ('pgaudit', 'pg_cron', 'pg_partman', 'pg_repack', 'pg_stat_kcache', 'pg_wait_sampling',
+    'pgvector', 'postgis', 'pgrouting', 'timescaledb');
+
+-- Add new third-party extension
+insert into public.extensions (extension_name, extension_description, postgres_min_version, postgres_max_version, extension_url, extension_image, contrib)
+  values ('pgvectorscale', 'Advanced indexing for vector data. Provided by Timescale', 13, 18, 'https://github.com/timescale/pgvectorscale', null, false);
+
+-- Update PostgreSQL max version for contrib extensions 
+update
+  public.extensions
+set
+  postgres_max_version = '16'
+where
+  extension_name in ('adminpack', 'old_snapshot');
+
+-- Add new contrib extension
+insert into public.extensions (extension_name, extension_description, postgres_min_version, postgres_max_version, extension_url, extension_image, contrib)
+  values ('pg_logicalinspect', 'functions to inspect logical decoding components', 18, null, null, null, true);
+
+-- Remove logo references for third-party extensions lacking an official image
+update
+  public.extensions
+set
+  extension_image = null
+where
+  extension_name in ('pg_cron', 'pg_partman', 'pg_repack', 'pgvector');
+
+-- Remove citus extension
+delete from public.extensions
+where extension_name = 'citus';
+
+-- Update AWS volumes
+update
+  public.cloud_volumes
+set
+  volume_description = 'Throughput Optimized HDD (Max throughput: 500 MiB/s, Max IOPS: 500)'
+where
+  cloud_provider = 'aws' and volume_type = 'st1';
+
+update
+  public.cloud_volumes
+set
+  volume_description = 'General Purpose SSD (Max throughput: 2,000 MiB/s, Max IOPS: 80,000)',
+  volume_max_size = '64000'
+where
+  cloud_provider = 'aws' and volume_type = 'gp3';
+
+update
+  public.cloud_volumes
+set
+  volume_description = 'Provisioned IOPS SSD (Max throughput: 4,000 MiB/s, Max IOPS: 256,000)',
+  volume_max_size = '64000'
+where
+  cloud_provider = 'aws' and volume_type = 'io2';
 
 -- +goose Down

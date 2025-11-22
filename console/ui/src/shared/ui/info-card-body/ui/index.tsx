@@ -8,20 +8,18 @@ import { InfoCardBodyProps } from '@shared/ui/info-card-body/model/types.ts';
  * @param config - Config with data to render.
  * @constructor
  */
-const InfoCardBody: FC<InfoCardBodyProps> = ({ config }) => {
-  return (
-    <Stack gap={1}>
-      {config.map(({ title, children }, index) => (
-        <Stack key={title} gap={0.5}>
-          <Typography color="text.secondary" fontWeight="bold">
-            {title}
-          </Typography>
-          {children}
-          {index < config.length - 1 ? <Divider /> : null}
-        </Stack>
-      ))}
-    </Stack>
-  );
-};
+const InfoCardBody: FC<InfoCardBodyProps> = ({ config }) => (
+  <Stack gap={1}>
+    {config.map(({ title, children }, index) => (
+      <Stack key={title} gap={0.5}>
+        <Typography color="text.secondary" fontWeight="bold">
+          {title}
+        </Typography>
+        {children}
+        {index < config.length - 1 ? <Divider /> : null}
+      </Stack>
+    ))}
+  </Stack>
+);
 
 export default InfoCardBody;

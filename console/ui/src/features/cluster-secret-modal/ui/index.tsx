@@ -11,44 +11,59 @@ import {
   Stack,
   TextField,
 } from '@mui/material';
-import { Controller, FormProvider, useForm, useFormContext } from 'react-hook-form';
+import { Controller, FormProvider, useForm, useWatch } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
-import { CLUSTER_FORM_FIELD_NAMES } from '@widgets/cluster-form/model/constants.ts';
+import { CLUSTER_CREATION_TYPES, CLUSTER_FORM_FIELD_NAMES } from '@widgets/cluster-form/model/constants.ts';
 import { generateAbsoluteRouterPath, handleRequestErrorCatch } from '@shared/lib/functions.ts';
 import RouterPaths from '@app/router/routerPathsConfig';
 import { useNavigate } from 'react-router-dom';
-import { ClusterSecretModalFormValues, ClusterSecretModalProps } from '@features/cluster-secret-modal/model/types.ts';
+import {
+  ClusterFormValues,
+  ClusterSecretModalFormValues,
+  ClusterSecretModalProps,
+} from '@features/cluster-secret-modal/model/types.ts';
 import { useGetSecretsQuery, usePostSecretsMutation } from '@shared/api/api/secrets.ts';
-import { CLUSTER_SECRET_MODAL_FORM_FIELD_NAMES } from '@features/cluster-secret-modal/model/constants.ts';
+import {
+  CLUSTER_SECRET_MODAL_FORM_DEFAULT_VALUES,
+  CLUSTER_SECRET_MODAL_FORM_FIELD_NAMES,
+} from '@features/cluster-secret-modal/model/constants.ts';
 import { useAppSelector } from '@app/redux/store/hooks.ts';
 import { selectCurrentProject } from '@app/redux/slices/projectSlice/projectSelectors.ts';
 import { toast } from 'react-toastify';
-import { mapFormValuesToRequestFields } from '@features/cluster-secret-modal/lib/functions.ts';
 import { usePostClustersMutation } from '@shared/api/api/clusters.ts';
 import SecretFormBlock from '@entities/secret-form-block';
 
 import { SECRET_MODAL_CONTENT_FORM_FIELD_NAMES } from '@entities/secret-form-block/model/constants.ts';
 import { getSecretBodyFromValues } from '@entities/secret-form-block/lib/functions.ts';
+import { DATABASE_SERVERS_FIELD_NAMES } from '@entities/cluster/database-servers-block/model/const.ts';
+import { mapFormValuesToRequestFields } from '@shared/lib/clusterValuesTransformFunctions.ts';
+import { PROVIDERS } from '@shared/config/constants.ts';
+import { isEmpty } from 'lodash';
 
-const ClusterSecretModal: FC<ClusterSecretModalProps> = ({ isClusterFormDisabled = false }) => {
+const ClusterSecretModal: FC<ClusterSecretModalProps> = ({ isClusterFormDisabled = false, customExtraVars = {} }) => {
   const { t } = useTranslation(['clusters', 'shared', 'toasts']);
   const navigate = useNavigate();
+  const currentProject = useAppSelector(selectCurrentProject);
   const createSecretResultRef = useRef(null); // ref is used for case when user saves secret and uses its ID to create cluster
 
-  const currentProject = useAppSelector(selectCurrentProject);
-
   const [isModalOpen, setIsModalOpen] = useState(false);
-
-  const { watch, getValues } = useFormContext();
-
-  const watchProvider = watch(CLUSTER_FORM_FIELD_NAMES.PROVIDER);
-
-  const secrets = useGetSecretsQuery({ type: watchProvider?.code, projectId: currentProject });
 
   const [addSecretTrigger, addSecretTriggerState] = usePostSecretsMutation();
   const [addClusterTrigger, addClusterTriggerState] = usePostClustersMutation();
 
-  const methods = useForm<ClusterSecretModalFormValues>();
+  const watchClusterFormValues = useWatch();
+
+  const secrets = useGetSecretsQuery({
+    type:
+      watchClusterFormValues?.[CLUSTER_FORM_FIELD_NAMES.CREATION_TYPE] === CLUSTER_CREATION_TYPES.YAML
+        ? (customExtraVars?.cloud_provider ?? PROVIDERS.LOCAL)
+        : watchClusterFormValues?.[CLUSTER_FORM_FIELD_NAMES.PROVIDER]?.code,
+    projectId: currentProject,
+  });
+
+  const methods = useForm<ClusterSecretModalFormValues>({
+    defaultValues: CLUSTER_SECRET_MODAL_FORM_DEFAULT_VALUES,
+  });
 
   const watchIsSaveToConsole = methods.watch(CLUSTER_SECRET_MODAL_FORM_FIELD_NAMES.IS_SAVE_TO_CONSOLE);
 
@@ -56,61 +71,68 @@ const ClusterSecretModal: FC<ClusterSecretModalProps> = ({ isClusterFormDisabled
 
   const cancelHandler = () => navigate(generateAbsoluteRouterPath(RouterPaths.clusters.absolutePath));
 
-  const onSubmit = async (values: ClusterSecretModalFormValues) => {
-    const clusterFormValues = getValues();
+  const onSubmit = async (secretsFields: ClusterSecretModalFormValues) => {
     try {
-      if (values[CLUSTER_SECRET_MODAL_FORM_FIELD_NAMES.IS_SAVE_TO_CONSOLE] && !createSecretResultRef?.current) {
+      if (secretsFields[CLUSTER_SECRET_MODAL_FORM_FIELD_NAMES.IS_SAVE_TO_CONSOLE] && !createSecretResultRef?.current) {
         createSecretResultRef.current = await addSecretTrigger({
           requestSecretCreate: {
             project_id: Number(currentProject),
-            type: clusterFormValues[CLUSTER_FORM_FIELD_NAMES.PROVIDER].code,
-            name: values[CLUSTER_SECRET_MODAL_FORM_FIELD_NAMES.SECRET_NAME],
+            type:
+              watchClusterFormValues[CLUSTER_FORM_FIELD_NAMES.CREATION_TYPE] === CLUSTER_CREATION_TYPES.YAML
+                ? (customExtraVars?.cloud_provider ?? PROVIDERS.LOCAL)
+                : watchClusterFormValues[CLUSTER_FORM_FIELD_NAMES.PROVIDER].code,
+            name: secretsFields[CLUSTER_SECRET_MODAL_FORM_FIELD_NAMES.SECRET_NAME],
             value: getSecretBodyFromValues({
-              ...values,
-              [SECRET_MODAL_CONTENT_FORM_FIELD_NAMES.SECRET_TYPE]: clusterFormValues.provider.code,
+              ...secretsFields,
+              [SECRET_MODAL_CONTENT_FORM_FIELD_NAMES.SECRET_TYPE]:
+                watchClusterFormValues[CLUSTER_FORM_FIELD_NAMES.CREATION_TYPE] === CLUSTER_CREATION_TYPES.YAML
+                  ? (customExtraVars?.cloud_provider ?? PROVIDERS.LOCAL)
+                  : watchClusterFormValues[CLUSTER_FORM_FIELD_NAMES.PROVIDER].code,
             }),
           },
         }).unwrap();
         toast.success(
           t('secretSuccessfullyCreated', {
             ns: 'toasts',
-            secretName: values[SECRET_MODAL_CONTENT_FORM_FIELD_NAMES.SECRET_NAME],
+            secretName: secretsFields[SECRET_MODAL_CONTENT_FORM_FIELD_NAMES.SECRET_NAME],
           }),
         );
       }
-      if (!secrets.data?.data?.length && !createSecretResultRef?.current?.id) {
-        await addClusterTrigger({
-          requestClusterCreate: mapFormValuesToRequestFields({
-            values: clusterFormValues,
-            envs: values,
-            projectId: Number(currentProject),
-          }),
-        }).unwrap();
-      } else {
-        await addClusterTrigger({
-          requestClusterCreate: mapFormValuesToRequestFields({
-            values: clusterFormValues,
-            secretId: createSecretResultRef.current?.id ?? values[CLUSTER_FORM_FIELD_NAMES.SECRET_ID],
-            projectId: Number(currentProject),
-          }),
-        }).unwrap();
-      }
+      await addClusterTrigger({
+        requestClusterCreate: mapFormValuesToRequestFields({
+          values: watchClusterFormValues as ClusterFormValues,
+          secretsInfo: secretsFields,
+          projectId: Number(currentProject),
+          ...(!isEmpty(customExtraVars) ? { customExtraVars } : {}),
+          ...(!secrets.data?.data?.length && !createSecretResultRef?.current?.id
+            ? {
+                secretsInfo: secretsFields,
+              }
+            : {
+                secretId: createSecretResultRef.current?.id ?? secretsFields[CLUSTER_FORM_FIELD_NAMES.SECRET_ID],
+              }),
+        }),
+      }).unwrap();
       toast.success(
         t(
-          clusterFormValues[CLUSTER_FORM_FIELD_NAMES.EXISTING_CLUSTER]
+          watchClusterFormValues[DATABASE_SERVERS_FIELD_NAMES.IS_CLUSTER_EXISTS]
             ? 'clusterSuccessfullyImported'
             : 'clusterSuccessfullyCreated',
           {
             ns: 'toasts',
-            clusterName: clusterFormValues[CLUSTER_FORM_FIELD_NAMES.CLUSTER_NAME],
-          }
-        )
+            clusterName:
+              watchClusterFormValues[CLUSTER_FORM_FIELD_NAMES.CREATION_TYPE] === CLUSTER_CREATION_TYPES.YAML
+                ? customExtraVars?.patroni_cluster_name
+                : watchClusterFormValues[CLUSTER_FORM_FIELD_NAMES.CLUSTER_NAME],
+          },
+        ),
       );
-      navigate(generateAbsoluteRouterPath(RouterPaths.clusters.absolutePath));
+      await navigate(generateAbsoluteRouterPath(RouterPaths.clusters.absolutePath));
     } catch (e) {
       handleRequestErrorCatch(e);
     } finally {
       setIsModalOpen(false);
+      methods.reset();
     }
   };
 
@@ -119,11 +141,16 @@ const ClusterSecretModal: FC<ClusterSecretModalProps> = ({ isClusterFormDisabled
   return (
     <Stack direction="row" gap="8px" justifyContent="flex-start" alignItems="center">
       <Button
-        disabled={isClusterFormDisabled || isSubmitting || addSecretTriggerState.isLoading || addClusterTriggerState.isLoading}
+        disabled={
+          isClusterFormDisabled || isSubmitting || addSecretTriggerState.isLoading || addClusterTriggerState.isLoading
+        }
         onClick={handleModalOpenState(true)}
         variant="contained"
-        startIcon={isSubmitting || addSecretTriggerState.isLoading || addClusterTriggerState.isLoading ? <CircularProgress size={16} /> : undefined}
-      >
+        startIcon={
+          isSubmitting || addSecretTriggerState.isLoading || addClusterTriggerState.isLoading ? (
+            <CircularProgress size={16} />
+          ) : undefined
+        }>
         {t('createCluster', { ns: 'clusters' })}
       </Button>
       <Box>
@@ -166,7 +193,11 @@ const ClusterSecretModal: FC<ClusterSecretModalProps> = ({ isClusterFormDisabled
                   ) : (
                     <>
                       <SecretFormBlock
-                        secretType={watchProvider?.code}
+                        secretType={
+                          watchClusterFormValues[CLUSTER_FORM_FIELD_NAMES.CREATION_TYPE] === CLUSTER_CREATION_TYPES.YAML
+                            ? customExtraVars?.cloud_provider
+                            : watchClusterFormValues?.[CLUSTER_FORM_FIELD_NAMES.PROVIDER]?.code
+                        }
                         isAdditionalInfoDisplayed={watchIsSaveToConsole}
                       />
                       {watchIsSaveToConsole ? (
@@ -200,12 +231,21 @@ const ClusterSecretModal: FC<ClusterSecretModalProps> = ({ isClusterFormDisabled
                     </>
                   )}
                   <Button
-                    disabled={!isValid || !isDirty || isSubmitting || addSecretTriggerState.isLoading || addClusterTriggerState.isLoading}
+                    disabled={
+                      !isValid ||
+                      !isDirty ||
+                      isSubmitting ||
+                      addSecretTriggerState.isLoading ||
+                      addClusterTriggerState.isLoading
+                    }
                     variant="contained"
                     type="submit"
                     fullWidth={false}
-                    startIcon={isSubmitting || addSecretTriggerState.isLoading || addClusterTriggerState.isLoading ? <CircularProgress size={16} /> : undefined}
-                  >
+                    startIcon={
+                      isSubmitting || addSecretTriggerState.isLoading || addClusterTriggerState.isLoading ? (
+                        <CircularProgress size={16} />
+                      ) : undefined
+                    }>
                     {t('createCluster', { ns: 'clusters' })}
                   </Button>
                 </Stack>

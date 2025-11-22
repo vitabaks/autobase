@@ -12,80 +12,20 @@ const ClustersTableExportButton: FC<ClustersTableRemoveButtonProps> = ({ cluster
   const { t } = useTranslation(['clusters', 'shared']);
   const [getClusterTrigger] = useLazyGetClustersByIdQuery();
 
-  const parseVariableValue = (valueRaw: string): any => {
-    // Handle boolean values
-    if (valueRaw === 'true') return true;
-    if (valueRaw === 'false') return false;
-    
-    // Handle numeric values
-    if (!isNaN(Number(valueRaw)) && valueRaw !== '') {
-      return Number(valueRaw);
-    }
-    
-    // Handle JSON structures (objects and arrays)
-    if (valueRaw.startsWith('{') || valueRaw.startsWith('[')) {
-      try {
-        // First try to parse as valid JSON
-        return JSON.parse(valueRaw);
-      } catch (e) {
-        // If JSON parsing fails, try to fix common issues
-        try {
-          let fixedValue = valueRaw;
-          
-          if (valueRaw.startsWith('{')) {
-            // Fix object notation: {key:value} -> {"key":"value"}
-            // Handle unquoted keys and values
-            fixedValue = valueRaw
-              .replace(/([{,]\s*)([a-zA-Z_][a-zA-Z0-9_]*)\s*:/g, '$1"$2":')  // Quote keys
-              .replace(/:\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*([,}])/g, ':"$1"$2')   // Quote string values
-              .replace(/:\s*(\d+)\s*([,}])/g, ':$1$2');                        // Keep numeric values unquoted
-          } else if (valueRaw.startsWith('[')) {
-            // Fix array notation: ensure proper JSON format
-            // Handle arrays of strings that might not be properly quoted
-            fixedValue = valueRaw
-              .replace(/\[\s*"([^"]+)"\s*(?:,\s*"([^"]+)"\s*)*\]/g, (match) => {
-                // Already properly quoted, return as is
-                return match;
-              })
-              .replace(/\[\s*([^"\[{][^,\]]*)\s*(?:,\s*([^"\[{][^,\]]*)\s*)*\]/g, (match) => {
-                // Fix unquoted string arrays
-                return match.replace(/([^",\[\]{}]+)/g, (item) => {
-                  const trimmed = item.trim();
-                  if (trimmed && !trimmed.startsWith('"') && !trimmed.endsWith('"') && isNaN(Number(trimmed))) {
-                    return `"${trimmed}"`;
-                  }
-                  return item;
-                });
-              });
-          }
-          
-          return JSON.parse(fixedValue);
-        } catch (e2) {
-          // If all parsing attempts fail, return as string
-          return valueRaw;
-        }
-      }
-    }
-    
-    // Return as string if no special processing needed
-    return valueRaw;
-  };
-
   const handleButtonClick = async () => {
     try {
       const response = await getClusterTrigger({ id: clusterId }).unwrap();
 
-      // Convert extra_vars array of 'key=value' to object for vars
-      const vars: Record<string, any> = {};
-      (response.extra_vars || []).forEach(pair => {
-        // Split only at the first '='
-        const eqIdx = pair.indexOf('=');
-        if (eqIdx !== -1) {
-          const key = pair.slice(0, eqIdx);
-          const valueRaw = pair.slice(eqIdx + 1);
-          vars[key] = parseVariableValue(valueRaw);
+      // extra_vars parsing
+      let vars: Record<string, any> = {};
+      if (typeof response.extra_vars === 'string' && response.extra_vars.trim() !== '') {
+        try {
+          vars = JSON.parse(response.extra_vars);
+        } catch (e) {
         }
-      });
+      } else if (response.extra_vars && typeof response.extra_vars === 'object') {
+        vars = response.extra_vars as Record<string, any>;
+      }
 
       // Only include valid servers (with ip and name)
       const validServers = (response.servers || []).filter(
@@ -137,6 +77,14 @@ const ClustersTableExportButton: FC<ClustersTableRemoveButtonProps> = ({ cluster
           .filter(k => typeof k === 'string' && k.length > 0);
       }
 
+      // Sorting vars by key in alphabetical order before exporting
+      const sortedVars: Record<string, any> = Object.keys(vars)
+        .sort((a, b) => a.localeCompare(b))
+        .reduce((acc, key) => {
+          acc[key] = vars[key];
+          return acc;
+        }, {} as Record<string, any>);
+
       // Force js-yaml to use plain style for ssh_public_keys (no quotes, no block/literal)
       const yamlOptions = {
         noRefs: true,
@@ -148,7 +96,7 @@ const ClustersTableExportButton: FC<ClustersTableRemoveButtonProps> = ({ cluster
 
       const inventory = {
         all: {
-          vars,
+          vars: sortedVars,
           children: {
             master: { hosts: Object.keys(masterHosts).length ? masterHosts : {} },
             replica: { hosts: Object.keys(replicaHosts).length ? replicaHosts : {} },
@@ -159,7 +107,7 @@ const ClustersTableExportButton: FC<ClustersTableRemoveButtonProps> = ({ cluster
               }
             },
             etcd_cluster: { hosts: Object.keys(etcdHosts).length ? etcdHosts : {} },
-            balancers: { hosts: (vars.with_haproxy_load_balancing && Object.keys(balancerHosts).length) ? balancerHosts : {} },
+            balancers: { hosts: (sortedVars.with_haproxy_load_balancing && Object.keys(balancerHosts).length) ? balancerHosts : {} },
           }
         }
       };
