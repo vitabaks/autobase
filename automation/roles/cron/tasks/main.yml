@@ -50,18 +50,6 @@
     - cron_jobs is defined and cron_jobs | length > 0
   tags: cron
 
-# Fix /etc/environment syntax - pam_env doesn't understand shell 'export' syntax
-# Some tools add 'export VAR=value' but pam_env expects 'VAR=value'
-- name: Fix /etc/environment syntax (remove export prefix)
-  ansible.builtin.replace:
-    path: /etc/environment
-    regexp: '^export '
-    replace: ''
-  when:
-    - ansible_os_family == "RedHat"
-    - cron_jobs is defined and cron_jobs | length > 0
-  tags: cron
-
 - name: Add cron jobs
   ansible.builtin.cron:
     cron_file: "{{ item.file | default('') }}"
