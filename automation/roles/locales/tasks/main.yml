@@ -74,8 +74,8 @@
         group: root
         mode: "0644"
       loop:
-        - { regexp: "LANG=", line: "LANG={{ locale }}" }
-        - { regexp: "LC_ALL=", line: "LC_ALL={{ locale }}" }
+        - { regexp: "LANG=", line: "export LANG={{ locale }}" }
+        - { regexp: "LC_ALL=", line: "export LC_ALL={{ locale }}" }
       loop_control:
         label: "{{ item.line }}"
       when: ansible_os_family == "RedHat"
