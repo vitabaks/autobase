@@ -36,6 +36,32 @@
     - cron_jobs is defined and cron_jobs | length > 0
   tags: cron
 
+# Fix PAM issue on RHEL/AlmaLinux: postgres user with locked password (!) cannot run cron jobs
+# The postgres user is created by the postgresql package with a locked password by default.
+# pam_unix.so rejects locked accounts even for cron. Change to unusable password (*) which
+# allows cron execution while still preventing direct password login.
+- name: Fix postgres user password for PAM/cron compatibility (RHEL)
+  ansible.builtin.user:
+    name: postgres
+    password: '*'
+    password_lock: false
+  when:
+    - ansible_os_family == "RedHat"
+    - cron_jobs is defined and cron_jobs | length > 0
+  tags: cron
+
+# Fix /etc/environment syntax - pam_env doesn't understand shell 'export' syntax
+# Some tools add 'export VAR=value' but pam_env expects 'VAR=value'
+- name: Fix /etc/environment syntax (remove export prefix)
+  ansible.builtin.replace:
+    path: /etc/environment
+    regexp: '^export '
+    replace: ''
+  when:
+    - ansible_os_family == "RedHat"
+    - cron_jobs is defined and cron_jobs | length > 0
+  tags: cron
+
 - name: Add cron jobs
   ansible.builtin.cron:
     cron_file: "{{ item.file | default('') }}"
