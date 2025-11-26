@@ -623,6 +623,12 @@ postgresql_restore_command: ""
 # {{ pg_probackup_dir }} --instance {{ pg_probackup_instance }} --wal-file-path=%p
 # --wal-file-name=%f"  # restore WAL-s using pg_probackup
 
+# PostgreSQL archive_command used for WAL archiving (wal-g, pgBackRest, or disabled with /bin/true)
+postgresql_archive_command: >-
+  {{ pgbackrest_archive_command if pgbackrest_install | bool
+     else wal_g_archive_command if wal_g_install | bool
+     else '/bin/true' }}
+
 # pg_probackup
 pg_probackup_install: false # or 'true'
 pg_probackup_install_from_postgrespro_repo: true # or 'false'
@@ -802,12 +808,6 @@ cluster_restore_timeout: 86400 # backup and WAL restore timeout in seconds (24 h
 
 disable_archive_command: true # or 'false' to not disable archive_command after restore
 keep_patroni_dynamic_json: true # or 'false' to remove patroni.dynamic.json after restore (if exists)
-
-# PostgreSQL archive_command used for WAL archiving (wal-g, pgBackRest, or disabled with /bin/true)
-postgresql_archive_command: >-
-  {{ pgbackrest_archive_command if pgbackrest_install | bool
-     else wal_g_archive_command if wal_g_install | bool
-     else '/bin/true' }}
 
 ############################################################
 # Monitoring
