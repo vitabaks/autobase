@@ -371,9 +371,7 @@ postgresql_parameters:
   - { option: "autovacuum_naptime", value: "1s" }
   - { option: "archive_mode", value: "on" }
   - { option: "archive_timeout", value: "1800s" } # or 600s
-  - { option: "archive_command", value: "cd ." } # not doing anything yet with WAL-s
-  #  - { option: "archive_command", value: "{{ wal_g_archive_command }}" }  # archive WAL-s using WAL-G
-  #  - { option: "archive_command", value: "{{ pgbackrest_archive_command }}" }  # archive WAL-s using pgbackrest
+  - { option: "archive_command", value: "{{ postgresql_archive_command }}" }
   - { option: "max_wal_senders", value: "20" } # the maximum number of standby servers you might possibly have
   - { option: "max_replication_slots", value: "20" } # the maximum number of slots for standby servers
   - { option: "hot_standby", value: "on" }
@@ -804,6 +802,12 @@ cluster_restore_timeout: 86400 # backup and WAL restore timeout in seconds (24 h
 
 disable_archive_command: true # or 'false' to not disable archive_command after restore
 keep_patroni_dynamic_json: true # or 'false' to remove patroni.dynamic.json after restore (if exists)
+
+# PostgreSQL archive_command used for WAL archiving (wal-g, pgBackRest, or disabled with /bin/true)
+postgresql_archive_command: >-
+  {{ pgbackrest_archive_command if pgbackrest_install | bool
+     else wal_g_archive_command if wal_g_install | bool
+     else '/bin/true' }}
 
 ############################################################
 # Monitoring
