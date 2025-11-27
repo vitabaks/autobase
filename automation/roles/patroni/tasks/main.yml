@@ -285,13 +285,17 @@
         - regexp: "^name:"
           line: "name: {{ ansible_hostname }}"
         - regexp: "^  listen: .*:{{ patroni_restapi_port }}$"
-          line: "  listen: {{ patroni_bind_address | default(bind_address, true) }}:{{ patroni_restapi_port }}"
+          line: "  listen: {{ patroni_restapi_listen_addr }}:{{ patroni_restapi_port }}"
         - regexp: "^  connect_address: .*:{{ patroni_restapi_port }}$"
-          line: "  connect_address: {{ patroni_bind_address | default(bind_address, true) }}:{{ patroni_restapi_port }}"
+          line: "  connect_address: {{ patroni_restapi_connect_addr
+                                  | default(patroni_bind_address
+                                  | default(bind_address, true), true) }}:{{ patroni_restapi_port }}"
         - regexp: "^  listen: ((?!{{ patroni_restapi_port }}).)*$"
-          line: "  listen: {{ patroni_bind_address | default(bind_address, true) }},127.0.0.1:{{ postgresql_port }}"
+          line: "  listen: {{ postgresql_listen_addr }}:{{ postgresql_port }}"
         - regexp: "^  connect_address: ((?!{{ patroni_restapi_port }}).)*$"
-          line: "  connect_address: {{ patroni_bind_address | default(bind_address, true) }}:{{ postgresql_port }}"
+          line: "  connect_address: {{ postgresql_connect_addr
+                                  | default(patroni_bind_address
+                                  | default(bind_address, true), true) }}:{{ postgresql_port }}"
       loop_control:
         loop_var: patroni_config_without_cluster_vip_item
         label: "{{ patroni_config_without_cluster_vip_item.line }}"
@@ -307,13 +311,17 @@
         - regexp: "^name:"
           line: "name: {{ ansible_hostname }}"
         - regexp: "^  listen: .*:{{ patroni_restapi_port }}$"
-          line: "  listen: {{ patroni_bind_address | default(bind_address, true) }}:{{ patroni_restapi_port }}"
+          line: "  listen: {{ patroni_restapi_listen_addr }}:{{ patroni_restapi_port }}"
         - regexp: "^  connect_address: .*:{{ patroni_restapi_port }}$"
-          line: "  connect_address: {{ patroni_bind_address | default(bind_address, true) }}:{{ patroni_restapi_port }}"
+          line: "  connect_address: {{ patroni_restapi_connect_addr
+                                  | default(patroni_bind_address
+                                  | default(bind_address, true), true) }}:{{ patroni_restapi_port }}"
         - regexp: "^  listen: ((?!{{ patroni_restapi_port }}).)*$"
-          line: "  listen: {{ patroni_bind_address | default(bind_address, true) }},{{ cluster_vip }},127.0.0.1:{{ postgresql_port }}"
+          line: "  listen: {{ postgresql_listen_addr }},{{ cluster_vip }}:{{ postgresql_port }}"
         - regexp: "^  connect_address: ((?!{{ patroni_restapi_port }}).)*$"
-          line: "  connect_address: {{ patroni_bind_address | default(bind_address, true) }}:{{ postgresql_port }}"
+          line: "  connect_address: {{ postgresql_connect_addr
+                                  | default(patroni_bind_address
+                                  | default(bind_address, true), true) }}:{{ postgresql_port }}"
       loop_control:
         loop_var: patroni_config_with_cluster_vip_item
         label: "{{ patroni_config_with_cluster_vip_item.line }}"
