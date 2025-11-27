@@ -371,9 +371,7 @@ postgresql_parameters:
   - { option: "autovacuum_naptime", value: "1s" }
   - { option: "archive_mode", value: "on" }
   - { option: "archive_timeout", value: "1800s" } # or 600s
-  - { option: "archive_command", value: "cd ." } # not doing anything yet with WAL-s
-  #  - { option: "archive_command", value: "{{ wal_g_archive_command }}" }  # archive WAL-s using WAL-G
-  #  - { option: "archive_command", value: "{{ pgbackrest_archive_command }}" }  # archive WAL-s using pgbackrest
+  - { option: "archive_command", value: "{{ postgresql_archive_command }}" }
   - { option: "max_wal_senders", value: "20" } # the maximum number of standby servers you might possibly have
   - { option: "max_replication_slots", value: "20" } # the maximum number of slots for standby servers
   - { option: "hot_standby", value: "on" }
@@ -624,6 +622,12 @@ postgresql_restore_command: ""
 # postgresql_restore_command: "pg_probackup-{{ pg_probackup_version }} archive-get -B
 # {{ pg_probackup_dir }} --instance {{ pg_probackup_instance }} --wal-file-path=%p
 # --wal-file-name=%f"  # restore WAL-s using pg_probackup
+
+# PostgreSQL archive_command used for WAL archiving (wal-g, pgBackRest, or disabled with /bin/true)
+postgresql_archive_command: >-
+  {{ pgbackrest_archive_command if pgbackrest_install | bool
+     else wal_g_archive_command if wal_g_install | bool
+     else '/bin/true' }}
 
 # pg_probackup
 pg_probackup_install: false # or 'true'
