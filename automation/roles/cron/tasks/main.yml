@@ -52,14 +52,7 @@
         name: postgres
         password: '*'
         password_lock: false
-      vars:
-        postgres_shadow_password: >-
-          {{
-            (postgres_shadow.stdout | default(''))
-            | regex_search('^[^:]*:([^:]+):', '\1')
-            | default('')
-          }}
-      when: postgres_shadow_password is match('^!+')
+      when: postgres_shadow.stdout is match('^postgres:!+')
   when:
     - ansible_os_family == "RedHat"
     - cron_jobs is defined and cron_jobs | length > 0
