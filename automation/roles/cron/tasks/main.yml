@@ -36,7 +36,7 @@
     - cron_jobs is defined and cron_jobs | length > 0
   tags: cron
 
-# Fix PAM issue on RHEL/AlmaLinux: postgres user with locked password (!) cannot run cron jobs
+# Fix PAM issue on RHEL: postgres user with locked password (!) cannot run cron jobs
 # The postgres user is created by the postgresql package with a locked password by default.
 # pam_unix.so rejects locked accounts even for cron. Change to unusable password (*) which
 # allows cron execution while still preventing direct password login.

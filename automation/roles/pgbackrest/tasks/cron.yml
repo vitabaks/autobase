@@ -33,6 +33,35 @@
     - "'cron' not in ansible_facts.packages"
   tags: pgbackrest_cron
 
+# Fix PAM issue on RHEL: postgres user with locked password (!) cannot run cron jobs
+# The postgres user is created by the postgresql package with a locked password by default.
+# pam_unix.so rejects locked accounts even for cron. Change to unusable password (*) which
+# allows cron execution while still preventing direct password login.
+- block:
+    - name: Check password lock state for postgres user
+      ansible.builtin.command: "getent shadow postgres"
+      register: postgres_shadow
+      changed_when: false
+      no_log: true
+
+    - name: Unlock the locked password for postgres user (for PAM/cron compatibility)
+      ansible.builtin.user:
+        name: postgres
+        password: '*'
+        password_lock: false
+      vars:
+        postgres_shadow_password: >-
+          {{
+            (postgres_shadow.stdout | default(''))
+            | regex_search('^[^:]*:([^:]+):', '\1')
+            | default('')
+          }}
+      when: postgres_shadow_password is match('^!+')
+  when:
+    - ansible_os_family == "RedHat"
+    - cron_jobs is defined and cron_jobs | length > 0
+  tags: cron
+
 - name: Add pgbackrest cron jobs on database server
   ansible.builtin.cron:
     cron_file: "{{ item.file | default('') }}"
