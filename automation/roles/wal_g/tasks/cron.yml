@@ -33,47 +33,9 @@
     - "'cron' not in ansible_facts.packages"
   tags: wal_g_cron
 
-# Fix PAM issue on RHEL: postgres user with locked password (!) cannot run cron jobs
-# The postgres user is created by the postgresql package with a locked password by default.
-# pam_unix.so rejects locked accounts even for cron. Change to unusable password (*) which
-# allows cron execution while still preventing direct password login.
-- block:
-    - name: Check password lock state for postgres user
-      ansible.builtin.command: "getent shadow postgres"
-      register: postgres_shadow
-      changed_when: false
-      no_log: true
-
-    - name: Unlock the locked password for postgres user (for PAM/cron compatibility)
-      ansible.builtin.user:
-        name: postgres
-        password: '*'
-        password_lock: false
-      vars:
-        postgres_shadow_password: >-
-          {{
-            (postgres_shadow.stdout | default(''))
-            | regex_search('^[^:]*:([^:]+):', '\1')
-            | default('')
-          }}
-      when: postgres_shadow_password is match('^!+')
-  when:
-    - ansible_os_family == "RedHat"
-    - cron_jobs is defined and cron_jobs | length > 0
-  tags: cron
-
 - name: Add WAL-G cron jobs
-  ansible.builtin.cron:
-    cron_file: "{{ item.file | default('') }}"
-    user: "{{ item.user | default('postgres') }}"
-    minute: "{{ item.minute | default('*') }}"
-    hour: "{{ item.hour | default('*') }}"
-    day: "{{ item.day | default('*') }}"
-    month: "{{ item.month | default('*') }}"
-    weekday: "{{ item.weekday | default('*') }}"
-    name: "{{ item.name }}"
-    disabled: "{{ item.disabled | default(False) }}"
-    state: "{{ item.state | default('present') }}"
-    job: "{{ item.job }}"
-  loop: "{{ wal_g_cron_jobs }}"
+  ansible.builtin.include_role:
+    name: vitabaks.autobase.cron
+  vars:
+    cron_jobs: "{{ wal_g_cron_jobs }}"
   tags: wal_g_cron
