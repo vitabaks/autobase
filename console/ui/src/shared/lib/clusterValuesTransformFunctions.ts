@@ -507,15 +507,29 @@ export const getBaseClusterExtraVars = (values: ClusterFormValues) => {
     : baseExtraVars;
 };
 
-const convertObjectValueToBase64Format = (object: Record<string, any>) =>
-  Object.entries(object).reduce((acc: string[], [key, value]) => [...acc, `${key}=${btoa(JSON.stringify(value))}`], []);
+const convertObjectValueToBase64Format = (object: Record<string, unknown>): string[] =>
+  Object.entries(object).reduce<string[]>((acc, [key, value]) => {
+    let raw: string;
+
+    if (typeof value === 'string') {
+      // Encode strings without extra quotes
+      raw = value;
+    } else {
+      raw = JSON.stringify(value) ?? '';
+    }
+
+    acc.push(`${key}=${btoa(raw)}`);
+    return acc;
+  }, []);
 
 const getRequestCloudParams = (values, secretsInfo, customExtraVars) => ({
-  envs: Object.fromEntries(
-    Object.entries({
-      ...secretsInfo,
-    }).filter(([key, value]) => SECRET_MODAL_CONTENT_BODY_FORM_FIELDS?.[key] && value),
-  ),
+  envs: convertObjectValueToBase64Format({
+    ...Object.fromEntries(
+      Object.entries({
+        ...secretsInfo,
+      }).filter(([key, value]) => SECRET_MODAL_CONTENT_BODY_FORM_FIELDS?.[key] && value),
+    ),
+  }),
   extra_vars: customExtraVars ?? {
     ...getBaseClusterExtraVars(values),
     ...getCloudProviderExtraVars(values),
