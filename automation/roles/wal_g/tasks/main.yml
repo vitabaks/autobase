@@ -301,8 +301,9 @@
     mode: "0644"
   tags: wal-g, wal_g, wal_g_conf
 
-- ansible.builtin.import_tasks: cron.yml
-  when:
-    - wal_g_cron_jobs is defined
-    - wal_g_cron_jobs | length > 0
+- name: Add WAL-G cron jobs
+  ansible.builtin.include_role:
+    name: vitabaks.autobase.cron
+  vars:
+    cron_jobs: "{{ wal_g_cron_jobs }}"
   tags: wal-g, wal_g, wal_g_cron

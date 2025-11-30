@@ -197,14 +197,23 @@
     - not ansible_check_mode
   tags: pgbackrest, pgbackrest_ssh_keys
 
-- ansible.builtin.import_tasks: cron.yml
+- name: Add pgbackrest cron jobs on database server
+  ansible.builtin.include_role:
+    name: vitabaks.autobase.cron
+  vars:
+    cron_jobs: "{{ pgbackrest_cron_jobs }}"
   when:
-    - pgbackrest_cron_jobs is defined
-    - pgbackrest_cron_jobs | length > 0
-  tags: pgbackrest, pgbackrest_cron
-# - import_tasks: bootstrap_script.yml
-#  when:
-#    - patroni_cluster_bootstrap_method is defined
-#    - patroni_cluster_bootstrap_method == "pgbackrest"
-#    - "'postgres_cluster' in group_names"
-#  tags: pgbackrest, pgbackrest_bootstrap_script
+    - "'postgres_cluster' in group_names"
+    - pgbackrest_repo_host | default('') | length < 1
+  tags: pgbackrest_cron
+
+# Dedicated pgbackrest server (if "repo_host" is set)
+- name: Add pgbackrest cron jobs on pgbackrest server
+  ansible.builtin.include_role:
+    name: vitabaks.autobase.cron
+  vars:
+    cron_jobs: "{{ pgbackrest_cron_jobs }}"
+  when:
+    - "'pgbackrest' in group_names"
+    - pgbackrest_repo_host | default('') | length > 0
+  tags: pgbackrest_cron
