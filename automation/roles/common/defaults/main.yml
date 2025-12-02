@@ -124,7 +124,7 @@ etcd_cluster_name: "etcd-{{ patroni_cluster_name }}" # ETCD_INITIAL_CLUSTER_TOKE
 etcd_on_dedicated_nodes: "{{ groups['etcd_cluster'] | difference(groups['postgres_cluster']) | length > 0 }}" # 'true' or 'false'
 # TLS
 # Enables TLS encryption with a self-signed certificate if 'tls_cert_generate' is true.
-etcd_tls_enable: "{{ tls_cert_generate | default(true) }}"
+etcd_tls_enable: "{{ (tls_cert_generate | bool) and not (dcs_exists | bool) }}"
 etcd_tls_dir: "{{ etcd_conf_dir }}/tls"
 etcd_tls_ca_crt: "ca.crt"
 etcd_tls_ca_key: "ca.key"
@@ -135,12 +135,6 @@ etcd_client_cert_auth: "{{ 'true' if not etcd_on_dedicated_nodes | bool else 'fa
 # This allows Patroni to connect without requiring a client certificate, ensuring secure encrypted communication
 # using only the CA certificate while avoiding the need to regenerate etcd certificates when adding new Patroni clusters.
 
-# if dcs_type: "etcd" and dcs_exists: true
-patroni_etcd_hosts: [] # list of servers of an existing etcd cluster
-#  - { host: "10.128.64.140", port: "2379" }
-#  - { host: "10.128.64.142", port: "2379" }
-#  - { host: "10.128.64.143", port: "2379" }
-
 patroni_etcd_namespace: "service" # (optional) etcd namespace (prefix)
 patroni_etcd_username: "" # (optional) username for etcd authentication
 patroni_etcd_password: "" # (optional) password for etcd authentication
@@ -148,6 +142,12 @@ patroni_etcd_protocol: "{{ 'https' if etcd_tls_enable | bool else 'http' }}"
 patroni_etcd_cacert: "/etc/patroni/tls/etcd/ca.crt"
 patroni_etcd_cert: "/etc/patroni/tls/etcd/server.crt"
 patroni_etcd_key: "/etc/patroni/tls/etcd/server.key"
+
+# if dcs_type: "etcd" and dcs_exists: true
+patroni_etcd_hosts: [] # list of servers of an existing etcd cluster
+#  - { host: "10.128.64.140", port: "2379" }
+#  - { host: "10.128.64.142", port: "2379" }
+#  - { host: "10.128.64.143", port: "2379" }
 
 # if dcs_type: "consul"
 consul_version: "latest" # or a specific version (e.q., '1.18.2') if 'consul_install_from_repo' is 'false'
