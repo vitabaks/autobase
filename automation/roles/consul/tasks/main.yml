@@ -1,26 +1,5 @@
 ---
 # File: main.yml - Main tasks for Consul
-- block:
-    - name: Looking up latest version of Consul
-      ansible.builtin.set_fact:
-        consul_version: >-
-          {{
-            (lookup('url', 'https://api.github.com/repos/hashicorp/consul/releases/latest', split_lines=False)
-            | from_json).get('tag_name')
-            | regex_search('([0-9]+\.[0-9]+\.[0-9]+(?:\.[0-9]+)?)', '\1')
-            | default('', true)
-          }}
-
-    - name: Fail if unable to parse Consul version from tag
-      ansible.builtin.fail:
-        msg: "Unable to parse Consul version from hashicorp/consul GitHub repository."
-      when: consul_version | length == 0
-
-    - name: Debug consul_version
-      ansible.builtin.debug:
-        msg: "Consul version is {{ consul_version }}"
-  when: consul_version == "latest"
-
 - name: Install python dependencies
   when:
     - consul_install_dependencies | bool
