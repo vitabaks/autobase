@@ -150,8 +150,8 @@ patroni_etcd_hosts: [] # list of servers of an existing etcd cluster
 #  - { host: "10.128.64.143", port: "2379" }
 
 # if dcs_type: "consul"
-consul_version: "latest" # or a specific version (e.q., '1.18.2') if 'consul_install_from_repo' is 'false'
-consul_install_from_repo: true # specify 'false' only if patroni_installation_method: "pip" is used
+consul_version: "latest" # or a specific version (e.q., '1.22.1')
+consul_install_from_repo: true # install from hashicorp repository, or 'false' to install from binary
 consul_config_path: "/etc/consul"
 consul_configd_path: "{{ consul_config_path }}/conf.d"
 consul_data_path: "/var/lib/consul"
