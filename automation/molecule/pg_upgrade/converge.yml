@@ -8,9 +8,10 @@
       ansible.builtin.set_fact:
         ansible_become_method: su # Override become_method
         firewall_enabled_at_boot: false
-        firewall_enable_ipv6: false # Added to prevent test failures in CI.
-        swap_file_create: false # Added to prevent test failures in CI.
-        sysctl_set: false # Added to prevent test failures in CI.
+        firewall_enable_ipv6: false # to prevent test failures in CI
+        swap_file_create: false # to prevent test failures in CI
+        sysctl_set: false # to prevent test failures in CI
+        chronyd_ignore_errors: true # to prevent failures in CI
         nameservers: ["8.8.8.8", "9.9.9.9"]
         timezone: "Etc/UTC"
         with_haproxy_load_balancing: true

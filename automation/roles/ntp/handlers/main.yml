@@ -18,4 +18,5 @@
     name: chronyd
     enabled: true
     state: restarted
+  ignore_errors: "{{ chronyd_ignore_errors | default(false) }}"
   listen: "restart chronyd"
