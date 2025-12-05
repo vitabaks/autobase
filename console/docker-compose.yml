@@ -40,7 +40,7 @@ services:
       autobase-console-api:
         condition: service_healthy
     environment:
-      - PG_CONSOLE_AUTHORIZATION_TOKEN=${AUTH_TOKEN}
+      - VITE_AUTH_TOKEN=${AUTH_TOKEN}
       - PG_CONSOLE_API_HOST=autobase-console-api
     networks:
       - autobase
