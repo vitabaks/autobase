@@ -69,8 +69,6 @@
         validate_checksum: true
         flat: true
       delegate_to: "{{ balancer_delegate }}"
-      vars:
-        balancer_delegate: "{{ (groups.get('balancers') | default([], true) | list | first) | default(inventory_hostname, true) }}"
 
     - name: Copy keepalived.conf conf file to replica
       ansible.builtin.copy:
@@ -97,6 +95,8 @@
       loop_control:
         label: "{{ item.line }}"
       notify: "restart keepalived"
+  vars:
+    balancer_delegate: "{{ (groups.get('balancers') | default([], true) | list | first) | default(inventory_hostname, true) }}"
   when: add_balancer is defined and add_balancer|bool
   tags: keepalived_conf, keepalived
 
