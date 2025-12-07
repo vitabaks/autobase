@@ -257,7 +257,7 @@
         dest: "{{ files_dir | default(playbook_dir ~ '/files') }}/patroni.yml"
         validate_checksum: true
         flat: true
-      delegate_to: "{{ groups.master[0] }}"
+      delegate_to: "{{ (groups.get('master') | default([], true) | list | first) | default(inventory_hostname, true) }}"
 
     - name: Copy patroni.yml conf file to replica
       ansible.builtin.copy:
@@ -1055,7 +1055,7 @@
         dest: "{{ files_dir | default(playbook_dir ~ '/files') }}/pg_hba.conf"
         validate_checksum: true
         flat: true
-      delegate_to: "{{ groups.master[0] }}"
+      delegate_to: "{{ (groups.get('master') | default([], true) | list | first) | default(inventory_hostname, true) }}"
 
     - name: Prepare PostgreSQL | copy pg_hba.conf file to replica
       ansible.builtin.copy:

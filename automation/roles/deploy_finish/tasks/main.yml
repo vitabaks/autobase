@@ -18,7 +18,7 @@
   environment:
     PGPASSWORD: "{{ patroni_superuser_password }}"
   register: users_result
-  delegate_to: "{{ groups.master[0] }}"
+  delegate_to: "{{ (groups.get('master') | default([], true) | list | first) | default(inventory_hostname, true) }}"
   changed_when: false
   ignore_errors: true
   tags: users, users_list, cluster_info, cluster_status, point_in_time_recovery
@@ -37,7 +37,7 @@
   environment:
     PGPASSWORD: "{{ patroni_superuser_password }}"
   register: dbs_result
-  delegate_to: "{{ groups.master[0] }}"
+  delegate_to: "{{ (groups.get('master') | default([], true) | list | first) | default(inventory_hostname, true) }}"
   changed_when: false
   ignore_errors: true
   tags: databases, db_list, cluster_info, cluster_status, point_in_time_recovery

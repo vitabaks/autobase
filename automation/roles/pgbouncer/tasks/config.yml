@@ -36,7 +36,7 @@
         PGPASSWORD: "{{ patroni_superuser_password }}"
       register: pg_shadow_result
       changed_when: false
-      delegate_to: "{{ groups.master[0] }}"
+      delegate_to: "{{ (groups.get('master') | default([], true) | list | first) | default(inventory_hostname, true) }}"
 
     - name: "Generate {{ pgbouncer_conf_dir | default('') }}/userlist.txt"
       become: true
