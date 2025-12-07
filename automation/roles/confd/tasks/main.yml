@@ -63,7 +63,7 @@
   tags: confd_conf, confd
 
 - block: # for add_balancer.yml
-    - name: "Fetch confd.toml, haproxy.toml, haproxy.tmpl conf files from {{ groups.balancers[0] }}"
+    - name: "Fetch confd.toml, haproxy.toml, haproxy.tmpl conf files from {{ balancer_delegate }}"
       run_once: true
       ansible.builtin.fetch:
         src: "{{ item }}"
@@ -74,7 +74,9 @@
         - /etc/confd/confd.toml
         - /etc/confd/conf.d/haproxy.toml
         - /etc/confd/templates/haproxy.tmpl
-      delegate_to: "{{ groups.balancers[0] }}"
+      delegate_to: "{{ balancer_delegate }}"
+      vars:
+        balancer_delegate: "{{ (groups.get('balancers') | default([], true) | list | first) | default(inventory_hostname, true) }}"
 
     - name: Copy confd.toml, haproxy.toml, haproxy.tmpl conf files to replica
       ansible.builtin.copy:
