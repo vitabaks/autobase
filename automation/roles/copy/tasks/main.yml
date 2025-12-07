@@ -9,10 +9,11 @@
     flat: true
     validate_checksum: true
   loop: "{{ fetch_files_from_master }}"
-  delegate_to: "{{ groups.master[0] }}"
+  delegate_to: "{{ (groups.get('master') | default([], true) | list | first) | default(inventory_hostname, true) }}"
   when:
     - fetch_files_from_master is defined
     - fetch_files_from_master | length > 0
+    - (groups.get('master') | default([], true) | length) > 0
   tags: fetch_files
 
 - name: Copy files to all servers
