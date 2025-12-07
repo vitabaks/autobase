@@ -4,7 +4,7 @@
     - name: Build etcd endpoints for existing cluster members
       ansible.builtin.set_fact:
         etcd_existing_endpoints: >-
-          {% for host in groups['etcd_cluster'] | difference(new_etcd_nodes | default([])) -%}
+          {% for host in etcd_existing_hosts -%}
           {{ patroni_etcd_protocol | default('http', true) }}://
           {{- hostvars[host]['etcd_bind_address'] | default(hostvars[host]['bind_address'], true) }}:2379
           {%- if not loop.last %},{% endif -%}
@@ -21,7 +21,7 @@
         {% endif %}
       environment:
         ETCDCTL_API: "3"
-      delegate_to: "{{ groups['etcd_cluster'] | difference(new_etcd_nodes | default([])) | first }}"
+      delegate_to: "{{ etcd_delegate }}"
       register: etcd_member_list
       changed_when: false
 
@@ -37,7 +37,7 @@
         {% endif %}
       environment:
         ETCDCTL_API: "3"
-      delegate_to: "{{ groups['etcd_cluster'] | difference(new_etcd_nodes | default([])) | first }}"
+      delegate_to: "{{ etcd_delegate }}"
       register: etcd_member_add_result
       vars:
         etcd_node_bind_address: "{{ hostvars[etcd_node].etcd_bind_address | default(hostvars[etcd_node].bind_address) }}"
@@ -77,4 +77,9 @@
           delegate_to: "{{ etcd_node }}"
       vars:
         etcd_bind_address: "{{ hostvars[etcd_node].etcd_bind_address | default(hostvars[etcd_node].bind_address) }}"
+  vars:
+    etcd_cluster_hosts: "{{ groups.get('etcd_cluster') | default([], true) }}"
+    etcd_new_hosts: "{{ new_etcd_nodes | default([], true) }}"
+    etcd_existing_hosts: "{{ etcd_cluster_hosts | difference(etcd_new_hosts) | list }}"
+    etcd_delegate: "{{ (etcd_existing_hosts | first) | default(inventory_hostname, true) }}"
   tags: etcd, etcd_member_add
