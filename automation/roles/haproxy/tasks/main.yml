@@ -113,8 +113,6 @@
         flat: true
       notify: "restart haproxy"
       delegate_to: "{{ balancer_delegate }}"
-      vars:
-        balancer_delegate: "{{ (groups.get('balancers') | default([], true) | list | first) | default(inventory_hostname, true) }}"
 
     - name: Copy haproxy.cfg file to replica
       ansible.builtin.copy:
@@ -177,6 +175,8 @@
         label: "{{ bind_config_with_vip_item.line }}"
       notify: "restart haproxy"
       when: cluster_vip is defined and cluster_vip | length > 0
+  vars:
+    balancer_delegate: "{{ (groups.get('balancers') | default([], true) | list | first) | default(inventory_hostname, true) }}"
   when: add_balancer is defined and add_balancer|bool
   tags: haproxy, haproxy_conf, load_balancing
 
