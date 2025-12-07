@@ -3,8 +3,8 @@
   ansible.builtin.setup:
   delegate_to: "{{ item }}"
   delegate_facts: true
-  loop: "{{ groups['postgres_cluster'] }}"
-  when: hostvars[groups['postgres_cluster'][0]].ansible_hostname is not defined
+  loop: "{{ groups.get('postgres_cluster') | default([], true) | list }}"
+  when: hostvars[(groups.get('postgres_cluster') | default([], true) | first)].ansible_hostname is not defined
 
 - name: Gather package facts
   ansible.builtin.package_facts:
@@ -104,7 +104,7 @@
   tags: haproxy, haproxy_service, load_balancing
 
 - block: # for add_balancer.yml
-    - name: "Fetch haproxy.cfg file from {{ groups.balancers[0] }}"
+    - name: "Fetch haproxy.cfg file from {{ balancer_delegate }}"
       run_once: true
       ansible.builtin.fetch:
         src: /etc/haproxy/haproxy.cfg
@@ -112,7 +112,9 @@
         validate_checksum: true
         flat: true
       notify: "restart haproxy"
-      delegate_to: "{{ groups.balancers[0] }}"
+      delegate_to: "{{ balancer_delegate }}"
+      vars:
+        balancer_delegate: "{{ (groups.get('balancers') | default([], true) | list | first) | default(inventory_hostname, true) }}"
 
     - name: Copy haproxy.cfg file to replica
       ansible.builtin.copy:
