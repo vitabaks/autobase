@@ -1,10 +1,12 @@
 ---
 - name: Gather facts from postgres_cluster hosts
   ansible.builtin.setup:
-  delegate_to: "{{ item }}"
+  delegate_to: "{{ item | default(inventory_hostname, true) }}"
   delegate_facts: true
   loop: "{{ groups.get('postgres_cluster') | default([], true) | list }}"
-  when: hostvars[(groups.get('postgres_cluster') | default([], true) | first)].ansible_hostname is not defined
+  when:
+    - (groups.get('postgres_cluster') | default([], true) | length) > 0
+    - hostvars[(groups.get('postgres_cluster') | default([], true) | first)].ansible_hostname is not defined
 
 - name: Gather package facts
   ansible.builtin.package_facts:
