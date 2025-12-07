@@ -9,7 +9,7 @@
         owner: haproxy
         group: haproxy
       delegate_to: "{{ item }}"
-      loop: "{{ groups.balancers | default([]) | list }}"
+      loop: "{{ groups.get('balancers') | default([], true) | list }}"
       run_once: true
 
     - name: Reload haproxy service
@@ -17,7 +17,7 @@
         name: haproxy
         state: reloaded
       delegate_to: "{{ item }}"
-      loop: "{{ groups.balancers | default([]) | list }}"
+      loop: "{{ groups.get('balancers') | default([], true) | list }}"
       run_once: true
 
     - name: Start confd service
@@ -25,15 +25,14 @@
         name: confd
         state: started
       delegate_to: "{{ item }}"
-      loop: "{{ groups.balancers | default([]) | list }}"
+      loop: "{{ groups.get('balancers') | default([], true) | list }}"
       run_once: true
       when: dcs_type == "etcd"
-
   become: true
   become_user: root
   ignore_errors: true # show the error and continue the playbook execution
   when:
-    - groups.balancers | default([]) | length > 0
+    - (groups.get('balancers') | default([], true) | length) > 0
     - with_haproxy_load_balancing | bool
     - pgbouncer_install | bool
     - pgbouncer_pool_pause | bool
