@@ -183,16 +183,16 @@ const configureHosts = ({
  * @param values - Filled form values.
  */
 const constructDcsEnvs = (values: ClusterFormValues) => {
-  if (values[DCS_BLOCK_FIELD_NAMES.IS_DEPLOY_NEW_CLUSTER]) {
-    if (!IS_EXPERT_MODE) {
-      return {
-        etcd_cluster: {
-          hosts: configureHosts({ values }),
-        },
-        consul_instances: { hosts: {} },
-      };
-    }
-    if (IS_EXPERT_MODE) {
+  if (!IS_EXPERT_MODE) {
+    return {
+      etcd_cluster: {
+        hosts: configureHosts({ values }),
+      },
+      consul_instances: { hosts: {} },
+    };
+  }
+  if (IS_EXPERT_MODE) {
+    if (values[DCS_BLOCK_FIELD_NAMES.IS_DEPLOY_NEW_CLUSTER]) {
       switch (values[DCS_BLOCK_FIELD_NAMES.TYPE]) {
         case DCS_TYPES.ETCD:
           return {
@@ -227,15 +227,14 @@ const constructDcsEnvs = (values: ClusterFormValues) => {
             },
           };
       }
-    }
-  }
-  if (IS_EXPERT_MODE && !values[DCS_BLOCK_FIELD_NAMES.IS_DEPLOY_NEW_CLUSTER]) {
-    if (values[DCS_BLOCK_FIELD_NAMES.TYPE] === DCS_TYPES.CONSUL) {
-      return {
-        consul_instances: {
-          hosts: configureHosts({ values, role: 'client' }),
-        },
-      };
+    } else {
+      if (values[DCS_BLOCK_FIELD_NAMES.TYPE] === DCS_TYPES.CONSUL) {
+        return {
+          consul_instances: {
+            hosts: configureHosts({ values, role: 'client' }),
+          },
+        };
+      }
     }
   }
 };
