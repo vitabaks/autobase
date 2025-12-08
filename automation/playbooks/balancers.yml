@@ -79,7 +79,9 @@
     - role: vitabaks.autobase.haproxy
 
     - role: vitabaks.autobase.confd
-      when: dcs_type | default('etcd') == "etcd"
+      when:
+        - dcs_type | default('etcd') == "etcd"
+        - haproxy_confd_install | default(true) | bool
 
     - role: vitabaks.autobase.keepalived
       when: cluster_vip is defined and cluster_vip | length > 0

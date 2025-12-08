@@ -237,6 +237,7 @@
       when:
         - dcs_type | default('etcd') == "etcd"
         - with_haproxy_load_balancing | default(false) | bool
+        - haproxy_confd_install | default(true) | bool
 
     - role: vitabaks.autobase.keepalived
       when:
