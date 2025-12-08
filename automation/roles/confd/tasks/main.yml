@@ -27,6 +27,7 @@
   ansible.builtin.include_role:
     name: vitabaks.autobase.tls_certificate
     tasks_from: copy
+  notify: "restart confd"
   vars:
     tls_group_name: "etcd_cluster"
     fetch_tls_dir: "{{ etcd_tls_dir | default('/etc/etcd/tls') }}"
