@@ -77,9 +77,13 @@
     - role: vitabaks.autobase.sysctl
 
     - role: vitabaks.autobase.haproxy
+      when: with_haproxy_load_balancing | default(false) | bool
 
     - role: vitabaks.autobase.confd
-      when: dcs_type | default('etcd') == "etcd"
+      when:
+        - with_haproxy_load_balancing | default(false) | bool
+        - confd_install | default(true) | bool
+        - dcs_type | default('etcd') == "etcd"
 
     - role: vitabaks.autobase.keepalived
       when: cluster_vip is defined and cluster_vip | length > 0

@@ -81,6 +81,10 @@ haproxy_timeout:
 #  \"request_size\":%U\
 #  }"
 
+# if with_haproxy_load_balancing: true
+confd_install: true # install confd for HAProxy config management (optional).
+confd_version: 0.16.0
+
 cluster_vip: "" # IP address for client access to the databases in the cluster (optional).
 vip_interface: "{{ ansible_default_ipv4.interface }}" # interface name (e.g., "ens32").
 # Note: VIP-based solutions such as keepalived or vip-manager may not function correctly in cloud environments.
@@ -1194,7 +1198,7 @@ glibc_langpack:
 # additional packages
 etcd_package_repo: "https://github.com/etcd-io/etcd/releases/download/v{{ etcd_version }}/etcd-v{{ etcd_version }}-linux-{{ etcd_architecture_map[ansible_architecture] }}.tar.gz" # yamllint disable rule:line-length
 vip_manager_package_repo: "https://github.com/cybertec-postgresql/vip-manager/releases/download/v{{ vip_manager_version }}/vip-manager_{{ vip_manager_version }}_Linux_{{ vip_manager_architecture_map[ansible_architecture] }}.{{ pkg_type }}" # yamllint disable rule:line-length
-confd_package_repo: "https://github.com/kelseyhightower/confd/releases/download/v0.16.0/confd-0.16.0-linux-{{ confd_architecture_map[ansible_architecture] }}"
+confd_package_repo: "https://github.com/kelseyhightower/confd/releases/download/v{{ confd_version }}/confd-{{ confd_version }}-linux-{{ confd_architecture_map[ansible_architecture] }}"
 
 # You can also download the deb/rpm packages into the 'files/' directory.
 # Packages from this directory will be used during installation (optional).
