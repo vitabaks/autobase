@@ -54,14 +54,9 @@
     - not dcs_exists | bool
   tags: patroni, patroni_conf
 
-- name: Generate conf file "/etc/patroni/patroni.yml"
-  ansible.builtin.template:
-    src: templates/patroni.yml.j2
-    dest: /etc/patroni/patroni.yml
-    owner: postgres
-    group: postgres
-    mode: "0640"
-  when: existing_pgcluster is not defined or not existing_pgcluster|bool
+- name: Create patroni config file
+  ansible.builtin.import_tasks: patroni.yml
+  when: cluster_scaling is not defined or not cluster_scaling | bool
   tags: patroni, patroni_conf
 
 - name: Create patroni log directory
@@ -74,7 +69,7 @@
   when: patroni_log_destination == 'logfile'
   tags: patroni, patroni_conf
 
-- block: # for add_pgnode.yml
+- block: # if cluster_scaling (add_node.yml)
     - name: Fetch patroni.yml conf file from master
       run_once: true
       ansible.builtin.fetch:
@@ -110,13 +105,17 @@
         - regexp: "^name:"
           line: "name: {{ ansible_hostname }}"
         - regexp: "^  listen: .*:{{ patroni_restapi_port }}$"
-          line: "  listen: {{ patroni_bind_address | default(bind_address, true) }}:{{ patroni_restapi_port }}"
+          line: "  listen: {{ patroni_restapi_listen_addr }}:{{ patroni_restapi_port }}"
         - regexp: "^  connect_address: .*:{{ patroni_restapi_port }}$"
-          line: "  connect_address: {{ patroni_bind_address | default(bind_address, true) }}:{{ patroni_restapi_port }}"
+          line: "  connect_address: {{ patroni_restapi_connect_addr
+                                  | default(patroni_bind_address
+                                  | default(bind_address, true), true) }}:{{ patroni_restapi_port }}"
         - regexp: "^  listen: ((?!{{ patroni_restapi_port }}).)*$"
-          line: "  listen: {{ patroni_bind_address | default(bind_address, true) }},127.0.0.1:{{ postgresql_port }}"
+          line: "  listen: {{ postgresql_listen_addr }}:{{ postgresql_port }}"
         - regexp: "^  connect_address: ((?!{{ patroni_restapi_port }}).)*$"
-          line: "  connect_address: {{ patroni_bind_address | default(bind_address, true) }}:{{ postgresql_port }}"
+          line: "  connect_address: {{ postgresql_connect_addr
+                                  | default(patroni_bind_address
+                                  | default(bind_address, true), true) }}:{{ postgresql_port }}"
       loop_control:
         loop_var: patroni_config_without_cluster_vip_item
         label: "{{ patroni_config_without_cluster_vip_item.line }}"
@@ -132,18 +131,22 @@
         - regexp: "^name:"
           line: "name: {{ ansible_hostname }}"
         - regexp: "^  listen: .*:{{ patroni_restapi_port }}$"
-          line: "  listen: {{ patroni_bind_address | default(bind_address, true) }}:{{ patroni_restapi_port }}"
+          line: "  listen: {{ patroni_restapi_listen_addr }}:{{ patroni_restapi_port }}"
         - regexp: "^  connect_address: .*:{{ patroni_restapi_port }}$"
-          line: "  connect_address: {{ patroni_bind_address | default(bind_address, true) }}:{{ patroni_restapi_port }}"
+          line: "  connect_address: {{ patroni_restapi_connect_addr
+                                  | default(patroni_bind_address
+                                  | default(bind_address, true), true) }}:{{ patroni_restapi_port }}"
         - regexp: "^  listen: ((?!{{ patroni_restapi_port }}).)*$"
-          line: "  listen: {{ patroni_bind_address | default(bind_address, true) }},{{ cluster_vip }},127.0.0.1:{{ postgresql_port }}"
+          line: "  listen: {{ postgresql_listen_addr }},{{ cluster_vip }}:{{ postgresql_port }}"
         - regexp: "^  connect_address: ((?!{{ patroni_restapi_port }}).)*$"
-          line: "  connect_address: {{ patroni_bind_address | default(bind_address, true) }}:{{ postgresql_port }}"
+          line: "  connect_address: {{ postgresql_connect_addr
+                                  | default(patroni_bind_address
+                                  | default(bind_address, true), true) }}:{{ postgresql_port }}"
       loop_control:
         loop_var: patroni_config_with_cluster_vip_item
         label: "{{ patroni_config_with_cluster_vip_item.line }}"
       when: not with_haproxy_load_balancing|bool and not pgbouncer_install|bool and (cluster_vip is defined and cluster_vip | length > 0)
-  when: existing_pgcluster is defined and existing_pgcluster|bool
+  when: cluster_scaling is defined and cluster_scaling | bool
   tags: patroni, patroni_conf
 
 - name: Copy systemd service file "/etc/systemd/system/patroni.service"
@@ -181,7 +184,7 @@
     - postgresql_version | int <= 14
   tags: patroni, pgsql_stats_tmp
 
-- name: Prepare PostgreSQL | make sure the postgresql log directory "{{ postgresql_log_dir }}" exists
+- name: Prepare PostgreSQL | make sure the postgresql log directory "{{ postgresql_log_dir | default('') }}" exists
   ansible.builtin.file:
     path: "{{ postgresql_log_dir }}"
     owner: postgres
@@ -190,7 +193,7 @@
     mode: "0700"
   tags: patroni
 
-- name: Prepare PostgreSQL | make sure the custom WAL directory "{{ postgresql_wal_dir }}" exists
+- name: Prepare PostgreSQL | make sure the custom WAL directory "{{ postgresql_wal_dir | default('') }}" exists
   ansible.builtin.file:
     path: "{{ postgresql_wal_dir }}"
     owner: postgres
@@ -201,9 +204,33 @@
   tags: patroni, custom_wal_dir
 
 - block: # when postgresql NOT exists or PITR
-    - name: Prepare PostgreSQL | make sure PostgreSQL data directory "{{ postgresql_data_dir }}" exists
+    - name: Prepare PostgreSQL | make sure PostgreSQL home directory "{{ postgresql_home_dir | default('') }}"
+      ansible.builtin.file:
+        path: "{{ postgresql_home_dir }}"
+        state: directory
+        owner: postgres
+        group: postgres
+        mode: "0755"
+
+    - name: Prepare PostgreSQL | make sure PostgreSQL data directory "{{ postgresql_data_dir | default('') }}" exists
       ansible.builtin.file:
         path: "{{ postgresql_data_dir }}"
+        owner: postgres
+        group: postgres
+        state: directory
+        mode: "0700"
+
+    - name: Prepare PostgreSQL | make sure PostgreSQL unix socket directory "{{ postgresql_unix_socket_dir | default('') }}" exists
+      ansible.builtin.file:
+        path: "{{ postgresql_unix_socket_dir }}"
+        owner: postgres
+        group: postgres
+        state: directory
+        mode: "02775"
+
+    - name: Prepare PostgreSQL | make sure PostgreSQL log directory "{{ postgresql_log_dir | default('') }}" exists
+      ansible.builtin.file:
+        path: "{{ postgresql_log_dir }}"
         owner: postgres
         group: postgres
         state: directory
@@ -219,13 +246,11 @@
             owner: postgres
             group: postgres
             recurse: true
-          when: postgresql_packages|join(" ") is not search("postgrespro")
 
         - name: Prepare PostgreSQL | make sure PostgreSQL config files exists
           ansible.builtin.stat:
             path: "{{ postgresql_conf_dir }}/postgresql.conf"
           register: postgresql_conf_file
-          when: postgresql_packages|join(" ") is not search("postgrespro")
 
         - name: Prepare PostgreSQL | generate default PostgreSQL config files
           become: true
@@ -238,11 +263,11 @@
             --locale {{ postgresql_locale }}
           register: pg_createcluster_result
           failed_when: pg_createcluster_result.rc != 0
-          when: (postgresql_packages|join(" ") is not search("postgrespro")) and
-            not postgresql_conf_file.stat.exists
+          when: not postgresql_conf_file.stat.exists
       when:
         - ansible_os_family == "Debian"
         - installation_method == "packages"
+        - postgresql_packages|join(" ") is not search("postgrespro")
 
     # When performing PITR, we do not clear the directory if pgbackrest is used to be able to use the '--delta restore' option.
     # In all other cases, we must clear the data directory before restore.
@@ -252,7 +277,15 @@
             name: patroni
             state: stopped
 
-        - name: Prepare PostgreSQL | make sure the data directory "{{ postgresql_data_dir }}" is empty
+        - name: Prepare PostgreSQL | make sure the postgres home directory "{{ postgresql_home_dir | default('') }}"
+          ansible.builtin.file:
+            path: "{{ postgresql_home_dir }}"
+            state: directory
+            owner: postgres
+            group: postgres
+            mode: "0755"
+
+        - name: Prepare PostgreSQL | make sure the data directory "{{ postgresql_data_dir | default('') }}" is empty
           ansible.builtin.file:
             path: "{{ postgresql_data_dir }}"
             state: "{{ item }}"
@@ -263,7 +296,23 @@
             - absent
             - directory
 
-        - name: Prepare PostgreSQL | make sure the custom WAL directory "{{ postgresql_wal_dir }}" is empty
+        - name: Prepare PostgreSQL | make sure PostgreSQL unix socket directory "{{ postgresql_unix_socket_dir | default('') }}" exists
+          ansible.builtin.file:
+            path: "{{ postgresql_unix_socket_dir }}"
+            owner: postgres
+            group: postgres
+            state: directory
+            mode: "02775"
+
+        - name: Prepare PostgreSQL | make sure PostgreSQL log directory "{{ postgresql_log_dir | default('') }}" exists
+          ansible.builtin.file:
+            path: "{{ postgresql_log_dir }}"
+            owner: postgres
+            group: postgres
+            state: directory
+            mode: "0700"
+
+        - name: Prepare PostgreSQL | make sure the custom WAL directory "{{ postgresql_wal_dir | default('') }}" is empty
           ansible.builtin.file:
             path: "{{ postgresql_wal_dir }}"
             state: "{{ item }}"
@@ -314,12 +363,25 @@
             group: postgres
             mode: "0640"
 
+        - name: Prepare PostgreSQL | validate generated pg_hba.conf
+          become: true
+          become_user: postgres
+          community.postgresql.postgresql_query:
+            login_host: "127.0.0.1"
+            login_port: "{{ postgresql_port }}"
+            login_user: "{{ patroni_superuser_username }}"
+            login_password: "{{ patroni_superuser_password }}"
+            login_db: "postgres"
+            query: "SELECT * FROM pg_hba_file_rules WHERE error IS NOT NULL"
+          register: pg_hba_validate_result
+          failed_when: pg_hba_validate_result.query_result | length > 0
+
         - name: Prepare PostgreSQL | reload for apply the pg_hba.conf
           become: true
           become_user: postgres
           ansible.builtin.command: "{{ postgresql_bin_dir }}/pg_ctl reload -D {{ postgresql_data_dir }}"
 
-        - name: Prepare PostgreSQL | make sure the user "{{ patroni_superuser_username }}" are present, and password does not differ from the specified
+        - name: Prepare PostgreSQL | ensure user "{{ patroni_superuser_username | default('') }}" exists and password matches the specified
           community.postgresql.postgresql_user:
             name: "{{ patroni_superuser_username }}"
             password: "{{ patroni_superuser_password }}"
@@ -332,7 +394,7 @@
           become: true
           become_user: postgres
 
-        - name: Prepare PostgreSQL | make sure the user "{{ patroni_replication_username }}" are present, and password does not differ from the specified
+        - name: Prepare PostgreSQL | ensure user "{{ patroni_replication_username | default('') }}" exists and password matches the specified
           community.postgresql.postgresql_user:
             name: "{{ patroni_replication_username }}"
             password: "{{ patroni_replication_password }}"
@@ -362,7 +424,9 @@
       become: true
       become_user: postgres
       ansible.builtin.command: >
-        {{ postgresql_bin_dir }}/psql -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc "CHECKPOINT"
+        {{ postgresql_bin_dir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc "CHECKPOINT"
+      environment:
+        PGPASSWORD: "{{ patroni_superuser_password }}"
       register: checkpoint_result
       until: checkpoint_result.rc == 0
       retries: 300
@@ -429,7 +493,7 @@
         {{ postgresql_bin_dir }}/pg_ctl stop -D {{ postgresql_data_dir }} -m fast -w -t {{ pg_ctl_timeout | default(3600) }}
       when: pg_ctl_status_result.rc is defined and (pg_ctl_status_result.rc != 3 and pg_ctl_status_result.rc != 4)
 
-    - name: Remove patroni cluster "{{ patroni_cluster_name }}" from DCS (if exist)
+    - name: Remove patroni cluster "{{ patroni_cluster_name | default('') }}" from DCS (if exist)
       become: true
       become_user: postgres
       ansible.builtin.expect:
@@ -446,7 +510,7 @@
       when: inventory_hostname == groups['master'][0]
 
     - block: # for pgbackrest only (for use --delta restore)
-        - name: Run "{{ pgbackrest_patroni_cluster_restore_command }}" on Master
+        - name: Run "{{ pgbackrest_patroni_cluster_restore_command | default('') }}" on Master
           ansible.builtin.command: >
             {{ pgbackrest_patroni_cluster_restore_command }}
             {{ '--target-action=promote' if pgbackrest_patroni_cluster_restore_command is search('--type=') else '' }}
@@ -456,7 +520,7 @@
           when: inventory_hostname == groups['master'][0]
 
           # if patroni_create_replica_methods: "pgbackrest"
-        - name: Run "{{ pgbackrest_patroni_cluster_restore_command }}" on Replica
+        - name: Run "{{ pgbackrest_patroni_cluster_restore_command | default('') }}" on Replica
           ansible.builtin.command: >
             {{ pgbackrest_patroni_cluster_restore_command }}
             {{ '--target-action=pause' if pgbackrest_patroni_cluster_restore_command is search('--type=') else '' }}
@@ -518,8 +582,10 @@
 
         - name: Wait for PostgreSQL recovery to complete (WAL apply)
           ansible.builtin.command: >-
-            {{ postgresql_bin_dir }}/psql -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres
+            {{ postgresql_bin_dir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres
             -tAXc "select pg_is_in_recovery()"
+          environment:
+            PGPASSWORD: "{{ patroni_superuser_password }}"
           register: pg_is_in_recovery
           until: pg_is_in_recovery.stdout == "f"
           retries: "{{ (cluster_restore_timeout | default(86400)) | int // 30 }}" # timeout 24 hours
@@ -594,7 +660,7 @@
       when: disable_archive_command | bool
   when: patroni_cluster_bootstrap_method != "initdb" and
     (pgbackrest_install | bool or wal_g_install | bool) and
-    (existing_pgcluster is not defined or not existing_pgcluster | bool)
+    (cluster_scaling is not defined or not cluster_scaling | bool)
   become: true
   become_user: postgres
   tags: patroni, point_in_time_recovery
@@ -609,7 +675,7 @@
         mode: "0640"
   when: patroni_cluster_bootstrap_method != "initdb" and
     postgresql_conf_dir != postgresql_data_dir and
-    (existing_pgcluster is not defined or not existing_pgcluster|bool)
+    (cluster_scaling is not defined or not cluster_scaling | bool)
   tags: patroni
 
 - block: # start patroni on master
@@ -620,7 +686,7 @@
         state: restarted
         enabled: true
 
-    - name: "Wait for port {{ patroni_restapi_port }} to become open on the host"
+    - name: "Wait for port {{ patroni_restapi_port | default('8008') }} to become open on the host"
       ansible.builtin.wait_for:
         port: "{{ patroni_restapi_port }}"
         host: "{{ patroni_bind_address | default(bind_address, true) }}"
@@ -634,8 +700,10 @@
       become: true
       become_user: postgres
       ansible.builtin.command: >-
-        {{ postgresql_bin_dir }}/psql -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc
+        {{ postgresql_bin_dir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc
         "select pg_is_in_recovery()"
+      environment:
+        PGPASSWORD: "{{ patroni_superuser_password }}"
       register: pg_is_in_recovery
       until: pg_is_in_recovery.stdout == "f"
       retries: "{{ (cluster_restore_timeout | default(86400)) | int // 30 }}" # timeout 24 hours
@@ -646,8 +714,10 @@
 
     - name: Wait for the Standby cluster initialization to complete
       ansible.builtin.uri:
-        url: "http://{{ patroni_bind_address | default(bind_address, true) }}:{{ patroni_restapi_port }}/standby-leader"
+        url: "{{ patroni_restapi_protocol }}://{{ patroni_restapi_connect_addr | default(patroni_bind_address | default(bind_address, true), true) }}:\
+          {{ patroni_restapi_port }}/standby-leader"
         status_code: 200
+        ca_path: "{{ patroni_restapi_cafile | default(omit, true) }}"
       register: standby_leader_result
       until: standby_leader_result.status == 200
       retries: "{{ (cluster_restore_timeout | default(86400)) | int // 30 }}" # timeout 24 hours
@@ -670,8 +740,10 @@
 
     - name: Wait for the cluster to initialize (master is the leader with the lock)
       ansible.builtin.uri:
-        url: "http://{{ patroni_bind_address | default(bind_address, true) }}:{{ patroni_restapi_port }}/leader"
+        url: "{{ patroni_restapi_protocol }}://{{ patroni_restapi_connect_addr | default(patroni_bind_address | default(bind_address, true), true) }}:\
+          {{ patroni_restapi_port }}/leader"
         status_code: 200
+        ca_path: "{{ patroni_restapi_cafile | default(omit, true) }}"
       register: result
       until: result.status == 200
       retries: 10
@@ -697,6 +769,20 @@
         (('replica' in groups and groups['replica'] | length > 0 and inventory_hostname in groups['replica'] and postgresql_conf_dir != postgresql_data_dir)
         or postgresql_exists | default(false) | bool)
 
+    - name: Prepare PostgreSQL | validate generated pg_hba.conf
+      become: true
+      become_user: postgres
+      community.postgresql.postgresql_query:
+        login_host: "127.0.0.1"
+        login_port: "{{ postgresql_port }}"
+        login_user: "{{ patroni_superuser_username }}"
+        login_password: "{{ patroni_superuser_password }}"
+        login_db: "postgres"
+        query: "SELECT * FROM pg_hba_file_rules WHERE error IS NOT NULL"
+      register: pg_hba_validate_result
+      failed_when: pg_hba_validate_result.query_result | length > 0
+      when: inventory_hostname == groups['master'][0]
+
     - name: Prepare PostgreSQL | reload for apply the pg_hba.conf
       become: true
       become_user: postgres
@@ -705,14 +791,16 @@
       changed_when: pg_ctl_reload_result.rc == 0
       failed_when: false # exec 'reload' on all running postgres (to re-run with --tag pg_hba).
       when: generate_pg_hba is changed
-  when: existing_pgcluster is not defined or not existing_pgcluster|bool
+  when: cluster_scaling is not defined or not cluster_scaling | bool
   tags: patroni, pg_hba, pg_hba_generate
 
 - block: # PITR (custom bootstrap) - password reset for PostgreSQL users
     - name: Make sure the Master is not in recovery mode
       ansible.builtin.command: >-
-        {{ postgresql_bin_dir }}/psql -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc
+        {{ postgresql_bin_dir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc
         "select pg_is_in_recovery()"
+      environment:
+        PGPASSWORD: "{{ patroni_superuser_password }}"
       register: pg_is_in_recovery
       until: pg_is_in_recovery.stdout == "f"
       retries: "{{ (cluster_restore_timeout | default(86400)) | int // 30 }}" # timeout 24 hours
@@ -774,13 +862,13 @@
   when:
     - patroni_cluster_bootstrap_method != "initdb"
     - (pgbackrest_install | bool or wal_g_install | bool)
-    - (existing_pgcluster is not defined or not existing_pgcluster | bool)
+    - (cluster_scaling is not defined or not cluster_scaling | bool)
     - patroni_standby_cluster.host | default('') | length < 1 # do not perform on the Standby Cluster
   become: true
   become_user: postgres
   tags: patroni, point_in_time_recovery
 
-- block: # for add_pgnode.yml
+- block: # if cluster_scaling (add_node.yml)
     - name: Prepare PostgreSQL | fetch pg_hba.conf file from master
       run_once: true
       ansible.builtin.fetch:
@@ -797,7 +885,7 @@
         owner: postgres
         group: postgres
         mode: "0640"
-  when: existing_pgcluster is defined and existing_pgcluster|bool
+  when: cluster_scaling is defined and cluster_scaling | bool
     and postgresql_conf_dir != postgresql_data_dir
   tags: patroni, pg_hba, pg_hba_generate
 
@@ -809,7 +897,7 @@
         state: restarted
         enabled: true
 
-    - name: "Wait for port {{ patroni_restapi_port }} to become open on the host"
+    - name: "Wait for port {{ patroni_restapi_port | default('8008') }} to become open on the host"
       ansible.builtin.wait_for:
         port: "{{ patroni_restapi_port }}"
         host: "{{ patroni_bind_address | default(bind_address, true) }}"
@@ -820,8 +908,10 @@
 
     - name: Check that the patroni is healthy on the replica server
       ansible.builtin.uri:
-        url: "http://{{ patroni_bind_address | default(bind_address, true) }}:{{ patroni_restapi_port }}/health"
+        url: "{{ patroni_restapi_protocol }}://{{ patroni_restapi_connect_addr | default(patroni_bind_address | default(bind_address, true), true) }}:\
+          {{ patroni_restapi_port }}/health"
         status_code: 200
+        ca_path: "{{ patroni_restapi_cafile | default(omit, true) }}"
       register: replica_result
       until: replica_result.status == 200
       retries: "{{ (cluster_restore_timeout | default(86400)) | int // 30 }}" # timeout 24 hours
@@ -849,28 +939,23 @@
         mode: "0644"
       when: ansible_os_family == "Debian"
 
-    - name: Disable "postgresql@{{ postgresql_version }}-{{ postgresql_cluster_name }}" service
+    - name: Disable "postgresql@{{ postgresql_version | default('') }}-{{ postgresql_cluster_name | default('') }}" service
       ansible.builtin.systemd:
         name: "postgresql@{{ postgresql_version }}-{{ postgresql_cluster_name }}"
         enabled: false
         daemon_reload: true
-      when:
-        - ansible_os_family == "Debian"
-        - postgresql_packages|join(" ") is not search("postgrespro")
+      when: ansible_os_family == "Debian" and postgresql_packages|join(" ") is not search("postgrespro")
 
     # "RedHat"
-    - name: Disable "postgresql-{{ postgresql_version }}" service (will be managed by patroni)
+    - name: Disable "postgresql-{{ postgresql_version | default('') }}" service (will be managed by patroni)
       ansible.builtin.systemd:
         name: "postgresql-{{ postgresql_version }}"
         enabled: false
         daemon_reload: true
-      when:
-        - ansible_os_family == "RedHat"
-        - postgresql_packages|join(" ") is not search("postgrespro")
-      tags: patroni, postgresql_disable
+      when: ansible_os_family == "RedHat" and postgresql_packages|join(" ") is not search("postgrespro")
 
     # PostgresPro
-    - name: Disable "postgrespro-std-{{ postgresql_version }}" service (will be managed by patroni)
+    - name: Disable "postgrespro-std-{{ postgresql_version | default('') }}" service (will be managed by patroni)
       ansible.builtin.systemd:
         name: "postgrespro-std-{{ postgresql_version }}"
         enabled: false
@@ -889,6 +974,18 @@
     owner: root
     group: root
     mode: "0644"
+    create: true
   ignore_errors: true
   when: installation_method == "packages"
+  tags: patroni, patroni_env
+
+- name: Add PATRONICTL_CONFIG_FILE to /etc/profile.d/patroni.sh
+  ansible.builtin.copy:
+    content: |
+      #!/bin/bash
+      export PATRONICTL_CONFIG_FILE=/etc/patroni/patroni.yml
+    dest: /etc/profile.d/patroni.sh
+    owner: root
+    group: root
+    mode: "0644"
   tags: patroni, patroni_env
