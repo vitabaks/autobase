@@ -36,6 +36,7 @@
     owner: "{{ copy_tls_owner | default(tls_owner | default('postgres')) }}"
     group: "{{ copy_tls_owner | default(tls_owner | default('postgres')) }}"
     mode: "{{ item.mode }}"
+  notify: "{{ copy_tls_notify | default('') }}"
   loop:
     - { key: "server_crt", filename: "{{ copy_tls_cert | default(tls_cert | default('server.crt')) }}", mode: "0644" }
     - { key: "ca_crt", filename: "{{ copy_tls_ca_cert | default(tls_ca_cert | default('ca.crt')) }}", mode: "0644" }
