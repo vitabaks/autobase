@@ -1,6 +1,6 @@
 [{{ pgbackrest_stanza }}]
 {% for host in groups['postgres_cluster'] %}
-pg{{ loop.index }}-host={{ host }}
+pg{{ loop.index }}-host={{ hostvars[host].bind_address }}
 pg{{ loop.index }}-port={{ postgresql_port }}
 pg{{ loop.index }}-socket-path={{ postgresql_unix_socket_dir }}
 pg{{ loop.index }}-path={{ postgresql_data_dir }}

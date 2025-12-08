@@ -14,7 +14,7 @@
   until: pgbouncer_restart_result is success
   listen: "restart pgbouncer"
 
-- name: Wait for port "{{ pgbouncer_listen_port }}" to become open on the host
+- name: Wait for port "{{ pgbouncer_listen_port | default('6432') }}" to become open on the host
   ansible.builtin.wait_for:
     port: "{{ pgbouncer_listen_port }}"
     host: "{{ patroni_bind_address | default(bind_address, true) }}"

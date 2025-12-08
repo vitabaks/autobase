@@ -1,12 +1,12 @@
 ---
-- name: "Make sure {{ pg_new_datadir }}/pg_wal is not symlink"
+- name: "Make sure {{ pg_new_datadir | default('') }}/pg_wal is not symlink"
   ansible.builtin.stat:
     path: "{{ pg_new_datadir }}/pg_wal"
   register: sym
 
 # Synchronize WAL`s (if wal dir is not symlink)
 - block:
-    - name: Make sure the custom WAL directory "{{ pg_new_wal_dir }}" exists and is empty
+    - name: Make sure the custom WAL directory "{{ pg_new_wal_dir | default('') }}" exists and is empty
       become: true
       become_user: root
       ansible.builtin.file:
@@ -19,7 +19,7 @@
         - absent
         - directory
 
-    - name: "Synchronize {{ pg_new_datadir }}/pg_wal to {{ pg_new_wal_dir }}"
+    - name: "Synchronize {{ pg_new_datadir | default('') }}/pg_wal to {{ pg_new_wal_dir | default('') }}"
       become: true
       become_user: postgres
       ansible.posix.synchronize:
@@ -30,7 +30,7 @@
     - name: "Rename pg_wal to pg_wal_old"
       ansible.builtin.command: mv {{ pg_new_datadir }}/pg_wal {{ pg_new_datadir }}/pg_wal_old
 
-    - name: "Create symlink {{ pg_new_datadir }}/pg_wal -> {{ pg_new_wal_dir }}"
+    - name: "Create symlink {{ pg_new_datadir | default('') }}/pg_wal -> {{ pg_new_wal_dir | default('') }}"
       become: true
       become_user: postgres
       ansible.builtin.file:

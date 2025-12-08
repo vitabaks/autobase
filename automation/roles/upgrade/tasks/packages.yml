@@ -22,18 +22,18 @@
   when: ansible_os_family == "Debian"
 
 # Install PostgreSQL packages
-- name: "Install PostgreSQL {{ pg_new_version }} packages"
+- name: "Install PostgreSQL {{ pg_new_version | default('') }} packages"
   ansible.builtin.package:
     name: "{{ item }}"
     state: latest
-  loop: "{{ pg_new_packages }}"
+  loop: "{{ pg_new_packages | list }}"
   register: package_status
   until: package_status is success
   delay: 5
   retries: 3
 
 # Install Extensions packages
-- name: "Install Extensions packages for PostgreSQL {{ pg_new_version }}"
+- name: "Install Extensions packages for PostgreSQL {{ pg_new_version | default('') }}"
   ansible.builtin.import_tasks: "../../packages/tasks/extensions.yml"
   vars:
     pg_version: "{{ pg_new_version }}"

@@ -3,10 +3,10 @@
 # 🎯 The goal is to verify the correct display of renaming based on PostgreSQL version
 
 # 🔄 Set postgresql_version for the first test scenario
-- name: Molecule.tests.roles.patroni.variables.custom_wal_dir | Define PG version as 17 for scenario 1
+- name: Molecule.tests.roles.patroni.variables.custom_wal_dir | Define PG version as 18 for scenario 1
   run_once: true
   ansible.builtin.set_fact:
-    postgresql_version: 17
+    postgresql_version: 18
 
 # ======================================
 # 💻 Scenario: PostgreSQL version >= 10
@@ -22,13 +22,13 @@
 - name: Molecule.tests.roles.patroni.variables.custom_wal_dir | Determine mv command for scenario 1
   run_once: true
   ansible.builtin.set_fact:
-    mv_command_postgresql_version_17: "mv {{ postgresql_data_dir }}/{{ pg_wal_dir }} {{ postgresql_data_dir }}/{{ pg_wal_dir }}_old"
+    mv_command_postgresql_version_18: "mv {{ postgresql_data_dir }}/{{ pg_wal_dir }} {{ postgresql_data_dir }}/{{ pg_wal_dir }}_old"
 
 # 🚀 Display the command
 - name: Molecule.tests.roles.patroni.variables.custom_wal_dir | Display command for scenario 1
   run_once: true
   ansible.builtin.debug:
-    var: mv_command_postgresql_version_17
+    var: mv_command_postgresql_version_18
 
 # ✅ Verify if the name has been determined correctly
 - name: Molecule.tests.roles.patroni.variables.custom_wal_dir | Validate mv command for scenario 1 (RedHat)
@@ -36,7 +36,7 @@
   when: ansible_os_family == 'RedHat'
   ansible.builtin.assert:
     that:
-      - mv_command_postgresql_version_17 == 'mv /var/lib/pgsql/17/data/pg_wal /var/lib/pgsql/17/data/pg_wal_old'
+      - mv_command_postgresql_version_18 == 'mv /var/lib/pgsql/18/data/pg_wal /var/lib/pgsql/18/data/pg_wal_old'
     fail_msg: "Test failed for RedHat: incorrect mv command."
     success_msg: "Test passed: mv command for RedHat is correct."
 
@@ -45,7 +45,7 @@
   when: ansible_os_family == 'Debian'
   ansible.builtin.assert:
     that:
-      - mv_command_postgresql_version_17 == 'mv /var/lib/postgresql/17/main/pg_wal /var/lib/postgresql/17/main/pg_wal_old'
+      - mv_command_postgresql_version_18 == 'mv /var/lib/postgresql/18/main/pg_wal /var/lib/postgresql/18/main/pg_wal_old'
     fail_msg: "Test failed for Debian: incorrect mv command."
     success_msg: "Test passed: mv command for Debian is correct."
 

@@ -12,6 +12,7 @@ import { secretsTableColumns } from '@widgets/secrets-table/model/constants.ts';
 
 import { useGetSecretsTableData } from '@widgets/secrets-table/lib/hooks.tsx';
 import DefaultTable from '@shared/ui/default-table';
+import RowActionsMenu from '@features/row-actions-menu/ui';
 
 const SecretsTable: React.FC = () => {
   const { t, i18n } = useTranslation(['settings', 'shared']);
@@ -50,7 +51,7 @@ const SecretsTable: React.FC = () => {
       isLoading: secretsList.isFetching,
       pagination,
     },
-    renderRowActionMenuItems: ({ closeMenu, row }) => <SettingsTableRowActions closeMenu={closeMenu} row={row} />,
+    renderRowActions: ({ row }) => <RowActionsMenu row={row} ActionsComponent={SettingsTableRowActions} />,
   };
 
   return (

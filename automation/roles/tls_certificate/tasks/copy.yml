@@ -1,5 +1,5 @@
 ---
-- name: "Fetch TLS certificate, key and CA from {{ inventory_hostname }}"
+- name: "Fetch TLS certificate, key and CA from master node"
   ansible.builtin.slurp:
     src: "{{ fetch_tls_dir | default(tls_dir | default('/etc/tls')) }}/{{ item }}"
   register: tls_files_raw
@@ -7,7 +7,8 @@
     - "{{ fetch_tls_privatekey | default(tls_privatekey | default('server.key')) }}"
     - "{{ fetch_tls_cert | default(tls_cert | default('server.crt')) }}"
     - "{{ fetch_tls_ca_cert | default(tls_ca_cert | default('ca.crt')) }}"
-  when: inventory_hostname == (groups[tls_group_name | default('master')][0])
+  delegate_to: "{{ groups[tls_group_name | default('master')][0] }}"
+  run_once: true
   tags: tls, tls_cert_copy
 
 - name: "Set variable: tls_files"
@@ -16,7 +17,7 @@
       server_key: "{{ tls_files_raw.results[0].content }}"
       server_crt: "{{ tls_files_raw.results[1].content }}"
       ca_crt: "{{ tls_files_raw.results[2].content }}"
-  when: inventory_hostname == (groups[tls_group_name | default('master')][0])
+  run_once: true
   tags: tls, tls_cert_copy
 
 - name: Create directory {{ copy_tls_dir | default(tls_dir | default('/etc/tls')) }}
@@ -30,7 +31,7 @@
 
 - name: Copy TLS certificate, key and CA to all nodes
   ansible.builtin.copy:
-    content: "{{ (hostvars[groups[tls_group_name | default('master')][0]].tls_files[item.key] | b64decode) }}"
+    content: "{{ (tls_files[item.key] | b64decode) }}"
     dest: "{{ copy_tls_dir | default(tls_dir | default('/etc/tls')) }}/{{ item.filename }}"
     owner: "{{ copy_tls_owner | default(tls_owner | default('postgres')) }}"
     group: "{{ copy_tls_owner | default(tls_owner | default('postgres')) }}"

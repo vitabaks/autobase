@@ -38,34 +38,44 @@ The Console stack consists of the following core components:
 
 ## Quick Start
 
-1. Clone the repository:
+1. Create DNS A record: point your domain to Autobase IP address.
+
+2. Clone the repository:
 
    ```sh
    git clone https://github.com/vitabaks/autobase.git
    ```
 
-2. Navigate to the `console` directory:
+3. Navigate to the `console` directory:
 
    ```sh
    cd autobase/console
    ```
 
-3. Setup environment:
+4. Setup environment:
 
    ```sh
    cp .env.example .env
    ```
 
-4. Configure your `.env`:
+5. Configure your `.env`:
 
    ```sh
-   DOMAIN=your-domain.com  # Set your domain
-   EMAIL=your@email.com    # Required for Caddy SSL
-   AUTH_TOKEN=your-token   # Your authorization token
+   DOMAIN=autobase.your-domain.com  # Set your domain (required for Caddy SSL)
+   EMAIL=admin@your-domain.com      # Set your email (required for Caddy SSL)
+   AUTH_TOKEN=your-secret-token     # Your authorization token
    ```
 
-5. Run Docker Compose:
+6. Run Docker Compose:
+
    ```sh
+   # with Caddy proxy
+   docker compose -f docker-compose.caddy.yml up -d
+   ```
+
+	Or, without automatic handling of SSL certificates for your domain
+   ```sh
+   # without Caddy proxy
    docker compose up -d
    ```
 
@@ -75,5 +85,4 @@ The Console stack consists of the following core components:
 - Data is persisted in Docker volumes: `console_postgres` and `caddy_data`
 - The Caddy network is created automatically by Docker Compose
 - All services are configured to restart automatically unless stopped manually.
-- Additional [environment variables](https://github.com/vitabaks/autobase/tree/master/console/service#configuration) can be configured based on your project needs
-- Using the `latest` versions is great for testing. For production installations, specify release versions in the [docker-compose.yml](docker-compose.yml) file.
+- Additional [environment variables](https://github.com/vitabaks/autobase/tree/master/console/service#configuration) can be configured based on your project needs.

@@ -10,13 +10,14 @@
 
     - name: Setting kernel parameters
       ansible.posix.sysctl:
-        name: "{{ item.name }}"
+        name: "{{ item.option | default(item.name) }}"
         value: "{{ item.value }}"
         sysctl_set: true
         state: present
+        sysctl_file: "{{ sysctl_file | default('/etc/sysctl.d/autobase.sysctl.conf') }}"
         reload: true
       loop: "{{ sysctl_conf_dynamic_var | default([]) | unique }}"
       when: sysctl_conf_dynamic_var | default([]) | length > 0
   ignore_errors: true
-  when: sysctl_set|bool
+  when: sysctl_set | bool
   tags: sysctl, kernel

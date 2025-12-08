@@ -7,7 +7,7 @@
     enabled: true
   listen: "restart vip-manager"
 
-- name: Wait for the cluster ip address (VIP) "{{ cluster_vip }}" is running
+- name: Wait for the cluster ip address (VIP) "{{ cluster_vip | default('') }}" is running
   ansible.builtin.wait_for:
     host: "{{ cluster_vip }}"
     port: "{{ pgbouncer_listen_port if pgbouncer_install | bool else postgresql_port }}"

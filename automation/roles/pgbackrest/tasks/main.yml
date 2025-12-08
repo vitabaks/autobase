@@ -7,81 +7,50 @@
     - pgbackrest_auto_conf | default(true) | bool # to be able to disable auto backup settings
   tags: pgbackrest, pgbackrest_conf
 
+# GCS (if 'cloud_provider=gcp')
+- block:
+    # if 'gcs_key_file' is not defined, copy GCS key file from GCP_SERVICE_ACCOUNT_CONTENTS environment variable.
+    - block:
+        - name: "Get GCP service account contents from localhost"
+          ansible.builtin.set_fact:
+            gcp_service_account_contents: "{{ lookup('ansible.builtin.env', 'GCP_SERVICE_ACCOUNT_CONTENTS') }}"
+          delegate_to: localhost
+          run_once: true # noqa run-once
+          no_log: true # do not output GCP service account contents to the ansible log
+
+        - name: "Copy GCP service account contents to {{ pgbackrest_gcs_key | default((postgresql_home_dir | default('')) ~ '/gcs-key.json') }}"
+          ansible.builtin.copy:
+            content: "{{ gcp_service_account_contents }}"
+            dest: "{{ pgbackrest_gcs_key | default(postgresql_home_dir + '/gcs-key.json') }}"
+            mode: "0600"
+            owner: "postgres"
+            group: "postgres"
+          no_log: true # do not output GCP service account contents to the ansible log
+      when: gcs_key_file is not defined
+
+    # if 'gcs_key_file' is defined, copy this GCS key file.
+    - name: "Copy GCS key file to {{ pgbackrest_gcs_key | default((postgresql_home_dir | default('')) ~ '/gcs-key.json') }}"
+      ansible.builtin.copy:
+        src: "{{ gcs_key_file }}"
+        dest: "{{ pgbackrest_gcs_key | default(postgresql_home_dir + '/gcs-key.json') }}"
+        mode: "0600"
+        owner: "postgres"
+        group: "postgres"
+      no_log: true # do not output GCP service account contents to the ansible log
+      when: gcs_key_file is defined and gcs_key_file | length > 0
+  when: cloud_provider | default('') | lower == 'gcp'
+
 - name: Gather package facts
   ansible.builtin.package_facts:
     manager: auto
   when: ansible_facts.packages is not defined
   check_mode: false
 
-- block:
-    # Debian pgdg repo
-    - name: Ensure required packages are present
-      ansible.builtin.apt:
-        name: "{{ item }}"
-        state: present
-      register: apt_status
-      until: apt_status is success
-      delay: 5
-      retries: 3
-      loop:
-        - gnupg
-        - apt-transport-https
-        - python3-debian
-      when: item not in ansible_facts.packages
-
-    - name: Add pgdg repository and signing key
-      ansible.builtin.deb822_repository:
-        name: "{{ pgbackrest_repo_name | default('apt-postgresql-org') }}"
-        types: [deb]
-        uris: "https://apt.postgresql.org/pub/repos/apt/"
-        signed_by: "https://apt.postgresql.org/pub/repos/apt/ACCC4CF8.asc"
-        suites: "{{ ansible_distribution_release }}-pgdg"
-        components: [main]
-        state: present
-        enabled: true
-      when: ansible_os_family == "Debian"
-
-    - name: Update apt cache
-      ansible.builtin.apt:
-        update_cache: true
-      register: apt_status
-      until: apt_status is success
-      delay: 5
-      retries: 3
-  environment: "{{ proxy_env | default({}) }}"
-  when:
-    - installation_method == "packages"
-    - ansible_os_family == "Debian"
-    - pgbackrest_install_from_pgdg_repo|bool
-  tags: pgbackrest, pgbackrest_repo, pgbackrest_install
-
-- block:
-    # RedHat pgdg repo
-    - name: Get pgdg-redhat-repo-latest.noarch.rpm
-      ansible.builtin.get_url:
-        url: "https://download.postgresql.org/pub/repos/yum/reporpms/EL-{{ ansible_distribution_major_version }}-{{ pgdg_architecture_map[ansible_architecture] }}/pgdg-redhat-repo-latest.noarch.rpm" # yamllint disable rule:line-length
-        dest: /tmp/
-        timeout: 30
-        validate_certs: false
-
-    - name: Make sure pgdg repository is installed
-      ansible.builtin.package:
-        name: /tmp/pgdg-redhat-repo-latest.noarch.rpm
-        state: present
-      register: package_status
-      until: package_status is success
-      delay: 5
-      retries: 3
-      when:
-        - not ansible_check_mode
-
-    - name: Clean dnf cache
-      ansible.builtin.command: dnf clean all
-  environment: "{{ proxy_env | default({}) }}"
-  when:
-    - installation_method == "packages"
-    - ansible_os_family == "RedHat"
-    - pgbackrest_install_from_pgdg_repo|bool
+- name: Add repositories, if it wasn't done yet
+  ansible.builtin.import_role:
+    name: vitabaks.autobase.add_repository
+    allow_duplicates: false
+  when: pgbackrest_install_from_pgdg_repo | bool
   tags: pgbackrest, pgbackrest_repo, pgbackrest_install
 
 - name: Install pgbackrest
@@ -144,7 +113,7 @@
         group: postgres
         mode: "0750"
 
-    - name: "Generate conf file {{ pgbackrest_conf_file }}"
+    - name: "Generate conf file {{ pgbackrest_conf_file | default('') }}"
       ansible.builtin.template:
         src: pgbackrest.conf.j2
         dest: "{{ pgbackrest_conf_file }}"
@@ -198,7 +167,7 @@
         group: "{{ pgbackrest_repo_user }}"
         mode: "0750"
 
-    - name: "Generate global conf file {{ pgbackrest_conf_file }}"
+    - name: "Generate global conf file {{ pgbackrest_conf_file | default('') }}"
       ansible.builtin.template:
         src: pgbackrest.server.conf.j2
         dest: "{{ pgbackrest_conf_file }}"
@@ -206,7 +175,7 @@
         group: "{{ pgbackrest_repo_user }}"
         mode: "0644"
 
-    - name: "Generate stanza conf file {{ pgbackrest_conf_file | dirname }}/conf.d/{{ pgbackrest_stanza }}.conf"
+    - name: "Generate stanza conf file {{ pgbackrest_conf_file | default('') | dirname }}/conf.d/{{ pgbackrest_stanza | default('') }}.conf"
       ansible.builtin.template:
         src: pgbackrest.server.stanza.conf.j2
         dest: "{{ pgbackrest_conf_file | dirname }}/conf.d/{{ pgbackrest_stanza }}.conf"
@@ -228,14 +197,23 @@
     - not ansible_check_mode
   tags: pgbackrest, pgbackrest_ssh_keys
 
-- ansible.builtin.import_tasks: cron.yml
+- name: Add pgbackrest cron jobs on database server
+  ansible.builtin.include_role:
+    name: vitabaks.autobase.cron
+  vars:
+    cron_jobs: "{{ pgbackrest_cron_jobs }}"
   when:
-    - pgbackrest_cron_jobs is defined
-    - pgbackrest_cron_jobs | length > 0
-  tags: pgbackrest, pgbackrest_cron
-# - import_tasks: bootstrap_script.yml
-#  when:
-#    - patroni_cluster_bootstrap_method is defined
-#    - patroni_cluster_bootstrap_method == "pgbackrest"
-#    - "'postgres_cluster' in group_names"
-#  tags: pgbackrest, pgbackrest_bootstrap_script
+    - "'postgres_cluster' in group_names"
+    - pgbackrest_repo_host | default('') | length < 1
+  tags: pgbackrest_cron
+
+# Dedicated pgbackrest server (if "repo_host" is set)
+- name: Add pgbackrest cron jobs on pgbackrest server
+  ansible.builtin.include_role:
+    name: vitabaks.autobase.cron
+  vars:
+    cron_jobs: "{{ pgbackrest_cron_jobs }}"
+  when:
+    - "'pgbackrest' in group_names"
+    - pgbackrest_repo_host | default('') | length > 0
+  tags: pgbackrest_cron

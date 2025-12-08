@@ -15,7 +15,7 @@
         groups['balancers']
         | default([])
         | map('extract', hostvars, 'inventory_hostname')
-        | join(',')
+        | join(', ')
       }}
 
 # 🖨️ Debugging the established haproxy_nodes
@@ -32,7 +32,7 @@
     that:
       - "haproxy_nodes is not none"
       - "haproxy_nodes != 'N/A'"
-      - "haproxy_nodes == 'una.name,10.172.0.21,10.172.0.22'"
+      - "haproxy_nodes == 'una.name, 10.172.0.21, 10.172.0.22'"
     fail_msg: "Test failed: haproxy_nodes is not set correctly."
     success_msg: "Test passed: haproxy_nodes is set correctly."
 
@@ -49,7 +49,7 @@
         groups['postgres_cluster']
         | default([])
         | map('extract', hostvars, 'inventory_hostname')
-        | join(',')
+        | join(', ')
       }}
 
 # 🖨️ Debugging the established postgres_cluster_nodes
@@ -66,6 +66,6 @@
     that:
       - "postgres_cluster_nodes is not none"
       - "postgres_cluster_nodes != 'N/A'"
-      - "postgres_cluster_nodes == 'una.name,10.172.0.21,10.172.0.22'"
+      - "postgres_cluster_nodes == 'una.name, 10.172.0.21, 10.172.0.22'"
     fail_msg: "Test failed: postgres_cluster_nodes is not set correctly."
     success_msg: "Test passed: postgres_cluster_nodes is set correctly."

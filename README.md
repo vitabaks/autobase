@@ -9,12 +9,6 @@
 [![Flake8](https://github.com/vitabaks/autobase/actions/workflows/flake8.yml/badge.svg)](https://github.com/vitabaks/autobase/actions/workflows/flake8.yml)
 [![Molecule](https://github.com/vitabaks/autobase/actions/workflows/molecule.yml/badge.svg)](https://github.com/vitabaks/autobase/actions/workflows/molecule.yml)
 [![GitHub license](https://img.shields.io/github/license/vitabaks/autobase)](https://github.com/vitabaks/autobase/blob/master/LICENSE)
-<a href="https://algora.io/autobase/bounties/new">
-<img
-    src="https://img.shields.io/endpoint?url=https%3A%2F%2Falgora.io%2Fapi%2Fshields%2Fautobase%2Fbounties%3Fstatus%3Dopen"
-    alt="Open Bounties"
-  />
-</a>
 
 **Autobase for PostgreSQL®** is an open-source alternative to cloud-managed databases (DBaaS) such as Amazon RDS, Google Cloud SQL, Azure Database, and more.
 
@@ -22,124 +16,13 @@ This automated database platform enables you to create and manage production-rea
 
 **Automate deployment, failover, backups, restore, upgrades, scaling, and more with ease.**
 
-You can find a version of this documentation that is searchable and also easier to navigate at [autobase.tech](https://autobase.tech)
+## Documentation
 
----
+Autobase documentation can be found [here](https://autobase.tech). Feedback, bug-reports, requests... [welcome](https://github.com/vitabaks/autobase/issues)!
 
-### Project Status
-
-Autobase has been actively developed for over 5 years (since 2019) and is trusted by companies worldwide, including in production environments with high loads and demanding reliability requirements. Our mission is to provide an open-source DBaaS that delivers reliability, flexibility, and cost-efficiency.
-
-The project will remain open-source forever, but to ensure its continuous growth and development, we rely on [sponsorship](https://autobase.tech/docs/sponsor). By subscribing to [Autobase packages](https://autobase.tech/docs/support), you gain access to personalized support from the project authors and PostgreSQL experts, ensuring the reliability of your database infrastructure.
-
----
-
-### Supported setups of Postgres Cluster
-
-![pg_cluster_scheme](images/pg_cluster_scheme.png#gh-light-mode-only)
-![pg_cluster_scheme](images/pg_cluster_scheme.dark_mode.png#gh-dark-mode-only)
-
-You have three schemes available for deployment:
-
-#### 1. PostgreSQL High-Availability only
-
-This is simple scheme without load balancing.
-
-##### Components:
-
-- [**Patroni**](https://github.com/zalando/patroni) is a template for you to create your own customized, high-availability solution using Python and - for maximum accessibility - a distributed configuration store like ZooKeeper, etcd, Consul or Kubernetes. Used for automate the management of PostgreSQL instances and auto failover.
-
-- [**etcd**](https://github.com/etcd-io/etcd) is a distributed reliable key-value store for the most critical data of a distributed system. etcd is written in Go and uses the [Raft](https://raft.github.io/) consensus algorithm to manage a highly-available replicated log. It is used by Patroni to store information about the status of the cluster and PostgreSQL configuration parameters. [What is Distributed Consensus?](https://thesecretlivesofdata.com/raft/)
-
-- [**vip-manager**](https://github.com/cybertec-postgresql/vip-manager) (_optional, if the `cluster_vip` variable is specified_) is a service that gets started on all cluster nodes and connects to the DCS. If the local node owns the leader-key, vip-manager starts the configured VIP. In case of a failover, vip-manager removes the VIP on the old leader and the corresponding service on the new leader starts it there. Used to provide a single entry point (VIP) for database access.
-
-- [**PgBouncer**](https://pgbouncer.github.io/features.html) (optional, if the `pgbouncer_install` variable is `true`) is a connection pooler for PostgreSQL.
-
-#### 2. PostgreSQL High-Availability with Load Balancing
-
-This scheme enables load distribution for read operations and also allows for scaling out the cluster with read-only replicas.
-
-When deploying to cloud providers such as AWS, GCP, Azure, DigitalOcean, and Hetzner Cloud, a cloud load balancer is automatically created by default to provide a single entry point to the database (controlled by the `cloud_load_balancer` variable).
-
-For non-cloud environments, such as when deploying on Your Own Machines, the HAProxy load balancer is available for use. To enable it, set `with_haproxy_load_balancing: true` variable.
-
-> [!NOTE]
-> Your application must have support sending read requests to a custom port 5001, and write requests to port 5000.
-
-List of ports when using HAProxy:
-
-- port 5000 (read / write) master
-- port 5001 (read only) all replicas
-- port 5002 (read only) synchronous replica only
-- port 5003 (read only) asynchronous replicas only
-
-##### Components of HAProxy load balancing:
-
-- [**HAProxy**](https://www.haproxy.org/) is a free, very fast and reliable solution offering high availability, load balancing, and proxying for TCP and HTTP-based applications.
-
-- [**confd**](https://github.com/kelseyhightower/confd) manage local application configuration files using templates and data from etcd or consul. Used to automate HAProxy configuration file management.
-
-- [**Keepalived**](https://github.com/acassen/keepalived) (_optional, if the `cluster_vip` variable is specified_) provides a virtual high-available IP address (VIP) and single entry point for databases access.
-  Implementing VRRP (Virtual Router Redundancy Protocol) for Linux. In our configuration keepalived checks the status of the HAProxy service and in case of a failure delegates the VIP to another server in the cluster.
-
-#### 3. PostgreSQL High-Availability with Consul Service Discovery
-
-To use this scheme, specify `dcs_type: consul` variable.
-
-This scheme is suitable for master-only access and for load balancing (using DNS) for reading across replicas. Consul [Service Discovery](https://developer.hashicorp.com/consul/docs/concepts/service-discovery) with [DNS resolving ](https://developer.hashicorp.com/consul/docs/discovery/dns) is used as a client access point to the database.
-
-Client access point (example):
-
-- `master.postgres-cluster.service.consul`
-- `replica.postgres-cluster.service.consul`
-
-Besides, it can be useful for a distributed cluster across different data centers. We can specify in advance which data center the database server is located in and then use this for applications running in the same data center.
-
-Example: `replica.postgres-cluster.service.dc1.consul`, `replica.postgres-cluster.service.dc2.consul`
-
-It requires the installation of a consul in client mode on each application server for service DNS resolution (or use [forward DNS](https://developer.hashicorp.com/consul/tutorials/networking/dns-forwarding?utm_source=docs) to the remote consul server instead of installing a local consul client).
-
-## Compatibility
-
-###### Supported Linux Distributions:
-
-- **Debian**: 11, 12, 13
-- **Ubuntu**: 22.04, 24.04
-- **CentOS Stream**: 9, 10
-- **Oracle Linux**: 8, 9, 10
-- **Rocky Linux**: 8, 9, 10
-- **AlmaLinux**: 8, 9, 10
-
-Architecture: x86_64/amd64, arm64/aarch64
-
-###### PostgreSQL versions:
-
-all supported PostgreSQL versions
-
-:white_check_mark: tested, works fine: PostgreSQL 10, 11, 12, 13, 14, 15, 16, 17
-
-_Table of results of daily automated testing of cluster deployment:_
-| Distribution | Test result |
-|--------------|:----------:|
-| Debian 12 | [![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/vitabaks/autobase/schedule_pg_debian12.yml?branch=master)](https://github.com/vitabaks/autobase/actions/workflows/schedule_pg_debian12.yml) |
-| Debian 13 | [![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/vitabaks/autobase/schedule_pg_debian13.yml?branch=master)](https://github.com/vitabaks/autobase/actions/workflows/schedule_pg_debian13.yml) |
-| Ubuntu 22.04 | [![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/vitabaks/autobase/schedule_pg_ubuntu2204.yml?branch=master)](https://github.com/vitabaks/autobase/actions/workflows/schedule_pg_ubuntu2204.yml) |
-| Ubuntu 24.04 | [![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/vitabaks/autobase/schedule_pg_ubuntu2204.yml?branch=master)](https://github.com/vitabaks/autobase/actions/workflows/schedule_pg_ubuntu2404.yml) |
-| CentOS Stream 9 | [![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/vitabaks/autobase/schedule_pg_centosstream9.yml?branch=master)](https://github.com/vitabaks/autobase/actions/workflows/schedule_pg_centosstream9.yml) |
-| CentOS Stream 10 | [![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/vitabaks/autobase/schedule_pg_centosstream10.yml?branch=master)](https://github.com/vitabaks/autobase/actions/workflows/schedule_pg_centosstream10.yml) |
-| Oracle Linux 9 | [![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/vitabaks/autobase/schedule_pg_oracle_linux9.yml?branch=master)](https://github.com/vitabaks/autobase/actions/workflows/schedule_pg_oracle_linux9.yml) |
-| Oracle Linux 10 | [![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/vitabaks/autobase/schedule_pg_oracle_linux10.yml?branch=master)](https://github.com/vitabaks/autobase/actions/workflows/schedule_pg_oracle_linux10.yml) |
-| Rocky Linux 9 | [![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/vitabaks/autobase/schedule_pg_rockylinux9.yml?branch=master)](https://github.com/vitabaks/autobase/actions/workflows/schedule_pg_rockylinux9.yml) |
-| Rocky Linux 10 | [![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/vitabaks/autobase/schedule_pg_rockylinux10.yml?branch=master)](https://github.com/vitabaks/autobase/actions/workflows/schedule_pg_rockylinux10.yml) |
-| AlmaLinux 9 | [![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/vitabaks/autobase/schedule_pg_almalinux9.yml?branch=master)](https://github.com/vitabaks/autobase/actions/workflows/schedule_pg_almalinux9.yml) |
-| AlmaLinux 10 | [![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/vitabaks/autobase/schedule_pg_almalinux10.yml?branch=master)](https://github.com/vitabaks/autobase/actions/workflows/schedule_pg_almalinux10.yml) |
-
-## Getting Started
+## Quick start
 
 You have the option to deploy Postgres clusters using the Console (UI), command line, or GitOps.
-
-> [!TIP]
-> 📩 Contact us at info@autobase.tech, and our team will help you implement Autobase into your infrastructure.
 
 ### Console (UI)
 
@@ -150,8 +33,6 @@ To run the autobase console, execute the following command:
 ```
 docker run -d --name autobase-console \
   --publish 80:80 \
-  --publish 8080:8080 \
-  --env PG_CONSOLE_API_URL=http://localhost:8080/api/v1 \
   --env PG_CONSOLE_AUTHORIZATION_TOKEN=secret_token \
   --env PG_CONSOLE_DOCKER_IMAGE=autobase/automation:latest \
   --volume console_postgres:/var/lib/postgresql \
@@ -162,9 +43,6 @@ docker run -d --name autobase-console \
 ```
 
 > [!NOTE]
-> If you are running the console on a dedicated server (rather than on your laptop), replace `localhost` with the server’s IP address in the `PG_CONSOLE_API_URL` variable.
-
-> [!TIP]
 > It is recommended to run the console in the same network as your database servers to enable monitoring of the cluster status.
 
 Alternatively, you can use [Docker Compose](console/README.md).
@@ -187,25 +65,26 @@ While the Console (UI) is designed for ease of use and is suitable for most user
 > [!NOTE]
 > All dependencies and source code are bundled into the `autobase/automation` docker image. This means the deployment process comes down to simply launching a container with a few variable overrides.
 
-1. Prepare your inventory file
+1. Prepare your inventory
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/vitabaks/autobase/refs/heads/master/automation/inventory.example \
   --output ./inventory
 ```
 
-Specify the hosts and appropriate connection settings for your environment, such as ansible_user, ansible_ssh_pass, or ansible_ssh_private_key_file.
+Specify IP addresses and appropriate connection settings for your environment, such as ansible_user, ansible_ssh_pass, or ansible_ssh_private_key_file.
 
 ```bash
 nano ./inventory
 ```
 
-2. Prepare your variables file
+2. Prepare your variables
 
-Refer to the default [variables](https://github.com/vitabaks/autobase/blob/master/automation/roles/common/defaults/main.yml) for all configurable options. To override defaults, copy the relevant variables into your vars file.
+Refer to the default [variables](https://github.com/vitabaks/autobase/blob/master/automation/roles/common/defaults/main.yml) for all configurable options. Override them as needed using group_vars, host_vars, or directly in the inventory file.
 
 ```bash
-nano ./vars.yml
+mkdir -p ./group_vars
+nano ./group_vars/all.yml
 ```
 
 3. Run the deployment command
@@ -213,12 +92,11 @@ nano ./vars.yml
 ```bash
 docker run --rm -it \
   -e ANSIBLE_SSH_ARGS="-F none" \
-  -e ANSIBLE_INVENTORY=/autobase/inventory \
-  -v $PWD/inventory:/autobase/inventory \
-  -v $PWD/vars.yml:/vars.yml \
+  -e ANSIBLE_INVENTORY=/project/inventory \
+  -v $PWD:/project \
   -v $HOME/.ssh:/root/.ssh \
   autobase/automation:latest \
-    ansible-playbook deploy_pgcluster.yml -e "@/vars.yml"
+    ansible-playbook deploy_pgcluster.yml
 ```
 
 Tip: Start with `deploy_pgcluster` for initial provisioning, then use `config_pgcluster` for further configuration changes.
@@ -238,6 +116,59 @@ Available variables:
 ⚠️ Caution: Only use this in non-production or when you’re absolutely sure.
 
 </p></details>
+
+> [!TIP]
+> 📩 Contact us at info@autobase.tech, and our team will help you implement Autobase into your infrastructure.
+
+### Supported setups of Postgres Cluster
+
+For a detailed description of the cluster components, visit the [Architecture](https://autobase.tech/docs/overview/architecture) page.
+
+![pg_cluster_scheme](images/pg_cluster_scheme.png#gh-light-mode-only)
+![pg_cluster_scheme](images/pg_cluster_scheme.dark_mode.png#gh-dark-mode-only)
+
+## Compatibility
+
+RedHat and Debian based distros.
+
+###### Supported Linux Distributions:
+
+- **Debian**: 11, 12, 13
+- **Ubuntu**: 22.04, 24.04
+- **CentOS Stream**: 9, 10
+- **Oracle Linux**: 8, 9, 10
+- **Rocky Linux**: 8, 9, 10
+- **AlmaLinux**: 8, 9, 10
+
+Architecture: x86_64 (amd64), aarch64 (arm64).
+
+###### PostgreSQL versions:
+
+all supported PostgreSQL versions
+
+:white_check_mark: tested, works fine: PostgreSQL 10, 11, 12, 13, 14, 15, 16, 17, 18
+
+_Table of results of daily automated testing of cluster deployment:_
+| Distribution | Test result |
+|--------------|:----------:|
+| Debian 12 | [![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/vitabaks/autobase/schedule_pg_debian12.yml?branch=master)](https://github.com/vitabaks/autobase/actions/workflows/schedule_pg_debian12.yml) |
+| Debian 13 | [![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/vitabaks/autobase/schedule_pg_debian13.yml?branch=master)](https://github.com/vitabaks/autobase/actions/workflows/schedule_pg_debian13.yml) |
+| Ubuntu 22.04 | [![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/vitabaks/autobase/schedule_pg_ubuntu2204.yml?branch=master)](https://github.com/vitabaks/autobase/actions/workflows/schedule_pg_ubuntu2204.yml) |
+| Ubuntu 24.04 | [![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/vitabaks/autobase/schedule_pg_ubuntu2204.yml?branch=master)](https://github.com/vitabaks/autobase/actions/workflows/schedule_pg_ubuntu2404.yml) |
+| CentOS Stream 9 | [![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/vitabaks/autobase/schedule_pg_centosstream9.yml?branch=master)](https://github.com/vitabaks/autobase/actions/workflows/schedule_pg_centosstream9.yml) |
+| CentOS Stream 10 | [![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/vitabaks/autobase/schedule_pg_centosstream10.yml?branch=master)](https://github.com/vitabaks/autobase/actions/workflows/schedule_pg_centosstream10.yml) |
+| Oracle Linux 9 | [![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/vitabaks/autobase/schedule_pg_oracle_linux9.yml?branch=master)](https://github.com/vitabaks/autobase/actions/workflows/schedule_pg_oracle_linux9.yml) |
+| Oracle Linux 10 | [![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/vitabaks/autobase/schedule_pg_oracle_linux10.yml?branch=master)](https://github.com/vitabaks/autobase/actions/workflows/schedule_pg_oracle_linux10.yml) |
+| Rocky Linux 9 | [![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/vitabaks/autobase/schedule_pg_rockylinux9.yml?branch=master)](https://github.com/vitabaks/autobase/actions/workflows/schedule_pg_rockylinux9.yml) |
+| Rocky Linux 10 | [![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/vitabaks/autobase/schedule_pg_rockylinux10.yml?branch=master)](https://github.com/vitabaks/autobase/actions/workflows/schedule_pg_rockylinux10.yml) |
+| AlmaLinux 9 | [![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/vitabaks/autobase/schedule_pg_almalinux9.yml?branch=master)](https://github.com/vitabaks/autobase/actions/workflows/schedule_pg_almalinux9.yml) |
+| AlmaLinux 10 | [![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/vitabaks/autobase/schedule_pg_almalinux10.yml?branch=master)](https://github.com/vitabaks/autobase/actions/workflows/schedule_pg_almalinux10.yml) |
+
+## Project Status
+
+Autobase has been actively developed for over 5 years (since 2019) and is trusted by companies worldwide, including in production environments with high loads and demanding reliability requirements. Our mission is to provide an open-source DBaaS that delivers reliability, flexibility, and cost-efficiency.
+
+**The project will remain open-source forever**, but to ensure its continuous growth and development, we rely on [sponsorship](https://autobase.tech/docs/sponsor). By subscribing to [Autobase packages](https://autobase.tech/docs/support), you gain access to personalized support from the project authors and PostgreSQL experts, ensuring the reliability of your database infrastructure.
 
 ## Star us
 
@@ -271,9 +202,5 @@ Licensed under the MIT License. See the [LICENSE](./LICENSE) file for details.
 
 ## Author
 
-Vitaliy Kukharik (PostgreSQL DBA) \
+Vitaliy Kukharik (PostgreSQL Expert, Founder Autobase.tech) \
 vitaliy@autobase.tech
-
-## Feedback, bug-reports, requests, ...
-
-Are [welcome](https://github.com/vitabaks/autobase/issues)!

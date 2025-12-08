@@ -1,58 +1,58 @@
 ---
 services:
-  caddy:
-    image: lucaslorentz/caddy-docker-proxy:ci-alpine
-    container_name: caddy
-    ports:
-      - 80:80
-      - 443:443
-    environment:
-      - CADDY_INGRESS_NETWORKS=caddy
-    networks:
-      - caddy
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - caddy_data:/data
-    restart: unless-stopped
-    labels:
-      caddy.email: ${EMAIL}
-
   autobase-console-api:
-    image: autobase/console_api:latest
+    image: autobase/console_api:2.5.1
     container_name: autobase-console-api
+    healthcheck:
+      test: ["CMD", "curl", "-fsS",
+            "-H", "accept: application/json",
+            "-H", "Authorization: Bearer ${AUTH_TOKEN}",
+            "http://localhost:8080/api/v1/version"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     restart: unless-stopped
+    depends_on:
+      autobase-console-db:
+        condition: service_healthy
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - /tmp/ansible:/tmp/ansible
     environment:
       - PG_CONSOLE_AUTHORIZATION_TOKEN=${AUTH_TOKEN}
-      - PG_CONSOLE_DB_HOST=autobase-console-db
       - PG_CONSOLE_LOGGER_LEVEL=${PG_CONSOLE_LOGGER_LEVEL:-INFO}
-      - PG_CONSOLE_DOCKER_IMAGE=autobase/automation:latest
+      - PG_CONSOLE_DB_HOST=autobase-console-db
     networks:
       - autobase
-      - caddy
 
   autobase-console-ui:
-    image: autobase/console_ui:latest
+    image: autobase/console_ui:2.5.1
     container_name: autobase-console-ui
+    ports:
+      - 80:80
+    healthcheck:
+      test: [ "CMD", "curl", "http://localhost:80/" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     restart: unless-stopped
-    labels:
-      caddy: ${DOMAIN}
-      caddy.route_0: /api/v1/*
-      caddy.route_0.reverse_proxy: autobase-console-api:8080
-      caddy.route_1: /*
-      caddy.route_1.reverse_proxy: autobase-console-ui:80
+    depends_on:
+      autobase-console-api:
+        condition: service_healthy
     environment:
-      - PG_CONSOLE_API_URL=/api/v1
       - PG_CONSOLE_AUTHORIZATION_TOKEN=${AUTH_TOKEN}
+      - PG_CONSOLE_API_HOST=autobase-console-api
     networks:
       - autobase
-      - caddy
 
   autobase-console-db:
-    image: autobase/console_db:latest
+    image: autobase/console_db:2.5.1
     container_name: autobase-console-db
+    healthcheck:
+      test: pg_isready -U postgres -h 127.0.0.1
+      interval: 5s
+      timeout: 5s
+      retries: 10
     restart: unless-stopped
     volumes:
       - console_postgres:/var/lib/postgresql
@@ -62,11 +62,7 @@ services:
 volumes:
   console_postgres:
     name: console_postgres
-  caddy_data:
-    name: caddy_data
 
 networks:
   autobase:
     name: autobase
-  caddy:
-    name: caddy

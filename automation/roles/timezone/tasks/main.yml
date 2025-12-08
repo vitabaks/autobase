@@ -17,7 +17,7 @@
         - installation_method == "packages"
         - "'tzdata' not in ansible_facts.packages"
 
-    - name: Set timezone to "{{ timezone }}"
+    - name: Set timezone to "{{ timezone | default('') }}"
       become: true
       become_method: sudo
       community.general.timezone:

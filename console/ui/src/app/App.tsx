@@ -5,7 +5,7 @@ import Router from '@app/router/Router.tsx';
 import { Provider } from 'react-redux';
 import { ToastContainer } from 'react-toastify';
 import { LocalizationProvider } from '@mui/x-date-pickers';
-import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFnsV3';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { store } from '@app/redux/store/store.ts';
 import { useAppSelector, useAppDispatch } from '@app/redux/store/hooks.ts';
 import { selectActualTheme } from '@app/redux/slices/themeSlice/themeSelectors.ts';

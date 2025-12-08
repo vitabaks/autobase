@@ -16,9 +16,11 @@
       become: true
       become_user: postgres
       ansible.builtin.command: >
-        {{ postgresql_bin_dir }}/psql -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc "CHECKPOINT"
+        {{ postgresql_bin_dir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc "CHECKPOINT"
+      environment:
+        PGPASSWORD: "{{ patroni_superuser_password }}"
 
-    - name: "Stop Patroni service on the Cluster Replica ({{ ansible_hostname }})"
+    - name: "Stop Patroni service on the Cluster Replica ({{ ansible_hostname | default('') }})"
       become: true
       become_user: root
       ansible.builtin.service:
@@ -32,9 +34,11 @@
       become: true
       become_user: postgres
       ansible.builtin.command: >
-        {{ postgresql_bin_dir }}/psql -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc "CHECKPOINT"
+        {{ postgresql_bin_dir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc "CHECKPOINT"
+      environment:
+        PGPASSWORD: "{{ patroni_superuser_password }}"
 
-    - name: "Stop Patroni service on the old Cluster Leader ({{ ansible_hostname }})"
+    - name: "Stop Patroni service on the old Cluster Leader ({{ ansible_hostname | default('') }})"
       become: true
       become_user: root
       ansible.builtin.service:

@@ -5,8 +5,6 @@ on:
   push:
     branches:
       - master
-    tags:
-      - "*"
   pull_request:
     branches:
       - master
@@ -38,12 +36,12 @@ jobs:
           fi
 
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
-          python-version: "3.13"
+          python-version: "3.14"
 
       - name: Install dependencies
         run: make bootstrap-dev
@@ -56,6 +54,7 @@ jobs:
         env:
           TAG: ${{ env.TAG }}
 
+      # push latest image
       - name: Run Docker push
         if: ${{ env.DOCKER_REGISTRY_USER != '' && env.DOCKER_REGISTRY_PASSWORD != '' && github.event_name != 'pull_request' }}
         run: make docker-push

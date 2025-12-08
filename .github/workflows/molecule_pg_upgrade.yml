@@ -8,14 +8,15 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    if: ${{ github.repository_owner == 'vitabaks' || github.event_name == 'workflow_dispatch' }}
     strategy:
       fail-fast: false
       matrix:
         config:
-          - distro: debian12
+          - distro: debian13
             tag: latest
             namespace: geerlingguy
-          - distro: debian11
+          - distro: debian12
             tag: latest
             namespace: geerlingguy
           - distro: ubuntu2404
@@ -24,39 +25,43 @@ jobs:
           - distro: ubuntu2204
             tag: latest
             namespace: geerlingguy
-          - distro: rockylinux8
-            tag: latest
-            namespace: geerlingguy
-          - distro: rockylinux9
-            tag: latest
-            namespace: geerlingguy
-          - distro: almalinux8
-            tag: latest
-            namespace: glillico
-          - distro: almalinux9
-            tag: latest
-            namespace: glillico
-          - distro: oraclelinux8
-            tag: latest
-            namespace: glillico
-          - distro: oraclelinux9
-            tag: latest
-            namespace: glillico
-          - distro: centosstream9
-            tag: latest
-            namespace: glillico
+# TODO: error "rsync: connection unexpectedly closed" in GitHub CI environment (need to investigate)
+#          - distro: rockylinux10
+#            tag: latest
+#            namespace: geerlingguy
+#          - distro: rockylinux9
+#            tag: latest
+#            namespace: geerlingguy
+#          - distro: almalinux10
+#            tag: latest
+#            namespace: glillico
+#          - distro: almalinux9
+#            tag: latest
+#            namespace: glillico
+#          - distro: oraclelinux10
+#            tag: latest
+#            namespace: glillico
+#          - distro: oraclelinux9
+#            tag: latest
+#            namespace: glillico
+#          - distro: centosstream10
+#            tag: latest
+#            namespace: glillico
+#          - distro: centosstream9
+#            tag: latest
+#            namespace: glillico
 
     steps:
       - name: Set TERM environment variable
         run: echo "TERM=xterm" >> $GITHUB_ENV
 
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
-          python-version: "3.13"
+          python-version: "3.14"
 
       - name: Install dependencies
         run: make bootstrap-dev

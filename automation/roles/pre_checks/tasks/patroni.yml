@@ -1,7 +1,7 @@
 ---
 # when postgresql NOT exists
 - block:
-    - name: PostgreSQL | check that data directory "{{ postgresql_data_dir }}" is not initialized
+    - name: PostgreSQL | check that data directory "{{ postgresql_data_dir | default('') }}" is not initialized
       ansible.builtin.stat:
         path: "{{ postgresql_data_dir }}/PG_VERSION"
       register: pgdata_initialized
@@ -15,11 +15,11 @@
         - pgdata_initialized.stat.exists
   when:
     - not postgresql_exists | default(false) | bool
-    - not (postgresql_cluster_maintenance|default(false)|bool) # exclude for config_pgcluster.yml and add_pgnode.yml
+    - not (postgresql_cluster_maintenance|default(false)|bool) # exclude for config_pgcluster.yml and add_node.yml
 
 # when postgresql exists
 - block:
-    - name: PostgreSQL | check that data directory "{{ postgresql_data_dir }}" is initialized
+    - name: PostgreSQL | check that data directory "{{ postgresql_data_dir | default('') }}" is initialized
       ansible.builtin.stat:
         path: "{{ postgresql_data_dir }}/PG_VERSION"
       register: pgdata_initialized
@@ -32,4 +32,4 @@
         - not pgdata_initialized.stat.exists
   when:
     - postgresql_exists | default(false) | bool
-    - not (postgresql_cluster_maintenance|default(false)|bool) # exclude for config_pgcluster.yml and add_pgnode.yml
+    - not (postgresql_cluster_maintenance|default(false)|bool) # exclude for config_pgcluster.yml and add_node.yml

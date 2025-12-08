@@ -8,18 +8,19 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    if: ${{ github.repository_owner == 'vitabaks' || github.event_name == 'workflow_dispatch' }}
 
     steps:
       - name: Set TERM environment variable
         run: echo "TERM=xterm" >> $GITHUB_ENV
 
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
-          python-version: "3.13"
+          python-version: "3.14"
 
       - name: Install dependencies
         run: make bootstrap-dev

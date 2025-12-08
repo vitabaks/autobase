@@ -2,7 +2,7 @@
 platforms:
   - name: pgnode01
     hostname: pgnode01
-    image: "${IMAGE_NAMESPACE:-geerlingguy}/docker-${IMAGE_DISTRO:-ubuntu2204}-ansible:${IMAGE_TAG:-latest}"
+    image: "${IMAGE_NAMESPACE:-geerlingguy}/docker-${IMAGE_DISTRO:-ubuntu2404}-ansible:${IMAGE_TAG:-latest}"
     # docker_networks:  # TODO github.com/ansible-community/molecule/pull/2696
     # - name: test_docker_network
     # ipam_config:
@@ -38,7 +38,7 @@ platforms:
 
   - name: pgnode02
     hostname: pgnode02
-    image: "${IMAGE_NAMESPACE:-geerlingguy}/docker-${IMAGE_DISTRO:-ubuntu2204}-ansible:${IMAGE_TAG:-latest}"
+    image: "${IMAGE_NAMESPACE:-geerlingguy}/docker-${IMAGE_DISTRO:-ubuntu2404}-ansible:${IMAGE_TAG:-latest}"
     networks:
       - name: test_docker_network
         ipv4_address: 10.172.0.21
@@ -69,7 +69,7 @@ platforms:
 
   - name: pgnode03
     hostname: pgnode03
-    image: "${IMAGE_NAMESPACE:-geerlingguy}/docker-${IMAGE_DISTRO:-ubuntu2204}-ansible:${IMAGE_TAG:-latest}"
+    image: "${IMAGE_NAMESPACE:-geerlingguy}/docker-${IMAGE_DISTRO:-ubuntu2404}-ansible:${IMAGE_TAG:-latest}"
     networks:
       - name: test_docker_network
         ipv4_address: 10.172.0.22

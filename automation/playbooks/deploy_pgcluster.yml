@@ -4,9 +4,9 @@
   gather_facts: true
   any_errors_fatal: true
   pre_tasks:
-    # set_fact: 'pgbackrest_install' to configure Postgres backups (TODO: Add the ability to configure backups in the UI)
+    # set_fact: 'pgbackrest_install' to configure Postgres backups if not disabled explicitly.
     # Note: Applicable only for "aws", "gcp", "azure", because:
-    # "digitalocean" - requires the Spaces access keys ("AWS_ACCESS_KEY_ID" and "AWS_SECRET_ACCESS_KEY" variables)
+    # "digitalocean" - requires the Spaces access keys ("digital_ocean_spaces_access_key" and "digital_ocean_spaces_secret_key" variables)
     # "hetzner" - requires the S3 credentials ("hetzner_object_storage_access_key" and "hetzner_object_storage_secret_key" variables).
     - name: "Set variable: 'pgbackrest_install' to configure Postgres backups"
       ansible.builtin.set_fact:
@@ -70,7 +70,7 @@
       tags: always
 
     # if 'cloud_provider' is 'aws', 'gcp', or 'azure'
-    # set_fact: 'pgbackrest_install' to configure Postgres backups (TODO: Add the ability to configure backups in the UI)
+    # set_fact: 'pgbackrest_install' to configure Postgres backups if not disabled explicitly.
     - name: "Set variable: 'pgbackrest_install' to configure Postgres backups"
       ansible.builtin.set_fact:
         pgbackrest_install: true
@@ -210,12 +210,6 @@
 
     - role: vitabaks.autobase.hostname
 
-    - role: vitabaks.autobase.tls_certificate
-      vars:
-        tls_group_name: "postgres_cluster"
-        tls_cert_regenerate: "{{ patroni_tls_cert_regenerate | default(false) }}" # Do not generate new certificates if they already exist.
-      when: tls_cert_generate | default(true) | bool
-
     - role: vitabaks.autobase.docker
       when:
         - installation_method | default('packages') == "docker"
@@ -300,7 +294,7 @@
 
   pre_tasks:
     # if 'cloud_provider' is 'aws', 'gcp', or 'azure'
-    # set_fact: 'pgbackrest_install' to configure Postgres backups (TODO: Add the ability to configure backups in the UI)
+    # set_fact: 'pgbackrest_install' to configure Postgres backups if not disabled explicitly.
     - name: "Set variable: 'pgbackrest_install' to configure Postgres backups"
       ansible.builtin.set_fact:
         pgbackrest_install: true
@@ -322,7 +316,7 @@
 
   pre_tasks:
     # if 'cloud_provider' is 'aws', 'gcp', or 'azure'
-    # set_fact: 'pgbackrest_install' to configure Postgres backups (TODO: Add the ability to configure backups in the UI)
+    # set_fact: 'pgbackrest_install' to configure Postgres backups if not disabled explicitly.
     - name: "Set variable: 'pgbackrest_install' to configure Postgres backups"
       ansible.builtin.set_fact:
         pgbackrest_install: true
@@ -332,7 +326,15 @@
         - pgbackrest_auto_conf | default(true) | bool # to be able to disable auto backup settings
       tags: always
 
-    - name: Copy certificates
+    - name: Generate Postgres TLS certificate
+      ansible.builtin.include_role:
+        name: vitabaks.autobase.tls_certificate
+      vars:
+        tls_group_name: "postgres_cluster"
+        tls_cert_regenerate: "{{ postgres_tls_cert_regenerate | default(false) }}" # Do not generate new certificates if they already exist.
+      when: tls_cert_generate | default(true) | bool
+
+    - name: Copy Postgres TLS certificate, key and CA to all nodes
       ansible.builtin.include_role:
         name: vitabaks.autobase.tls_certificate
         tasks_from: copy

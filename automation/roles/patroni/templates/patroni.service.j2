@@ -19,13 +19,13 @@ EnvironmentFile=-/etc/patroni_env.conf
 # StandardOutput=syslog
 
 # Pre-commands to start watchdog device
-# Uncomment if watchdog is part of your patroni setup
+# Uses '+' prefix to run as root without sudo (avoids SELinux init_t -> sudo_exec_t denial)
 {% if patroni_watchdog_mode in ['automatic', 'required']  %}
-ExecStartPre=-/usr/bin/sudo /sbin/modprobe softdog
-ExecStartPre=-/usr/bin/sudo /bin/chown postgres {{ patroni_watchdog_device }}
+ExecStartPre=-+/sbin/modprobe softdog
+ExecStartPre=-+/bin/chown postgres {{ patroni_watchdog_device }}
 {% else %}
-#ExecStartPre=-/usr/bin/sudo /sbin/modprobe softdog
-#ExecStartPre=-/usr/bin/sudo /bin/chown postgres {{ patroni_watchdog_device }}
+#ExecStartPre=-+/sbin/modprobe softdog
+#ExecStartPre=-+/bin/chown postgres {{ patroni_watchdog_device }}
 {% endif %}
 
 # Start the patroni process

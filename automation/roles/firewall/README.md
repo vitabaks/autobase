@@ -1,16 +1,10 @@
 # Ansible Role: Firewall (iptables)
 
-[![Build Status](https://travis-ci.org/geerlingguy/ansible-role-firewall.svg?branch=master)](https://travis-ci.org/geerlingguy/ansible-role-firewall)
-
-Installs an iptables-based firewall for Linux. Supports both IPv4 (`iptables`) and IPv6 (`ip6tables`).
+Installs an iptables-based firewall for Linux. Supports both IPv4 (`iptables`) and IPv6 (`ip6tables`). Based on geerlingguy/[ansible-role-firewall](https://github.com/geerlingguy/ansible-role-firewall)
 
 This firewall aims for simplicity over complexity, and only opens a few specific ports for incoming traffic (configurable through Ansible variables). If you have a rudimentary knowledge of `iptables` and/or firewalls in general, this role should be a good starting point for a secure system firewall.
 
 After the role is run, a `firewall` init service will be available on the server. You can use `service firewall [start|stop|restart|status]` to control the firewall.
-
-## Requirements
-
-None.
 
 ## Role Variables
 
@@ -59,8 +53,8 @@ See [Iptables Essentials: Common Firewall Rules and Commands](https://www.digita
 
 Whether to log dropped packets to syslog (messages will be prefixed with "Dropped by firewall: ").
 
-    firewall_disable_firewalld: false
-    firewall_disable_ufw: false
+    firewall_disable_firewalld: true
+    firewall_disable_ufw: true
 
 Set to `true` to disable firewalld (installed by default on RHEL/CentOS) or ufw (installed by default on Ubuntu), respectively.
 
@@ -70,27 +64,8 @@ Set to `false` to disable configuration of ip6tables (for example, if your `GRUB
 
 ## Dependencies
 
-None.
-
-## Example Playbook
-
-    - hosts: server
-      vars_files:
-        - vars/main.yml
-      roles:
-        - { role: geerlingguy.firewall }
-
-_Inside `vars/main.yml`_:
-
-    firewall_allowed_tcp_ports:
-      - "22"
-      - "25"
-      - "80"
-
-## TODO
-
-- Make outgoing ports more configurable.
-- Make other firewall features (like logging) configurable.
+This role depends on:
+- `vitabaks.autobase.common` - Provides common variables and configurations
 
 ## License
 

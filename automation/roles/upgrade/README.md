@@ -1,6 +1,6 @@
 ## PostgreSQL in-place major upgrade
 
-This role is designed for in-place major upgrades of PostgreSQL (e.g., from version 16 to 17).
+This role is designed for in-place major upgrades of PostgreSQL (e.g., from version 17 to 18).
 
 #### Compatibility
 
@@ -33,7 +33,7 @@ Specify the current (old) version of PostgreSQL in the `pg_old_version` variable
 ### Upgrade
 
 ```bash
-ansible-playbook pg_upgrade.yml -e "pg_old_version=16 pg_new_version=17"
+ansible-playbook pg_upgrade.yml -e "pg_old_version=17 pg_new_version=18"
 ```
 
 #### Database Downtime Considerations
@@ -333,3 +333,8 @@ Note: For variables marked as "Derived value", the default value is determined b
   - **Print info messages**
     - List the Patroni cluster members
     - Upgrade completed
+
+## Dependencies
+
+This role depends on:
+- `vitabaks.autobase.common` - Provides common variables and configurations

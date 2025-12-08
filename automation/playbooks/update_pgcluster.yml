@@ -17,15 +17,40 @@
         name: vitabaks.autobase.bind_address
       tags: always
 
+    - name: Set default variables
+      ansible.builtin.import_role:
+        name: vitabaks.autobase.common
+      tags: always
+
     - name: "[Prepare] Get Patroni Cluster Leader Node"
       ansible.builtin.uri:
-        url: http://{{ patroni_bind_address | default(bind_address, true) }}:{{ patroni_restapi_port | default('8008') }}/leader
+        url: >-
+          {{ patroni_restapi_protocol | default('https') }}://{{ patroni_restapi_connect_addr
+            | default(patroni_bind_address | default(bind_address, true), true) }}:{{ patroni_restapi_port
+            | default('8008') }}/leader
         status_code: 200
+        ca_path: "{{ patroni_restapi_cafile | default(omit, true) }}"
       register: patroni_leader_result
       changed_when: false
       failed_when: false
+      check_mode: false
       environment:
         no_proxy: "{{ patroni_bind_address | default(bind_address, true) }}"
+      tags: always
+
+    # Stop, if no healthy Patroni leader node
+    - name: The Patroni cluster is unhealthy
+      ansible.builtin.fail:
+        msg: >
+          No healthy leader node detected in cluster '{{ patroni_cluster_name | default('postgres-cluster') }}'.
+          Please ensure the cluster is up and node responds on REST API port ({{ patroni_restapi_port | default('8008') }}).
+      when:
+        - inventory_hostname == groups['postgres_cluster'][0]
+        - (hostvars
+            | dict2items
+            | selectattr('value.patroni_leader_result.status', 'defined')
+            | selectattr('value.patroni_leader_result.status', 'equalto', 200)
+            | list | length) == 0
       tags: always
 
     - name: '[Prepare] Add host to group "primary" (in-memory inventory)'
@@ -41,7 +66,7 @@
       ansible.builtin.add_host:
         name: "{{ item }}"
         groups: secondary
-      when: hostvars[item]['patroni_leader_result']['status'] != 200
+      when: hostvars[item]['patroni_leader_result']['status'] == 503
       loop: "{{ groups['postgres_cluster'] }}"
       changed_when: false
       tags: always
@@ -51,7 +76,7 @@
         msg:
           - "Cluster Name: {{ patroni_cluster_name | default('postgres-cluster') }}"
           - "Cluster Leader: {{ ansible_hostname }}"
-      when: inventory_hostname in groups['primary']
+      when: inventory_hostname in groups['primary'] | default([])
       tags: always
 
 - name: "(1/4) PRE-UPDATE: Perform pre-update tasks"
@@ -211,17 +236,23 @@
       ansible.builtin.command: patronictl -c /etc/patroni/patroni.yml list
       register: patronictl_result
       changed_when: false
+      check_mode: false
       environment:
         PATH: "{{ ansible_env.PATH }}:/usr/bin:/usr/local/bin"
 
     - name: Check the current PostgreSQL version
       run_once: true # noqa run-once
-      ansible.builtin.command: |
-        psql -p {{ postgresql_port | default(5432) }} \
-          -U {{ patroni_superuser_username | default('postgres') }} \
-          -d postgres -tAXc "select current_setting('server_version')"
+      ansible.builtin.command: >
+        psql -h 127.0.0.1
+        -p {{ postgresql_port | default(5432) }}
+        -U {{ patroni_superuser_username | default('postgres') }}
+        -d postgres
+        -tAXc "select current_setting('server_version')"
+      environment:
+        PGPASSWORD: "{{ patroni_superuser_password | default('') }}"
       register: postgres_version
       changed_when: false
+      check_mode: false
 
     - name: List the Patroni cluster members
       run_once: true # noqa run-once

@@ -27,7 +27,7 @@
     - ansible_os_family == "RedHat"
     - "'openssh-clients' not in ansible_facts.packages"
 
-- name: Make sure the SSH key for user "{{ ssh_key_user }}" exists
+- name: Make sure the SSH key for user "{{ ssh_key_user | default('') }}" exists
   ansible.builtin.user:
     name: "{{ ssh_key_user }}"
     generate_ssh_key: true
@@ -64,9 +64,12 @@
   ansible.builtin.command: "ssh-keyscan -trsa -p {{ ansible_ssh_port | default(22) }} {{ hostvars[item]['bind_address'] }}"
   loop: "{{ groups['postgres_cluster'] }}"
   register: ssh_known_host_results
+  until: ssh_known_host_results is succeeded
+  retries: 3
+  delay: 5
   changed_when: false
 
-- name: known_hosts | for each host, add/update the public key in the "~{{ ssh_key_user }}/.ssh/known_hosts"
+- name: known_hosts | for each host, add/update the public key in the "~{{ ssh_key_user | default('') }}/.ssh/known_hosts"
   become: true
   become_user: "{{ ssh_key_user }}"
   ansible.builtin.known_hosts:

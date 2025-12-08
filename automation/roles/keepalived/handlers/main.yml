@@ -10,7 +10,7 @@
 # This task checks the cluster VIP's availability, selecting the appropriate port:
 # - during maintenance, it targets the database through PgBouncer or directly.
 # - otherwise, it defaults to SSH, applicable during deployment when the database is not yet available.
-- name: Wait for the cluster ip address (VIP) "{{ cluster_vip }}" is running
+- name: Wait for the cluster ip address (VIP) "{{ cluster_vip | default('') }}" is running
   ansible.builtin.wait_for:
     host: "{{ cluster_vip }}"
     port: "{{ target_port }}"

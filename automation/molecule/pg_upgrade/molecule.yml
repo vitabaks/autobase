@@ -2,7 +2,7 @@
 platforms:
   - name: pgnode01
     hostname: pgnode01
-    image: "${IMAGE_NAMESPACE:-geerlingguy}/docker-${IMAGE_DISTRO:-ubuntu2204}-ansible:${IMAGE_TAG:-latest}"
+    image: "${IMAGE_NAMESPACE:-geerlingguy}/docker-${IMAGE_DISTRO:-ubuntu2404}-ansible:${IMAGE_TAG:-latest}"
     networks:
       - name: upgrade_test_docker_network
         ipv4_address: 10.172.2.20
@@ -33,7 +33,7 @@ platforms:
 
   - name: pgnode02
     hostname: pgnode02
-    image: "${IMAGE_NAMESPACE:-geerlingguy}/docker-${IMAGE_DISTRO:-ubuntu2204}-ansible:${IMAGE_TAG:-latest}"
+    image: "${IMAGE_NAMESPACE:-geerlingguy}/docker-${IMAGE_DISTRO:-ubuntu2404}-ansible:${IMAGE_TAG:-latest}"
     networks:
       - name: upgrade_test_docker_network
         ipv4_address: 10.172.2.21
@@ -64,7 +64,7 @@ platforms:
 
   - name: pgnode03
     hostname: pgnode03
-    image: "${IMAGE_NAMESPACE:-geerlingguy}/docker-${IMAGE_DISTRO:-ubuntu2204}-ansible:${IMAGE_TAG:-latest}"
+    image: "${IMAGE_NAMESPACE:-geerlingguy}/docker-${IMAGE_DISTRO:-ubuntu2404}-ansible:${IMAGE_TAG:-latest}"
     networks:
       - name: upgrade_test_docker_network
         ipv4_address: 10.172.2.22

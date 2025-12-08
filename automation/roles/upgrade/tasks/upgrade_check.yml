@@ -1,8 +1,10 @@
 ---
 - name: Get the current shared_preload_libraries settings
   ansible.builtin.command: >-
-    {{ pg_old_bindir }}/psql -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc
+    {{ pg_old_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc
     "show shared_preload_libraries"
+  environment:
+    PGPASSWORD: "{{ patroni_superuser_password }}"
   changed_when: false
   register: pg_shared_preload_libraries_result
   when:
