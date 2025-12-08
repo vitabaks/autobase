@@ -80,7 +80,9 @@ haproxy_timeout:
 #  \"response_size\":%B,\
 #  \"request_size\":%U\
 #  }"
-haproxy_confd_install: true # or 'false' to disable installation of https://github.com/kelseyhightower/confd (optional).
+
+# if with_haproxy_load_balancing: true
+confd_install: true # install confd for HAProxy config management (optional).
 
 cluster_vip: "" # IP address for client access to the databases in the cluster (optional).
 vip_interface: "{{ ansible_default_ipv4.interface }}" # interface name (e.g., "ens32").
