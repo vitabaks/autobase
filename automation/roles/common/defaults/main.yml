@@ -780,6 +780,9 @@ pgbackrest_archive_command: "pgbackrest --stanza={{ pgbackrest_stanza }} archive
 
 pgbackrest_patroni_cluster_restore_command: "/usr/bin/pgbackrest --stanza={{ pgbackrest_stanza }} --delta restore" # restore from latest backup
 #  '/usr/bin/pgbackrest --stanza={{ pgbackrest_stanza }} --type=time "--target=2020-06-01 11:00:00+03" --delta restore'  # Point-in-Time Recovery (example)
+pgbackrest_patroni_cluster_bootstrap_recovery_conf:
+  - recovery_target_action: promote
+  - recovery_target_timeline: latest
 
 # By default, the cron jobs is created on the database server.
 # If 'repo_host' is defined, the cron jobs will be created on the pgbackrest server.

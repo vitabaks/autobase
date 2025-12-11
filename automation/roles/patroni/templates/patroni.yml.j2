@@ -90,6 +90,19 @@ bootstrap:
       {% endfor %}
       {% endfor %}
 {% endif %}
+{% if patroni_cluster_bootstrap_method == 'pgbackrest' %}
+  pgbackrest:
+    command: "{{ pgbackrest_patroni_cluster_restore_command }}"
+    keep_existing_recovery_conf: False
+    no_params: True
+    recovery_conf:
+      restore_command: {{ pgbackrest_patroni_cluster_bootstrap_archive_get_command | default(postgresql_restore_command) }}
+      {% for item in pgbackrest_patroni_cluster_bootstrap_recovery_conf %}
+      {% for key, value in item.items() %}
+      {{ key }}: {{ value }}
+      {% endfor %}
+      {% endfor %}
+{% endif %}
 {% if patroni_cluster_bootstrap_method == 'pg_probackup' %}
   pg_probackup:
     command: {{ pg_probackup_patroni_cluster_bootstrap_command }}
