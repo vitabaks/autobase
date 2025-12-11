@@ -781,6 +781,7 @@ pgbackrest_archive_command: "pgbackrest --stanza={{ pgbackrest_stanza }} archive
 pgbackrest_patroni_cluster_restore_command: "/usr/bin/pgbackrest --stanza={{ pgbackrest_stanza }} --delta restore" # restore from latest backup
 #  '/usr/bin/pgbackrest --stanza={{ pgbackrest_stanza }} --type=time "--target=2020-06-01 11:00:00+03" --delta restore'  # Point-in-Time Recovery (example)
 pgbackrest_patroni_cluster_bootstrap_recovery_conf:
+  - restore_command: "pgbackrest --stanza={{ pgbackrest_stanza }} archive-get %f %p"
   - recovery_target_action: promote
   - recovery_target_timeline: latest
 

@@ -96,7 +96,6 @@ bootstrap:
     keep_existing_recovery_conf: False
     no_params: True
     recovery_conf:
-      restore_command: {{ pgbackrest_patroni_cluster_bootstrap_archive_get_command | default(postgresql_restore_command) }}
       {% for item in pgbackrest_patroni_cluster_bootstrap_recovery_conf %}
       {% for key, value in item.items() %}
       {{ key }}: {{ value }}
