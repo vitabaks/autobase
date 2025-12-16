@@ -12,6 +12,15 @@
   changed_when: false
   ignore_errors: true # show the error and continue the playbook execution
 
+- name: Delete the temporary .pgpass entry
+  ansible.builtin.lineinfile:
+    path: "{{ postgresql_home_dir }}/.pgpass"
+    search_string: "localhost:*:*:{{ pg_install_user.stdout }}"
+    state: absent
+  no_log: true
+  when:
+    - inventory_hostname in groups['primary']
+
 # RedHat based
 - name: Delete the old PostgreSQL data directory
   ansible.builtin.file:

@@ -70,12 +70,18 @@
   when:
     - inventory_hostname in groups['primary']
 
+- name: Create temporary password file
+  ansible.builtin.copy:
+    dest: "{{ postgresql_home_dir }}/.pg_install_user_password"
+    content: "{{ pg_install_user_password }}"
+    mode: 0600
+  no_log: true
+
 # for Debian based use pg_createcluster, if the PostgreSQL configuration is not located in the data directory.
 # Note: Patroni failure is possible if the default postgresql config files are missing in the /etc/postgresql/...
 - name: Initialize new PostgreSQL data directory with default config files
-  ansible.builtin.command: >
+  ansible.builtin.shell: >
     /usr/bin/pg_createcluster {{ pg_new_version }} {{ postgresql_cluster_name }}
-    --user={{ hostvars[groups['primary'][0]].pg_install_user.stdout }}
     --datadir={{ pg_new_datadir }}
     --encoding={{ (hostvars[groups['primary'][0]].pg_settings.stdout | from_json).server_encoding }}
     --lc-collate={{ (hostvars[groups['primary'][0]].pg_settings.stdout | from_json).lc_collate }}
@@ -85,9 +91,14 @@
     --lc-numeric={{ (hostvars[groups['primary'][0]].pg_settings.stdout | from_json).lc_numeric }}
     --lc-time={{ (hostvars[groups['primary'][0]].pg_settings.stdout | from_json).lc_time }}
     --start-conf=manual
+    -- --username={{ hostvars[groups['primary'][0]].pg_install_user.stdout }}
+    --auth-local={{ postgresql_password_encryption_algorithm }}
+    --pwfile="{{ postgresql_home_dir }}/.pg_install_user_password"
     {% if (hostvars[groups['primary'][0]].pg_settings.stdout | from_json).data_checksums == 'on' %}
-    -- --data-checksums
+    --data-checksums
     {% endif %}
+  args:
+    executable: /bin/bash
   when:
     - ansible_os_family == "Debian"
     - pg_new_confdir != pg_new_datadir
@@ -96,7 +107,9 @@
 - name: Initialize new PostgreSQL data directory on the Primary
   ansible.builtin.command: >
     {{ pg_new_bindir }}/initdb
+    --auth-local={{ postgresql_password_encryption_algorithm }}
     --username={{ pg_install_user.stdout }}
+    --pwfile={{ postgresql_home_dir }}/.pg_install_user_password
     --pgdata={{ pg_new_datadir }}
     --encoding={{ (pg_settings.stdout | from_json).server_encoding }}
     --lc-collate={{ (pg_settings.stdout | from_json).lc_collate }}
@@ -111,3 +124,8 @@
   when:
     - inventory_hostname in groups['primary']
     - pg_new_confdir == pg_new_datadir
+
+- name: Delete temporary password file
+  ansible.builtin.file:
+    path: "{{ postgresql_home_dir }}/.pg_install_user_password"
+    state: absent
