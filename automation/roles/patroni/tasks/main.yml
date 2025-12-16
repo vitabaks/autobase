@@ -381,6 +381,12 @@
   when: postgresql_wal_dir is defined and postgresql_wal_dir | length > 0
   tags: patroni, custom_wal_dir
 
+- name: Check if data directory exists, before creating it
+  ansible.builtin.stat:
+    path: "{{ postgresql_data_dir }}"
+  register: stat_postgresql_data_dir
+  tags: patroni, point_in_time_recovery
+
 - block: # when postgresql NOT exists or PITR
     - name: Prepare PostgreSQL | make sure PostgreSQL home directory "{{ postgresql_home_dir | default('') }}"
       ansible.builtin.file:
@@ -464,17 +470,6 @@
             group: postgres
             mode: "0755"
 
-        - name: Prepare PostgreSQL | make sure the data directory "{{ postgresql_data_dir | default('') }}" is empty
-          ansible.builtin.file:
-            path: "{{ postgresql_data_dir }}"
-            state: "{{ item }}"
-            owner: postgres
-            group: postgres
-            mode: "0700"
-          loop:
-            - absent
-            - directory
-
         - name: Prepare PostgreSQL | make sure PostgreSQL unix socket directory "{{ postgresql_unix_socket_dir | default('') }}" exists
           ansible.builtin.file:
             path: "{{ postgresql_unix_socket_dir }}"
@@ -502,8 +497,22 @@
             - absent
             - directory
           when: postgresql_wal_dir | default('') | length > 0
-      when: patroni_cluster_bootstrap_method != "pgbackrest"
+      when: patroni_cluster_bootstrap_method != "pgbackrest" or pgbackrest_do_patroni_clean_bootsrap | default(false)
   when: not postgresql_exists | default(false) | bool or patroni_cluster_bootstrap_method != "initdb"
+  tags: patroni, point_in_time_recovery
+
+- name: Prepare PostgreSQL | make sure the data directory "{{ postgresql_data_dir | default('') }}" is empty
+  ansible.builtin.file:
+    path: "{{ postgresql_data_dir }}"
+    state: "{{ item }}"
+    owner: postgres
+    group: postgres
+    mode: "0700"
+  loop:
+    - absent
+    - directory
+  # Clean the data directory if it didn't exist before.
+  when: (not stat_postgresql_data_dir.stat.exists) or pgbackrest_do_patroni_clean_bootsrap | default(false)
   tags: patroni, point_in_time_recovery
 
 - block: # when postgresql exists
@@ -795,7 +804,7 @@
           ansible.builtin.command: >-
             {{ postgresql_bin_dir }}/pg_ctl stop -D {{ postgresql_data_dir }} -m fast -w -t {{ pg_ctl_timeout | default(3600) }}
           when: pg_ctl_status_result.rc is defined and (pg_ctl_status_result.rc != 3 and pg_ctl_status_result.rc != 4)
-      when: patroni_cluster_bootstrap_method == "pgbackrest"
+      when: patroni_cluster_bootstrap_method == "pgbackrest" and not pgbackrest_do_patroni_clean_bootsrap | default(false)
       become: true
       become_user: postgres
   environment: "{{ proxy_env | default({}) }}"
@@ -925,8 +934,8 @@
         ca_path: "{{ patroni_restapi_cafile | default(omit, true) }}"
       register: result
       until: result.status == 200
-      retries: 10
-      delay: 2
+      retries: "{{ 10 if not pgbackrest_do_patroni_clean_bootsrap | default(false) else (cluster_restore_timeout | default(86400)) | int // 30 }}"
+      delay: "{{ 2 if not pgbackrest_do_patroni_clean_bootstrap | default(false) else 30 }}"
       environment:
         no_proxy: "{{ patroni_bind_address | default(bind_address, true) }}"
       when:
@@ -995,6 +1004,8 @@
         login_db: postgres
         login_unix_socket: "{{ postgresql_unix_socket_dir }}"
         login_port: "{{ postgresql_port }}"
+        login_user: "{{ patroni_superuser_username }}"
+        login_password: "{{ patroni_superuser_password }}"
       register: postgresql_user_result
       loop:
         - { name: "{{ patroni_superuser_username }}", password: "{{ patroni_superuser_password }}", flags: "SUPERUSER" }
@@ -1016,6 +1027,8 @@
         login_db: postgres
         login_unix_socket: "{{ postgresql_unix_socket_dir }}"
         login_port: "{{ postgresql_port }}"
+        login_user: "{{ patroni_superuser_username }}"
+        login_password: "{{ patroni_superuser_password }}"
       loop: "{{ postgresql_users }}"
       loop_control:
         label: "{{ item.name }}"
