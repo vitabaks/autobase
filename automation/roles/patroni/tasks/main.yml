@@ -1011,7 +1011,7 @@
     - name: Make sure the postgresql users are present, and password does not differ from the specified
       community.postgresql.postgresql_user:
         name: "{{ item.name }}"
-        password: "{{ item.password }}"
+        password: "{{ item.password | default(omit) }}"
         role_attr_flags: "{{ item.flags }}"
         login_db: postgres
         login_unix_socket: "{{ postgresql_unix_socket_dir }}"
