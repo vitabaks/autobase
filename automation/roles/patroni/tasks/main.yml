@@ -497,7 +497,7 @@
             - absent
             - directory
           when: postgresql_wal_dir | default('') | length > 0
-      when: patroni_cluster_bootstrap_method != "pgbackrest" or pgbackrest_do_patroni_clean_bootsrap | default(false)
+      when: patroni_cluster_bootstrap_method != "pgbackrest" or pgbackrest_patroni_cluster_clean_bootstrap | default(false)
   when: not postgresql_exists | default(false) | bool or patroni_cluster_bootstrap_method != "initdb"
   tags: patroni, point_in_time_recovery
 
@@ -512,7 +512,7 @@
     - absent
     - directory
   # Clean the data directory if it didn't exist before.
-  when: (not stat_postgresql_data_dir.stat.exists) or pgbackrest_do_patroni_clean_bootsrap | default(false)
+  when: (not stat_postgresql_data_dir.stat.exists) or pgbackrest_patroni_cluster_clean_bootstrap | default(false)
   tags: patroni, point_in_time_recovery
 
 - block: # when postgresql exists
@@ -804,7 +804,7 @@
           ansible.builtin.command: >-
             {{ postgresql_bin_dir }}/pg_ctl stop -D {{ postgresql_data_dir }} -m fast -w -t {{ pg_ctl_timeout | default(3600) }}
           when: pg_ctl_status_result.rc is defined and (pg_ctl_status_result.rc != 3 and pg_ctl_status_result.rc != 4)
-      when: patroni_cluster_bootstrap_method == "pgbackrest" and not pgbackrest_do_patroni_clean_bootsrap | default(false)
+      when: patroni_cluster_bootstrap_method == "pgbackrest" and not pgbackrest_patroni_cluster_clean_bootstrap | default(false)
       become: true
       become_user: postgres
   environment: "{{ proxy_env | default({}) }}"
@@ -934,8 +934,8 @@
         ca_path: "{{ patroni_restapi_cafile | default(omit, true) }}"
       register: result
       until: result.status == 200
-      retries: "{{ 10 if not pgbackrest_do_patroni_clean_bootsrap | default(false) else (cluster_restore_timeout | default(86400)) | int // 30 }}"
-      delay: "{{ 2 if not pgbackrest_do_patroni_clean_bootstrap | default(false) else 30 }}"
+      retries: "{{ 10 if not pgbackrest_patroni_cluster_clean_bootstrap | default(false) else (cluster_restore_timeout | default(86400)) | int // 30 }}"
+      delay: "{{ 2 if not pgbackrest_patroni_cluster_clean_bootstrap | default(false) else 30 }}"
       environment:
         no_proxy: "{{ patroni_bind_address | default(bind_address, true) }}"
       when:
