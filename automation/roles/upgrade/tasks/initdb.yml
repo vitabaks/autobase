@@ -71,7 +71,7 @@
   when:
     - inventory_hostname in groups['primary']
 
-- name: Create temporary password file
+- name: Create temporary password file for install user
   ansible.builtin.copy:
     dest: "{{ postgresql_home_dir }}/.pg_install_user_password"
     content: "{{ pg_install_user_password }}"
