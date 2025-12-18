@@ -61,7 +61,8 @@
         current_setting('lc_numeric') as lc_numeric,
         current_setting('lc_time') as lc_time,
         current_setting('server_encoding') as server_encoding,
-        current_setting('data_checksums') as data_checksums
+        current_setting('data_checksums') as data_checksums,
+        current_setting('wal_level') as wal_level
     ) pg_settings"
   environment:
     PGPASSWORD: "{{ patroni_superuser_password }}"
@@ -85,8 +86,9 @@
     --lc-numeric={{ (hostvars[groups['primary'][0]].pg_settings.stdout | from_json).lc_numeric }}
     --lc-time={{ (hostvars[groups['primary'][0]].pg_settings.stdout | from_json).lc_time }}
     --start-conf=manual
+    -- -c wal_level={{ (hostvars[groups['primary'][0]].pg_settings.stdout | from_json).wal_level }}
     {% if (hostvars[groups['primary'][0]].pg_settings.stdout | from_json).data_checksums == 'on' %}
-    -- --data-checksums
+    --data-checksums
     {% endif %}
   when:
     - ansible_os_family == "Debian"
@@ -105,6 +107,7 @@
     --lc-monetary={{ (pg_settings.stdout | from_json).lc_monetary }}
     --lc-numeric={{ (pg_settings.stdout | from_json).lc_numeric }}
     --lc-time={{ (pg_settings.stdout | from_json).lc_time }}
+    -c wal_level={{ (hostvars[groups['primary'][0]].pg_settings.stdout | from_json).wal_level }}
     {% if (pg_settings.stdout | from_json).data_checksums == 'on' %}
     --data-checksums
     {% endif %}
