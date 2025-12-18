@@ -30,13 +30,14 @@
   when:
     - inventory_hostname in groups['primary']
 
-- name: Create temporary .pgpass file for {{ hostvars[groups['primary'][0]].pg_install_user.stdout }}
+- name: Create temporary .pgpass file for install user
   ansible.builtin.lineinfile:
     path: "{{ postgresql_home_dir }}/.pgpass"
     line: "localhost:*:*:{{ hostvars[groups['primary'][0]].pg_install_user.stdout }}:{{ pg_install_user_password }}"
   no_log: true
   when:
     - inventory_hostname in groups['primary']
+    - pg_install_user_password is defined
 
 - name: "Start new PostgreSQL on port {{ schema_compatibility_check_port | default('5433') }} to check the schema compatibility"
   ansible.builtin.command: >
@@ -84,7 +85,7 @@
   args:
     executable: /bin/bash
   environment:
-    PGPASSWORD: "{{ pg_install_user_password }}"
+    PGPASSWORD: "{{ pg_install_user_password | default(patroni_superuser_password) }}"
   async: "{{ schema_compatibility_check_timeout }}" # run the command asynchronously
   poll: 0
   register: pg_dumpall_result
