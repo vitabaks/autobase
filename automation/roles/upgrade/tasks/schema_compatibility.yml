@@ -30,7 +30,7 @@
   when:
     - inventory_hostname in groups['primary']
 
-- name: Create temporary .pgpass file for install user
+- name: Create temporary .pgpass entry for install user
   ansible.builtin.lineinfile:
     path: "{{ postgresql_home_dir }}/.pgpass"
     line: "localhost:*:*:{{ hostvars[groups['primary'][0]].pg_install_user.stdout }}:{{ pg_install_user_password }}"
