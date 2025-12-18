@@ -61,7 +61,8 @@
         current_setting('lc_numeric') as lc_numeric,
         current_setting('lc_time') as lc_time,
         current_setting('server_encoding') as server_encoding,
-        current_setting('data_checksums') as data_checksums
+        current_setting('data_checksums') as data_checksums,
+        current_setting('wal_level') as wal_level
     ) pg_settings"
   environment:
     PGPASSWORD: "{{ patroni_superuser_password }}"
@@ -74,7 +75,7 @@
   ansible.builtin.copy:
     dest: "{{ postgresql_home_dir }}/.pg_install_user_password"
     content: "{{ pg_install_user_password }}"
-    mode: 0600
+    mode: "0600"
   no_log: true
 
 # for Debian based use pg_createcluster, if the PostgreSQL configuration is not located in the data directory.
@@ -91,7 +92,8 @@
     --lc-numeric={{ (hostvars[groups['primary'][0]].pg_settings.stdout | from_json).lc_numeric }}
     --lc-time={{ (hostvars[groups['primary'][0]].pg_settings.stdout | from_json).lc_time }}
     --start-conf=manual
-    -- --username={{ hostvars[groups['primary'][0]].pg_install_user.stdout }}
+    -- -c wal_level={{ (hostvars[groups['primary'][0]].pg_settings.stdout | from_json).wal_level }}
+    --username={{ hostvars[groups['primary'][0]].pg_install_user.stdout }}
     --auth-local={{ postgresql_password_encryption_algorithm }}
     --pwfile="{{ postgresql_home_dir }}/.pg_install_user_password"
     {% if (hostvars[groups['primary'][0]].pg_settings.stdout | from_json).data_checksums == 'on' %}
@@ -118,6 +120,7 @@
     --lc-monetary={{ (pg_settings.stdout | from_json).lc_monetary }}
     --lc-numeric={{ (pg_settings.stdout | from_json).lc_numeric }}
     --lc-time={{ (pg_settings.stdout | from_json).lc_time }}
+    -c wal_level={{ (hostvars[groups['primary'][0]].pg_settings.stdout | from_json).wal_level }}
     {% if (pg_settings.stdout | from_json).data_checksums == 'on' %}
     --data-checksums
     {% endif %}
