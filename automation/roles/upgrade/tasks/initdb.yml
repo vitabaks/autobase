@@ -133,7 +133,7 @@
     - inventory_hostname in groups['primary']
     - pg_new_confdir == pg_new_datadir
 
-- name: Delete temporary password file
+- name: Delete temporary password file for install user
   ansible.builtin.file:
     path: "{{ postgresql_home_dir }}/.pg_install_user_password"
     state: absent
