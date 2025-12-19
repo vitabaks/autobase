@@ -381,12 +381,6 @@
   when: postgresql_wal_dir is defined and postgresql_wal_dir | length > 0
   tags: patroni, custom_wal_dir
 
-- name: Check if data directory exists, before creating it
-  ansible.builtin.stat:
-    path: "{{ postgresql_data_dir }}"
-  register: stat_postgresql_data_dir
-  tags: patroni, point_in_time_recovery
-
 - block: # when postgresql NOT exists or PITR
     - name: Prepare PostgreSQL | make sure PostgreSQL home directory "{{ postgresql_home_dir | default('') }}"
       ansible.builtin.file:
@@ -470,6 +464,17 @@
             group: postgres
             mode: "0755"
 
+        - name: Prepare PostgreSQL | make sure the data directory "{{ postgresql_data_dir | default('') }}" is empty
+          ansible.builtin.file:
+            path: "{{ postgresql_data_dir }}"
+            state: "{{ item }}"
+            owner: postgres
+            group: postgres
+            mode: "0700"
+          loop:
+            - absent
+            - directory
+
         - name: Prepare PostgreSQL | make sure PostgreSQL unix socket directory "{{ postgresql_unix_socket_dir | default('') }}" exists
           ansible.builtin.file:
             path: "{{ postgresql_unix_socket_dir }}"
@@ -499,20 +504,6 @@
           when: postgresql_wal_dir | default('') | length > 0
       when: patroni_cluster_bootstrap_method != "pgbackrest" or pgbackrest_patroni_cluster_clean_bootstrap | default(false)
   when: not postgresql_exists | default(false) | bool or patroni_cluster_bootstrap_method != "initdb"
-  tags: patroni, point_in_time_recovery
-
-- name: Prepare PostgreSQL | make sure the data directory "{{ postgresql_data_dir | default('') }}" is empty
-  ansible.builtin.file:
-    path: "{{ postgresql_data_dir }}"
-    state: "{{ item }}"
-    owner: postgres
-    group: postgres
-    mode: "0700"
-  loop:
-    - absent
-    - directory
-  # Clean the data directory if it didn't exist before.
-  when: (not stat_postgresql_data_dir.stat.exists) or pgbackrest_patroni_cluster_clean_bootstrap | default(false)
   tags: patroni, point_in_time_recovery
 
 - block: # when postgresql exists
