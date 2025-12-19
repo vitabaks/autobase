@@ -82,7 +82,7 @@
 # for Debian based use pg_createcluster, if the PostgreSQL configuration is not located in the data directory.
 # Note: Patroni failure is possible if the default postgresql config files are missing in the /etc/postgresql/...
 - name: Initialize new PostgreSQL data directory with default config files
-  ansible.builtin.shell: >
+  ansible.builtin.command: >
     /usr/bin/pg_createcluster {{ pg_new_version }} {{ postgresql_cluster_name }}
     --datadir={{ pg_new_datadir }}
     --encoding={{ (hostvars[groups['primary'][0]].pg_settings.stdout | from_json).server_encoding }}
@@ -102,8 +102,6 @@
     {% if (hostvars[groups['primary'][0]].pg_settings.stdout | from_json).data_checksums == 'on' %}
     --data-checksums
     {% endif %}
-  args:
-    executable: /bin/bash
   when:
     - ansible_os_family == "Debian"
     - pg_new_confdir != pg_new_datadir
