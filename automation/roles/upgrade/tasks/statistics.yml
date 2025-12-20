@@ -79,8 +79,11 @@
       ansible.builtin.command: >
         {{ pg_new_bindir }}/vacuumdb -p {{ postgresql_port }}
         --all --analyze-in-stages --jobs={{ vacuumdb_parallel_jobs }}
+        -U {{ patroni_superuser_username }}
       async: "{{ vacuumdb_analyze_timeout }}" # run the command asynchronously with a maximum duration
       poll: 0
+      environment:
+        PGPASSWORD: "{{ patroni_superuser_password }}"
       register: vacuumdb_analyze
       ignore_errors: true # ignore errors if the task runs for over an 'vacuumdb_analyze_timeout'.
   when: inventory_hostname in groups['primary']
