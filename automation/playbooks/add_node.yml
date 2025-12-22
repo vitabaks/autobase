@@ -230,6 +230,12 @@
     - role: vitabaks.autobase.resolv_conf
     - role: vitabaks.autobase.sysctl
 
+    - role: vitabaks.autobase.docker
+      when:
+        - installation_method | default('packages') == "docker"
+        - docker_install | default(true) | bool
+      tags: docker, docker_install
+
     - role: vitabaks.autobase.haproxy
       when: with_haproxy_load_balancing | default(false) | bool
 
@@ -279,6 +285,12 @@
     - role: vitabaks.autobase.ntp
     - role: vitabaks.autobase.copy
     - role: vitabaks.autobase.cron
+
+    - role: vitabaks.autobase.docker
+      when:
+        - installation_method | default('packages') == "docker"
+        - docker_install | default(true) | bool
+      tags: docker, docker_install
 
 - name: vitabaks.autobase.add_node | Configure pgBackRest
   hosts: pgbackrest:postgres_cluster
