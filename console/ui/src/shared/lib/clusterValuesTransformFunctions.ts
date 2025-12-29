@@ -170,6 +170,7 @@ const configureHosts = ({
       ...acc,
       [server[usedKeys.ipAddress]]: {
         ansible_host: server[usedKeys.ipAddress],
+        bind_address: server[usedKeys.ipAddress],
         ...(shouldAddHostname && usedKeys?.hostname ? { hostname: server[usedKeys.hostname] } : {}),
         ...(role ? { consul_node_role: role } : {}),
       },
@@ -253,6 +254,7 @@ const constructBalancersEnvs = (values: ClusterFormValues) => {
           ...acc,
           [server[LOAD_BALANCERS_FIELD_NAMES.LOAD_BALANCER_DATABASES_IP_ADDRESS]]: {
             ansible_host: server[LOAD_BALANCERS_FIELD_NAMES.LOAD_BALANCER_DATABASES_IP_ADDRESS],
+            bind_address: server[LOAD_BALANCERS_FIELD_NAMES.LOAD_BALANCER_DATABASES_IP_ADDRESS],
           },
         }),
         {},
@@ -263,6 +265,7 @@ const constructBalancersEnvs = (values: ClusterFormValues) => {
           ...acc,
           [server[DATABASE_SERVERS_FIELD_NAMES.DATABASE_IP_ADDRESS]]: {
             ansible_host: server[DATABASE_SERVERS_FIELD_NAMES.DATABASE_IP_ADDRESS],
+            bind_address: server[DATABASE_SERVERS_FIELD_NAMES.DATABASE_IP_ADDRESS],
           },
         }),
         {},
@@ -296,7 +299,7 @@ export const getLocalMachineEnvs = (values: ClusterFormValues, secretId?: number
         ansible_user: values[SECRET_MODAL_CONTENT_FORM_FIELD_NAMES.USERNAME],
         ...(values[CLUSTER_FORM_FIELD_NAMES.AUTHENTICATION_METHOD] === AUTHENTICATION_METHODS.PASSWORD
           ? {
-              ansible_ssh_pass: values[SECRET_MODAL_CONTENT_FORM_FIELD_NAMES.USERNAME],
+              ansible_ssh_pass: values[SECRET_MODAL_CONTENT_FORM_FIELD_NAMES.PASSWORD],
               ansible_sudo_pass: values[SECRET_MODAL_CONTENT_FORM_FIELD_NAMES.PASSWORD],
             }
           : {}),
@@ -314,6 +317,10 @@ export const getLocalMachineEnvs = (values: ClusterFormValues, secretId?: number
                   DATABASE_SERVERS_FIELD_NAMES.DATABASE_HOSTNAME
                 ],
               ansible_host:
+                values[DATABASE_SERVERS_FIELD_NAMES.DATABASE_SERVERS][0][
+                  DATABASE_SERVERS_FIELD_NAMES.DATABASE_IP_ADDRESS
+                ],
+              bind_address:
                 values[DATABASE_SERVERS_FIELD_NAMES.DATABASE_SERVERS][0][
                   DATABASE_SERVERS_FIELD_NAMES.DATABASE_IP_ADDRESS
                 ],
@@ -338,6 +345,7 @@ export const getLocalMachineEnvs = (values: ClusterFormValues, secretId?: number
                     [server[DATABASE_SERVERS_FIELD_NAMES.DATABASE_IP_ADDRESS]]: {
                       hostname: server?.[DATABASE_SERVERS_FIELD_NAMES.DATABASE_HOSTNAME],
                       ansible_host: server?.[DATABASE_SERVERS_FIELD_NAMES.DATABASE_IP_ADDRESS],
+                      bind_address: server?.[DATABASE_SERVERS_FIELD_NAMES.DATABASE_IP_ADDRESS],
                       server_location: server?.[DATABASE_SERVERS_FIELD_NAMES.DATABASE_LOCATION],
                       postgresql_exists: IS_EXPERT_MODE
                         ? server?.[DATABASE_SERVERS_FIELD_NAMES.IS_POSTGRESQL_EXISTS]
