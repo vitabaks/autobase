@@ -68,7 +68,7 @@ etcd3:
 
 {% if dcs_type == 'consul' %}
 consul:
-  host: 127.0.0.1:8500
+  host: {{ patroni_consul_host | default('127.0.0.1:8500') }}
   {% if consul_tls_enable | default(false) | bool %}
   scheme: https
   cacert: {{ patroni_consul_cacert | default('/etc/patroni/tls/consul/ca.crt') }}
@@ -85,6 +85,18 @@ bootstrap:
     no_params: True
     recovery_conf:
       {% for item in wal_g_patroni_cluster_bootstrap_recovery_conf %}
+      {% for key, value in item.items() %}
+      {{ key }}: {{ value }}
+      {% endfor %}
+      {% endfor %}
+{% endif %}
+{% if patroni_cluster_bootstrap_method == 'pgbackrest' %}
+  pgbackrest:
+    command: "{{ pgbackrest_patroni_cluster_restore_command }}"
+    keep_existing_recovery_conf: True
+    no_params: True
+    recovery_conf:
+      {% for item in pgbackrest_patroni_cluster_bootstrap_recovery_conf %}
       {% for key, value in item.items() %}
       {{ key }}: {{ value }}
       {% endfor %}

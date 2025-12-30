@@ -94,6 +94,7 @@
       when:
         - ansible_distribution_major_version is version("9", ">=")
         - ansible_distribution != "OracleLinux"
+        - ansible_distribution != "RedHat"
 
     # CodeReady Builder repository for OracleLinux
     - name: Enable CodeReady Builder repository

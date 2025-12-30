@@ -32,6 +32,7 @@
     fetch_tls_dir: "{{ etcd_tls_dir | default('/etc/etcd/tls') }}"
     copy_tls_dir: "{{ confd_etcd_tls_dir | default('/etc/confd/tls/etcd') }}"
     copy_tls_owner: "root"
+    copy_tls_notify: "restart confd"
   when:
     - tls_cert_generate | bool
     - dcs_type == "etcd"

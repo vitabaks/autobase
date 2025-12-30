@@ -91,6 +91,7 @@ If these checks pass, the playbook switches back to the old PostgreSQL paths and
 | `pg_slow_active_query_treshold`              | Time in milliseconds to wait for active queries before trying to pause the pool.                                                                                                      |        `1000` |
 | `pg_slow_active_query_treshold_to_terminate` | Time in milliseconds after reaching "pgbouncer_pool_pause_terminate_after" before the script terminates active queries.                                                               |         `100` |
 | `pgbackrest_stanza_upgrade`                  | Perform the "stanza-upgrade" command after the upgrade (if 'pgbackrest_install' is 'true').                                                                                           |        `true` |
+| `pg_install_user_password`                  | The Postgres install user (rolname with oid = 10) password. | `{{ patroni_superuser_password }}` |
 
 Note: For variables marked as "Derived value", the default value is determined based on other variables. Please see the [upgrade.yml](../upgrade/defaults/main.yml) variable file.
 

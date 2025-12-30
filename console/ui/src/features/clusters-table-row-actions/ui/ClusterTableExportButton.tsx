@@ -46,6 +46,7 @@ const ClustersTableExportButton: FC<ClustersTableRemoveButtonProps> = ({ cluster
         const hostData: Record<string, any> = {
           hostname: server.name,
           ansible_host: server.ip,
+          bind_address: server.ip,
           postgresql_exists: true,
         };
         if (server.location) hostData.server_location = server.location;
@@ -54,11 +55,11 @@ const ClustersTableExportButton: FC<ClustersTableRemoveButtonProps> = ({ cluster
         } else {
           replicaHosts[server.ip] = hostData;
         }
-        // etcd_cluster: only ansible_host
-        etcdHosts[server.ip] = { ansible_host: server.ip };
-        // balancers: only ansible_host, only if enabled
+        // etcd_cluster: ansible_host + bind_address
+        etcdHosts[server.ip] = { ansible_host: server.ip, bind_address: server.ip };
+        // balancers: ansible_host + bind_address, only if enabled
         if (vars.with_haproxy_load_balancing) {
-          balancerHosts[server.ip] = { ansible_host: server.ip };
+          balancerHosts[server.ip] = { ansible_host: server.ip, bind_address: server.ip };
         }
       });
 
