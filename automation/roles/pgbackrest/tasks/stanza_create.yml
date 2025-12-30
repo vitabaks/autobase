@@ -55,10 +55,18 @@
       delegate_to: "{{ pgbackrest_delegate }}"
       run_once: true
       ansible.builtin.set_fact:
-        repo1_path: "{{ pgbackrest_server_conf['global'] | selectattr('option', 'equalto', 'repo1-path') | map(attribute='value') | list | first }}"
+        repo1_path: >-
+          {{
+            (pgbackrest_server_conf['global']
+              | selectattr('option', 'equalto', 'repo1-path')
+              | map(attribute='value')
+              | list
+              | first
+            ) | default('/var/lib/pgbackrest', true)
+          }}
       when: (pgbackrest_repo_type | default('posix')) | lower == 'posix'
 
-    - name: "Make sure the {{ repo1_path | default('') }} directory exists"
+    - name: "Make sure the {{ repo1_path | default('/var/lib/pgbackrest') }} directory exists"
       delegate_to: "{{ pgbackrest_delegate }}"
       run_once: true
       ansible.builtin.file:
