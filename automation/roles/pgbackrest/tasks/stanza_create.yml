@@ -1,12 +1,28 @@
 ---
 # Create a stanza locally (if "pgbackrest_repo_host" is not set)
 - block:
-    - name: Get repo1-path and repo1_type value
+    - name: Get repo1-path and repo1-type value
       ansible.builtin.set_fact:
-        repo1_path: "{{ pgbackrest_conf['global'] | selectattr('option', 'equalto', 'repo1-path') | map(attribute='value') | list | first }}"
-        repo1_type: "{{ pgbackrest_conf['global'] | selectattr('option', 'equalto', 'repo1-type') | map(attribute='value') | list | first }}"
+        repo1_path: >-
+          {{
+            (pgbackrest_conf['global']
+              | selectattr('option', 'equalto', 'repo1-path')
+              | map(attribute='value')
+              | list
+              | first
+            ) | default('/var/lib/pgbackrest', true)
+          }}
+        repo1_type: >-
+          {{
+            (pgbackrest_conf['global']
+              | selectattr('option', 'equalto', 'repo1-type')
+              | map(attribute='value')
+              | list
+              | first
+            ) | default('posix', true)
+          }}
 
-    - name: "Make sure the {{ repo1_path | default('') }} directory exists"
+    - name: "Make sure the {{ repo1_path | default('/var/lib/pgbackrest') }} directory exists"
       ansible.builtin.file:
         path: "{{ repo1_path }}"
         state: directory
