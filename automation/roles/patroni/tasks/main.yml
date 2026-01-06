@@ -442,6 +442,8 @@
         -p {{ postgresql_port }}
         -e {{ postgresql_encoding }}
         --locale {{ postgresql_locale }}
+        --
+        --auth-local {{ postgresql_password_encryption_algorithm }}
       register: pg_createcluster_result
       failed_when: pg_createcluster_result.rc != 0
       when: (ansible_os_family == "Debian" and
