@@ -156,6 +156,8 @@ bootstrap:
     - locale: {{ postgresql_locale }}
   {% if postgresql_data_checksums|bool %}
     - data-checksums
+  {% elif postgresql_version | int >= 18 %}
+    - no-data-checksums
   {% endif %}
 
   pg_hba:  # Add following lines to pg_hba.conf after running 'initdb'
