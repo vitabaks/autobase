@@ -93,9 +93,9 @@
 # Allow replication connections from localhost, by a user with the
 # replication privilege.
 {% if patroni_use_unix_socket_repl | default(false) %}
-  local        replication              {{ patroni_replication_username }}                                      trust
+  local        replication              {{ patroni_replication_username }}                                       {{ postgresql_local_replication_auth_method }}
 {% else %}
-  {{ host_type }}      replication              {{ patroni_replication_username }}               localhost                trust
+  {{ host_type }}      replication              {{ patroni_replication_username }}               localhost                {{ postgresql_local_replication_auth_method }}
 {% endif %}
 {% for host in pg_hba_hosts | default(groups['postgres_cluster'] | default([])) %}
   {{ host_type }}      replication              {{ patroni_replication_username }}               {{ hostvars[host]['patroni_bind_address'] | default(hostvars[host]['bind_address'], true) }}/32         {{ postgresql_password_encryption_algorithm }}

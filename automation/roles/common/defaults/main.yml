@@ -448,6 +448,10 @@ postgresql_pg_hba:
 #  - { type: "{{ host_type }}", database: "mydatabase", user: "mydb-user", address: "192.168.0.0/24", method: "{{ postgresql_password_encryption_algorithm }}" }
 #  - { type: "{{ host_type }}", database: "all", user: "all", address: "192.168.0.0/24", method: "ident", options: "map=main" }  # use pg_ident
 
+# Specify authentication method for local connections: via socket if enabled, or 127.0.0.1
+# Replace with "{{ postgresql_password_encryption_algorithm }}" to require a password for local connections to the replication user
+postgresql_local_replication_auth_method: "trust"
+
 host_type: "{{ 'hostssl' if tls_cert_generate | bool else 'host' }}"
 
 # list of lines that Patroni will use to generate pg_ident.conf
