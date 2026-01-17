@@ -287,7 +287,7 @@ tags:
 {% if 'noloadbalance=' not in normalized_tags %}
   noloadbalance: false
 {% endif %}
-{% if 'nofailover=' not in normalized_tags %}
+{% if 'nofailover=' not in normalized_tags and 'failover_priority=' not in normalized_tags %}
   nofailover: false
 {% endif %}
 {% if 'clonefrom=' not in normalized_tags %}
