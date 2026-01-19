@@ -105,10 +105,6 @@ pgbackrest_stanza_upgrade: true # perform the "stanza-upgrade" command after the
 ############################################################
 
 pg_replication_database: "all" # database name for the replication, 'all' for the entire database cluster.
-pg_wal_keep_gigabytes: 100 # or 'none' to not change the parameter.
-# pg_source_wal_keep_gigabytes - the number of WAL files (in gigabytes) to hold in the Source Cluster.
-# To guarantee that the necessary WAL files are available to reach recovery_target_lsn via streaming replication for the leader of the Target Cluster.
-# After performing the upgrade procedure, the parameter will be reset to original state.
 
 pg_publication_count: 1 # number of publications, replication slots and subscriptions to be created for logical replication (source -> target).
 pg_publication_name: "pg_upgrade_publication"
@@ -121,10 +117,15 @@ pg_reverse_publication_name: "reverse_{{ publication_name }}"
 pg_reverse_subscription_name: "reverse_{{ subscription_name }}"
 pg_reverse_subscription_slot_name: "reverse_{{ subscription_slot_name }}"
 
+pg_wal_keep_gigabytes: 100 # or 'none' to not change the parameter.
+# pg_wal_keep_gigabytes - the number of WAL files (in gigabytes) to hold in the source cluster.
+# To guarantee that the necessary WAL files are available to reach recovery_target_lsn via streaming replication for the leader of the target cluster.
+# After performing the upgrade procedure, the parameter will be reset to original state.
+
 ### SWITCHOVER ###
 # Redirect database traffic to the target cluster with near-zero downtime (pg_logical_switchover.yml)
 pg_switchover_no_lag_wait_timeout: 10 # the maximum waiting time (in seconds) until the logical replication lag is 0 bytes.
 pg_switchover_force_mode: false # "Plan B": switch traffic with a small replication lag.
 pg_switchover_force_mode_lag_bytes: 1048576 # 1 MiB. Allowed lag (in bytes) in force mode.
-# sequences
+# Sequences
 pg_sequences_increase_value: 1000000 # add +N to the current value of the sequences (received from the old cluster) in the new cluster.
