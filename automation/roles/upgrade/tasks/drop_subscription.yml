@@ -1,0 +1,33 @@
+---
+
+# One subscription (if pg_publication_count = 1)
+- name: '[Stop logical replication] Drop Subscription'
+  ansible.builtin.command: >-
+    {{ psql_command }} -tAXc "alter subscription {{ subscription_name | default(pg_subscription_name) }} disable;
+    alter subscription {{ subscription_name | default(pg_subscription_name) }} set (slot_name=NONE);
+    drop subscription {{ subscription_name | default(pg_subscription_name) }}"
+  vars:
+    psql_command: "{{ pg_old_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d {{ dbname }}"
+  environment:
+    PGPASSWORD: "{{ patroni_superuser_password }}"
+  when:
+    - pg_publication_count | int == 1
+    - patroni_cluster_leader
+
+# Multiple subscriptions (if pg_publication_count > 1)
+- name: '[Stop logical replication] Drop Subscriptions'
+  ansible.builtin.command: >-
+    {{ psql_command }} -tAXc "alter subscription {{ subscription_name | default(pg_subscription_name) }}_{{ '%02d' % (idx + 1) }} disable;
+    alter subscription {{ subscription_name | default(pg_subscription_name) }}_{{ '%02d' % (idx + 1) }} set (slot_name=NONE);
+    drop subscription {{ subscription_name | default(pg_subscription_name) }}_{{ '%02d' % (idx + 1) }}"
+  loop: "{{ range(0, pg_publication_count | int) | list }}"
+  loop_control:
+    index_var: idx
+    label: "{{ subscription_name | default(pg_subscription_name) }}_{{ '%02d' % (idx + 1) }}"
+  vars:
+    psql_command: "{{ pg_old_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d {{ dbname }}"
+  environment:
+    PGPASSWORD: "{{ patroni_superuser_password }}"
+  when:
+    - pg_publication_count | int > 1
+    - patroni_cluster_leader
