@@ -1,6 +1,6 @@
 ---
 # Blue-green upgrade method: Create subscriptions on the target cluster
-# for logical replication from the source cluster.
+# for logical replication from the source cluster (source -> target).
 
 # One subscription (if pg_publication_count = 1)
 - block:

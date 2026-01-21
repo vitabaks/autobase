@@ -1,6 +1,6 @@
 ---
 # Blue-green upgrade method: Create publications and replication slots on the source cluster
-# for logical replication to the target cluster.
+# for logical replication to the target cluster (source -> target).
 
 # One publication (if pg_publication_count = 1)
 - block:
