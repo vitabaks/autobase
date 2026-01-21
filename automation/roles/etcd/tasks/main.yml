@@ -123,7 +123,7 @@
 
 # Install etcd package from RPM or APT repository configured on the system
 # Note: Installation is done after configuration, as Debian automatically starts the service after install.
-- name: Make sure etcd is installed
+- name: Install etcd package
   ansible.builtin.package:
     name: "{{ etcd_packages | flatten }}"
     state: present
