@@ -33,7 +33,7 @@
     "i18next-http-backend": "^3.0.2",
     "ip-regex": "^5.0.0",
     "js-yaml": "^4.1.0",
-    "lodash": "^4.17.21",
+    "lodash": "^4.17.23",
     "material-react-table": "^3.2.1",
     "normalize.css": "^8.0.1",
     "react": "^19.2.0",
