@@ -45,10 +45,10 @@
           - --no-same-owner
         remote_src: true
 
-    - name: Copy "etcd" and "etcdctl" binary files to {{ etcd_install_dir | default('/usr/local/bin') }}
+    - name: Copy "etcd" and "etcdctl" binary files to {{ etcd_bin_dir | default('/usr/local/bin') }}
       ansible.builtin.copy:
         src: "/tmp/{{ etcd_package_repo.split('.tar.gz')[0] | basename }}/{{ item }}"
-        dest: "{{ etcd_install_dir | default('/usr/local/bin') }}"
+        dest: "{{ etcd_bin_dir | default('/usr/local/bin') }}"
         mode: u+x,g+x,o+x
         remote_src: true
       loop:

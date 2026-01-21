@@ -10,7 +10,7 @@ WorkingDirectory={{ etcd_data_dir | default('/var/lib/etcd') }}
 EnvironmentFile=-{{ etcd_conf_dir | default('/etc/etcd') }}/etcd.conf
 User=etcd
 # set GOMAXPROCS to number of processors
-ExecStart=/bin/bash -c "GOMAXPROCS=$(nproc) {{ etcd_install_dir | default('/usr/local/bin') }}/etcd"
+ExecStart=/bin/bash -c "GOMAXPROCS=$(nproc) {{ etcd_bin_dir | default('/usr/local/bin') }}/etcd"
 Restart=on-failure
 RestartSec=10
 StartLimitInterval=0
