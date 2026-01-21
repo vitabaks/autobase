@@ -19,7 +19,6 @@
     psql_command: "{{ pg_old_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d {{ dbname }}"
   environment:
     PGPASSWORD: "{{ patroni_superuser_password }}"
-  ignore_errors: true # show the error and continue the playbook execution
   when:
     - inventory_hostname in groups['target_cluster']
     - patroni_cluster_leader
@@ -177,7 +176,6 @@
     psql_command: "{{ pg_old_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d {{ dbname }}"
   environment:
     PGPASSWORD: "{{ patroni_superuser_password }}"
-  ignore_errors: true # show the error and continue the playbook execution
   when:
     - inventory_hostname in groups['target_cluster']
     - patroni_cluster_leader
