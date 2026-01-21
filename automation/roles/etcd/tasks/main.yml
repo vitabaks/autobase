@@ -25,7 +25,6 @@
       retries: 3
       environment: "{{ proxy_env | default({}) }}"
       when: "'unzip' not in ansible_facts.packages or 'tar' not in ansible_facts.packages"
-      tags: etcd, etcd_install
 
     - name: Download "etcd" package
       ansible.builtin.get_url:
@@ -122,19 +121,20 @@
     dest: /etc/systemd/system/etcd.service
   tags: etcd, etcd_conf
 
-# Installation is done after configuration, as Debian automatically starts the service after install.
-- block: # install etcd package from RPM or APT repository configured on the system
-    - name: Make sure etcd is installed
-      ansible.builtin.package:
-        name: "{{ etcd_packages | flatten }}"
-        state: present
-      register: install_etcd_packages
-      until: install_etcd_packages is success
-      delay: 5
-      retries: 3
-      environment: "{{ proxy_env | default({}) }}"
+# Install etcd package from RPM or APT repository configured on the system
+# Note: Installation is done after configuration, as Debian automatically starts the service after install.
+- name: Make sure etcd is installed
+  ansible.builtin.package:
+    name: "{{ etcd_packages | flatten }}"
+    state: present
+  register: install_etcd_packages
+  until: install_etcd_packages is success
+  delay: 5
+  retries: 3
+  environment: "{{ proxy_env | default({}) }}"
   when:
-    - installation_method == "packages" and (etcd_installation_method == "rpm" or etcd_installation_method == "deb")
+    - installation_method == "packages"
+    - (etcd_installation_method == "rpm" or etcd_installation_method == "deb")
   tags: etcd, etcd_install
 
 - name: Start etcd service and check cluster health
