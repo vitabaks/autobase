@@ -122,7 +122,7 @@ dcs_exists: false # or 'true' if you do not want Autobase to deploy and manage e
 # if dcs_type: "etcd" and dcs_exists: false
 # renovate: datasource=github-releases depName=etcd-io/etcd extractVersion=^v(?<version>.*)$
 etcd_version: 3.5.25
-etcd_installation_method: "binary" # binary -> install from repo such as GitHub, "{{ pkg_type }}" -> install from apt or yum repository
+etcd_installation_method: "{{ pkg_type }}" # binary -> install from repo such as GitHub, "{{ pkg_type }}" -> install from apt or yum repository
 etcd_bin_dir: "{{ '/usr/bin' if etcd_installation_method == pkg_type else '/usr/local/bin' }}"
 etcd_conf_dir: "/etc/etcd"
 etcd_data_dir: "/var/lib/etcd"
