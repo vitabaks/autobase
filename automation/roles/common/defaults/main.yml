@@ -553,10 +553,10 @@ patroni_standby_cluster:
 #  restore_command: ""  # command to restore WAL records from the remote master to standby leader (optional)
 #  recovery_min_apply_delay: ""  # how long to wait before actually apply WAL records on a standby leader (optional)
 
-# Permanent replication slots.
-# These slots will be preserved during switchover/failover.
+# Permanent replication slots (stored in DCS at the 'slots' level).
+# These slots will be preserved and automatically recreated during switchover/failover.
 # https://patroni.readthedocs.io/en/latest/dynamic_configuration.html
-patroni_slots: []
+patroni_permanent_slots: []
 #  - slot: "logical_replication_slot" # the name of the permanent replication slot.
 #    type: "logical" # the type of slot. Could be 'physical' or 'logical' (if the slot is logical, you have to define 'database' and 'plugin').
 #    plugin: "pgoutput" # the plugin name for the logical slot.
@@ -565,6 +565,10 @@ patroni_slots: []
 #    type: "logical"
 #    plugin: "pgoutput"
 #    database: "test"
+
+# DEPRECATED: Use 'patroni_permanent_slots' instead.
+# Kept for backwards compatibility.
+patroni_slots: []
 
 patroni_log_destination: logfile # or 'stderr'
 # if patroni_log_destination: logfile

@@ -58,7 +58,7 @@
       loop: "{{ postgresql_parameters }}"
       when: item.value == "null"
 
-    - name: Update postgresql slots in DCS
+    - name: Update permanent replication slots in DCS
       ansible.builtin.uri:
         url: "{{ patroni_restapi_protocol }}://{{ patroni_restapi_connect_addr | default(patroni_bind_address | default(bind_address, true), true) }}:\
           {{ patroni_restapi_port }}/config"
@@ -67,33 +67,31 @@
         password: "{{ patroni_restapi_password | default(omit) }}"
         body: >-
           {
-            "postgresql": {
-              "slots": {
-                {% for slot in patroni_slots %}
-                  "{{ slot.slot }}": {
-                    {% for key, value in slot.items() if key != 'slot' %}
-                      "{{ key }}": {{ value | to_json }}{% if not loop.last %},{% endif %}
-                    {% endfor %}
-                  }{% if not loop.last %},{% endif %}
-                {% endfor %}
-              }
+            "slots": {
+              {% for slot in (patroni_permanent_slots | default([]) or patroni_slots | default([])) %}
+                "{{ slot.slot }}": {
+                  {% for key, value in slot.items() if key != 'slot' %}
+                    "{{ key }}": {{ value | to_json }}{% if not loop.last %},{% endif %}
+                  {% endfor %}
+                }{% if not loop.last %},{% endif %}
+              {% endfor %}
             }
           }
         body_format: json
         ca_path: "{{ patroni_restapi_cafile | default(omit, true) }}"
-      when: patroni_slots is defined and patroni_slots | length > 0
+      when: (patroni_permanent_slots | default([]) | length > 0) or (patroni_slots | default([]) | length > 0)
 
-    - name: Delete postgresql slots from DCS
+    - name: Delete permanent replication slots from DCS
       ansible.builtin.uri:
         url: "{{ patroni_restapi_protocol }}://{{ patroni_restapi_connect_addr | default(patroni_bind_address | default(bind_address, true), true) }}:\
           {{ patroni_restapi_port }}/config"
         method: PATCH
         user: "{{ patroni_restapi_username | default(omit) }}"
         password: "{{ patroni_restapi_password | default(omit) }}"
-        body: '{"postgresql":{"slots":null}}'
+        body: '{"slots":null}'
         body_format: json
         ca_path: "{{ patroni_restapi_cafile | default(omit, true) }}"
-      when: patroni_slots is not defined or patroni_slots | length < 1
+      when: (patroni_permanent_slots | default([]) | length < 1) and (patroni_slots | default([]) | length < 1)
   environment:
     no_proxy: "{{ patroni_bind_address | default(bind_address, true) }}"
   when: inventory_hostname in groups['primary']

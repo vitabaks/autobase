@@ -137,9 +137,10 @@ bootstrap:
       recovery_min_apply_delay: {{ patroni_standby_cluster.recovery_min_apply_delay }}
      {% endif %}
     {% endif %}
-    {% if patroni_slots is defined and patroni_slots | length > 0 %}
+{% set _permanent_slots = patroni_permanent_slots | default([]) or patroni_slots | default([]) %}
+    {% if _permanent_slots | length > 0 %}
     slots:
-      {% for slot in patroni_slots %}
+      {% for slot in _permanent_slots %}
       {{ slot.slot }}:
         type: {{ slot.type }}
         {% if slot.plugin | default('') | length > 0 %}
