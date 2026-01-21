@@ -1106,15 +1106,6 @@ install_postgresql_repo: true # or 'false' (installed from the package "pgdg-red
 install_postgresql_repo_extras: true # enable PostgreSQL extras repository (e.g., pgdg-rhel8-extras)
 install_epel_repo: true # or 'false' (installed from the package "epel-release-latest.noarch.rpm")
 
-etcd_os_specific_packages:
-  Debian:
-    - etcd-client
-    - etcd-server
-  RedHat:
-    - etcd
-etcd_packages:
-  - "{{ etcd_os_specific_packages[ansible_os_family] }}"
-
 # Full PostgreSQL package version string (e.g., "18.1-1PGDG.rhel9").
 # Used only on RedHat-based distributions, where any minor version can be installed from the PGDG repo.
 # On Debian/Ubuntu, only the latest minor is available for each major release.
@@ -1170,6 +1161,15 @@ patroni_packages:
   - "{{ patroni_os_specific_packages[ansible_os_family] }}"
 
 python_version: "3" # override the version (e.q, 3.11) only if patroni_installation_method: "pip" is used
+
+etcd_os_specific_packages:
+  Debian:
+    - etcd-client
+    - etcd-server
+  RedHat:
+    - etcd
+etcd_packages:
+  - "{{ etcd_os_specific_packages[ansible_os_family] }}"
 
 system_os_specific_packages:
   Debian:
