@@ -9,7 +9,7 @@
         {{ psql_command }} -tAXc "drop subscription if exists {{ pg_subscription_name }}";
         {{ psql_command }} -tAXc "create subscription {{ pg_subscription_name }}
         connection 'host={{ hostvars[groups['source_primary'][0]]['inventory_hostname'] }}
-        port={{ pg_source_port }} user={{ patroni_superuser_username }} dbname={{ dbname }}'
+        port={{ postgresql_port }} user={{ patroni_superuser_username }} dbname={{ dbname }}'
         publication {{ pg_publication_name }}
         with (copy_data = false, create_slot = false, slot_name = '{{ pg_subscription_slot_name }}')"
       when:
@@ -62,7 +62,7 @@
         {{ psql_command }} -tAXc "drop subscription if exists {{ pg_subscription_name }}_{{ '%02d' % (idx + 1) }}";
         {{ psql_command }} -tAXc "create subscription {{ pg_subscription_name }}_{{ '%02d' % (idx + 1) }}
         connection 'host={{ hostvars[groups['source_primary'][0]]['inventory_hostname'] }}
-        port={{ pg_source_port }} user={{ patroni_superuser_username }} dbname={{ dbname }}'
+        port={{ postgresql_port }} user={{ patroni_superuser_username }} dbname={{ dbname }}'
         publication {{ pg_publication_name }}_{{ '%02d' % (idx + 1) }}
         with (copy_data = false, create_slot = false, slot_name = '{{ pg_subscription_slot_name }}_{{ '%02d' % (idx + 1) }}')"
       loop: "{{ range(0, pg_publication_count | int) | list }}"
