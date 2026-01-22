@@ -1,4 +1,5 @@
 ---
+# Blue-green upgrade method: Drop subscriptions.
 
 # One subscription (if pg_publication_count = 1)
 - name: '[Stop logical replication] Drop Subscription'
