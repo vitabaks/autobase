@@ -1,0 +1,16 @@
+# Blue-green upgrade method: inventory example
+all:
+  vars:
+    pg_old_version: 17
+    pg_new_version: 18
+  children:
+    source_cluster:
+      hosts:
+        10.128.64.141:
+        10.128.64.142:
+        10.128.64.143:
+    target_cluster:
+      hosts:
+        10.128.64.151:
+        10.128.64.152:
+        10.128.64.153:
