@@ -8,7 +8,7 @@
       ansible.builtin.shell: >-
         {{ psql_command }} -tAXc "drop subscription if exists {{ pg_reverse_subscription_name }}";
         {{ psql_command }} -tAXc "create subscription {{ pg_reverse_subscription_name }}
-        connection 'host={{ hostvars[groups['target_primary'][0]]['inventory_hostname'] }}
+        connection 'host={{ hostvars[groups['primary'][0]]['inventory_hostname'] }}
         port={{ postgresql_port }} user={{ patroni_superuser_username }} dbname={{ dbname }}'
         publication {{ pg_reverse_publication_name }}
         with (copy_data = false, create_slot = false, slot_name = '{{ pg_reverse_subscription_slot_name }}')"
@@ -41,7 +41,7 @@
       ansible.builtin.shell: >-
         {{ psql_command }} -tAXc "drop subscription if exists {{ pg_reverse_subscription_name }}_{{ '%02d' % (idx + 1) }}";
         {{ psql_command }} -tAXc "create subscription {{ pg_reverse_subscription_name }}_{{ '%02d' % (idx + 1) }}
-        connection 'host={{ hostvars[groups['target_primary'][0]]['inventory_hostname'] }}
+        connection 'host={{ hostvars[groups['primary'][0]]['inventory_hostname'] }}
         port={{ postgresql_port }} user={{ patroni_superuser_username }} dbname={{ dbname }}'
         publication {{ pg_reverse_publication_name }}_{{ '%02d' % (idx + 1) }}
         with (copy_data = false, create_slot = false, slot_name = '{{ pg_reverse_subscription_slot_name }}_{{ '%02d' % (idx + 1) }}')"
