@@ -121,17 +121,28 @@
     dest: /etc/systemd/system/etcd.service
   tags: etcd, etcd_conf
 
-# Install etcd package from RPM or APT repository configured on the system
-# Note: Installation is done after configuration, as Debian automatically starts the service after install.
-- name: Install etcd package
-  ansible.builtin.package:
-    name: "{{ etcd_packages | flatten }}"
-    state: present
-  register: install_etcd_packages
-  until: install_etcd_packages is success
-  delay: 5
-  retries: 3
-  environment: "{{ proxy_env | default({}) }}"
+- block:
+    - name: Enable PGDG extras repository for etcd
+      # etcd needs PGDG extras repository on RHEL, as etcd isn't available from standard repositories.
+      ansible.builtin.import_role:
+        name: vitabaks.autobase.add_repository
+        allow_duplicates: false
+      when:
+        - etcd_installation_method == 'rpm'
+        - install_postgresql_repo_extras | bool
+        - install_postgresql_repo | bool
+
+    # Install etcd package from RPM or APT repository configured on the system
+    # Note: Installation is done after configuration, as Debian automatically starts the service after install.
+    - name: Install etcd package
+      ansible.builtin.package:
+        name: "{{ etcd_packages | flatten }}"
+        state: present
+      register: install_etcd_packages
+      until: install_etcd_packages is success
+      delay: 5
+      retries: 3
+      environment: "{{ proxy_env | default({}) }}"
   when:
     - installation_method == "packages"
     - (etcd_installation_method == "rpm" or etcd_installation_method == "deb")
