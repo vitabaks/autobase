@@ -122,15 +122,40 @@
   tags: etcd, etcd_conf
 
 - block:
-    - name: Enable PGDG extras repository for etcd
-      # etcd needs PGDG extras repository on RHEL, as etcd isn't available from standard repositories.
-      ansible.builtin.import_role:
-        name: vitabaks.autobase.add_repository
-        allow_duplicates: false
+    - block:
+      # Install PostgreSQL Repository
+        - name: Get pgdg-redhat-repo-latest.noarch.rpm
+          ansible.builtin.get_url: # yamllint disable rule:line-length
+            url: "https://download.postgresql.org/pub/repos/yum/reporpms/EL-{{ ansible_distribution_major_version }}-{{ pgdg_architecture_map[ansible_architecture] }}/pgdg-redhat-repo-latest.noarch.rpm"
+            dest: /tmp/
+            timeout: 30
+            validate_certs: false
+          when:
+            - "'pgdg-redhat-repo' not in ansible_facts.packages"
+
+        - name: Install PostgreSQL repository
+          ansible.builtin.package:
+            name: /tmp/pgdg-redhat-repo-latest.noarch.rpm
+            state: present
+            disable_gpg_check: true
+          register: package_status
+          until: package_status is success
+          delay: 5
+          retries: 3
+          when:
+            - "'pgdg-redhat-repo' not in ansible_facts.packages"
+
+        - name: Enable PGDG extras repository for etcd
+          ansible.builtin.command: dnf config-manager --enable pgdg-rhel{{ ansible_distribution_major_version }}-extras
+          register: pgdg_extras_result
+          failed_when:
+            - pgdg_extras_result.rc != 0
+            - "'No matching repo' not in pgdg_extras_result.stderr"
       when:
         - etcd_installation_method == 'rpm'
-        - install_postgresql_repo_extras | bool
         - install_postgresql_repo | bool
+        - install_postgresql_repo_extras | bool
+      tags: install_postgresql_repo
 
     # Install etcd package from RPM or APT repository configured on the system
     # Note: Installation is done after configuration, as Debian automatically starts the service after install.
