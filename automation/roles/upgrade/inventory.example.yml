@@ -1,3 +1,4 @@
+---
 # Blue-green upgrade method: inventory example
 all:
   vars:
