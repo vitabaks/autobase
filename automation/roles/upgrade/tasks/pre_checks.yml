@@ -162,7 +162,7 @@
         no_proxy: "{{ patroni_bind_address | default(bind_address, true) }}"
       when: inventory_hostname in (groups.get('target_cluster') | default([], true))
 
-    - name: "[Pre-Check] Make sure that the wal_level parameter is set to 'logical"
+    - name: "[Pre-Check] Make sure that the wal_level parameter is set to 'logical'"
       ansible.builtin.command: >-
         {{ pg_old_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc
         "show wal_level"
@@ -183,7 +183,7 @@
         path: "{{ pg_old_confdir }}/pg_hba.conf"
         marker: "# {mark} ANSIBLE TEMPORARY pg_upgrade RULE"
         insertbefore: BOF
-        content: "host all postgres {{ primary_host }}/32 trust"
+        content: "host all {{ patroni_superuser_username }} {{ primary_host }}/32 trust"
       vars:
         source_primary_host: "{{ (groups.get('source_primary') | default([], true) | first) | default('', true) }}"
         target_primary_host: "{{ (groups.get('primary') | default([], true) | first) | default('', true) }}"

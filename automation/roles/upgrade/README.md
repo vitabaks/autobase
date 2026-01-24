@@ -104,7 +104,7 @@ Note: For variables marked as "Derived value", the default value is determined b
 - **Make sure that the required variables are specified**
   - Notes: `pg_old_version` and `pg_new_version` variables
   - Stop, if one or more required variables have empty values.
-- **Make sure that the old and new data and confg directories do not match**
+- **Make sure that the old and new data and config directories do not match**
   - Stop, if `pg_old_datadir` and `pg_new_datadir`, or `pg_old_confdir` and `pg_new_confdir` match.
 - **Make sure the ansible required Python library is installed**
   - Notes: Install 'pexpect' package if missing
@@ -119,6 +119,16 @@ Note: For variables marked as "Derived value", the default value is determined b
   - Note: This check is necessary to avoid the risk of deleting the current data directory
   - Stop, if the current data directory is the same as `pg_new_datadir`.
   - Stop, if the current WAL directory is the same as `pg_new_wal_dir` (if a custom wal dir is used).
+- **Perform pre-checks for blue-green upgrade method (pg_upgrade_logical.yml)**
+  - Make sure that is Standby Cluster leader
+  - Make sure that the wal_level parameter is set to 'logical'
+  - Add temporary hba rule for logical replication
+    - Note: a trust rule between the source and target primary hosts for `patroni_superuser_username`
+    - Update the PostgreSQL configuration
+  - Make sure there are no tables with replica identity "nothing"
+  - Make sure that tables with replica identity "default" have primary key
+  - Set REPLICA IDENTITY FULL for tables without primary key
+    - Note: if `pg_allow_replica_identity_full` is `true` (default: true)
 - **Make sure that physical replication is active**
   - Stop, if there are no active replicas
 - **Make sure there is no high replication lag**
@@ -139,8 +149,6 @@ Note: For variables marked as "Derived value", the default value is determined b
 - **Test PgBouncer access via unix socket**
   - Ensure correct permissions for PgBouncer unix socket directory
   - Test access via unix socket to be able to perform 'PAUSE' command
-- **Make sure that the cluster ip address (VIP) is running**
-  - Notes: if 'cluster_vip' is defined
 
 #### 2. PRE-UPGRADE: Install new PostgreSQL packages
 
