@@ -230,6 +230,7 @@
         - inventory_hostname in (groups.get('source_cluster') | default([], true))
         - pg_reverse_logical_replication | default(false) | bool
 
+    # Replica identity
     - name: "[Pre-Check] Replica identity checks per database"
       ansible.builtin.include_tasks: replica_identity.yml
       loop: "{{ source_databases }}"
@@ -237,6 +238,30 @@
         loop_var: dbname
         label: "{{ dbname }}"
       when: inventory_hostname in (groups.get('source_cluster') | default([], true))
+
+    # Check restore_command
+    - name: "[Pre-Check] Make sure that the 'restore_command' parameter is not specified"
+      ansible.builtin.command: "grep -E '^[[:space:]]*restore_command[[:space:]]*:' {{ patroni_config_file }}"
+      register: restore_command_result
+      changed_when: false
+      failed_when: false
+      when: inventory_hostname in (groups.get('target_cluster') | default([], true))
+
+    # if 'restore_command' is specified
+    # Comment out the recovery_conf block in patroni.yml to avoid WAL archive conflicts.
+    # Such conflicts may occur if WAL files from previous tests exist in the archive or if the archive is empty,
+    # causing restore_command to fail or wait indefinitely.
+    - name: Comment out recovery_conf (restore_command) in patroni.yml
+      ansible.builtin.replace:
+        path: "{{ patroni_config_file }}"
+        regexp: '^(?!\s*#)(\s*)({{ item }}\s*:.*)$'
+        replace: '# \1\2'
+      loop:
+        - recovery_conf
+        - restore_command
+      when:
+        - inventory_hostname in (groups.get('target_cluster') | default([], true))
+        - restore_command_result.stdout | length > 0
 
   vars:
     source_primary_host: "{{ (groups.get('source_primary') | default([], true) | first) | default('', true) }}"
