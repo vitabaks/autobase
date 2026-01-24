@@ -1,0 +1,65 @@
+---
+# Blue-green upgrade method: Pre-checks for replica identity settings on the source cluster.
+
+- name: '[Pre-Check] Make sure there are no tables with replica identity "nothing"'
+  ansible.builtin.command: >-
+    {{ psql_command }} -d {{ dbname }} -tAXc "
+    select format('%I.%I', n.nspname, c.relname)
+    from pg_class c
+    join pg_namespace n on (n.oid = c.relnamespace)
+    where nspname not in ('pg_catalog', 'information_schema')
+      and relkind='r'
+      and relreplident='n'"
+  register: pg_replica_identity_nothing
+  changed_when: false
+  vars:
+    psql_command: "{{ pg_old_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }}"
+  environment:
+    PGPASSWORD: "{{ patroni_superuser_password }}"
+
+- block: # Stop, if replica identity "nothing" is present
+    - name: 'Print tables with replica identity "nothing"'
+      ansible.builtin.debug:
+        msg:
+          - "database: {{ dbname }}"
+          - "{{ pg_replica_identity_nothing.stdout_lines }}"
+
+    - name: "Pre-Check error"
+      ansible.builtin.fail:
+        msg: "Tables with replica identity \"nothing\" were found in database {{ dbname }}."
+  when: pg_replica_identity_nothing.stdout | default('') | length > 0
+
+- name: '[Pre-Check] Make sure that tables with replica identity "default" have primary key'
+  ansible.builtin.command: >-
+    {{ psql_command }} -d {{ dbname }} -tAXc "
+    select format('%I.%I', n.nspname, c.relname)
+    from pg_class c
+    join pg_namespace n on (n.oid = c.relnamespace)
+    where nspname not in ('pg_catalog', 'information_schema')
+      and relkind='r'
+      and relreplident='d'
+      and c.oid not in (
+        select c.oid
+        from pg_class c
+        join pg_index i on i.indrelid = c.oid
+        where c.relkind='r'
+          and i.indisprimary = true
+      )"
+  register: pg_replica_identity_default
+  changed_when: false
+  vars:
+    psql_command: "{{ pg_old_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }}"
+  environment:
+    PGPASSWORD: "{{ patroni_superuser_password }}"
+
+- block: # Stop, if replica identity "default" without PK is present
+    - name: 'Print tables without primary key'
+      ansible.builtin.debug:
+        msg:
+          - "database: {{ dbname }}"
+          - "{{ pg_replica_identity_default.stdout_lines }}"
+
+    - name: "Pre-Check error"
+      ansible.builtin.fail:
+        msg: "Tables with replica identity \"default\" and without primary key were found in database {{ dbname }}."
+  when: pg_replica_identity_default.stdout | default('') | length > 0

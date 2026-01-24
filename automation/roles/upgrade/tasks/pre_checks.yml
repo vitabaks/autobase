@@ -1,6 +1,6 @@
 ---
 # Stop, if pg_old_version, pg_new_version are not defined
-- name: Make sure that the required variables are specified
+- name: "[Pre-Check] Make sure that the required variables are specified"
   run_once: true
   ansible.builtin.debug:
     msg:
@@ -10,7 +10,7 @@
   when: pg_old_version | string | length < 1 or pg_new_version | string | length < 1
 
 # Stop, if the directories of the old and new versions are the same
-- name: "Make sure that the old and new data and config directories do not match"
+- name: "[Pre-Check] Make sure that the old and new data and config directories do not match"
   run_once: true
   ansible.builtin.debug:
     msg:
@@ -32,6 +32,7 @@
   environment:
     PATH: "{{ ansible_env.PATH }}:/usr/local/bin:/usr/bin"
     PIP_BREAK_SYSTEM_PACKAGES: "1"
+  when: inventory_hostname in groups['primary']
 
 - name: "[Pre-Check] Test PostgreSQL database access using a unix socket"
   ansible.builtin.command: >
@@ -41,12 +42,13 @@
   register: socket_access_result
   changed_when: false
   failed_when: "socket_access_result.rc != 0 and 'no pg_hba.conf entry' not in socket_access_result.stderr"
+  when: inventory_hostname in groups['primary']
 
 # if 'no pg_hba.conf entry'
 - block:
     # Add a temporary local access rule for pg_upgrade to allow the upgrade process to proceed without authentication issues.
     # This is necessary to ensure a smooth upgrade process and will be removed after the upgrade is complete.
-    - name: Add temporary local access rule (during the upgrade)
+    - name: Add temporary local hba rule (during the upgrade)
       ansible.builtin.blockinfile:
         path: "{{ pg_old_confdir }}/pg_hba.conf"
         marker: "# {mark} ANSIBLE TEMPORARY pg_upgrade RULE"
@@ -56,6 +58,7 @@
     - name: Update the PostgreSQL configuration
       ansible.builtin.command: "{{ pg_old_bindir }}/pg_ctl reload -D {{ pg_old_datadir }}"
   when:
+    - inventory_hostname in groups['primary']
     - socket_access_result.stderr is defined
     - "'no pg_hba.conf entry' in socket_access_result.stderr"
 
@@ -142,6 +145,82 @@
   when:
     - inventory_hostname in groups['primary']
     - pg_new_wal_dir | length > 0 and pg_new_wal_dir == postgresql_wal_dir
+
+# Pre-Checks for blue-green upgrade method
+- block:
+    - name: "[Pre-Check] Make sure that is Standby Cluster leader"
+      ansible.builtin.uri:
+        url: >-
+          {{ patroni_restapi_protocol | default('https') }}://{{ patroni_restapi_connect_addr
+            | default(patroni_bind_address | default(bind_address, true), true) }}:{{ patroni_restapi_port
+            | default('8008') }}/standby-leader
+        status_code: 200
+      register: patroni_standby_leader_result
+      changed_when: false
+      failed_when: patroni_standby_leader_result.status != 200
+      environment:
+        no_proxy: "{{ patroni_bind_address | default(bind_address, true) }}"
+      when: inventory_hostname in (groups.get('target_cluster') | default([], true))
+
+    - name: "[Pre-Check] Make sure that the wal_level parameter is set to 'logical"
+      ansible.builtin.command: >-
+        {{ pg_old_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc
+        "show wal_level"
+      environment:
+        PGPASSWORD: "{{ patroni_superuser_password }}"
+      changed_when: false
+      register: pg_wal_level
+
+    # Stop, if wal_level != logical 
+    - name: "Pre-Check error. The wal_level parameter is not set to 'logical'"
+      ansible.builtin.fail:
+        msg:
+          - "The wal_level parameter is not set to 'logical'. Current value: {{ pg_wal_level.stdout }}"
+      when: pg_wal_level.stdout != "logical"
+
+    - name: Add temporary hba rule for logical replication
+      ansible.builtin.blockinfile:
+        path: "{{ pg_old_confdir }}/pg_hba.conf"
+        marker: "# {mark} ANSIBLE TEMPORARY pg_upgrade RULE"
+        insertbefore: BOF
+        content: "host all postgres {{ primary_host }}/32 trust"
+      vars:
+        source_primary_host: "{{ (groups.get('source_primary') | default([], true) | first) | default('', true) }}"
+        target_primary_host: "{{ (groups.get('primary') | default([], true) | first) | default('', true) }}"
+        primary_host: >-
+          {{
+            (inventory_hostname in (groups.get('target_cluster') | default([], true)))
+            | ternary(
+                (hostvars[source_primary_host].patroni_bind_address
+                  | default(hostvars[source_primary_host].bind_address, true)
+                  | default(hostvars[source_primary_host].inventory_hostname, true)
+                ),
+                (hostvars[target_primary_host].patroni_bind_address
+                  | default(hostvars[target_primary_host].bind_address, true)
+                  | default(hostvars[target_primary_host].inventory_hostname, true)
+                )
+              )
+          }}
+
+    - name: Update the PostgreSQL configuration
+      ansible.builtin.command: "{{ pg_old_bindir }}/pg_ctl reload -D {{ pg_old_datadir }}"
+
+    - name: "[Pre-Check] Replica identity checks per database"
+      ansible.builtin.include_tasks: precheck_replica_identity.yml
+      loop: "{{ pg_replication_database | list }}"
+      loop_control:
+        loop_var: dbname
+        label: "{{ dbname }}"
+      when: inventory_hostname in (groups.get('source_cluster') | default([], true))
+
+  vars:
+    psql_command: "{{ pg_old_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }}"
+  environment:
+    PGPASSWORD: "{{ patroni_superuser_password }}"
+  when:
+    - (inventory_hostname in (groups.get('source_cluster') | default([], true)) or
+       inventory_hostname in (groups.get('target_cluster') | default([], true)))
+    - patroni_cluster_leader | default(false)
 
 - name: "[Pre-Check] Make sure that physical replication is active"
   ansible.builtin.command: >-
@@ -372,48 +451,36 @@
     state: absent
 
 # PgBouncer (if 'pgbouncer_pool_pause' is 'true')
-- name: Ensure correct permissions for PgBouncer unix socket directory
-  become: true
-  become_user: root
-  ansible.builtin.file:
-    path: "/var/run/pgbouncer{{ '-%d' % (idx + 1) if idx > 0 else '' }}"
-    state: directory
-    owner: postgres
-    group: postgres
-    mode: "0755"
-  loop: "{{ range(0, (pgbouncer_processes | default(1) | int)) | list }}"
-  loop_control:
-    index_var: idx
-    label: "{{ 'pgbouncer' if idx == 0 else 'pgbouncer-%d' % (idx + 1) }}"
+# Note: not for blue-green upgrade method
+- block:
+    - name: Ensure correct permissions for PgBouncer unix socket directory
+      become: true
+      become_user: root
+      ansible.builtin.file:
+        path: "/var/run/pgbouncer{{ '-%d' % (idx + 1) if idx > 0 else '' }}"
+        state: directory
+        owner: postgres
+        group: postgres
+        mode: "0755"
+      loop: "{{ range(0, (pgbouncer_processes | default(1) | int)) | list }}"
+      loop_control:
+        index_var: idx
+        label: "{{ 'pgbouncer' if idx == 0 else 'pgbouncer-%d' % (idx + 1) }}"
+
+    # Test access via unix socket to be able to perform 'PAUSE' command
+    - name: "[Pre-Check] Test PgBouncer access via unix socket"
+      ansible.builtin.command: >-
+        {{ pg_old_bindir }}/psql -h /var/run/pgbouncer{{ '-%d' % (idx + 1) if idx > 0 else '' }}
+        -p {{ pgbouncer_listen_port }}
+        -U {{ patroni_superuser_username }}
+        -d pgbouncer
+        -tAXc "SHOW POOLS"
+      loop: "{{ range(0, (pgbouncer_processes | default(1) | int)) | list }}"
+      loop_control:
+        index_var: idx
+        label: "{{ 'pgbouncer' if idx == 0 else 'pgbouncer-%d' % (idx + 1) }}"
+      changed_when: false
   when:
     - pgbouncer_install | bool
     - pgbouncer_pool_pause | bool
-
-# Test access via unix socket to be able to perform 'PAUSE' command
-- name: "[Pre-Check] Test PgBouncer access via unix socket"
-  ansible.builtin.command: >-
-    {{ pg_old_bindir }}/psql -h /var/run/pgbouncer{{ '-%d' % (idx + 1) if idx > 0 else '' }}
-    -p {{ pgbouncer_listen_port }}
-    -U {{ patroni_superuser_username }}
-    -d pgbouncer
-    -tAXc "SHOW POOLS"
-  loop: "{{ range(0, (pgbouncer_processes | default(1) | int)) | list }}"
-  loop_control:
-    index_var: idx
-    label: "{{ 'pgbouncer' if idx == 0 else 'pgbouncer-%d' % (idx + 1) }}"
-  changed_when: false
-  when:
-    - pgbouncer_install | bool
-    - pgbouncer_pool_pause | bool
-
-# Check the VIP address
-- name: Make sure that the cluster ip address (VIP) "{{ cluster_vip | default('') }}" is running
-  ansible.builtin.wait_for:
-    host: "{{ cluster_vip }}"
-    port: "{{ pgbouncer_listen_port if pgbouncer_install | bool else postgresql_port }}"
-    state: started
-    timeout: 15 # max wait time: 30 seconds
-    delay: 2
-  ignore_errors: true # show the error and continue the playbook execution
-  when:
-    - cluster_vip | length > 0
+    - inventory_hostname not in (groups.get('target_cluster') | default([], true))
