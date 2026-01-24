@@ -8,8 +8,8 @@
       ansible.builtin.shell: >-
         {{ psql_command }} -tAXc "drop subscription if exists {{ pg_subscription_name }}";
         {{ psql_command }} -tAXc "create subscription {{ pg_subscription_name }}
-        connection 'host={{ hostvars[groups['source_primary'][0]]['inventory_hostname'] }}
-        port={{ postgresql_port }} user={{ patroni_superuser_username }} dbname={{ dbname }}'
+        connection 'host={{ source_primary_host_addr }} port={{ postgresql_port }}
+        user={{ patroni_superuser_username }} dbname={{ dbname }}'
         publication {{ pg_publication_name }}
         with (copy_data = false, create_slot = false, slot_name = '{{ pg_subscription_slot_name }}')"
       when:
@@ -50,6 +50,13 @@
         - patroni_cluster_leader
   vars:
     psql_command: "{{ pg_old_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d {{ dbname }}"
+    source_primary_host: "{{ (groups.get('source_primary') | default([], true) | first) | default('', true) }}"
+    source_primary_host_addr: >-
+      {{
+        hostvars[source_primary_host].patroni_bind_address
+        | default(hostvars[source_primary_host].bind_address, true)
+        | default(hostvars[source_primary_host].inventory_hostname, true)
+      }}
   environment:
     PGPASSWORD: "{{ patroni_superuser_password }}"
   when: pg_publication_count | int == 1
@@ -61,8 +68,8 @@
       ansible.builtin.shell: >-
         {{ psql_command }} -tAXc "drop subscription if exists {{ pg_subscription_name }}_{{ '%02d' % (idx + 1) }}";
         {{ psql_command }} -tAXc "create subscription {{ pg_subscription_name }}_{{ '%02d' % (idx + 1) }}
-        connection 'host={{ hostvars[groups['source_primary'][0]]['inventory_hostname'] }}
-        port={{ postgresql_port }} user={{ patroni_superuser_username }} dbname={{ dbname }}'
+        connection 'host={{ source_primary_host_addr }} port={{ postgresql_port }}
+        user={{ patroni_superuser_username }} dbname={{ dbname }}'
         publication {{ pg_publication_name }}_{{ '%02d' % (idx + 1) }}
         with (copy_data = false, create_slot = false, slot_name = '{{ pg_subscription_slot_name }}_{{ '%02d' % (idx + 1) }}')"
       loop: "{{ range(0, pg_publication_count | int) | list }}"
@@ -120,6 +127,13 @@
         - patroni_cluster_leader
   vars:
     psql_command: "{{ pg_old_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d {{ dbname }}"
+    source_primary_host: "{{ (groups.get('source_primary') | default([], true) | first) | default('', true) }}"
+    source_primary_host_addr: >-
+      {{
+        hostvars[source_primary_host].patroni_bind_address
+        | default(hostvars[source_primary_host].bind_address, true)
+        | default(hostvars[source_primary_host].inventory_hostname, true)
+      }}
   environment:
     PGPASSWORD: "{{ patroni_superuser_password }}"
   when: pg_publication_count | int > 1
