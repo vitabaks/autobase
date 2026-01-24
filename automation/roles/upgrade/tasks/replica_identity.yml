@@ -59,7 +59,23 @@
           - "database: {{ dbname }}"
           - "{{ pg_replica_identity_default.stdout_lines }}"
 
+    # if pg_allow_replica_identity_full is false
     - name: "Pre-Check error"
       ansible.builtin.fail:
         msg: "Tables with replica identity \"default\" and without primary key were found in database {{ dbname }}."
+      when: not pg_allow_replica_identity_full | bool
+
+    # if pg_allow_replica_identity_full is true
+    - name: "Set REPLICA IDENTITY FULL for tables without primary key"
+      ansible.builtin.command: >-
+        {{ psql_command }} -d {{ dbname }} -tAXc
+        "alter table {{ item }} replica identity full"
+      loop: "{{ pg_replica_identity_default.stdout_lines }}"
+      loop_control:
+        label: "{{ item }}"
+      when: pg_allow_replica_identity_full | bool
+  vars:
+    psql_command: "{{ pg_old_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }}"
+  environment:
+    PGPASSWORD: "{{ patroni_superuser_password }}"
   when: pg_replica_identity_default.stdout | default('') | length > 0

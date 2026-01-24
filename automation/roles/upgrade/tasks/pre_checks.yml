@@ -171,7 +171,7 @@
       changed_when: false
       register: pg_wal_level
 
-    # Stop, if wal_level != logical 
+    # Stop, if wal_level != logical
     - name: "Pre-Check error. The wal_level parameter is not set to 'logical'"
       ansible.builtin.fail:
         msg:
@@ -206,7 +206,7 @@
       ansible.builtin.command: "{{ pg_old_bindir }}/pg_ctl reload -D {{ pg_old_datadir }}"
 
     - name: "[Pre-Check] Replica identity checks per database"
-      ansible.builtin.include_tasks: precheck_replica_identity.yml
+      ansible.builtin.include_tasks: replica_identity.yml
       loop: "{{ pg_replication_database | list }}"
       loop_control:
         loop_var: dbname

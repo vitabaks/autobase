@@ -106,16 +106,18 @@ pgbackrest_stanza_upgrade: true # perform the "stanza-upgrade" command after the
 
 pg_replication_database: "all" # database name for the replication, 'all' for the entire database cluster.
 
+pg_allow_replica_identity_full: true # set REPLICA IDENTITY FULL on tables without primary key.
+
 pg_publication_count: 1 # number of publications, replication slots and subscriptions to be created for logical replication (source -> target).
 pg_publication_name: "pg_upgrade_publication"
 pg_subscription_name: "pg_upgrade_subscription"
-pg_subscription_slot_name: "{{ subscription_name }}_slot"
+pg_subscription_slot_name: "{{ pg_subscription_name }}_slot"
 
 # Reverse logical replication (rollback without losing changes)
 pg_reverse_logical_replication: true # enable reverse logical replication (source <- target).
-pg_reverse_publication_name: "reverse_{{ publication_name }}"
-pg_reverse_subscription_name: "reverse_{{ subscription_name }}"
-pg_reverse_subscription_slot_name: "reverse_{{ subscription_slot_name }}"
+pg_reverse_publication_name: "reverse_{{ pg_publication_name }}"
+pg_reverse_subscription_name: "reverse_{{ pg_subscription_name }}"
+pg_reverse_subscription_slot_name: "reverse_{{ pg_subscription_slot_name }}"
 
 pg_wal_keep_gigabytes: 100 # or 'none' to not change the parameter.
 # pg_wal_keep_gigabytes - the number of WAL files (in gigabytes) to hold in the source cluster.
