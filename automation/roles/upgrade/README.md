@@ -125,6 +125,9 @@ Note: For variables marked as "Derived value", the default value is determined b
   - Add temporary hba rule for logical replication
     - Note: a trust rule between the source and target primary hosts for `patroni_superuser_username`
     - Update the PostgreSQL configuration
+  - Test access from the target cluster to the source database
+  - Test access from the source cluster to the target database
+    - Note: if `pg_reverse_logical_replication` is `true` (default: true)
   - Make sure there are no tables with replica identity "nothing"
   - Make sure that tables with replica identity "default" have primary key
   - Set REPLICA IDENTITY FULL for tables without primary key
