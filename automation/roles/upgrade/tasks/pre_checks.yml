@@ -205,19 +205,30 @@
     - name: Update the PostgreSQL configuration
       ansible.builtin.command: "{{ pg_old_bindir }}/pg_ctl reload -D {{ pg_old_datadir }}"
 
-    - name: "[Pre-Check] Test access to the source database"
+    - name: "[Pre-Check] Test access from the target cluster to the source database"
       ansible.builtin.command: >-
-        {{ pg_old_bindir }}/psql -w -h {{ source_primary_host_addr }}
-        -p {{ postgresql_port }}
-        -U {{ patroni_superuser_username }}
-        -d {{ dbname }}
-        -tAXc 'select 1'
+        {{ pg_old_bindir }}/psql -w -h {{ source_primary_host_addr }} -p {{ postgresql_port }}
+        -U {{ patroni_superuser_username }} -d {{ dbname }} -tAXc 'select 1'
       changed_when: false
       loop: "{{ source_databases }}"
       loop_control:
         loop_var: dbname
         label: "{{ dbname }}"
       when: inventory_hostname in (groups.get('target_cluster') | default([], true))
+
+    # if 'pg_reverse_logical_replication' is 'true'
+    - name: "[Pre-Check] Test access from the source cluster to the target database"
+      ansible.builtin.command: >-
+        {{ pg_old_bindir }}/psql -w -h {{ target_primary_host_addr }} -p {{ postgresql_port }}
+        -U {{ patroni_superuser_username }} -d {{ dbname }} -tAXc 'select 1'
+      changed_when: false
+      loop: "{{ source_databases }}"
+      loop_control:
+        loop_var: dbname
+        label: "{{ dbname }}"
+      when:
+        - inventory_hostname in (groups.get('source_cluster') | default([], true))
+        - pg_reverse_logical_replication | default(false) | bool
 
     - name: "[Pre-Check] Replica identity checks per database"
       ansible.builtin.include_tasks: replica_identity.yml
@@ -228,13 +239,19 @@
       when: inventory_hostname in (groups.get('source_cluster') | default([], true))
 
   vars:
-    psql_command: "{{ pg_old_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }}"
     source_primary_host: "{{ (groups.get('source_primary') | default([], true) | first) | default('', true) }}"
     source_primary_host_addr: >-
       {{
         hostvars[source_primary_host].patroni_bind_address
         | default(hostvars[source_primary_host].bind_address, true)
         | default(hostvars[source_primary_host].inventory_hostname, true)
+      }}
+    target_primary_host: "{{ (groups.get('target_primary') | default([], true) | first) | default('', true) }}"
+    target_primary_host_addr: >-
+      {{
+        hostvars[target_primary_host].patroni_bind_address
+        | default(hostvars[target_primary_host].bind_address, true)
+        | default(hostvars[target_primary_host].inventory_hostname, true)
       }}
     source_databases: >-
       {{
@@ -244,8 +261,6 @@
             (pg_replication_database | default([], true))
           )
       }}
-  environment:
-    PGPASSWORD: "{{ patroni_superuser_password }}"
   when:
     - (inventory_hostname in (groups.get('source_cluster') | default([], true)) or
        inventory_hostname in (groups.get('target_cluster') | default([], true)))
