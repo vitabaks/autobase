@@ -132,6 +132,8 @@ Note: For variables marked as "Derived value", the default value is determined b
   - Make sure that tables with replica identity "default" have primary key
   - Set REPLICA IDENTITY FULL for tables without primary key
     - Note: if `pg_allow_replica_identity_full` is `true` (default: true)
+  - Make sure that the 'restore_command' parameter is not specified
+    - if 'restore_command' is specified: comment out recovery_conf in patroni.yml
 - **Make sure that physical replication is active**
   - Stop, if there are no active replicas
 - **Make sure there is no high replication lag**
