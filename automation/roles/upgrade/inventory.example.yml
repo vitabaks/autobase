@@ -2,8 +2,9 @@
 # Blue-green upgrade method: inventory example
 all:
   vars:
-    pg_old_version: 17
-    pg_new_version: 18
+    pg_old_version: 17 # the current (old) version of PostgreSQL
+    pg_new_version: 18 # the target version of PostgreSQL for the upgrade
+    pg_replication_database: "all" # dbname for replication, 'all' for the entire cluster
   children:
     source_cluster:
       hosts:
