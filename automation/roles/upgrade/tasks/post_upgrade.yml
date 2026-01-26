@@ -1,4 +1,30 @@
 ---
+
+- block: # for blue-green upgrade method
+    # Reset the wal_keep_segments parameter to original state
+    - name: Reset the wal_keep_segments parameter to original state on the Source Primary
+      ansible.builtin.command: >
+        {{ psql_command }} -tAXc "alter system reset wal_keep_segments"
+      when: pg_old_version|int < 13
+
+    # for PostgreSQL 13 and higher
+    - name: Reset the wal_keep_size parameter to original state on the Source Primary
+      ansible.builtin.command: >
+        {{ psql_command }} -tAXc "alter system reset wal_keep_size"
+      when: pg_old_version|int >= 13
+
+    - name: Update the PostgreSQL configuration on the Source Primary
+      ansible.builtin.command: >
+        {{ psql_command }} -tAXc "select pg_reload_conf()"
+  vars:
+    psql_command: "{{ pg_old_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres"
+  environment:
+    PGPASSWORD: "{{ patroni_superuser_password }}"
+  when:
+    - (inventory_hostname in (groups.get('source_cluster') | default([], true)))
+    - patroni_cluster_leader
+    - pg_wal_keep_gigabytes != 'none'
+
 - name: Ensure the current data directory is the new data directory
   ansible.builtin.command: >-
     {{ pg_new_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc

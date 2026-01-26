@@ -263,6 +263,30 @@
         - inventory_hostname in (groups.get('target_cluster') | default([], true))
         - restore_command_result.stdout | length > 0
 
+    # Increase the number of WAL files to hold in the Source Cluster (if 'pg_wal_keep_gigabytes' != 'none').
+    # To guarantee that the necessary WAL files are available to reach recovery_target_lsn via streaming replication.
+    - block:
+        - name: Increase the wal_keep_segments parameter to "{{ wal_keep_segments_value }}" ({{ wal_keep_size_value }}) on the Source Primary
+          ansible.builtin.command: >
+            {{ psql_command }} -tAXc "alter system set wal_keep_segments = '{{ wal_keep_segments_value }}'"
+          when: pg_old_version|int < 13
+
+        # for PostgreSQL 13 and higher
+        - name: Increase the wal_keep_size parameter to "{{ wal_keep_size_value }}" on the Source Primary
+          ansible.builtin.command: >
+            {{ psql_command }} -tAXc "alter system set wal_keep_size = '{{ wal_keep_size_value }}'"
+          when: pg_old_version|int >= 13
+
+        - name: Update the PostgreSQL configuration on the Source Primary
+          ansible.builtin.command: >
+            {{ psql_command }} -tAXc "select pg_reload_conf()"
+      vars:
+        wal_keep_segments_value: "{{ (pg_wal_keep_gigabytes | default(100) | int * 1024) // 16 }}"
+        wal_keep_size_value: "{{ pg_wal_keep_gigabytes | default(100) | string + 'GB' }}"
+      when:
+        - inventory_hostname in (groups.get('source_cluster') | default([], true))
+        - pg_wal_keep_gigabytes != 'none'
+
   vars:
     source_primary_host: "{{ (groups.get('source_primary') | default([], true) | first) | default('', true) }}"
     source_primary_host_addr: >-
@@ -286,6 +310,9 @@
             (pg_replication_database | default([], true))
           )
       }}
+    psql_command: "{{ pg_old_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres"
+  environment:
+    PGPASSWORD: "{{ patroni_superuser_password }}"
   when:
     - (inventory_hostname in (groups.get('source_cluster') | default([], true)) or
        inventory_hostname in (groups.get('target_cluster') | default([], true)))

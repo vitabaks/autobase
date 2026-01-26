@@ -134,6 +134,9 @@ Note: For variables marked as "Derived value", the default value is determined b
     - Note: if `pg_allow_replica_identity_full` is `true` (default: true)
   - Make sure that the 'restore_command' parameter is not specified
     - if 'restore_command' is specified: comment out recovery_conf in patroni.yml
+  - Increase the wal_keep_segments/wal_keep_size parameter on the Source Primary
+    - if `pg_wal_keep_gigabytes` != `none` (default: 100)
+    - Note: To guarantee that the necessary WAL files are available to reach recovery_target_lsn via streaming replication.
 - **Make sure that physical replication is active**
   - Stop, if there are no active replicas
 - **Make sure there is no high replication lag**
@@ -322,6 +325,8 @@ Note: For variables marked as "Derived value", the default value is determined b
     - if the number of rows match, print info message: "The PostgreSQL Replication is OK. The number of records in the 'test_replication' table the same as the Primary."
     - if the number of rows does not match, print error message: "The number of records in the 'test_replication' table does not match the Primary. Please check the replication status and PostgreSQL logs."
 - **Perform Post-Upgrade tasks**
+  - **Perform tasks for blue-green upgrade method (pg_upgrade_logical.yml)**
+    - Reset the wal_keep_segments/wal_keep_size parameter to original state on the Source Primary
   - **Ensure the current data directory is the new data directory**
     - Notes: to prevent deletion the old directory if it is used
   - **Delete the old PostgreSQL data directory**

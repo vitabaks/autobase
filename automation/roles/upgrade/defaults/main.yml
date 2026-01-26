@@ -119,7 +119,7 @@ pg_reverse_publication_name: "reverse_{{ pg_publication_name }}"
 pg_reverse_subscription_name: "reverse_{{ pg_subscription_name }}"
 pg_reverse_subscription_slot_name: "reverse_{{ pg_subscription_slot_name }}"
 
-pg_wal_keep_gigabytes: 100 # or 'none' to not change the parameter.
+pg_wal_keep_gigabytes: 100 # or 'none' to not change the wal_keep_segments/wal_keep_size parameter.
 # pg_wal_keep_gigabytes - the number of WAL files (in gigabytes) to hold in the source cluster.
 # To guarantee that the necessary WAL files are available to reach recovery_target_lsn via streaming replication for the leader of the target cluster.
 # After performing the upgrade procedure, the parameter will be reset to original state.
