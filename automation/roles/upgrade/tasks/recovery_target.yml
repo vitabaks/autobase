@@ -123,8 +123,9 @@
     - not patroni_cluster_leader
 
 - name: "Wait until physical replication becomes active"
-  ansible.builtin.command: >
-    {{ psql_command }} -tAXc "select count(*) from pg_stat_wal_receiver where status = 'streaming'"
+  ansible.builtin.command: >-
+    {{ psql_command }} -tAXc "
+    select count(*) from pg_stat_wal_receiver where status = 'streaming'"
   register: pg_stat_wal_receiver_state
   until: pg_stat_wal_receiver_state.stdout|int > 0
   retries: 60 # max duration 2 minutes
@@ -140,9 +141,10 @@
     - not patroni_cluster_leader
 
 - name: "Wait until physical replication lag is 0 bytes"
-  ansible.builtin.command: >
-    "{{ psql_command }} -tAXc "select pg_wal_lsn_diff(pg_current_wal_lsn(),
-    replay_lsn) pg_lag_bytes from pg_stat_replication
+  ansible.builtin.command: >-
+    {{ psql_command }} -tAXc "
+    select pg_wal_lsn_diff(pg_current_wal_lsn(), replay_lsn)
+    from pg_stat_replication
     order by pg_lag_bytes desc limit 1"
   register: pg_lag_bytes
   until: pg_lag_bytes.stdout|int == 0
