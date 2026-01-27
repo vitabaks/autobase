@@ -137,6 +137,20 @@
     - (etcd_installation_method == "rpm" or etcd_installation_method == "deb")
   tags: etcd, etcd_install
 
+# After installing etcd in RHEL-based system, ownership is reset on /etc/etcd
+# So it is necessary to
+- name: Make sure that etcd directory owner and permissions are correct
+  ansible.builtin.file:
+    path: "{{ etcd_conf_dir | default('/etc/etcd') }}"
+    state: directory
+    owner: etcd
+    group: etcd
+    mode: "0750"
+  tags: etcd, etcd_conf
+  when:
+    - etcd_conf_dir | default('/etc/etcd') == '/etc/etcd'
+    - etcd_installation_method == "rpm"
+
 - name: Start etcd service and check cluster health
   ansible.builtin.include_tasks: start.yml
   when:
