@@ -1,0 +1,209 @@
+---
+# Blue-green upgrade method: Create publications and replication slots on the source cluster
+# for logical replication to the target cluster (source -> target).
+
+# One publication (if pg_publication_count = 1)
+- block:
+    - name: "Create a publication for logical replication"
+      ansible.builtin.command: >-
+        {{ psql_command }} -tAXc "drop publication if exists {{ pg_publication_name }};
+        create publication {{ pg_publication_name }} for all tables;"
+
+    - name: "Create a slot for logical replication, and save 'lsn'"
+      ansible.builtin.command: >-
+        {{ psql_command }} -tAXc "select pg_drop_replication_slot('{{ pg_subscription_slot_name }}')
+        from pg_replication_slots
+        where slot_name = '{{ pg_subscription_slot_name }}';
+        select lsn from pg_create_logical_replication_slot('{{ pg_subscription_slot_name }}', 'pgoutput');"
+      register: pg_slot_lsn
+
+    - name: "Set variable: target_lsn"
+      ansible.builtin.set_fact:
+        target_lsn: "{{ pg_slot_lsn.stdout | trim }}"
+  vars:
+    psql_command: "{{ pg_old_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d {{ dbname }}"
+  environment:
+    PGPASSWORD: "{{ patroni_superuser_password }}"
+  when: pg_publication_count | int == 1
+
+# Multiple publications (if pg_publication_count > 1)
+- block:
+    # Split tables (sorted by DML activity) into groups for publications to evenly distribute tables across slots.
+    - name: "Get a list of tables distributed by groups"
+      ansible.builtin.shell: |
+        {{ psql_command }} -tAXc "
+        do \$$
+        declare
+          num_groups constant int := {{ pg_publication_count }};
+          group_weights bigint[] := array_fill(0, array[num_groups]);
+          random_group_index int;
+          lowest_weight_index int;
+          lowest_weight bigint;
+          table_rec record;
+        begin
+          create temp table tables_groups_tmp (
+            group_id int,
+            table_name text,
+            weight bigint,
+            total_weight bigint
+          );
+
+          for table_rec in
+            select
+              format('\\\"%I\\\".\\\"%I\\\"', schemaname, relname) as table_name,
+              n_tup_ins + n_tup_upd + n_tup_del as weight
+            from pg_stat_user_tables
+            where relname <> 'tables_groups_tmp'
+              and not exists (
+                select 1
+                from pg_class
+                where oid = pg_stat_user_tables.relid
+                  and (relkind = 'p' or relid in (select inhparent from pg_inherits))
+              )  -- Exclude parent tables for both declarative and inheritance-based partitioning
+            order by weight desc
+          loop
+            -- for tables with a weight > 0, we find the group with the lowest total weight
+            if table_rec.weight > 0 then
+              lowest_weight_index := 1;
+              lowest_weight := group_weights[1];
+              for i in 2..num_groups loop
+                if group_weights[i] < lowest_weight then
+                  lowest_weight_index := i;
+                  lowest_weight := group_weights[i];
+                end if;
+              end loop;
+            -- for tables with a weight = 0, randomly select a group
+            else
+              random_group_index := (trunc(random() * num_groups) + 1)::int;
+              lowest_weight_index := random_group_index;
+            end if;
+
+            group_weights[lowest_weight_index] := group_weights[lowest_weight_index] + table_rec.weight;
+
+            insert into tables_groups_tmp (group_id, table_name, weight, total_weight)
+            values (lowest_weight_index, table_rec.table_name, table_rec.weight, group_weights[lowest_weight_index]);
+          end loop;
+        end \$$;
+
+        -- get lists of tables separated by groups
+        select
+          string_agg(table_name, ',') as tables
+        from tables_groups_tmp
+        group by group_id
+        order by group_id;"
+      args:
+        executable: /bin/bash
+      register: tables_groups
+
+    # Monitor the locks and terminate the backend blocking the 'create publication' query (for more than 10 seconds)
+    - name: "Start pg_terminator script: Monitor locks and terminate the 'create publication' blockers"
+      ansible.builtin.shell: |
+        echo $$ > /tmp/pg_terminator.pid
+        for i in {1..360}; do
+          {{ psql_command }} -tAXc "
+          with blocker_pids(pid) as (
+            select unnest(pg_blocking_pids(pid))
+            from pg_stat_activity
+            where
+              query ilike '% create publication %'
+              and wait_event_type = 'Lock'
+          )
+          select
+            now(),
+            pg_terminate_backend(pid),
+            pid,
+            clock_timestamp() - xact_start as xact_lasted,
+            query
+          from pg_stat_activity
+          where
+            pid in (select pid from blocker_pids)
+            and xact_start < clock_timestamp() - interval '10s';" >> /tmp/pg_terminator.log
+          sleep 10
+        done
+      args:
+        executable: /bin/bash
+      async: 3600  # run the command asynchronously, max exec time: 1 hour
+      poll: 0
+
+    # Create multiple publications (for each table group)
+    # Note: ulimit - will increase stack size and ARG_MAX to prevent error 'Argument list too long'
+    - name: "Create a publications for logical replication"
+      ansible.builtin.command: >-
+        ulimit -S -s {{ create_publication_stack_size | default(32768) }}
+        {{ psql_command }} -tAXc "drop publication if exists {{ pg_publication_name }}_{{ '%02d' % (idx + 1) }};
+        create publication {{ pg_publication_name }}_{{ '%02d' % (idx + 1) }} for table {{ item }};"
+      loop: "{{ tables_groups.stdout_lines | reject('equalto', 'DO') | list }}"
+      loop_control:
+        index_var: idx
+        label: "{{ pg_publication_name }}_{{ '%02d' % (idx + 1) }}"
+
+    # Create multiple slots (for each publication/subscription)
+    - name: "Create a slots for logical replication, and save 'lsn'"
+      ansible.builtin.command: >-
+        {{ psql_command }} -tAXc "select pg_drop_replication_slot('{{ pg_subscription_slot_name }}_{{ '%02d' % (idx + 1) }}')
+        from pg_replication_slots
+        where slot_name = '{{ pg_subscription_slot_name }}_{{ '%02d' % (idx + 1) }}';
+        select lsn from pg_create_logical_replication_slot('{{ pg_subscription_slot_name }}_{{ '%02d' % (idx + 1) }}', 'pgoutput');"
+      register: multiple_pg_slot_lsn
+      loop: "{{ range(0, pg_publication_count | int) | list }}"
+      loop_control:
+        index_var: idx
+        label: "{{ pg_subscription_slot_name }}_{{ '%02d' % (idx + 1) }}"
+
+    # Advance all created slots to the same target LSN to ensure consistency
+    - name: "Advance all created slots to the last LSN position"
+      ansible.builtin.command: >-
+        {{ psql_command }} -tAXc "select pg_replication_slot_advance(
+        '{{ pg_subscription_slot_name }}_{{ '%02d' % (idx + 1) }}', '{{ multiple_pg_slot_lsn['results'][-1]['stdout'] }}')
+        from pg_replication_slots
+        where slot_name = '{{ pg_subscription_slot_name }}_{{ '%02d' % (idx + 1) }}';"
+      loop: "{{ range(0, pg_publication_count | int) | list }}"
+      loop_control:
+        index_var: idx
+        label: "{{ pg_subscription_slot_name }}_{{ '%02d' % (idx + 1) }}"
+
+    - name: "Stop pg_terminator script"
+      ansible.builtin.shell: |
+        pid=$(cat /tmp/pg_terminator.pid)
+        ps -p $pid > /dev/null 2>&1 && kill -9 $pid
+      args:
+        executable: /bin/bash
+      ignore_errors: true
+
+    - name: "Set variable: target_lsn"
+      ansible.builtin.set_fact:
+        target_lsn: "{{ multiple_pg_slot_lsn['results'][-1]['stdout'] | trim }}"
+  vars:
+    psql_command: "{{ pg_old_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d {{ dbname }}"
+  environment:
+    PGPASSWORD: "{{ patroni_superuser_password }}"
+  when: pg_publication_count | int > 1
+
+# Set recovery parameters to ensure the target PostgreSQL instance is recovered to the replication slot LSN.
+- name: "Specify recovery parameters on the Standby Cluster Leader"
+  ansible.builtin.lineinfile:
+    path: '{{ pg_old_confdir }}/postgresql.conf'
+    regexp: '{{ item.regexp }}'
+    line: '{{ item.line }}'
+  loop:
+    - regexp: ^recovery_target =
+      line: '#recovery_target = '''''
+    - regexp: ^recovery_target_lsn =
+      line: "recovery_target_lsn = '{{ hostvars[groups['source_primary'][0]]['target_lsn'] }}'"
+    - regexp: ^recovery_target_name =
+      line: '#recovery_target_name = '''''
+    - regexp: ^recovery_target_time =
+      line: '#recovery_target_time = '''''
+    - regexp: ^recovery_target_timeline =
+      line: '#recovery_target_timeline = ''latest'''
+    - regexp: ^recovery_target_xid =
+      line: '#recovery_target_xid = '''''
+    - regexp: ^recovery_target_action =
+      line: recovery_target_action = 'promote'
+    - regexp: ^restore_command =
+      line: '#restore_command = '''''
+  loop_control:
+    label: '{{ item.line }}'
+  when:
+    - inventory_hostname in groups['target_cluster']
+    - patroni_cluster_leader
