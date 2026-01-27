@@ -8,3 +8,8 @@ etcd_architecture_map:
   arm64: arm64
   32-bit: "386"
   64-bit: amd64
+
+pgdg_architecture_map:
+  amd64: x86_64
+  x86_64: x86_64
+  aarch64: aarch64

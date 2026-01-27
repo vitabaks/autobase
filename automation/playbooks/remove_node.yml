@@ -159,7 +159,7 @@
         - name: Fetch etcd cluster members before removal
           run_once: true # noqa run-once
           ansible.builtin.command: >-
-            /usr/local/bin/etcdctl member list
+            {{ etcd_bin_dir | default('/usr/local/bin') }}/etcdctl member list
             --write-out=table
             {% if etcd_tls_enable | default(true) | bool %}
             --cacert={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_ca_crt | default('ca.crt') }}
@@ -186,7 +186,7 @@
         - name: Fetch etcd cluster members after removal
           run_once: true # noqa run-once
           ansible.builtin.command: >-
-            /usr/local/bin/etcdctl member list
+            {{ etcd_bin_dir | default('/usr/local/bin') }}/etcdctl member list
             --write-out=table
             {% if etcd_tls_enable | default(true) | bool %}
             --cacert={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_ca_crt | default('ca.crt') }}

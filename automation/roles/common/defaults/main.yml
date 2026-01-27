@@ -122,6 +122,10 @@ dcs_exists: false # or 'true' if you do not want Autobase to deploy and manage e
 # if dcs_type: "etcd" and dcs_exists: false
 # renovate: datasource=github-releases depName=etcd-io/etcd extractVersion=^v(?<version>.*)$
 etcd_version: 3.5.25
+# Note: when etcd_installation_method: "rpm", the etcd package is installed from pgdg-rhel-extras,
+# unless install_postgresql_repo or install_postgresql_repo_extras are set to false.
+etcd_installation_method: "binary" # binary -> install from repo such as https://github.com, "{{ pkg_type }}" -> install from apt or yum repository
+etcd_bin_dir: "{{ '/usr/bin' if etcd_installation_method == pkg_type else '/usr/local/bin' }}"
 etcd_conf_dir: "/etc/etcd"
 etcd_data_dir: "/var/lib/etcd"
 etcd_cluster_name: "etcd-{{ patroni_cluster_name }}" # ETCD_INITIAL_CLUSTER_TOKEN
@@ -1159,6 +1163,15 @@ patroni_packages:
   - "{{ patroni_os_specific_packages[ansible_os_family] }}"
 
 python_version: "3" # override the version (e.q, 3.11) only if patroni_installation_method: "pip" is used
+
+etcd_os_specific_packages:
+  Debian:
+    - etcd-client
+    - etcd-server
+  RedHat:
+    - etcd
+etcd_packages:
+  - "{{ etcd_os_specific_packages[ansible_os_family] }}"
 
 system_os_specific_packages:
   Debian:

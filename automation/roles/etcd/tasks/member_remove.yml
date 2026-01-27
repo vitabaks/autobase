@@ -20,7 +20,7 @@
     - name: Get etcd cluster member list
       run_once: true # noqa run-once
       ansible.builtin.command: >-
-        /usr/local/bin/etcdctl member list
+        {{ etcd_bin_dir | default('/usr/local/bin') }}/etcdctl member list
         --write-out=json
         --endpoints={{ etcd_endpoints }}
         {% if etcd_tls_enable | default(false) | bool %}
@@ -60,7 +60,7 @@
     - name: Remove node from etcd cluster
       run_once: true # noqa run-once
       ansible.builtin.command: >-
-        /usr/local/bin/etcdctl member remove {{ target_etcd_member_id_hex }}
+        {{ etcd_bin_dir | default('/usr/local/bin') }}/etcdctl member remove {{ target_etcd_member_id_hex }}
         --endpoints={{ etcd_endpoints }}
         {% if etcd_tls_enable | default(false) | bool %}
         --cacert={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_ca_crt | default('ca.crt') }}

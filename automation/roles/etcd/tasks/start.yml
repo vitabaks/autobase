@@ -18,7 +18,7 @@
 
     - name: Wait until the etcd is healthy
       ansible.builtin.command: >
-        /usr/local/bin/etcdctl endpoint health
+        {{ etcd_bin_dir | default('/usr/local/bin') }}/etcdctl endpoint health
         --endpoints={{ patroni_etcd_protocol | default('http', true) }}://{{ etcd_bind_address }}:2379
         {% if etcd_tls_enable | default(false) | bool %}
         --cacert={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_ca_crt | default('ca.crt') }}
