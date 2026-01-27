@@ -124,7 +124,7 @@
 
 - name: "Wait until physical replication becomes active"
   ansible.builtin.command: >
-    "{{ psql_command }} -tAXc "select count(*) from pg_stat_wal_receiver where status = 'streaming'"
+    {{ psql_command }} -tAXc "select count(*) from pg_stat_wal_receiver where status = 'streaming'"
   register: pg_stat_wal_receiver_state
   until: pg_stat_wal_receiver_state.stdout|int > 0
   retries: 60 # max duration 2 minutes
