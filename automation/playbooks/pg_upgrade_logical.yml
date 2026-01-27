@@ -205,17 +205,17 @@
   any_errors_fatal: true
   tasks:
     - name: Stop PostgreSQL - Target Primary
-      include_role:
+      ansible.builtin.include_role:
         name: upgrade
         tasks_from: stop_target_primary
 
     - name: Create a publication - Source Primary
-      include_role:
+      ansible.builtin.include_role:
         name: upgrade
         tasks_from: publication
 
     - name: Reach recovery_target_lsn - Target Primary
-      include_role:
+      ansible.builtin.include_role:
         name: upgrade
         tasks_from: recovery_target
   tags:
