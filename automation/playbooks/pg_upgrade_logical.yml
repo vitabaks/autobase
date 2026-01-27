@@ -293,6 +293,21 @@
   tags:
     - upgrade
 
+- name: "(7/8) POST-UPGRADE: Create a subscription for logical replication"
+  hosts: 'source_cluster:target_cluster'
+  gather_facts: false
+  become: true
+  become_user: postgres
+  any_errors_fatal: true
+  tasks:
+    - name: Create a subscription on Target Primary
+      ansible.builtin.include_role:
+        name: upgrade
+        tasks_from: subscription
+  tags:
+    - upgrade
+    - logical-replication
+
 - name: "(8/8) POST-UPGRADE: Analyze a PostgreSQL database (update optimizer statistics) and Post-Upgrade tasks"
   hosts: target_cluster
   gather_facts: false
