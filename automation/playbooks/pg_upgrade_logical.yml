@@ -129,7 +129,7 @@
   tags:
     - always
 
-- name: "(1/10) PRE-UPGRADE: Perform Pre-Checks"
+- name: "(1/8) PRE-UPGRADE: Perform Pre-Checks"
   hosts: 'source_cluster:target_cluster'
   gather_facts: false
   become: true
@@ -145,7 +145,7 @@
     - upgrade
     - pre-checks
 
-- name: "(2/10) PRE-UPGRADE: Install new PostgreSQL packages"
+- name: "(2/8) PRE-UPGRADE: Install new PostgreSQL packages"
   hosts: target_cluster
   gather_facts: false
   become: true
@@ -162,7 +162,7 @@
     - upgrade-check
     - packages
 
-- name: "(3/10) PRE-UPGRADE: Initialize new db, schema compatibility check, and pg_upgrade --check"
+- name: "(3/8) PRE-UPGRADE: Initialize new db, schema compatibility check, and pg_upgrade --check"
   hosts: target_cluster
   gather_facts: false
   become: true
@@ -197,24 +197,24 @@
     - upgrade-check
     - schema-compatibility-check
 
-- name: "(4/10) PRE-UPGRADE: Create a publication/slot and reach recovery_target_lsn"
+- name: "(4/8) PRE-UPGRADE: Create a publication/slot and reach recovery_target_lsn"
   hosts: 'source_cluster:target_cluster'
   gather_facts: false
   become: true
   become_user: postgres
   any_errors_fatal: true
   tasks:
-    - name: Stop PostgreSQL - Target Primary
+    - name: Stop PostgreSQL on Target primary
       ansible.builtin.include_role:
         name: upgrade
         tasks_from: stop_target_primary
 
-    - name: Create a publication - Source Primary
+    - name: Create a publication and slot on Source Primary
       ansible.builtin.include_role:
         name: upgrade
         tasks_from: publication
 
-    - name: Reach recovery_target_lsn - Target Primary
+    - name: Reach recovery_target_lsn on Target Primary
       ansible.builtin.include_role:
         name: upgrade
         tasks_from: recovery_target
@@ -222,7 +222,7 @@
     - upgrade
     - logical-replication
 
-- name: "(5/10) PRE-UPGRADE: Prepare the Patroni configuration"
+- name: "(5/8) PRE-UPGRADE: Prepare the Patroni configuration"
   hosts: target_cluster
   gather_facts: false
   become: true
@@ -237,7 +237,7 @@
     - upgrade
     - update-config
 
-- name: "(6/10) UPGRADE: Upgrade PostgreSQL"
+- name: "(6/8) UPGRADE: Upgrade PostgreSQL"
   hosts: target_cluster
   gather_facts: false
   become: true
@@ -293,7 +293,7 @@
   tags:
     - upgrade
 
-- name: "(6/6) POST-UPGRADE: Analyze a PostgreSQL database (update optimizer statistics) and Post-Upgrade tasks"
+- name: "(8/8) POST-UPGRADE: Analyze a PostgreSQL database (update optimizer statistics) and Post-Upgrade tasks"
   hosts: target_cluster
   gather_facts: false
   become: true
