@@ -1,0 +1,327 @@
+---
+- name: "vitabaks.autobase.pg_upgrade | Upgrade PostgreSQL to the new major version (logical replication mode)"
+  hosts: 'source_cluster:target_cluster'
+  gather_facts: true
+  become: true
+  become_user: postgres
+  any_errors_fatal: true
+  pre_tasks:
+    - name: Gather package facts
+      ansible.builtin.package_facts:
+        manager: auto
+      check_mode: false
+
+    - name: Define bind_address
+      ansible.builtin.include_role:
+        name: vitabaks.autobase.bind_address
+
+    - name: Set default variables
+      ansible.builtin.import_role:
+        name: vitabaks.autobase.common
+
+    - name: "[Prepare] Get Patroni Cluster Name"
+      ansible.builtin.uri:
+        url: >-
+          {{ patroni_restapi_protocol | default('https') }}://{{ patroni_restapi_connect_addr
+            | default(patroni_bind_address | default(bind_address, true), true) }}:{{ patroni_restapi_port
+            | default('8008') }}/patroni
+      register: patroni_result
+      changed_when: false
+      environment:
+        no_proxy: "{{ patroni_bind_address | default(bind_address, true) }}"
+
+    - name: "[Prepare] Set the variable: patroni_cluster_name"
+      ansible.builtin.set_fact:
+        patroni_cluster_name: "{{ patroni_result.json.patroni.scope }}"
+
+    - name: "[Prepare] Get Patroni Cluster Leader Node"
+      ansible.builtin.uri:
+        url: >-
+          {{ patroni_restapi_protocol | default('https') }}://{{ patroni_restapi_connect_addr
+            | default(patroni_bind_address | default(bind_address, true), true) }}:{{ patroni_restapi_port
+            | default('8008') }}/leader
+        status_code: 200
+        ca_path: "{{ patroni_restapi_cafile | default(omit, true) }}"
+      register: patroni_leader_result
+      changed_when: false
+      failed_when: false
+      check_mode: false
+      environment:
+        no_proxy: "{{ patroni_bind_address | default(bind_address, true) }}"
+
+    - name: "[Prepare] Set the variable: patroni_cluster_leader: true"
+      ansible.builtin.set_fact:
+        patroni_cluster_leader: true
+      when: patroni_leader_result.status == 200
+
+    - name: "[Prepare] Set the variable: patroni_cluster_leader: false"
+      ansible.builtin.set_fact:
+        patroni_cluster_leader: false
+      when: patroni_leader_result.status != 200
+
+    # Stop, if no healthy Patroni leader node
+    - name: The Patroni cluster is unhealthy
+      ansible.builtin.fail:
+        msg: >
+          No healthy leader node detected in cluster '{{ patroni_cluster_name | default('postgres-cluster') }}'.
+          Please ensure the cluster is up and node responds on REST API port ({{ patroni_restapi_port | default('8008') }}).
+      when:
+        - (inventory_hostname == groups['source_cluster'][0] or
+           inventory_hostname == groups['target_cluster'][0])
+        - (hostvars
+            | dict2items
+            | selectattr('value.patroni_leader_result.status', 'defined')
+            | selectattr('value.patroni_leader_result.status', 'equalto', 200)
+            | list | length) == 0
+
+    - name: '[Prepare] Add Source Cluster host to group "source_primary" (in-memory inventory)'
+      ansible.builtin.add_host:
+        name: "{{ item }}"
+        groups: source_primary
+      when: hostvars[item]['patroni_leader_result']['status'] == 200
+      loop: "{{ groups['source_cluster'] }}"
+      changed_when: false
+
+    - name: "[Prepare] Get a list of databases from the Source Cluster"
+      ansible.builtin.command: >-
+        {{ pg_old_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc "
+        select datname from pg_catalog.pg_database where not datistemplate"
+      register: datname_result
+      changed_when: false
+      when:
+        - pg_replication_database == "all"
+        - inventory_hostname in groups['source_primary']
+
+    - name: "[Prepare] Set the variable: pg_replication_database"
+      ansible.builtin.set_fact:
+        pg_replication_database: "{{ hostvars[groups['source_primary'][0]]['datname_result'].stdout_lines }}"
+      when: pg_replication_database == "all"
+
+    - name: '[Prepare] Add Target Cluster host to group "primary" (in-memory inventory)'
+      ansible.builtin.add_host:
+        name: "{{ item }}"
+        groups: primary
+      when: hostvars[item]['patroni_leader_result']['status'] == 200
+      loop: "{{ groups['target_cluster'] }}"
+      changed_when: false
+
+    - name: '[Prepare] Add Target Cluster hosts to group "secondary" (in-memory inventory)'
+      ansible.builtin.add_host:
+        name: "{{ item }}"
+        groups: secondary
+      when: hostvars[item]['patroni_leader_result']['status'] == 503
+      loop: "{{ groups['target_cluster'] }}"
+      changed_when: false
+
+    - name: "Print Source Patroni Cluster info"
+      ansible.builtin.debug:
+        msg:
+          - "Source Cluster Name: {{ patroni_cluster_name }}"
+          - "Source Cluster Leader: {{ ansible_hostname }}"
+      when: inventory_hostname in groups['source_primary']
+
+    - name: "Print Target Patroni Cluster info"
+      ansible.builtin.debug:
+        msg:
+          - "Target Cluster Name: {{ patroni_cluster_name }}"
+          - "Target Cluster Leader: {{ ansible_hostname }}"
+      when: inventory_hostname in groups['primary']
+  tags:
+    - always
+
+- name: "(1/10) PRE-UPGRADE: Perform Pre-Checks"
+  hosts: 'source_cluster:target_cluster'
+  gather_facts: false
+  become: true
+  become_user: postgres
+  any_errors_fatal: true
+  environment: "{{ proxy_env | default({}) }}"
+  tasks:
+    - name: Running Pre-Checks
+      ansible.builtin.include_role:
+        name: vitabaks.autobase.upgrade
+        tasks_from: pre_checks
+  tags:
+    - upgrade
+    - pre-checks
+
+- name: "(2/10) PRE-UPGRADE: Install new PostgreSQL packages"
+  hosts: target_cluster
+  gather_facts: false
+  become: true
+  become_user: root
+  any_errors_fatal: true
+  environment: "{{ proxy_env | default({}) }}"
+  tasks:
+    - name: Install packages
+      ansible.builtin.include_role:
+        name: vitabaks.autobase.upgrade
+        tasks_from: packages
+  tags:
+    - upgrade
+    - upgrade-check
+    - packages
+
+- name: "(3/10) PRE-UPGRADE: Initialize new db, schema compatibility check, and pg_upgrade --check"
+  hosts: target_cluster
+  gather_facts: false
+  become: true
+  become_user: postgres
+  any_errors_fatal: true
+  tasks:
+    - name: Create Data directory and initdb
+      ansible.builtin.include_role:
+        name: vitabaks.autobase.upgrade
+        tasks_from: initdb
+
+    # (optional) copy files specified in variable:
+    # 'copy_files_to_all_server'
+    - name: Copy files
+      ansible.builtin.include_role:
+        name: vitabaks.autobase.copy
+      vars:
+        copy_files_to_all_server: "{{ upgrade_copy_files_to_all_server | default([]) }}"
+
+    - name: Check Schema Compatibility
+      ansible.builtin.import_role:
+        name: vitabaks.autobase.upgrade
+        tasks_from: schema_compatibility
+      when: schema_compatibility_check | default(true) | bool
+
+    - name: Check pg_upgrade
+      ansible.builtin.import_role:
+        name: vitabaks.autobase.upgrade
+        tasks_from: upgrade_check
+  tags:
+    - upgrade
+    - upgrade-check
+    - schema-compatibility-check
+
+- name: "(4/10) PRE-UPGRADE: Create a publication/slot and reach recovery_target_lsn"
+  hosts: 'source_cluster:target_cluster'
+  gather_facts: false
+  become: true
+  become_user: postgres
+  any_errors_fatal: true
+  tasks:
+    - name: Stop PostgreSQL - Target Primary
+      include_role:
+        name: upgrade
+        tasks_from: stop_target_primary
+
+    - name: Create a publication - Source Primary
+      include_role:
+        name: upgrade
+        tasks_from: publication
+
+    - name: Reach recovery_target_lsn - Target Primary
+      include_role:
+        name: upgrade
+        tasks_from: recovery_target
+  tags:
+    - upgrade
+    - logical-replication
+
+- name: "(5/10) PRE-UPGRADE: Prepare the Patroni configuration"
+  hosts: target_cluster
+  gather_facts: false
+  become: true
+  become_user: postgres
+  any_errors_fatal: true
+  tasks:
+    - name: Patroni config
+      ansible.builtin.include_role:
+        name: vitabaks.autobase.upgrade
+        tasks_from: update_config
+  tags:
+    - upgrade
+    - update-config
+
+- name: "(6/10) UPGRADE: Upgrade PostgreSQL"
+  hosts: target_cluster
+  gather_facts: false
+  become: true
+  become_user: postgres
+  any_errors_fatal: true
+  tasks:
+    - name: Enable maintenance mode
+      ansible.builtin.include_role:
+        name: vitabaks.autobase.upgrade
+        tasks_from: maintenance_enable
+
+    - name: Stop Services
+      ansible.builtin.include_role:
+        name: vitabaks.autobase.upgrade
+        tasks_from: stop_services
+
+    - name: Check 'Latest checkpoint location'
+      ansible.builtin.include_role:
+        name: vitabaks.autobase.upgrade
+        tasks_from: checkpoint_location
+
+    - name: Upgrade Primary
+      ansible.builtin.include_role:
+        name: vitabaks.autobase.upgrade
+        tasks_from: upgrade_primary
+
+    - name: Upgrade Secondary
+      ansible.builtin.include_role:
+        name: vitabaks.autobase.upgrade
+        tasks_from: upgrade_secondary
+
+    # if pg_new_wal_dir is defined
+    - name: Create WAL dir symlink
+      ansible.builtin.include_role:
+        name: vitabaks.autobase.upgrade
+        tasks_from: custom_wal_dir
+      when: pg_new_wal_dir | default('') | length > 0
+
+    - name: Remove old cluster from DCS
+      ansible.builtin.include_role:
+        name: vitabaks.autobase.upgrade
+        tasks_from: dcs_remove_cluster
+
+    - name: Start Services
+      ansible.builtin.include_role:
+        name: vitabaks.autobase.upgrade
+        tasks_from: start_services
+
+    - name: Disable maintenance mode
+      ansible.builtin.include_role:
+        name: vitabaks.autobase.upgrade
+        tasks_from: maintenance_disable
+  tags:
+    - upgrade
+
+- name: "(6/6) POST-UPGRADE: Analyze a PostgreSQL database (update optimizer statistics) and Post-Upgrade tasks"
+  hosts: target_cluster
+  gather_facts: false
+  become: true
+  become_user: postgres
+  any_errors_fatal: true
+  tasks:
+    - name: Analyze database
+      ansible.builtin.include_role:
+        name: vitabaks.autobase.upgrade
+        tasks_from: statistics
+      tags: analyze, statistics
+
+    - name: Update extensions
+      ansible.builtin.include_role:
+        name: vitabaks.autobase.upgrade
+        tasks_from: extensions
+      when: update_extensions | default(true) | bool
+      tags: update_extensions
+
+    - name: Running Post-Checks
+      ansible.builtin.include_role:
+        name: vitabaks.autobase.upgrade
+        tasks_from: post_checks
+
+    - name: Running Post-Upgrade tasks
+      ansible.builtin.include_role:
+        name: vitabaks.autobase.upgrade
+        tasks_from: post_upgrade
+  tags:
+    - upgrade
+    - post-upgrade
