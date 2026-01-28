@@ -1,6 +1,5 @@
 ---
 # Disable Ubuntu's unattended-upgrades to prevent automatic service restarts
-# https://github.com/vitabaks/autobase/issues/XXX
 #
 # Ubuntu Server installs 'unattended-upgrades' by default.
 # When packages are upgraded, the 'needrestart' tool automatically restarts
@@ -16,7 +15,7 @@
   when:
     - ansible_os_family == "Debian"
     - ansible_service_mgr == "systemd"
-  ignore_errors: true # service may not exist on all systems
+  failed_when: false
 
 - name: Disable apt-daily.timer (prevents automatic package updates)
   ansible.builtin.systemd:
@@ -27,7 +26,7 @@
   when:
     - ansible_os_family == "Debian"
     - ansible_service_mgr == "systemd"
-  ignore_errors: true # service may not exist on all systems
+  failed_when: false
 
 - name: Disable unattended-upgrades.service (prevents automatic upgrades)
   ansible.builtin.systemd:
@@ -38,4 +37,4 @@
   when:
     - ansible_os_family == "Debian"
     - ansible_service_mgr == "systemd"
-  ignore_errors: true # service may not exist on all systems
+  failed_when: false
