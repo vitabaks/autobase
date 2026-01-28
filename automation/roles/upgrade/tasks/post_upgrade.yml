@@ -22,8 +22,8 @@
     PGPASSWORD: "{{ patroni_superuser_password }}"
   when:
     - (inventory_hostname in (groups.get('source_cluster') | default([], true)))
-    - patroni_cluster_leader
-    - pg_wal_keep_gigabytes != 'none'
+    - patroni_cluster_leader | default(false)
+    - pg_wal_keep_gigabytes | default(100) != 'none'
 
 - name: Ensure the current data directory is the new data directory
   ansible.builtin.command: >-
