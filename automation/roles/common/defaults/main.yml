@@ -1070,6 +1070,9 @@ cron_jobs: []
 # when set to true, PostgreSQL log will NOT be rotated by logrotate.
 disable_logrotate_for_postgresql: true # false => do not remove /etc/logrotate.d/postgresql-common, log will be rotated.
 
+# Disable unattended-upgrades to prevent automatic service restarts
+disable_unattended_upgrades: true
+
 # Configure mount points in /etc/fstab and mount the file system (if 'mount.src' is defined)
 mount:
   - path: "/pgdata"
