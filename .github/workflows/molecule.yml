@@ -52,10 +52,11 @@ jobs:
         run: make bootstrap-dev
 
       - name: Run Molecule tests
-        run: make molecule-test
+        run: make molecule-test-scenario
         env:
           PY_COLORS: "1"
           ANSIBLE_FORCE_COLOR: "1"
           IMAGE_DISTRO: ${{ matrix.config.distro }}
           IMAGE_TAG: ${{ matrix.config.tag }}
           IMAGE_NAMESPACE: ${{ matrix.config.namespace }}
+          MOLECULE_SCENARIO: "pg_upgrade"

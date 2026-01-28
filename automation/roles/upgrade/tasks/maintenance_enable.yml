@@ -7,9 +7,9 @@
   environment:
     PATH: "{{ ansible_env.PATH }}:/usr/bin:/usr/local/bin"
   register: pause_result
+  changed_when: "'Cluster is already paused' not in pause_result.stderr and pause_result.rc == 0"
   failed_when: "'Cluster is already paused' not in pause_result.stderr and pause_result.rc != 0"
-  when:
-    - inventory_hostname in groups['primary']
+  when: inventory_hostname in groups['primary']
 
 # Enable maintenance mode for HAProxy (Type A scheme)
 # if 'pgbouncer_install' is 'true' and 'pgbouncer_pool_pause' is 'true'
@@ -112,5 +112,4 @@
   delay: 10
   changed_when: false
   failed_when: false
-  when:
-    - inventory_hostname in groups['primary']
+  when: inventory_hostname in groups['primary']

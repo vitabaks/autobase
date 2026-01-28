@@ -1,0 +1,22 @@
+---
+# Blue-green upgrade method: Create publications and replication slots on the source cluster
+# for logical replication to the target cluster (source -> target).
+
+- name: "Create publication/slot for each database"
+  ansible.builtin.include_tasks: create_publication.yml
+  loop: "{{ source_databases }}"
+  loop_control:
+    loop_var: dbname
+    label: "{{ dbname }}"
+  vars:
+    source_databases: >-
+      {{
+        pg_replication_database is string
+        | ternary(
+            pg_replication_database.split(',') | map('trim') | reject('equalto', '') | list,
+            (pg_replication_database | default([], true))
+          )
+      }}
+  when:
+    - inventory_hostname in groups['source_cluster']
+    - patroni_cluster_leader
