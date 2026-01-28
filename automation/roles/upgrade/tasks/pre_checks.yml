@@ -176,7 +176,7 @@
       ansible.builtin.fail:
         msg:
           - "The wal_level parameter is not set to 'logical'. Current value: {{ pg_wal_level.stdout }}"
-      when: pg_wal_level.stdout != "logical"
+      when: pg_wal_level.stdout | default('') != "logical"
 
     - name: Add temporary hba rule for logical replication
       ansible.builtin.blockinfile:
@@ -261,7 +261,7 @@
         - restore_command
       when:
         - inventory_hostname in (groups.get('target_cluster') | default([], true))
-        - restore_command_result.stdout | length > 0
+        - restore_command_result.stdout | default('') | length > 0
 
     # Increase the number of WAL files to hold in the Source Cluster (if 'pg_wal_keep_gigabytes' != 'none').
     # To guarantee that the necessary WAL files are available to reach recovery_target_lsn via streaming replication.
@@ -285,7 +285,7 @@
         wal_keep_size_value: "{{ pg_wal_keep_gigabytes | default(100) | string + 'GB' }}"
       when:
         - inventory_hostname in (groups.get('source_cluster') | default([], true))
-        - pg_wal_keep_gigabytes != 'none'
+        - pg_wal_keep_gigabytes | default(100) != 'none'
 
   vars:
     source_primary_host: "{{ (groups.get('source_primary') | default([], true) | first) | default('', true) }}"
