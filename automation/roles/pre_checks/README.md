@@ -6,6 +6,7 @@ Pre-deployment validations and safety checks for the PostgreSQL cluster stack.
 - Verifies Ansible version and supported OS/distribution/version.
 - System checks/tuning:
   - Ensures systemd RemoveIPC is disabled (avoids PostgreSQL shared memory errors).
+  - Disables unattended-upgrades on Debian-based systems (prevents automatic Patroni restarts).
   - HugePages: estimates vm.nr_hugepages for large shared_buffers (>= 8GB) and optionally sets it.
 - Patroni:
   - Validates data directory state depending on cluster stage.

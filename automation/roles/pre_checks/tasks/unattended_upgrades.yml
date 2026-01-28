@@ -1,0 +1,41 @@
+---
+# Disable Ubuntu's unattended-upgrades to prevent automatic service restarts
+# https://github.com/vitabaks/autobase/issues/XXX
+#
+# Ubuntu Server installs 'unattended-upgrades' by default.
+# When packages are upgraded, the 'needrestart' tool automatically restarts
+# services using upgraded libraries, including Patroni, causing unexpected
+# cluster failovers.
+
+- name: Disable apt-daily-upgrade.timer (prevents automatic package upgrades)
+  ansible.builtin.systemd:
+    name: apt-daily-upgrade.timer
+    state: stopped
+    enabled: false
+    masked: false
+  when:
+    - ansible_os_family == "Debian"
+    - ansible_service_mgr == "systemd"
+  ignore_errors: true # service may not exist on all systems
+
+- name: Disable apt-daily.timer (prevents automatic package updates)
+  ansible.builtin.systemd:
+    name: apt-daily.timer
+    state: stopped
+    enabled: false
+    masked: false
+  when:
+    - ansible_os_family == "Debian"
+    - ansible_service_mgr == "systemd"
+  ignore_errors: true # service may not exist on all systems
+
+- name: Disable unattended-upgrades.service (prevents automatic upgrades)
+  ansible.builtin.systemd:
+    name: unattended-upgrades.service
+    state: stopped
+    enabled: false
+    masked: false
+  when:
+    - ansible_os_family == "Debian"
+    - ansible_service_mgr == "systemd"
+  ignore_errors: true # service may not exist on all systems
