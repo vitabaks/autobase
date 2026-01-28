@@ -32,7 +32,7 @@
     name: "{{ item }}"
     state: stopped
     enabled: false
-    masked: false
+    masked: true
   loop:
     - apt-daily-upgrade.timer
     - apt-daily.timer
