@@ -19,10 +19,6 @@
   ansible.builtin.import_tasks: system.yml
   when: inventory_hostname in groups['postgres_cluster']
 
-- name: Disable unattended-upgrades (Ubuntu)
-  ansible.builtin.import_tasks: unattended_upgrades.yml
-  when: inventory_hostname in groups['postgres_cluster']
-
 - name: Perform pre-checks for pgbouncer
   ansible.builtin.import_tasks: pgbouncer.yml
   when:
