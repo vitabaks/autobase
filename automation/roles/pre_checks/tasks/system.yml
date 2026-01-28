@@ -41,8 +41,8 @@
     - unattended-upgrades.service
   loop_control:
     label: "{{ item }}"
+  failed_when: false
   when:
     - ansible_os_family == "Debian"
     - ansible_service_mgr == "systemd"
     - disable_unattended_upgrades | bool
-  failed_when: false
