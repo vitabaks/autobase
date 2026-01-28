@@ -7,8 +7,7 @@
     PGPASSWORD: "{{ patroni_superuser_password }}"
   changed_when: false
   register: pg_shared_preload_libraries
-  when:
-    - inventory_hostname in groups['primary']
+  when: inventory_hostname in groups['primary']
 
 - name: Get the current cron.database_name settings
   ansible.builtin.command: >-
@@ -27,8 +26,7 @@
   register: pg_ctl_status_result
   failed_when: false
   changed_when: false
-  when:
-    - inventory_hostname in groups['primary']
+  when: inventory_hostname in groups['primary']
 
 - name: Create temporary .pgpass entry for install user
   ansible.builtin.lineinfile:
@@ -40,7 +38,7 @@
     - pg_install_user_password is defined
 
 - name: "Start new PostgreSQL on port {{ schema_compatibility_check_port | default('5433') }} to check the schema compatibility"
-  ansible.builtin.command: >
+  ansible.builtin.command: >-
     {{ pg_new_bindir }}/pg_ctl -D {{ pg_new_datadir }}
     -o "-p {{ schema_compatibility_check_port }}
     -c unix_socket_directories='/tmp'
@@ -69,18 +67,17 @@
     - inventory_hostname in groups['primary']
 
 - name: "Check the compatibility of the database schema with the PostgreSQL {{ pg_new_version | default('') }}"
-  ansible.builtin.shell: |
+  ansible.builtin.shell: >-
     set -o pipefail;
-    {{ pg_new_bindir }}/pg_dumpall \
-    -h {{ postgresql_unix_socket_dir }} \
-    -p {{ postgresql_port }} \
-    -U {{ pg_install_user.stdout }} \
-    --schema-only | grep -v '^GRANT ' | \
-    {{ pg_new_bindir }}/psql \
-    -U {{ pg_install_user.stdout }} \
-    -d postgres \
-    -h /tmp \
-    -p {{ schema_compatibility_check_port }} \
+    {{ pg_new_bindir }}/pg_dumpall
+    -h {{ postgresql_unix_socket_dir }}
+    -p {{ postgresql_port }}
+    -U {{ pg_install_user.stdout }}
+    --schema-only | grep -v '^GRANT ' | {{ pg_new_bindir }}/psql
+    -U {{ pg_install_user.stdout }}
+    -d postgres
+    -h /tmp
+    -p {{ schema_compatibility_check_port }}
     > /tmp/pg_schema_compatibility_check.log 2>&1
   args:
     executable: /bin/bash
@@ -89,8 +86,7 @@
   async: "{{ schema_compatibility_check_timeout }}" # run the command asynchronously
   poll: 0
   register: pg_dumpall_result
-  when:
-    - inventory_hostname in groups['primary']
+  when: inventory_hostname in groups['primary']
 
 - name: Wait for the schema compatibility check to complete.
   ansible.builtin.async_status:
@@ -99,11 +95,11 @@
   until: pg_dumpall_job_result.finished
   retries: "{{ (schema_compatibility_check_timeout | int) // 10 }}"
   delay: 10
-  when:
-    - inventory_hostname in groups['primary']
+  ignore_errors: true # show the error and continue the playbook execution
+  when: inventory_hostname in groups['primary']
 
 - name: Checking the result of the schema compatibility
-  ansible.builtin.shell: >
+  ansible.builtin.shell: >-
     set -o pipefail;
     grep ERROR /tmp/pg_schema_compatibility_check.log | grep -v "already exists"
   args:
@@ -111,8 +107,7 @@
   register: pg_schema_compatibility_check_result
   changed_when: false
   failed_when: false
-  when:
-    - inventory_hostname in groups['primary']
+  when: inventory_hostname in groups['primary']
 
 - name: "Result of checking the compatibility of the scheme - success"
   ansible.builtin.debug:
@@ -152,5 +147,4 @@
 
 - name: Reinitialize the database after checking schema compatibility
   ansible.builtin.include_tasks: "{{ role_path }}/tasks/initdb.yml"
-  when:
-    - inventory_hostname in groups['primary']
+  when: inventory_hostname in groups['primary']
