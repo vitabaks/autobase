@@ -46,6 +46,7 @@
   no_log: true
   when:
     - inventory_hostname in groups['primary']
+    - pg_install_user_password is defined
 
 # RedHat based
 - name: Delete the old PostgreSQL data directory
