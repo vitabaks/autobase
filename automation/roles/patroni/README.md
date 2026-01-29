@@ -121,16 +121,19 @@ Requirements:
 1. the cluster name for standby cluster must be unique (see 'patroni_cluster_name' variable)
 2. the IP addresses (or network) of the standby cluster servers must be added to the pg_hba.conf of the Main Cluster (see 'postgresql_pg_hba' variable).
 
-### Slots Configuration
+### Permanent Replication Slots Configuration
 
-| Variable        | Default | Description                                                                            |
-| --------------- | ------- | -------------------------------------------------------------------------------------- |
-| `patroni_slots` | `[]`    | Permanent replication slots. These slots will be preserved during switchover/failover. |
+| Variable                   | Default | Description                                                                                                                 |
+| -------------------------- | ------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `patroni_permanent_slots`  | `[]`    | Permanent replication slots stored in DCS. These slots will be preserved and automatically recreated during switchover/failover. |
+| `patroni_slots`            | `[]`    | **DEPRECATED**: Use `patroni_permanent_slots` instead. Kept for backwards compatibility.                                    |
+
+These slots are stored at the `slots` level in DCS configuration (not under `postgresql.slots`), which ensures they persist across cluster topology changes.
 
 Example:
 
 ```yaml
-patroni_slots:
+patroni_permanent_slots:
   - slot: "logical_replication_slot" # the name of the permanent replication slot.
     type: "logical" # the type of slot. Could be 'physical' or 'logical' (if the slot is logical, you have to define 'database' and 'plugin').
     plugin: "pgoutput" # the plugin name for the logical slot.
