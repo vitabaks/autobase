@@ -114,7 +114,9 @@
     msg: "The database schema are compatible with PostgreSQL {{ pg_new_version }}"
   when:
     - inventory_hostname in groups['primary']
-    - pg_schema_compatibility_check_result.stdout | length < 1
+    - (pg_dumpall_result.rc == 0 or
+       pg_schema_compatibility_check_result.rc == 0 or
+       pg_schema_compatibility_check_result.stdout | length < 1)
 
 # Stop, if the scheme is not compatible (there are errors)
 - name: "Result of checking the compatibility of the scheme - error"
@@ -126,7 +128,9 @@
   failed_when: true
   when:
     - inventory_hostname in groups['primary']
-    - pg_schema_compatibility_check_result.stdout | length > 0
+    - (pg_dumpall_result.rc != 0 or
+       pg_schema_compatibility_check_result.rc != 0 or
+       pg_schema_compatibility_check_result.stdout | length > 0)
 
 - name: Stop new PostgreSQL to re-initdb
   ansible.builtin.command: >
