@@ -116,7 +116,7 @@
     msg: "The database schema are compatible with PostgreSQL {{ pg_new_version }}"
   when:
     - inventory_hostname in groups['primary']
-    - (pg_dumpall_result.rc == 0 or
+    - (pg_dumpall_job_result.rc == 0 or
        pg_schema_compatibility_check_result.rc == 0 or
        pg_schema_compatibility_check_result.stdout | length < 1)
 
@@ -130,7 +130,7 @@
   failed_when: true
   when:
     - inventory_hostname in groups['primary']
-    - (pg_dumpall_result.rc != 0 or
+    - (pg_dumpall_job_result.rc != 0 or
        pg_schema_compatibility_check_result.rc != 0 or
        pg_schema_compatibility_check_result.stdout | length > 0)
 
