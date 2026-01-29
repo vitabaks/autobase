@@ -38,19 +38,19 @@
     - pgdata_initialized.stat.exists
 
 - name: Get the current install user
-  ansible.builtin.command: >-
-    {{ pg_old_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc
-    "select rolname from pg_roles where oid = 10"
-  environment:
-    PGPASSWORD: "{{ patroni_superuser_password }}"
+  ansible.builtin.command: >
+    {{ psql_command }} -d postgres -tAXc "select rolname from pg_roles where oid = 10"
   changed_when: false
   register: pg_install_user
-  when:
-    - inventory_hostname in groups['primary']
+  vars:
+    psql_command: "{{ pg_old_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }}"
+  environment:
+    PGPASSWORD: "{{ patroni_superuser_password }}"
+  when: inventory_hostname in groups['primary']
 
 - name: Get the current encodig and data_checksums settings
   ansible.builtin.command: >-
-    {{ pg_old_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc "
+    {{ psql_command }} -d postgres -tAXc "
     select row_to_json(pg_settings)
     from (
       select
@@ -64,12 +64,13 @@
         current_setting('data_checksums') as data_checksums,
         current_setting('wal_level') as wal_level
     ) pg_settings"
-  environment:
-    PGPASSWORD: "{{ patroni_superuser_password }}"
   changed_when: false
   register: pg_settings
-  when:
-    - inventory_hostname in groups['primary']
+  vars:
+    psql_command: "{{ pg_old_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }}"
+  environment:
+    PGPASSWORD: "{{ patroni_superuser_password }}"
+  when: nventory_hostname in groups['primary']
 
 - name: Create temporary password file for install user
   ansible.builtin.copy:

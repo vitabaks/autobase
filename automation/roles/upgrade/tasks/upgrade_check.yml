@@ -1,20 +1,19 @@
 ---
 - name: Get the current shared_preload_libraries settings
-  ansible.builtin.command: >-
-    {{ pg_old_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc
-    "show shared_preload_libraries"
-  environment:
-    PGPASSWORD: "{{ patroni_superuser_password }}"
+  ansible.builtin.command: >
+    {{ psql_command }} -tAXc "show shared_preload_libraries"
   changed_when: false
   register: pg_shared_preload_libraries_result
-  when:
-    - inventory_hostname in groups['primary']
+  vars:
+    psql_command: "{{ pg_old_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres"
+  environment:
+    PGPASSWORD: "{{ patroni_superuser_password }}"
+  when: inventory_hostname in groups['primary']
 
 - name: "Set the variable: pg_shared_preload_libraries_value"
   ansible.builtin.set_fact:
     pg_shared_preload_libraries_value: "{{ pg_shared_preload_libraries_result.stdout }}"
-  when:
-    - inventory_hostname in groups['primary']
+  when: inventory_hostname in groups['primary']
 
 # In the --new-options argument, an inline if condition checks if 'timescaledb' is present in the pg_shared_preload_libraries_value.
 # If it is, it appends '-c timescaledb.restoring='on'' to the --new-options argument.
@@ -33,19 +32,17 @@
     --check
   args:
     chdir: "/tmp"
-  environment:
-    PGPASSWORD: "{{ pg_install_user_password | default(patroni_superuser_password) }}"
   vars:
     shared_preload_libraries: "-c shared_preload_libraries='{{ pg_shared_preload_libraries_value }}'"
     timescaledb_restoring: '{{ "-c timescaledb.restoring=''on''" if ''timescaledb'' in pg_shared_preload_libraries_value else '''' }}'
   failed_when: false
   register: pg_upgrade_check_result
-  when:
-    - inventory_hostname in groups['primary']
+  environment:
+    PGPASSWORD: "{{ pg_install_user_password | default(patroni_superuser_password) }}"
+  when: inventory_hostname in groups['primary']
 
 - name: Print the result of the pg_upgrade check
   ansible.builtin.debug:
     var: pg_upgrade_check_result.stdout_lines
   failed_when: "'Clusters are compatible' not in pg_upgrade_check_result.stdout"
-  when:
-    - inventory_hostname in groups['primary']
+  when: inventory_hostname in groups['primary']

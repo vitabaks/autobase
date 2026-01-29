@@ -5,17 +5,17 @@
 - block:
     - name: '[Clean up logical replication] Drop Publication'
       ansible.builtin.command: >-
-        {{ psql_command }} -tAXc "
+        {{ psql_command }} -d {{ dbname }} -tAXc "
         drop publication if exists {{ publication_name | default(pg_publication_name) }}"
 
     - name: '[Clean up logical replication] Drop Replication slot'
       ansible.builtin.command: >-
-        {{ psql_command }} -tAXc "
+        {{ psql_command }} -d {{ dbname }} -tAXc "
         select pg_drop_replication_slot('{{ logical_slot_name | default(pg_subscription_slot_name) }}')
         from pg_replication_slots
         where slot_name = '{{ logical_slot_name | default(pg_subscription_slot_name) }}'"
   vars:
-    psql_command: "{{ pg_old_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d {{ dbname }}"
+    psql_command: "{{ pg_old_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }}"
   environment:
     PGPASSWORD: "{{ patroni_superuser_password }}"
   when:
@@ -35,7 +35,7 @@
 
     - name: '[Clean up logical replication] Drop Replication slots'
       ansible.builtin.command: >-
-        {{ psql_command }} -tAXc "
+        {{ psql_command }} -d {{ dbname }} -tAXc "
         select pg_drop_replication_slot('{{ logical_slot_name | default(pg_subscription_slot_name) }}_{{ '%02d' % (idx + 1) }}')
         from pg_replication_slots
         where slot_name = '{{ logical_slot_name | default(pg_subscription_slot_name) }}_{{ '%02d' % (idx + 1) }}'"
@@ -44,7 +44,7 @@
         index_var: idx
         label: "{{ logical_slot_name | default(pg_subscription_slot_name) }}_{{ '%02d' % (idx + 1) }}"
   vars:
-    psql_command: "{{ pg_old_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d {{ dbname }}"
+    psql_command: "{{ pg_old_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }}"
   environment:
     PGPASSWORD: "{{ patroni_superuser_password }}"
   when:

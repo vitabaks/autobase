@@ -1,14 +1,15 @@
 ---
 - name: Get a list of databases
-  ansible.builtin.command: >-
-    {{ pg_new_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc
-    "select datname from pg_catalog.pg_database where datname <> 'template0'"
+  ansible.builtin.command: >
+    {{ psql_command }} -d postgres -tAXc "select datname from pg_catalog.pg_database where datname <> 'template0'"
   register: databases_list
   until: databases_list is success
   delay: 5
   retries: 3
   changed_when: false
   ignore_errors: true # show the error and continue the playbook execution
+  vars:
+    psql_command: "{{ pg_new_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }}"
   environment:
     PGPASSWORD: "{{ patroni_superuser_password }}"
   when:
