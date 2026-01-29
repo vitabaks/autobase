@@ -588,6 +588,8 @@
         index_var: idx
         label: "{{ 'pgbouncer' if idx == 0 else 'pgbouncer-%d' % (idx + 1) }}"
       changed_when: false
+  environment:
+    PGPASSWORD: "{{ patroni_superuser_password }}"
   when:
     - pgbouncer_install | bool
     - pgbouncer_pool_pause | bool
