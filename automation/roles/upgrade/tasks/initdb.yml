@@ -96,7 +96,6 @@
     --start-conf=manual
     --
     --username={{ hostvars[groups['primary'][0]].pg_install_user.stdout }}
-    --auth-local={{ postgresql_password_encryption_algorithm }}
     {% if pg_new_version | int >= 16 %}
     --set wal_level={{ (hostvars[groups['primary'][0]].pg_settings.stdout | from_json).wal_level }}
     {% endif %}
@@ -125,7 +124,6 @@
     --lc-numeric={{ (pg_settings.stdout | from_json).lc_numeric }}
     --lc-time={{ (pg_settings.stdout | from_json).lc_time }}
     --username={{ pg_install_user.stdout }}
-    --auth-local={{ postgresql_password_encryption_algorithm }}
     {% if pg_new_version | int >= 16 %}
     --set wal_level={{ (hostvars[groups['primary'][0]].pg_settings.stdout | from_json).wal_level }}
     {% endif %}
