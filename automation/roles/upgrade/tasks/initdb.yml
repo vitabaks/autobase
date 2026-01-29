@@ -70,7 +70,7 @@
     psql_command: "{{ pg_old_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }}"
   environment:
     PGPASSWORD: "{{ patroni_superuser_password }}"
-  when: nventory_hostname in groups['primary']
+  when: inventory_hostname in groups['primary']
 
 - name: Create temporary password file for install user
   ansible.builtin.copy:
