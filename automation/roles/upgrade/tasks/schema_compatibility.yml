@@ -100,6 +100,24 @@
   ignore_errors: true # show the error and continue the playbook execution
   when: inventory_hostname in groups['primary']
 
+# Debug, if pg_dumpall failed
+- block:
+    - name: "Read pg_schema_compatibility_check.log content"
+      ansible.builtin.command: >
+        cat /tmp/pg_schema_compatibility_check.log
+      register: pg_schema_compatibility_check_log
+      changed_when: false
+      failed_when: false
+
+    - name: "Print pg_schema_compatibility_check.log content, because pg_dumpall failed"
+      ansible.builtin.debug:
+        msg: "{{ pg_schema_compatibility_check_log.stdout_lines }}"
+      failed_when: true
+  when:
+    - inventory_hostname in groups['primary']
+    - pg_dumpall_job_result.rc != 0
+
+# Check result
 - name: Checking the result of the schema compatibility
   ansible.builtin.shell: >-
     set -o pipefail;
@@ -116,9 +134,7 @@
     msg: "The database schema are compatible with PostgreSQL {{ pg_new_version }}"
   when:
     - inventory_hostname in groups['primary']
-    - (pg_dumpall_job_result.rc == 0 or
-       pg_schema_compatibility_check_result.rc == 0 or
-       pg_schema_compatibility_check_result.stdout | length < 1)
+    - pg_schema_compatibility_check_result.stdout | length < 1
 
 # Stop, if the scheme is not compatible (there are errors)
 - name: "Result of checking the compatibility of the scheme - error"
@@ -126,13 +142,10 @@
     msg:
       - "{{ pg_schema_compatibility_check_result.stdout_lines }}"
       - "The database schema is not compatible with PostgreSQL {{ pg_new_version }}"
-      - "Please check the /tmp/pg_schema_compatibility_check.log on the Primary"
   failed_when: true
   when:
     - inventory_hostname in groups['primary']
-    - (pg_dumpall_job_result.rc != 0 or
-       pg_schema_compatibility_check_result.rc != 0 or
-       pg_schema_compatibility_check_result.stdout | length > 0)
+    - pg_schema_compatibility_check_result.stdout | length > 0
 
 - name: Stop new PostgreSQL to re-initdb
   ansible.builtin.command: >
