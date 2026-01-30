@@ -440,7 +440,7 @@ pending_restart: false
 # specify additional hosts that will be added to the pg_hba.conf
 postgresql_pg_hba:
   - { type: "local", database: "all", user: "{{ patroni_superuser_username }}", address: "", method: "trust" }
-  - { type: "local", database: "all", user: "{{ pgbouncer_auth_username }}", address: "", method: "trust" } # required for pgbouncer auth_user
+  - { type: "local", database: "all", user: "{{ pgbouncer_auth_username }}", address: "", method: "trust" }
   - { type: "local", database: "all", user: "all", address: "", method: "{{ postgresql_password_encryption_algorithm }}" }
   - { type: "host", database: "all", user: "all", address: "127.0.0.1/32", method: "{{ postgresql_password_encryption_algorithm }}" }
   - { type: "host", database: "all", user: "all", address: "::1/128", method: "{{ postgresql_password_encryption_algorithm }}" }
@@ -488,7 +488,7 @@ pgbouncer_ignore_startup_parameters: "extra_float_digits,geqo,search_path"
 pgbouncer_auth_type: "{{ postgresql_password_encryption_algorithm }}"
 pgbouncer_auth_user: true # or 'false' if you want to manage the list of users for authentication in the database via userlist.txt
 pgbouncer_auth_username: pgbouncer # user who can query the database via the user_search function
-pgbouncer_auth_password: "" # If not defined, a password will be generated automatically during deployment
+pgbouncer_auth_password: "" # (optional) required if there is no trust rule in pg_hba for pgbouncer_auth_username
 pgbouncer_auth_dbname: "postgres"
 pgbouncer_tls_dir: "{{ tls_dir }}"
 pgbouncer_client_tls_sslmode: "{{ 'require' if tls_cert_generate | bool else 'disable' }}"
