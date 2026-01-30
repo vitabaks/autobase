@@ -24,17 +24,17 @@ jobs:
           - distro: ubuntu2404
             tag: latest
             namespace: geerlingguy
-          - distro: rockylinux9
-            tag: latest
-          - distro: rockylinux10
-            tag: latest
-            namespace: geerlingguy
-          - distro: almalinux9
-            tag: latest
-            namespace: glillico
-          - distro: almalinux10
-            tag: latest
-            namespace: glillico
+#          - distro: rockylinux9
+#            tag: latest
+#          - distro: rockylinux10
+#            tag: latest
+#            namespace: geerlingguy
+#          - distro: almalinux9
+#            tag: latest
+#            namespace: glillico
+#          - distro: almalinux10
+#            tag: latest
+#            namespace: glillico
 
     steps:
       - name: Set TERM environment variable
