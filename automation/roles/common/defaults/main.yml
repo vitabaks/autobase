@@ -258,7 +258,7 @@ postgresql_port: 5432
 postgresql_encoding: "UTF8" # for bootstrap only (initdb)
 postgresql_locale: "en_US.UTF-8" # for bootstrap only (initdb)
 postgresql_data_checksums: true # for bootstrap only (initdb)
-postgresql_password_encryption_algorithm: "scram-sha-256" # or "md5" if your clients do not work with passwords encrypted with SCRAM-SHA-256
+postgresql_password_encryption_algorithm: "{{ 'scram-sha-256' if postgresql_version | int > 13 else 'md5' }}"
 postgresql_cluster_name: "{{ 'main' if ansible_os_family == 'Debian' else 'data' }}"
 postgresql_home_dir: "{{ '/var/lib/postgresql' if ansible_os_family == 'Debian' else '/var/lib/pgsql' }}"
 # You can specify custom data dir path. Example: "/pgdata/{{ postgresql_version }}/main"
