@@ -6,6 +6,5 @@
     groups: source_primary
   changed_when: false
   when:
+    - patroni_standby_cluster is defined
     - patroni_standby_cluster.host is defined
-    - patroni_standby_cluster.host | length > 0
-
