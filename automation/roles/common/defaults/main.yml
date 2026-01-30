@@ -547,8 +547,8 @@ patroni_callbacks: []
 # 1. the cluster name for Standby Cluster must be unique ('patroni_cluster_name' variable)
 # 2. the IP addresses (or network) of the Standby Cluster servers must be added to the pg_hba.conf of the Main Cluster ('postgresql_pg_hba' variable).
 patroni_standby_cluster:
-  host: "" # an address of remote master
-  port: "5432" # a port of remote master
+  host: "{{ patroni_standby_cluster_host | default('') }}" # an address of remote master
+  port: "{{ patroni_standby_cluster_port | default(5432) }}" # a port of remote master
 #  primary_slot_name: ""  # which slot on the remote master to use for replication (optional)
 #  restore_command: ""  # command to restore WAL records from the remote master to standby leader (optional)
 #  recovery_min_apply_delay: ""  # how long to wait before actually apply WAL records on a standby leader (optional)
