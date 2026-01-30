@@ -1,0 +1,11 @@
+---
+
+- name: 'Add Source Cluster host to group "source_primary" (in-memory inventory)'
+  ansible.builtin.add_host:
+    name: "{{ patroni_standby_cluster.host }}"
+    groups: source_primary
+  changed_when: false
+  when:
+    - patroni_standby_cluster.host is defined
+    - patroni_standby_cluster.host | length > 0
+

@@ -52,6 +52,12 @@
   ansible.builtin.import_tasks: extensions.yml
   when: inventory_hostname == groups['master'][0]
 
+- name: Perform pre-checks for Standby Cluster configuration
+  ansible.builtin.import_tasks: standby_cluster.yml
+  when:
+    - inventory_hostname in groups['postgres_cluster']
+    - patroni_standby_cluster.host | default('') | length > 0
+
 - name: Generate passwords
   ansible.builtin.import_tasks: passwords.yml
   when: inventory_hostname in groups['postgres_cluster']
