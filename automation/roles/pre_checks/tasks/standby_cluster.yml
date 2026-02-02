@@ -14,10 +14,13 @@
       }}
 
 - name: "Validate Source Cluster IP addresses"
-  ansible.builtin.fail:
-    msg: "Invalid source cluster IP address: {{ item }}"
-  when: not item is match('^\\d+\\.\\d+\\.\\d+\\.\\d+$')
-  loop: "{{ source_cluster_hosts }}"
+  ansible.builtin.assert:
+    that:
+      - source_cluster_hosts | reject('match', '^\\d+\\.\\d+\\.\\d+\\.\\d+$') | list | length == 0
+    fail_msg: >
+      Invalid source cluster IPs:
+      {{ source_cluster_hosts | reject('match', '^\\d+\\.\\d+\\.\\d+\\.\\d+$') | list }}
+  run_once: true # noqa run-once
 
 - name: 'Add Source Cluster hosts to group "source_cluster" (in-memory inventory)'
   ansible.builtin.add_host:
