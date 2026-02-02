@@ -543,15 +543,18 @@ patroni_callbacks: []
 #  - {action: "on_role_change", script: ""}
 
 # https://patroni.readthedocs.io/en/latest/standby_cluster.html
-# Requirements:
-# 1. the cluster name for Standby Cluster must be unique ('patroni_cluster_name' variable)
-# 2. the IP addresses (or network) of the Standby Cluster servers must be added to the pg_hba.conf of the Main Cluster ('postgresql_pg_hba' variable).
+# Note: In case the remote site doesn’t provide a single endpoint that connects to a primary,
+# one could list all hosts of the source cluster in the patroni_standby_cluster.host (separated by commas).
 patroni_standby_cluster:
   host: "{{ patroni_standby_cluster_host | default('') }}" # Source Cluster host (IP address)
   port: "{{ patroni_standby_cluster_port | default(5432) }}" # Source Cluster port
 #  primary_slot_name: ""  # which slot on the remote master to use for replication (optional)
 #  restore_command: ""  # command to restore WAL records from the remote master to standby leader (optional)
 #  recovery_min_apply_delay: ""  # how long to wait before actually apply WAL records on a standby leader (optional)
+
+patroni_standby_cluster_auto_hba: true # automatically add the standby cluster nodes to pg_hba.conf of the source cluster.
+# Note: this is a temporary rule and may be overwritten by future source cluster reconfiguration.
+# It is recommended to explicitly configure standby cluster hosts in postgresql_pg_hba on the source cluster.
 
 # Permanent replication slots.
 # These slots will be preserved during switchover/failover.
