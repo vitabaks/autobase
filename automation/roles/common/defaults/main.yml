@@ -546,8 +546,8 @@ patroni_callbacks: []
 # Note: In case the remote site doesn’t provide a single endpoint that connects to a primary,
 # one could list all hosts of the source cluster in the patroni_standby_cluster.host (separated by commas).
 patroni_standby_cluster:
-  host: "{{ patroni_standby_cluster_host | default('') }}" # Source Cluster host (IP address)
-  port: "{{ patroni_standby_cluster_port | default(5432) }}" # Source Cluster port
+  host: "{{ source_cluster_host | default('') }}" # Source Cluster host (IP address)
+  port: "{{ source_cluster_port | default(5432) }}" # Source Cluster port
 #  primary_slot_name: ""  # which slot on the remote master to use for replication (optional)
 #  restore_command: ""  # command to restore WAL records from the remote master to standby leader (optional)
 #  recovery_min_apply_delay: ""  # how long to wait before actually apply WAL records on a standby leader (optional)
