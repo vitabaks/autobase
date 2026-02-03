@@ -47,12 +47,10 @@
       %}
       host replication {{ patroni_replication_username }} {{ addr }}/32 {{ pg_password_encryption }}
       {% endfor %}
-  delegate_to: "{{ item }}"
-  loop: "{{ groups.get('source_cluster') | default([], true) }}"
   vars:
     pg_conf_dir: "{{ source_cluster_postgresql_conf_dir | default(postgresql_conf_dir) }}"
     pg_password_encryption: "{{ source_cluster_postgresql_password_encryption_algorithm | default(postgresql_password_encryption_algorithm) }}"
   when:
     - patroni_standby_cluster_auto_hba | default(true) | bool
     - (groups.get('source_cluster') | default([], true) | length) > 0
-    - inventory_hostname == groups['postgres_cluster'][0] # run once
+    - inventory_hostname in groups['source_cluster']
