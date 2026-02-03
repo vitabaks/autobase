@@ -28,7 +28,9 @@
     groups: source_cluster
   loop: "{{ source_cluster_hosts }}"
   changed_when: false
-  when: patroni_standby_cluster.host | default('') | string != ''
+  when:
+    - patroni_standby_cluster.host | default('') | string != ''
+    - (groups.get('source_cluster') | default([], true) | length) == 0
 
 # if 'patroni_standby_cluster_auto_hba' is 'true'
 # Note: The PostgreSQL configuration update is performed after retrieving the patroni_superuser_password.
@@ -53,4 +55,4 @@
   when:
     - patroni_standby_cluster_auto_hba | default(true) | bool
     - (groups.get('source_cluster') | default([], true) | length) > 0
-    - inventory_hostname in groups['source_cluster']
+    - inventory_hostname in (groups.get('source_cluster') | default([], true))
