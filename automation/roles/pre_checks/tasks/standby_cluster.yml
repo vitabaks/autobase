@@ -26,6 +26,9 @@
   ansible.builtin.add_host:
     name: "{{ item }}"
     groups: source_cluster
+    ansible_ssh_host: "{{ source_cluster_host_public_ip | default(item) }}"
+    # source_cluster_host_public_ip is optional to override SSH host if needed.
+    # Note: it works if only one host is specified in patroni_standby_cluster.host variable.
   loop: "{{ source_cluster_hosts }}"
   changed_when: false
   when:
