@@ -12,6 +12,27 @@
   changed_when: false
   check_mode: false
 
+# Wait for sync standby to be available when synchronous_mode is enabled
+- name: Wait for synchronous standby to be available
+  become: true
+  become_user: postgres
+  ansible.builtin.shell: |
+    set -eo pipefail
+    patronictl -c /etc/patroni/patroni.yml list -f json | grep -q '"Sync Standby"'
+  args:
+    executable: /bin/bash
+  register: patroni_sync_check
+  until: patroni_sync_check.rc == 0
+  retries: 60
+  delay: 5
+  changed_when: false
+  environment:
+    PATH: "{{ ansible_env.PATH }}:/usr/bin:/usr/local/bin"
+  when:
+    - synchronous_mode | default(false) | bool
+    - patroni_leader_result.status is defined
+    - patroni_leader_result.status == 200
+
 # If the node is the current leader, perform switchover
 - name: Perform switchover of the Patroni leader role to another node
   become: true
