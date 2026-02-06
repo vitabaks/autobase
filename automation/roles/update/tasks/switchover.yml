@@ -13,12 +13,15 @@
   check_mode: false
 
 # Wait for sync standby to be available when synchronous_mode is enabled
+# This prevents "can not find sync_standby" error during switchover.
+# After nosync: false is restored, it may take time for PostgreSQL to re-establish
+# the replica as a synchronous standby. We wait up to 5 minutes (60 retries x 5 seconds).
 - name: Wait for synchronous standby to be available
   become: true
   become_user: postgres
   ansible.builtin.shell: |
     set -eo pipefail
-    patronictl -c /etc/patroni/patroni.yml list -f json | grep -q '"Sync Standby"'
+    patronictl -c /etc/patroni/patroni.yml list -f json | jq -e 'any(.[]; .Role == "Sync Standby")'
   args:
     executable: /bin/bash
   register: patroni_sync_check
