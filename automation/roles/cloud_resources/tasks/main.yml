@@ -36,8 +36,9 @@
     - ssh_key_content | length < 1
     - not (postgresql_cluster_maintenance|default(false)|bool) # exclude for config_pgcluster.yml
     - not (cluster_scaling | default(false) | bool) # exclude for cluster scaling
+    - patroni_standby_cluster.host | default('') | length < 1 # exclude for Standby Cluster
 
-# if ssh_key_name or ssh_key_content is not specified (for cluster scaling)
+# if ssh_key_name or ssh_key_content is not specified (for cluster scaling or Standby Cluster)
 - block:
     - name: Generate a unique temporary SSH key name
       ansible.builtin.set_fact:
@@ -88,7 +89,8 @@
         - (pub_slurp is defined or pub_from_priv is defined)
   when:
     - state == 'present'
-    - cluster_scaling | default(false) | bool
+    - cluster_scaling | default(false) | bool or
+      patroni_standby_cluster.host | default('') | length > 0
 
 - name: Import tasks for AWS
   ansible.builtin.import_tasks: aws.yml
