@@ -22,7 +22,7 @@
       tags: always
 
 - name: vitabaks.autobase.config_pgcluster | Check the cluster state and perform pre-checks
-  hosts: "postgres_cluster:etcd_cluster:source_cluster"
+  hosts: postgres_cluster:etcd_cluster
   become: true
   become_method: sudo
   gather_facts: true
