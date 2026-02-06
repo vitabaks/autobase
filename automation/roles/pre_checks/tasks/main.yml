@@ -75,6 +75,6 @@
   environment:
     PGPASSWORD: "{{ patroni_superuser_password }}"
   when:
-    - inventory_hostname == groups['postgres_cluster'][0] # run once
     - patroni_standby_cluster_auto_hba | default(true) | bool
     - (groups.get('source_cluster') | default([], true) | length) > 0
+    - inventory_hostname == groups['postgres_cluster'][0] # run once

@@ -59,4 +59,5 @@
     pg_password_encryption: "{{ source_cluster_postgresql_password_encryption_algorithm | default(postgresql_password_encryption_algorithm) }}"
   when:
     - patroni_standby_cluster_auto_hba | default(true) | bool
+    - (groups.get('source_cluster') | default([], true) | length) > 0
     - inventory_hostname == groups['postgres_cluster'][0] # run once
