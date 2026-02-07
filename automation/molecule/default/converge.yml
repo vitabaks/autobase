@@ -23,6 +23,7 @@
         patroni_tags: "datacenter=dc1,key1=value1"
         balancer_tags: "datacenter=dc1"
         enable_ssh_key_based_authentication: true
+        synchronous_mode: true
         cacheable: true
       delegate_to: localhost
       run_once: true # noqa run-once
