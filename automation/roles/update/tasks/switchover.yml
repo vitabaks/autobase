@@ -20,10 +20,10 @@
 - name: Wait for synchronous standby to be available
   ansible.builtin.uri:
     url: >-
-      {{ patroni_restapi_protocol | default('https') }}://{{ hostvars[item]['patroni_restapi_connect_addr']
-        | default(hostvars[item]['patroni_bind_address']
-        | default(hostvars[item]['bind_address'], true), true) }}:{{ patroni_restapi_port
-        | default('8008') }}/sync"
+      {{ patroni_restapi_protocol | default('https') }}://{{ hostvars[replica].patroni_restapi_connect_addr
+        | default(hostvars[replica].patroni_bind_address
+        | default(hostvars[replica].bind_address, true),true) }}:{{ patroni_restapi_port
+        | default('8008') }}/sync
     status_code: 200
     ca_path: "{{ patroni_restapi_cafile | default(omit, true) }}"
   register: patroni_sync_check
@@ -31,15 +31,18 @@
   failed_when: false
   check_mode: false
   environment:
-    no_proxy: "{{ hostvars[item]['patroni_bind_address'] | default(hostvars[item]['bind_address'], true) }}"
-  loop: "{{ groups['secondary'] | default([]) }}"
-  until: patroni_sync_check.results | default([]) | selectattr('status', 'defined') | selectattr('status', 'equalto', 200) | list | length > 0
+    no_proxy: "{{ patroni_bind_address | default(bind_address, true) }}"
+  loop: "{{ groups.get('secondary', []) }}"
+  loop_control:
+    loop_var: replica
+    label: "{{ replica }}"
+    break_when: (patroni_sync_check.status | default(0)) == 200
+  until: (patroni_sync_check.status | default(0)) == 200
   retries: 60
   delay: 5
   when:
     - synchronous_mode | default(false) | bool
-    - patroni_leader_result.status is defined
-    - patroni_leader_result.status == 200
+    - patroni_leader_result.status | default(0) == 200
 
 # If the node is the current leader, perform switchover
 - name: Perform switchover of the Patroni leader role to another node
@@ -50,9 +53,7 @@
   ignore_errors: true # show the error and continue the playbook execution
   environment:
     PATH: "{{ ansible_env.PATH }}:/usr/bin:/usr/local/bin"
-  when:
-    - patroni_leader_result.status is defined
-    - patroni_leader_result.status == 200
+  when: patroni_leader_result.status | default(0) == 200
 
 # Retry switchover if the first attempt failed and the node is still leader
 - block:
@@ -76,7 +77,7 @@
       register: patronictl_switchover_retry_result
       environment:
         PATH: "{{ ansible_env.PATH }}:/usr/bin:/usr/local/bin"
-      when: patroni_leader_recheck.status | default('') == 200
+      when: patroni_leader_recheck.status | default(0) == 200
   ignore_errors: true # show the error and continue the playbook execution
   when:
     - patronictl_switchover_result is defined
