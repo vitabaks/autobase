@@ -16,25 +16,29 @@
 # This prevents "can not find sync_standby" error during switchover.
 # After nosync: false is restored, it may take time for PostgreSQL to re-establish
 # the replica as a synchronous standby. We wait up to 5 minutes (60 retries x 5 seconds).
+# The /sync endpoint returns HTTP 200 only when a node is a synchronous standby.
 - name: Wait for synchronous standby to be available
-  become: true
-  become_user: postgres
-  ansible.builtin.shell: |
-    set -eo pipefail
-    patronictl -c /etc/patroni/patroni.yml list -f json | jq -e 'any(.[]; .Role == "Sync Standby")'
-  args:
-    executable: /bin/bash
+  ansible.builtin.uri:
+    url: "{{ patroni_restapi_protocol }}://{{ hostvars[item]['patroni_restapi_connect_addr'] \
+      | default(hostvars[item]['patroni_bind_address'] | default(hostvars[item]['bind_address'], true), true) }}:\
+      {{ patroni_restapi_port | default('8008') }}/sync"
+    status_code: 200
+    ca_path: "{{ patroni_restapi_cafile | default(omit, true) }}"
   register: patroni_sync_check
-  until: patroni_sync_check.rc == 0
+  changed_when: false
+  failed_when: false
+  environment:
+    no_proxy: "{{ hostvars[item]['patroni_bind_address'] | default(hostvars[item]['bind_address'], true) }}"
+  loop: "{{ groups['secondary'] | default([]) }}"
+  until: patroni_sync_check.results | default([]) | selectattr('status', 'defined') | selectattr('status', 'equalto', 200) | list | length > 0
   retries: 60
   delay: 5
-  changed_when: false
-  environment:
-    PATH: "{{ ansible_env.PATH }}:/usr/bin:/usr/local/bin"
   when:
     - synchronous_mode | default(false) | bool
     - patroni_leader_result.status is defined
     - patroni_leader_result.status == 200
+    - groups['secondary'] is defined
+    - groups['secondary'] | length > 0
 
 # If the node is the current leader, perform switchover
 - name: Perform switchover of the Patroni leader role to another node
