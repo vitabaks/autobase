@@ -175,7 +175,7 @@
         PGPASSWORD: "{{ patroni_superuser_password }}"
       when:
         - pg_replication_database == "all"
-        - inventory_hostname in (groups.get('source_cluster') | default([], true))
+        - inventory_hostname in (groups.get('source_primary') | default([], true))
 
     - name: "[Prepare] Set variable: pg_replication_database"
       ansible.builtin.set_fact:
@@ -325,7 +325,7 @@
         wal_keep_segments_value: "{{ (pg_wal_keep_gigabytes | default(100) | int * 1024) // 16 }}"
         wal_keep_size_value: "{{ pg_wal_keep_gigabytes | default(100) | string + 'GB' }}"
       when:
-        - inventory_hostname in (groups.get('source_cluster') | default([], true))
+        - inventory_hostname in (groups.get('source_primary') | default([], true))
         - pg_wal_keep_gigabytes | default(100) != 'none'
 
   vars:
