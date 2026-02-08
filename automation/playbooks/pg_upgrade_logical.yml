@@ -124,6 +124,14 @@
   any_errors_fatal: true
   environment: "{{ proxy_env | default({}) }}"
   tasks:
+    - name: Get current passwords
+      ansible.builtin.include_role:
+        name: vitabaks.autobase.pre_checks
+        tasks_from: passwords
+      vars:
+        postgresql_cluster_maintenance: true
+      when: patroni_superuser_password | default('') | length < 1
+
     - name: Running Pre-Checks
       ansible.builtin.include_role:
         name: vitabaks.autobase.upgrade
