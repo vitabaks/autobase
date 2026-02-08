@@ -35,7 +35,7 @@
     {{ pg_old_bindir }}/pg_ctl start -D {{ pg_old_datadir }} -w -t {{ pg_start_stop_timeout }}
     -o '--config-file={{ pg_old_confdir }}/postgresql.conf'
     -o '-c archive_mode=off'
-    -l /tmp/pg_recovery_target_lsn_{{ ansible_date_time.date }}.log
+    -l /tmp/pg_recovery_target_lsn.log
   async: "{{ pg_start_stop_timeout }}" # run the command asynchronously
   poll: 0
   register: pg_ctl_start_result
