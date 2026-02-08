@@ -512,6 +512,7 @@
   vars:
     ssh_key_user: postgres
     source_group: "{{ 'target_cluster' if inventory_hostname in groups.get('target_cluster', []) else 'postgres_cluster' }}"
+  when: inventory_hostname in groups['primary'] or inventory_hostname in groups['secondary']
 
 # if pg_new_wal_dir is defined (for synchronize wal dir)
 - name: "[Pre-Check] Make sure that the sshpass package are installed"
@@ -544,8 +545,7 @@
   ansible.builtin.file:
     path: /tmp/testrsync
     state: touch
-  when:
-    - inventory_hostname in groups['primary']
+  when: inventory_hostname in groups['primary']
 
 - name: "[Pre-Check] Rsync Checks: test rsync and ssh key access"
   become: true
@@ -556,8 +556,7 @@
   args:
     executable: /bin/bash
   loop: "{{ groups.secondary | list }}"
-  when:
-    - inventory_hostname in groups['primary']
+  when: inventory_hostname in groups['primary']
 
 - name: "[Pre-Check] Cleanup testrsync file"
   become: true
@@ -565,12 +564,13 @@
   ansible.builtin.file:
     path: /tmp/testrsync
     state: absent
+  when: inventory_hostname in groups['primary'] or inventory_hostname in groups['secondary']
 
 # Tablespaces
 - name: "[Pre-Check] Check if PostgreSQL tablespaces exist"
   ansible.builtin.command: >-
     {{ psql_command }} -tAXc "
-      select pg_tablespace_location(oid) as tablespace_location
+      select pg_tablespace_location(oid)
       from pg_tablespace
       where spcname not in ('pg_default','pg_global')"
   register: tablespace_location
@@ -579,8 +579,7 @@
     psql_command: "{{ pg_old_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres"
   environment:
     PGPASSWORD: "{{ patroni_superuser_password }}"
-  when:
-    - inventory_hostname in groups['primary']
+  when: inventory_hostname in groups['primary']
 
 - name: "Print tablespace location"
   ansible.builtin.debug:
@@ -593,6 +592,7 @@
   ansible.builtin.file:
     path: "{{ pg_old_datadir }}/recovery.signal"
     state: absent
+  when: inventory_hostname in groups['primary'] or inventory_hostname in groups['secondary']
 
 # PgBouncer (if 'pgbouncer_pool_pause' is 'true')
 # Note: not for blue-green upgrade method
@@ -629,4 +629,4 @@
   when:
     - pgbouncer_install | bool
     - pgbouncer_pool_pause | bool
-    - inventory_hostname not in (groups.get('target_cluster') | default([], true))
+    - source_databases is not defined # exclude for blue-green upgrade method
