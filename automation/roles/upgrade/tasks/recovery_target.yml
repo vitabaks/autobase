@@ -35,7 +35,7 @@
     {{ pg_old_bindir }}/pg_ctl start -D {{ pg_old_datadir }} -w -t {{ pg_start_stop_timeout }}
     -o '--config-file={{ pg_old_confdir }}/postgresql.conf'
     -o '-c archive_mode=off'
-    -l /tmp/pg_recovery_target_lsn.log
+    -l /tmp/pg_start_recovery_target.log
   async: "{{ pg_start_stop_timeout }}" # run the command asynchronously
   poll: 0
   register: pg_ctl_start_result
@@ -43,7 +43,7 @@
     - inventory_hostname in groups['target_cluster']
     - patroni_cluster_leader
 
-- name: "Wait for the PostgreSQL start to complete"
+- name: "Wait for the PostgreSQL start to complete (see log: /tmp/pg_start_recovery_target.log)"
   ansible.builtin.async_status:
     jid: "{{ pg_ctl_start_result.ansible_job_id }}"
   register: pg_ctl_start_job_result
