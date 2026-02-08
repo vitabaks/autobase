@@ -32,7 +32,7 @@
       environment:
         no_proxy: "{{ patroni_bind_address | default(bind_address, true) }}"
 
-    - name: "[Prepare] Set the variable: patroni_cluster_name"
+    - name: "[Prepare] Set variable: patroni_cluster_name"
       ansible.builtin.set_fact:
         patroni_cluster_name: "{{ patroni_result.json.patroni.scope }}"
 
@@ -51,12 +51,12 @@
       environment:
         no_proxy: "{{ patroni_bind_address | default(bind_address, true) }}"
 
-    - name: "[Prepare] Set the variable: patroni_cluster_leader: true"
+    - name: "[Prepare] Set variable: patroni_cluster_leader: true"
       ansible.builtin.set_fact:
         patroni_cluster_leader: true
       when: patroni_leader_result.status == 200
 
-    - name: "[Prepare] Set the variable: patroni_cluster_leader: false"
+    - name: "[Prepare] Set variable: patroni_cluster_leader: false"
       ansible.builtin.set_fact:
         patroni_cluster_leader: false
       when: patroni_leader_result.status != 200

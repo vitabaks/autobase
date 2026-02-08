@@ -10,7 +10,7 @@
     PGPASSWORD: "{{ patroni_superuser_password }}"
   when: inventory_hostname in groups['primary']
 
-- name: "Set the variable: pg_shared_preload_libraries_value"
+- name: "Set variable: pg_shared_preload_libraries_value"
   ansible.builtin.set_fact:
     pg_shared_preload_libraries_value: "{{ pg_shared_preload_libraries_result.stdout }}"
   when: inventory_hostname in groups['primary']
