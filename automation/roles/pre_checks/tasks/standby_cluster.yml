@@ -40,8 +40,8 @@
 - name: "Add hba rule on the Source Cluster for Standby Cluster"
   ansible.builtin.blockinfile:
     path: "{{ pg_conf_dir }}/pg_hba.conf"
-    marker: "# {mark} ANSIBLE: RULE FOR STANDBY CLUSTER"
-    insertafter: EOF
+    marker: "# {mark} ANSIBLE: TEMPORARY RULE FOR STANDBY CLUSTER"
+    insertbefore: BOF
     block: |
       {% for h in (groups.get('postgres_cluster') | default([], true)) %}
       {% set addr = (
