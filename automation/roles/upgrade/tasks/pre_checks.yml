@@ -153,6 +153,35 @@
 
 # Pre-Checks for blue-green upgrade method
 - block:
+    # Get a list of databases from the Source Cluster (if pg_replication_database = "all")
+    - name: "[Prepare] Get a list of databases from the Source Cluster"
+      ansible.builtin.command: >-
+        {{ pg_old_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc "
+        select datname from pg_catalog.pg_database where not datistemplate"
+      register: datname_result
+      changed_when: false
+      environment:
+        PGPASSWORD: "{{ patroni_superuser_password }}"
+      when:
+        - pg_replication_database == "all"
+        - inventory_hostname in (groups.get('source_cluster') | default([], true))
+
+    - name: "[Prepare] Set the variable: pg_replication_database"
+      ansible.builtin.set_fact:
+        pg_replication_database: "{{ hostvars[groups[source_primary_host][0]]['datname_result'].stdout_lines }}"
+      when: pg_replication_database == "all"
+
+    - name: "[Prepare] Set the variable: source_databases"
+      ansible.builtin.set_fact:
+        source_databases: >-
+          {{
+            pg_replication_database is string
+            | ternary(
+                pg_replication_database.split(',') | map('trim') | reject('equalto', '') | list,
+                (pg_replication_database | default([], true))
+              )
+          }}
+
     - name: "[Pre-Check] Make sure that is Standby Cluster leader"
       ansible.builtin.uri:
         url: >-
@@ -304,14 +333,6 @@
         hostvars[target_primary_host].patroni_bind_address
         | default(hostvars[target_primary_host].bind_address, true)
         | default(hostvars[target_primary_host].inventory_hostname, true)
-      }}
-    source_databases: >-
-      {{
-        pg_replication_database is string
-        | ternary(
-            pg_replication_database.split(',') | map('trim') | reject('equalto', '') | list,
-            (pg_replication_database | default([], true))
-          )
       }}
     psql_command: "{{ pg_old_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres"
   environment:

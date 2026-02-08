@@ -8,12 +8,3 @@
   loop_control:
     loop_var: dbname
     label: "{{ dbname }}"
-  vars:
-    source_databases: >-
-      {{
-        pg_replication_database is string
-        | ternary(
-            pg_replication_database.split(',') | map('trim') | reject('equalto', '') | list,
-            (pg_replication_database | default([], true))
-          )
-      }}

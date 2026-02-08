@@ -84,21 +84,6 @@
       loop: "{{ groups['source_cluster'] }}"
       changed_when: false
 
-    - name: "[Prepare] Get a list of databases from the Source Cluster"
-      ansible.builtin.command: >-
-        {{ postgresql_bin_dir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc "
-        select datname from pg_catalog.pg_database where not datistemplate"
-      register: datname_result
-      changed_when: false
-      when:
-        - pg_replication_database == "all"
-        - inventory_hostname in groups['source_primary']
-
-    - name: "[Prepare] Set the variable: pg_replication_database"
-      ansible.builtin.set_fact:
-        pg_replication_database: "{{ hostvars[groups['source_primary'][0]]['datname_result'].stdout_lines }}"
-      when: pg_replication_database == "all"
-
     - name: '[Prepare] Add Target Cluster host to group "primary" (in-memory inventory)'
       ansible.builtin.add_host:
         name: "{{ item }}"
