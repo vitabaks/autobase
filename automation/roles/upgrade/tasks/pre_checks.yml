@@ -509,7 +509,7 @@
   ansible.builtin.include_tasks: ssh-keys.yml
   vars:
     ssh_key_user: postgres
-    source_group: target_cluster
+    source_group: "{{ 'target_cluster' if inventory_hostname in groups.get('target_cluster', []) else 'postgres_cluster' }}"
 
 # if pg_new_wal_dir is defined (for synchronize wal dir)
 - name: "[Pre-Check] Make sure that the sshpass package are installed"
