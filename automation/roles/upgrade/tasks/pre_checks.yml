@@ -257,7 +257,7 @@
       loop: "{{ source_databases }}"
       loop_control:
         loop_var: dbname
-        label: "{{ dbname }}"
+        label: "{{ source_primary_host_addr }}"
       when: inventory_hostname in (groups.get('target_cluster') | default([], true))
 
     # if 'pg_reverse_logical_replication' is 'true'
@@ -269,7 +269,7 @@
       loop: "{{ source_databases }}"
       loop_control:
         loop_var: dbname
-        label: "{{ dbname }}"
+        label: "{{ target_primary_host_addr }}"
       when:
         - inventory_hostname in (groups.get('source_cluster') | default([], true))
         - pg_reverse_logical_replication | default(false) | bool
