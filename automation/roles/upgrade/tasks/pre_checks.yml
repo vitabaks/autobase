@@ -179,7 +179,7 @@
 
     - name: "[Prepare] Set variable: pg_replication_database"
       ansible.builtin.set_fact:
-        pg_replication_database: "{{ hostvars[groups[source_primary_host][0]]['datname_result'].stdout_lines }}"
+        pg_replication_database: "{{ hostvars[source_primary_host].datname_result.stdout_lines }}"
       when: pg_replication_database == "all"
 
     - name: "[Prepare] Set variable: source_databases"
@@ -228,8 +228,6 @@
         insertbefore: BOF
         content: "host all {{ patroni_superuser_username }} {{ primary_host }}/32 trust"
       vars:
-        source_primary_host: "{{ (groups.get('source_primary') | default([], true) | first) | default('', true) }}"
-        target_primary_host: "{{ (groups.get('primary') | default([], true) | first) | default('', true) }}"
         primary_host: >-
           {{
             (inventory_hostname in (groups.get('target_cluster') | default([], true)))
@@ -338,7 +336,7 @@
         | default(hostvars[source_primary_host].bind_address, true)
         | default(hostvars[source_primary_host].inventory_hostname, true)
       }}
-    target_primary_host: "{{ (groups.get('target_primary') | default([], true) | first) | default('', true) }}"
+    target_primary_host: "{{ (groups.get('primary') | default([], true) | first) | default('', true) }}"
     target_primary_host_addr: >-
       {{
         hostvars[target_primary_host].patroni_bind_address
