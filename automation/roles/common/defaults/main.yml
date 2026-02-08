@@ -16,12 +16,12 @@ patroni_superuser_username: "postgres"
 patroni_superuser_password: "" # Please specify a password. If not defined, will be generated automatically during deployment.
 patroni_superuser_auth_options:
   - { option: "sslmode", value: "{{ 'require' if tls_cert_generate | bool else 'disable' }}" } # or 'verify-ca', 'verify-full'
-  - { option: "sslrootcert", value: "{{ tls_dir ~ '/' ~ tls_ca_cert if tls_cert_generate | bool else '' }}" } # or 'system'
+#  - { option: "sslrootcert", value: "{{ tls_dir ~ '/' ~ tls_ca_cert if tls_cert_generate | bool else '' }}" } # or 'system'
 patroni_replication_username: "replicator"
 patroni_replication_password: "" # Please specify a password. If not defined, will be generated automatically during deployment.
 patroni_replication_auth_options:
   - { option: "sslmode", value: "{{ 'require' if tls_cert_generate | bool else 'disable' }}" } # or 'verify-ca', 'verify-full'
-  - { option: "sslrootcert", value: "{{ tls_dir ~ '/' ~ tls_ca_cert if tls_cert_generate | bool else '' }}" } # or 'system'
+#  - { option: "sslrootcert", value: "{{ tls_dir ~ '/' ~ tls_ca_cert if tls_cert_generate | bool else '' }}" } # or 'system'
 # Note: if sslmode: verify-full, and your certificate doesn't have IP address in the SAN,
 # set also the option postgresql_connect_addr to ensure TLS certificate validation is successful.
 
@@ -262,7 +262,7 @@ postgresql_port: 5432
 postgresql_encoding: "UTF8" # for bootstrap only (initdb)
 postgresql_locale: "en_US.UTF-8" # for bootstrap only (initdb)
 postgresql_data_checksums: true # for bootstrap only (initdb)
-postgresql_password_encryption_algorithm: "scram-sha-256" # or "md5" if your clients do not work with passwords encrypted with SCRAM-SHA-256
+postgresql_password_encryption_algorithm: "{{ 'scram-sha-256' if postgresql_version | int > 13 else 'md5' }}"
 postgresql_cluster_name: "{{ 'main' if ansible_os_family == 'Debian' else 'data' }}"
 postgresql_home_dir: "{{ '/var/lib/postgresql' if ansible_os_family == 'Debian' else '/var/lib/pgsql' }}"
 # You can specify custom data dir path. Example: "/pgdata/{{ postgresql_version }}/main"
@@ -444,7 +444,7 @@ pending_restart: false
 # specify additional hosts that will be added to the pg_hba.conf
 postgresql_pg_hba:
   - { type: "local", database: "all", user: "{{ patroni_superuser_username }}", address: "", method: "trust" }
-  - { type: "local", database: "all", user: "{{ pgbouncer_auth_username }}", address: "", method: "trust" } # required for pgbouncer auth_user
+  - { type: "local", database: "all", user: "{{ pgbouncer_auth_username }}", address: "", method: "trust" }
   - { type: "local", database: "all", user: "all", address: "", method: "{{ postgresql_password_encryption_algorithm }}" }
   - { type: "host", database: "all", user: "all", address: "127.0.0.1/32", method: "{{ postgresql_password_encryption_algorithm }}" }
   - { type: "host", database: "all", user: "all", address: "::1/128", method: "{{ postgresql_password_encryption_algorithm }}" }
@@ -492,7 +492,7 @@ pgbouncer_ignore_startup_parameters: "extra_float_digits,geqo,search_path"
 pgbouncer_auth_type: "{{ postgresql_password_encryption_algorithm }}"
 pgbouncer_auth_user: true # or 'false' if you want to manage the list of users for authentication in the database via userlist.txt
 pgbouncer_auth_username: pgbouncer # user who can query the database via the user_search function
-pgbouncer_auth_password: "" # If not defined, a password will be generated automatically during deployment
+pgbouncer_auth_password: "" # (optional) required if there is no trust rule in pg_hba for pgbouncer_auth_username
 pgbouncer_auth_dbname: "postgres"
 pgbouncer_tls_dir: "{{ tls_dir }}"
 pgbouncer_client_tls_sslmode: "{{ 'require' if tls_cert_generate | bool else 'disable' }}"
@@ -546,16 +546,19 @@ patroni_callbacks: []
 #  - {action: "on_reload", script: ""}
 #  - {action: "on_role_change", script: ""}
 
-# https://patroni.readthedocs.io/en/latest/replica_bootstrap.html#standby-cluster
-# Requirements:
-# 1. the cluster name for Standby Cluster must be unique ('patroni_cluster_name' variable)
-# 2. the IP addresses (or network) of the Standby Cluster servers must be added to the pg_hba.conf of the Main Cluster ('postgresql_pg_hba' variable).
+# https://patroni.readthedocs.io/en/latest/standby_cluster.html
+# Note: In case the remote site doesn’t provide a single endpoint that connects to a primary,
+# one could list all hosts of the source cluster in the patroni_standby_cluster.host (separated by commas).
 patroni_standby_cluster:
-  host: "" # an address of remote master
-  port: "5432" # a port of remote master
+  host: "{{ source_cluster_host | default('') }}" # Source Cluster host (IP address)
+  port: "{{ source_cluster_port | default(5432) }}" # Source Cluster port
 #  primary_slot_name: ""  # which slot on the remote master to use for replication (optional)
 #  restore_command: ""  # command to restore WAL records from the remote master to standby leader (optional)
 #  recovery_min_apply_delay: ""  # how long to wait before actually apply WAL records on a standby leader (optional)
+
+patroni_standby_cluster_auto_hba: true # automatically add the standby cluster nodes to pg_hba.conf of the source cluster.
+# Note: this is a temporary rule and may be overwritten by future source cluster reconfiguration.
+# It is recommended to explicitly configure standby cluster hosts in postgresql_pg_hba on the source cluster.
 
 # Permanent replication slots.
 # These slots will be preserved during switchover/failover.
