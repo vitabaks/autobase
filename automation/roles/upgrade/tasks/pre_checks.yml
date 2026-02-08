@@ -102,7 +102,7 @@
     - inventory_hostname in groups['primary']
     - pg_old_version | string is version('10', '<')
 
-- name: "Set variable 'current_pg_version'"
+- name: "Set variable: current_pg_version"
   ansible.builtin.set_fact:
     current_pg_version: "{{ pg_current_version.stdout if pg_old_version | string is version('10', '>=') else pg_current_version_9x.stdout }}"
   when:
