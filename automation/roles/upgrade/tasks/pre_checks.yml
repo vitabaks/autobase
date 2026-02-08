@@ -251,7 +251,7 @@
       ansible.builtin.command: "{{ pg_old_bindir }}/pg_ctl reload -D {{ pg_old_datadir }}"
       when: patroni_cluster_leader | default(false)
 
-    - name: "[Pre-Check] Test access from the target cluster to the source database"
+    - name: "[Pre-Check] Test access from the target to the source database"
       ansible.builtin.command: >-
         {{ pg_old_bindir }}/psql -w -h {{ source_primary_host_addr }} -p {{ postgresql_port }}
         -U {{ patroni_superuser_username }} -d {{ dbname }} -tAXc 'select 1'
@@ -260,10 +260,10 @@
       loop_control:
         loop_var: dbname
         label: "{{ source_primary_host_addr }}"
-      when: inventory_hostname in (groups.get('target_cluster') | default([], true))
+      when: inventory_hostname in (groups.get('primary') | default([], true))
 
     # if 'pg_reverse_logical_replication' is 'true'
-    - name: "[Pre-Check] Test access from the source cluster to the target database"
+    - name: "[Pre-Check] Test access from the source to the target database"
       ansible.builtin.command: >-
         {{ pg_old_bindir }}/psql -w -h {{ target_primary_host_addr }} -p {{ postgresql_port }}
         -U {{ patroni_superuser_username }} -d {{ dbname }} -tAXc 'select 1'
@@ -273,7 +273,7 @@
         loop_var: dbname
         label: "{{ target_primary_host_addr }}"
       when:
-        - inventory_hostname in (groups.get('source_cluster') | default([], true))
+        - inventory_hostname in (groups.get('source_primary') | default([], true))
         - pg_reverse_logical_replication | default(false) | bool
 
     # Replica identity
