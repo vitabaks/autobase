@@ -206,20 +206,23 @@
       failed_when: patroni_standby_leader_result.status != 200
       environment:
         no_proxy: "{{ patroni_bind_address | default(bind_address, true) }}"
-      when: inventory_hostname in (groups.get('target_cluster') | default([], true))
+      when: inventory_hostname in (groups.get('primary') | default([], true))
 
     - name: "[Pre-Check] Make sure that the wal_level parameter is set to 'logical'"
       ansible.builtin.command: >
         {{ psql_command }} -tAXc "show wal_level"
       changed_when: false
       register: pg_wal_level
+      when: patroni_cluster_leader | default(false)
 
     # Stop, if wal_level != logical
     - name: "Pre-Check error. The wal_level parameter is not set to 'logical'"
       ansible.builtin.fail:
         msg:
           - "The wal_level parameter is not set to 'logical'. Current value: {{ pg_wal_level.stdout }}"
-      when: pg_wal_level.stdout | default('') != "logical"
+      when:
+        - patroni_cluster_leader | default(false)
+        - pg_wal_level.stdout | default('') != "logical"
 
     - name: Add temporary hba rule for logical replication
       ansible.builtin.blockinfile:
@@ -278,7 +281,7 @@
       loop_control:
         loop_var: dbname
         label: "{{ dbname }}"
-      when: inventory_hostname in (groups.get('source_cluster') | default([], true))
+      when: inventory_hostname in (groups.get('source_primary') | default([], true))
 
     # Check restore_command
     - name: "[Pre-Check] Make sure that the 'restore_command' parameter is not specified"
@@ -286,7 +289,7 @@
       register: restore_command_result
       changed_when: false
       failed_when: false
-      when: inventory_hostname in (groups.get('target_cluster') | default([], true))
+      when: inventory_hostname in (groups.get('primary') | default([], true))
 
     # if 'restore_command' is specified
     # Comment out the recovery_conf block in patroni.yml to avoid WAL archive conflicts.
@@ -301,7 +304,7 @@
         - recovery_conf
         - restore_command
       when:
-        - inventory_hostname in (groups.get('target_cluster') | default([], true))
+        - inventory_hostname in (groups.get('primary') | default([], true))
         - restore_command_result.stdout | default('') | length > 0
 
     # Increase the number of WAL files to hold in the Source Cluster (if 'pg_wal_keep_gigabytes' != 'none').
@@ -349,7 +352,6 @@
   when:
     - (inventory_hostname in (groups.get('source_cluster') | default([], true)) or
        inventory_hostname in (groups.get('target_cluster') | default([], true)))
-    - patroni_cluster_leader | default(false)
 
 - name: "[Pre-Check] Make sure that physical replication is active"
   ansible.builtin.command: >
