@@ -49,7 +49,7 @@
     -c cron.database_name='{{ pg_cron_database_name.stdout }}'
     {% endif %}
     -c config_file='{{ pg_new_confdir }}/postgresql.conf'"
-    start -w -t {{ pg_start_stop_timeout }} -l /tmp/pg_tmp_start.log
+    start -w -t {{ pg_start_stop_timeout }} -l /tmp/pg_start_schema_compatibility.log
   async: "{{ pg_start_stop_timeout }}" # run the command asynchronously
   poll: 0
   register: pg_ctl_start_result
