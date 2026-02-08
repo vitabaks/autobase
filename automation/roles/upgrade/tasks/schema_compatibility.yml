@@ -57,7 +57,7 @@
     - inventory_hostname in groups['primary']
     - pg_ctl_status_result.rc != 0
 
-- name: Wait for PostgreSQL to start
+- name: "Wait for PostgreSQL to start (log: /tmp/pg_start_schema_compatibility.log)"
   ansible.builtin.async_status:
     jid: "{{ pg_ctl_start_result.ansible_job_id }}"
   register: pg_ctl_start_job_result

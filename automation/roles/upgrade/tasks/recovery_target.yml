@@ -43,7 +43,7 @@
     - inventory_hostname in groups['target_cluster']
     - patroni_cluster_leader
 
-- name: "Wait for the PostgreSQL start to complete (see log: /tmp/pg_start_recovery_target.log)"
+- name: "Wait for the PostgreSQL start to complete (log: /tmp/pg_start_recovery_target.log)"
   ansible.builtin.async_status:
     jid: "{{ pg_ctl_start_result.ansible_job_id }}"
   register: pg_ctl_start_job_result
