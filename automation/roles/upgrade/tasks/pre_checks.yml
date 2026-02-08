@@ -377,7 +377,7 @@
 - name: "[Pre-Check] Make sure there is no high replication lag (more than {{ max_replication_lag_bytes | default('') | human_readable }})"
   ansible.builtin.command: >-
     {{ psql_command}} -tAXc "
-      select pg_wal_lsn_diff(pg_current_wal_lsn(),replay_lsn)
+      select pg_wal_lsn_diff(pg_current_wal_lsn(),replay_lsn) as pg_lag_bytes
       from pg_stat_replication
       order by pg_lag_bytes desc limit 1"
   register: pg_lag_bytes
@@ -408,7 +408,7 @@
 - name: "[Pre-Check] Make sure there is no high replication lag (more than {{ max_replication_lag_bytes | default('') | human_readable }})"
   ansible.builtin.command: >-
     {{ psql_command}} -tAXc "
-      select pg_xlog_location_diff(pg_current_xlog_location(),replay_location)
+      select pg_xlog_location_diff(pg_current_xlog_location(),replay_location) as pg_lag_bytes
       from pg_stat_replication
       order by pg_lag_bytes desc limit 1"
   register: pg_lag_bytes_9x
