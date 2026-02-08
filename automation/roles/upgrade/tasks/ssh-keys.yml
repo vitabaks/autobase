@@ -55,14 +55,14 @@
   ansible.builtin.file:
     path: "{{ files_dir | default(playbook_dir ~ '/files') }}/{{ item }}-id_rsa.pub"
     state: absent
-  loop: "{{ groups['postgres_cluster'] }}"
+  loop: "{{ groups.get(source_group | default('postgres_cluster', true), []) }}"
   delegate_to: localhost
   changed_when: false
 
 # known_hosts
 - name: known_hosts | for each host, scan for its ssh public key
   ansible.builtin.command: "ssh-keyscan -trsa -p {{ ansible_ssh_port | default(22) }} {{ hostvars[item]['bind_address'] }}"
-  loop: "{{ groups['postgres_cluster'] }}"
+  loop: "{{ groups.get(source_group | default('postgres_cluster', true), []) }}"
   register: ssh_known_host_results
   until: ssh_known_host_results is succeeded
   retries: 3
