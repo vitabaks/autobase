@@ -129,6 +129,7 @@
         name: vitabaks.autobase.pre_checks
         tasks_from: passwords
       vars:
+        source_group: source_cluster
         postgresql_cluster_maintenance: true
       when: patroni_superuser_password | default('') | length < 1
 
