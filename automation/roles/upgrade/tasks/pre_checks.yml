@@ -160,6 +160,7 @@
             | default(patroni_bind_address | default(bind_address, true), true) }}:{{ patroni_restapi_port
             | default('8008') }}/standby-leader
         status_code: 200
+        ca_path: "{{ patroni_restapi_cafile | default(omit, true) }}"
       register: patroni_standby_leader_result
       changed_when: false
       failed_when: patroni_standby_leader_result.status != 200
