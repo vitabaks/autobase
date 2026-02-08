@@ -202,17 +202,17 @@
   tasks:
     - name: Stop PostgreSQL on Target primary
       ansible.builtin.include_role:
-        name: upgrade
+        name: vitabaks.autobase.upgrade
         tasks_from: stop_target_primary
 
     - name: Create a publication and slot on Source Primary
       ansible.builtin.include_role:
-        name: upgrade
+        name: vitabaks.autobase.upgrade
         tasks_from: publication
 
     - name: Reach recovery_target_lsn on Target Primary
       ansible.builtin.include_role:
-        name: upgrade
+        name: vitabaks.autobase.upgrade
         tasks_from: recovery_target
   tags:
     - upgrade
@@ -298,7 +298,7 @@
   tasks:
     - name: Create a subscription on Target Primary
       ansible.builtin.include_role:
-        name: upgrade
+        name: vitabaks.autobase.upgrade
         tasks_from: subscription
   tags:
     - upgrade
