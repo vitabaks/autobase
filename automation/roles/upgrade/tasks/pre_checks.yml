@@ -35,15 +35,16 @@
   when: inventory_hostname in groups['primary']
 
 - name: "[Pre-Check] Test PostgreSQL database access using a unix socket"
-  ansible.builtin.command: >
-    {{ psql_command }} -tAXc "select 1"
+  ansible.builtin.command: >-
+    {{ pg_old_bindir }}/psql
+    -h {{ postgresql_unix_socket_dir }}
+    -p {{ postgresql_port }}
+    -U {{ patroni_superuser_username }}
+    -d postgres
+    -tAXc "select 1"
   register: socket_access_result
   changed_when: false
-  failed_when: "socket_access_result.rc != 0 and 'no pg_hba.conf entry' not in socket_access_result.stderr"
-  vars:
-    psql_command: "{{ pg_old_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres"
-  environment:
-    PGPASSWORD: "{{ patroni_superuser_password }}"
+  failed_when: false
   when: inventory_hostname in groups['primary']
 
 # if 'no pg_hba.conf entry'
@@ -59,10 +60,20 @@
 
     - name: Update the PostgreSQL configuration
       ansible.builtin.command: "{{ pg_old_bindir }}/pg_ctl reload -D {{ pg_old_datadir }}"
+
+    - name: "Re-test PostgreSQL database access using a unix socket"
+      ansible.builtin.command: >-
+        {{ pg_old_bindir }}/psql
+        -h {{ postgresql_unix_socket_dir }}
+        -p {{ postgresql_port }}
+        -U {{ patroni_superuser_username }}
+        -d postgres
+        -tAXc "select 1"
+      register: socket_access_result
+      changed_when: false
   when:
     - inventory_hostname in groups['primary']
-    - socket_access_result.stderr is defined
-    - "'no pg_hba.conf entry' in socket_access_result.stderr"
+    - socket_access_result.rc != 0
 
 - name: "[Pre-Check] Check the current version of PostgreSQL"
   ansible.builtin.command: >
