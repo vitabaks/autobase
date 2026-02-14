@@ -35,8 +35,6 @@
         done
       args:
         executable: /bin/bash
-      environment:
-        PGPASSWORD: "{{ patroni_superuser_password }}"
       async: "{{ vacuumdb_analyze_timeout }}" # run the command asynchronously with a maximum duration
       poll: 0
       register: pg_terminator_analyze
@@ -64,8 +62,6 @@
         done
       args:
         executable: /bin/bash
-      environment:
-        PGPASSWORD: "{{ patroni_superuser_password }}"
       async: "{{ vacuumdb_analyze_timeout }}" # run the command asynchronously with a maximum duration
       poll: 0
       register: pg_terminator_long_transactions
@@ -82,8 +78,8 @@
         -U {{ patroni_superuser_username }}
       async: "{{ vacuumdb_analyze_timeout }}" # run the command asynchronously with a maximum duration
       poll: 0
-      environment:
-        PGPASSWORD: "{{ patroni_superuser_password }}"
       register: vacuumdb_analyze
       ignore_errors: true # ignore errors if the task runs for over an 'vacuumdb_analyze_timeout'.
+  environment:
+    PGPASSWORD: "{{ patroni_superuser_password }}"
   when: inventory_hostname in groups['primary']

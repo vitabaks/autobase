@@ -1,16 +1,48 @@
 ---
-- name: Ensure the current data directory is the new data directory
-  ansible.builtin.command: >-
-    {{ pg_new_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc
-    "show data_directory"
+
+# for blue-green upgrade method
+- block:
+    - name: Reset wal_keep_segments to original state on the Source Primary
+      ansible.builtin.command: >
+        {{ psql_command }} -tAXc "alter system reset wal_keep_segments"
+      delegate_to: "{{ source_primary_host }}"
+      run_once: true
+      when: pg_old_version | int < 13
+
+    - name: Reset wal_keep_size to original state on the Source Primary
+      ansible.builtin.command: >
+        {{ psql_command }} -tAXc "alter system reset wal_keep_size"
+      delegate_to: "{{ source_primary_host }}"
+      run_once: true
+      when: pg_old_version | int >= 13
+
+    - name: Reload PostgreSQL configuration on the Source Primary
+      ansible.builtin.command: >
+        {{ psql_command }} -tAXc "select pg_reload_conf()"
+      delegate_to: "{{ source_primary_host }}"
+      run_once: true
+  vars:
+    source_primary_host: "{{ groups.get('source_primary', []) | first }}"
+    psql_command: "{{ pg_old_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres"
   environment:
     PGPASSWORD: "{{ patroni_superuser_password }}"
+  when:
+    - source_primary_host | default('') | length > 0
+    - (pg_wal_keep_gigabytes | default('100') | string) != 'none'
+
+- name: Ensure the current data directory is the new data directory
+  ansible.builtin.command: >
+    {{ psql_command }} -tAXc "show data_directory"
   register: pg_current_datadir
   until: pg_current_datadir is success
   delay: 5
   retries: 3
   changed_when: false
   ignore_errors: true # show the error and continue the playbook execution
+  vars:
+    psql_command: "{{ pg_new_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres"
+  environment:
+    PGPASSWORD: "{{ patroni_superuser_password }}"
 
 - name: Delete the temporary .pgpass entry
   ansible.builtin.lineinfile:
@@ -20,6 +52,7 @@
   no_log: true
   when:
     - inventory_hostname in groups['primary']
+    - pg_install_user_password is defined
 
 # RedHat based
 - name: Delete the old PostgreSQL data directory
@@ -224,21 +257,20 @@
   changed_when: false
   environment:
     PATH: "{{ ansible_env.PATH }}:/usr/bin:/usr/local/bin"
-  when: inventory_hostname in groups['primary']
 
 - name: Check the current PostgreSQL version
   run_once: true
-  ansible.builtin.command: >-
-    {{ pg_new_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc
-    "select current_setting('server_version')"
-  environment:
-    PGPASSWORD: "{{ patroni_superuser_password }}"
+  ansible.builtin.command: >
+    {{ psql_command }} -tAXc "select current_setting('server_version')"
   register: postgres_version
   until: postgres_version is success
   delay: 5
   retries: 3
   changed_when: false
-  when: inventory_hostname in groups['primary']
+  vars:
+    psql_command: "{{ pg_new_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres"
+  environment:
+    PGPASSWORD: "{{ patroni_superuser_password }}"
 
 - name: List the Patroni cluster members
   run_once: true

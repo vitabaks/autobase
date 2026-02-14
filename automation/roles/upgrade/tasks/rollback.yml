@@ -207,9 +207,8 @@
 # Info
 - block:
     - name: Check the PostgreSQL version
-      ansible.builtin.command: >-
-        {{ postgresql_bin_dir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc
-        "select current_setting('server_version')"
+      ansible.builtin.command: >
+        {{ psql_command }} -tAXc "select current_setting('server_version')"
       environment:
         PGPASSWORD: "{{ patroni_superuser_password }}"
       register: postgres_version
@@ -233,4 +232,8 @@
         msg:
           - "Rollback to the old PostgreSQL is completed."
           - "Current version: {{ postgres_version.stdout }}"
+  vars:
+    psql_command: "{{ postgresql_bin_dir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres"
+  environment:
+    PGPASSWORD: "{{ patroni_superuser_password }}"
   when: inventory_hostname in groups['primary']
