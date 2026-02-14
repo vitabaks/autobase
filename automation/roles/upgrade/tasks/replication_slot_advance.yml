@@ -2,7 +2,7 @@
 # Blue-green upgrade method: Advance all created slots to the same target LSN to ensure consistency.
 
 # One slot (if pg_publication_count = 1)
-- name: "Advance replication slot to the last LSN position"
+- name: "Advance replication slot for database {{ dbname | default('postgres') }} to LSN {{ target_lsn | default('unknown') }}"
   ansible.builtin.command: >-
     {{ psql_command }} -d {{ dbname }} -tAXc "
     select pg_replication_slot_advance('{{ slot_name }}', '{{ target_lsn }}')
@@ -16,7 +16,7 @@
   when: pg_publication_count | int == 1
 
 # Multiple slots (if pg_publication_count > 1)
-- name: "Advance all replication slots to the last LSN position"
+- name: "Advance replication slots for database {{ dbname | default('postgres') }} to LSN {{ target_lsn | default('unknown') }}"
   ansible.builtin.command: >-
     {{ psql_command }} -d {{ dbname }} -tAXc "
     select pg_replication_slot_advance('{{ slot_name }}_{{ '%02d' % (idx + 1) }}', '{{ target_lsn }}')

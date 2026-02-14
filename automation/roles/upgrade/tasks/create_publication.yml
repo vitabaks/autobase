@@ -4,12 +4,12 @@
 
 # One publication (if pg_publication_count = 1)
 - block:
-    - name: "Create a publication for logical replication"
+    - name: "Create publication for logical replication (database: {{ dbname | default('postgres') }})"
       ansible.builtin.command: >-
         {{ psql_command }} -d {{ dbname }} -tAXc "drop publication if exists {{ pg_publication_name }};
         create publication {{ pg_publication_name }} for all tables;"
 
-    - name: "Create a slot for logical replication, and save 'lsn'"
+    - name: "Create slot for logical replication (database: {{ dbname | default('postgres') }})" 
       ansible.builtin.command: >-
         {{ psql_command }} -d {{ dbname }} -tAXc "
         select pg_drop_replication_slot('{{ slot_name }}')
@@ -32,7 +32,7 @@
 # Multiple publications (if pg_publication_count > 1)
 - block:
     # Split tables (sorted by DML activity) into groups for publications to evenly distribute tables across slots.
-    - name: "Get a list of tables distributed by groups"
+    - name: "Get a list of tables distributed by groups (database: {{ dbname | default('postgres') }})"
       ansible.builtin.shell: |
         {{ psql_command }} -d {{ dbname }} -tAXc "
         do \$$
@@ -130,7 +130,7 @@
 
     # Create multiple publications (for each table group)
     # Note: ulimit - will increase stack size and ARG_MAX to prevent error 'Argument list too long'
-    - name: "Create a publications for logical replication"
+    - name: "Create publications for logical replication (database: {{ dbname | default('postgres') }})"
       ansible.builtin.command: >-
         ulimit -S -s {{ create_publication_stack_size | default(32768) }}
         {{ psql_command }} -d {{ dbname }} -tAXc "drop publication if exists {{ pg_publication_name }}_{{ '%02d' % (idx + 1) }};
@@ -141,7 +141,7 @@
         label: "{{ pg_publication_name }}_{{ '%02d' % (idx + 1) }}"
 
     # Create multiple slots (for each publication/subscription)
-    - name: "Create slots for logical replication, and save 'lsn'"
+    - name: "Create slots for logical replication (database: {{ dbname | default('postgres') }})" 
       ansible.builtin.command: >-
         {{ psql_command }} -d {{ dbname }} -tAXc "
         select pg_drop_replication_slot('{{ slot_name }}_{{ '%02d' % (idx + 1) }}')
