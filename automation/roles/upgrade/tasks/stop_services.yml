@@ -98,6 +98,7 @@
   when:
     - pgbouncer_install | bool
     - pgbouncer_pool_pause | bool
+    - patroni_standby_cluster.host | default('') | length < 1 # exclude for Standby Cluster
 
 # Stop PostgreSQL (if replication lag is 0 bytes)
 - name: Stop PostgreSQL on the Leader
