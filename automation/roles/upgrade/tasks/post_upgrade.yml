@@ -252,7 +252,6 @@
   changed_when: false
   environment:
     PATH: "{{ ansible_env.PATH }}:/usr/bin:/usr/local/bin"
-  when: inventory_hostname in groups['primary']
 
 - name: Check the current PostgreSQL version
   run_once: true
@@ -267,7 +266,6 @@
     psql_command: "{{ pg_new_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres"
   environment:
     PGPASSWORD: "{{ patroni_superuser_password }}"
-  when: inventory_hostname in groups['primary']
 
 - name: List the Patroni cluster members
   run_once: true
