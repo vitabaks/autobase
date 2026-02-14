@@ -11,11 +11,14 @@
 
     - name: "Create a slot for logical replication, and save 'lsn'"
       ansible.builtin.command: >-
-        {{ psql_command }} -d {{ dbname }} -tAXc "select pg_drop_replication_slot('{{ pg_subscription_slot_name }}')
+        {{ psql_command }} -d {{ dbname }} -tAXc "
+        select pg_drop_replication_slot('{{ slot_name }}')
         from pg_replication_slots
-        where slot_name = '{{ pg_subscription_slot_name }}';
-        select lsn from pg_create_logical_replication_slot('{{ pg_subscription_slot_name }}', 'pgoutput');"
+        where slot_name = '{{ slot_name }}';
+        select lsn from pg_create_logical_replication_slot('{{ slot_name }}', 'pgoutput');"
       register: pg_slot_lsn
+      vars:
+        slot_name: "{{ (pg_subscription_slot_name ~ '_' ~ dbname) | lower | regex_replace('[^a-z0-9_]+', '_') }}"
 
     - name: "Set variable: target_lsn"
       ansible.builtin.set_fact:
@@ -138,17 +141,20 @@
         label: "{{ pg_publication_name }}_{{ '%02d' % (idx + 1) }}"
 
     # Create multiple slots (for each publication/subscription)
-    - name: "Create a slots for logical replication, and save 'lsn'"
+    - name: "Create slots for logical replication, and save 'lsn'"
       ansible.builtin.command: >-
-        {{ psql_command }} -d {{ dbname }} -tAXc "select pg_drop_replication_slot('{{ pg_subscription_slot_name }}_{{ '%02d' % (idx + 1) }}')
+        {{ psql_command }} -d {{ dbname }} -tAXc "
+        select pg_drop_replication_slot('{{ slot_name }}_{{ '%02d' % (idx + 1) }}')
         from pg_replication_slots
-        where slot_name = '{{ pg_subscription_slot_name }}_{{ '%02d' % (idx + 1) }}';
-        select lsn from pg_create_logical_replication_slot('{{ pg_subscription_slot_name }}_{{ '%02d' % (idx + 1) }}', 'pgoutput');"
+        where slot_name = '{{ slot_name }}_{{ '%02d' % (idx + 1) }}';
+        select lsn from pg_create_logical_replication_slot('{{ slot_name }}_{{ '%02d' % (idx + 1) }}', 'pgoutput');"
       register: multiple_pg_slot_lsn
       loop: "{{ range(0, pg_publication_count | int) | list }}"
       loop_control:
         index_var: idx
-        label: "{{ pg_subscription_slot_name }}_{{ '%02d' % (idx + 1) }}"
+        label: "{{ slot_name }}_{{ '%02d' % (idx + 1) }}"
+      vars:
+        slot_name: "{{ (pg_subscription_slot_name ~ '_' ~ dbname) | lower | regex_replace('[^a-z0-9_]+', '_') }}"
 
     - name: "Stop pg_terminator script"
       ansible.builtin.shell: |

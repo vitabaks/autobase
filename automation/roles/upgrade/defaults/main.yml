@@ -111,7 +111,7 @@ pg_allow_replica_identity_full: true # set REPLICA IDENTITY FULL on tables witho
 pg_publication_count: 1 # number of publications, replication slots and subscriptions to be created for logical replication (source -> target).
 pg_publication_name: "pg_upgrade_publication"
 pg_subscription_name: "pg_upgrade_subscription"
-pg_subscription_slot_name: "{{ pg_subscription_name }}_slot"
+pg_subscription_slot_name: "{{ pg_subscription_name }}_slot" # base prefix for logical replication slot names; each slot name includes the database name (and _01, _02, ... suffix if pg_publication_count > 1)
 
 # Reverse logical replication (rollback without losing changes)
 pg_reverse_logical_replication: true # enable reverse logical replication (source <- target).

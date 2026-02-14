@@ -11,7 +11,7 @@
         connection 'host={{ source_primary_host_addr }} port={{ postgresql_port }}
         user={{ patroni_superuser_username }} dbname={{ dbname }}'
         publication {{ pg_publication_name }}
-        with (copy_data = false, create_slot = false, slot_name = '{{ pg_subscription_slot_name }}')"
+        with (copy_data = false, create_slot = false, slot_name = '{{ slot_name }}')"
       when:
         - inventory_hostname in groups['target_cluster']
         - patroni_cluster_leader
@@ -19,7 +19,7 @@
     - name: "Make sure that logical replication is active"
       ansible.builtin.command: >-
         {{ psql_command }} -d {{ dbname }} -tAXc "
-        select active from pg_replication_slots where slot_name = '{{ pg_subscription_slot_name }}'"
+        select active from pg_replication_slots where slot_name = '{{ slot_name }}'"
       register: pg_logical_slot_state
       changed_when: false
       until: pg_logical_slot_state.stdout == "t"
@@ -34,7 +34,7 @@
         {{ psql_command }} -d {{ dbname }} -tAXc "
         select pg_wal_lsn_diff(pg_current_wal_lsn(), confirmed_flush_lsn)
         from pg_replication_slots
-        where slot_name = '{{ pg_subscription_slot_name }}'"
+        where slot_name = '{{ slot_name }}'"
       register: pg_logical_slot_lag_bytes
       changed_when: false
       when:
@@ -58,6 +58,7 @@
         | default(hostvars[source_primary_host].bind_address, true)
         | default(hostvars[source_primary_host].inventory_hostname, true)
       }}
+    slot_name: "{{ (pg_subscription_slot_name ~ '_' ~ dbname) | lower | regex_replace('[^a-z0-9_]+', '_') }}"
   environment:
     PGPASSWORD: "{{ patroni_superuser_password }}"
   when: pg_publication_count | int == 1
@@ -72,11 +73,11 @@
         connection 'host={{ source_primary_host_addr }} port={{ postgresql_port }}
         user={{ patroni_superuser_username }} dbname={{ dbname }}'
         publication {{ pg_publication_name }}_{{ '%02d' % (idx + 1) }}
-        with (copy_data = false, create_slot = false, slot_name = '{{ pg_subscription_slot_name }}_{{ '%02d' % (idx + 1) }}')"
+        with (copy_data = false, create_slot = false, slot_name = '{{ slot_name }}_{{ '%02d' % (idx + 1) }}')"
       loop: "{{ range(0, pg_publication_count | int) | list }}"
       loop_control:
         index_var: idx
-        label: "{{ pg_subscription_name }}_{{ '%02d' % (idx + 1) }}"
+        label: "{{ slot_name }}_{{ '%02d' % (idx + 1) }}"
       when:
         - inventory_hostname in groups['target_cluster']
         - patroni_cluster_leader
@@ -86,7 +87,7 @@
       ansible.builtin.command: >-
         {{ psql_command }} -d {{ dbname }} -tAXc "
         select active from pg_replication_slots
-        where slot_name = '{{ pg_subscription_slot_name }}_{{ '%02d' % (idx + 1) }}'"
+        where slot_name = '{{ slot_name }}_{{ '%02d' % (idx + 1) }}'"
       register: pg_logical_slot_state
       changed_when: false
       until: pg_logical_slot_state.stdout == "t"
@@ -95,7 +96,7 @@
       loop: "{{ range(0, pg_publication_count | int) | list }}"
       loop_control:
         index_var: idx
-        label: "{{ pg_subscription_slot_name }}_{{ '%02d' % (idx + 1) }}"
+        label: "{{ slot_name }}_{{ '%02d' % (idx + 1) }}"
       when:
         - patroni_cluster_leader
         - inventory_hostname in groups['source_cluster']
@@ -106,13 +107,13 @@
         {{ psql_command }} -d {{ dbname }} -Xc "
         select slot_name, pg_wal_lsn_diff(pg_current_wal_lsn(), confirmed_flush_lsn)
         from pg_replication_slots
-        where slot_name = '{{ pg_subscription_slot_name }}_{{ '%02d' % (idx + 1) }}'"
+        where slot_name = '{{ slot_name }}_{{ '%02d' % (idx + 1) }}'"
       register: pg_logical_slot_lag_bytes
       changed_when: false
       loop: "{{ range(0, pg_publication_count | int) | list }}"
       loop_control:
         index_var: idx
-        label: "{{ pg_subscription_slot_name }}_{{ '%02d' % (idx + 1) }}"
+        label: "{{ slot_name }}_{{ '%02d' % (idx + 1) }}"
       when:
         - inventory_hostname in groups['source_cluster']
         - patroni_cluster_leader
@@ -124,7 +125,7 @@
       loop: "{{ pg_logical_slot_lag_bytes.results }}"
       loop_control:
         index_var: idx
-        label: "{{ pg_subscription_slot_name }}_{{ '%02d' % (idx + 1) }}"
+        label: "{{ slot_name }}_{{ '%02d' % (idx + 1) }}"
       when:
         - inventory_hostname in groups['source_cluster']
         - patroni_cluster_leader
@@ -137,6 +138,7 @@
         | default(hostvars[source_primary_host].bind_address, true)
         | default(hostvars[source_primary_host].inventory_hostname, true)
       }}
+    slot_name: "{{ (pg_subscription_slot_name ~ '_' ~ dbname) | lower | regex_replace('[^a-z0-9_]+', '_') }}"
   environment:
     PGPASSWORD: "{{ patroni_superuser_password }}"
   when: pg_publication_count | int > 1

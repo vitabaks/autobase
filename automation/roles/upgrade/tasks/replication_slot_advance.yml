@@ -5,11 +5,12 @@
 - name: "Advance replication slot to the last LSN position"
   ansible.builtin.command: >-
     {{ psql_command }} -d {{ dbname }} -tAXc "
-    select pg_replication_slot_advance('{{ pg_subscription_slot_name }}', '{{ target_lsn }}')
+    select pg_replication_slot_advance('{{ slot_name }}', '{{ target_lsn }}')
     from pg_replication_slots
-    where slot_name = '{{ pg_subscription_slot_name }}';"
+    where slot_name = '{{ slot_name }}';"
   vars:
     psql_command: "{{ pg_old_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }}"
+    slot_name: "{{ (pg_subscription_slot_name ~ '_' ~ dbname) | lower | regex_replace('[^a-z0-9_]+', '_') }}"
   environment:
     PGPASSWORD: "{{ patroni_superuser_password }}"
   when: pg_publication_count | int == 1
@@ -18,15 +19,16 @@
 - name: "Advance all replication slots to the last LSN position"
   ansible.builtin.command: >-
     {{ psql_command }} -d {{ dbname }} -tAXc "
-    select pg_replication_slot_advance('{{ pg_subscription_slot_name }}_{{ '%02d' % (idx + 1) }}', '{{ target_lsn }}')
+    select pg_replication_slot_advance('{{ slot_name }}_{{ '%02d' % (idx + 1) }}', '{{ target_lsn }}')
     from pg_replication_slots
-    where slot_name = '{{ pg_subscription_slot_name }}_{{ '%02d' % (idx + 1) }}';"
+    where slot_name = '{{ slot_name }}_{{ '%02d' % (idx + 1) }}';"
   loop: "{{ range(0, pg_publication_count | int) | list }}"
   loop_control:
     index_var: idx
-    label: "{{ pg_subscription_slot_name }}_{{ '%02d' % (idx + 1) }}"
+    label: "{{ slot_name }}_{{ '%02d' % (idx + 1) }}"
   vars:
     psql_command: "{{ pg_old_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }}"
+    slot_name: "{{ (pg_subscription_slot_name ~ '_' ~ dbname) | lower | regex_replace('[^a-z0-9_]+', '_') }}"
   environment:
     PGPASSWORD: "{{ patroni_superuser_password }}"
   when: pg_publication_count | int > 1
