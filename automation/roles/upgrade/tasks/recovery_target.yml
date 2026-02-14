@@ -143,7 +143,7 @@
 - name: "Wait until physical replication lag is 0 bytes"
   ansible.builtin.command: >-
     {{ psql_command }} -tAXc "
-    select pg_wal_lsn_diff(pg_current_wal_lsn(), replay_lsn)
+    select pg_wal_lsn_diff(pg_current_wal_lsn(), replay_lsn) as pg_lag_bytes
     from pg_stat_replication
     order by pg_lag_bytes desc limit 1"
   register: pg_lag_bytes
