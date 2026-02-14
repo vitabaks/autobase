@@ -9,7 +9,7 @@
         {{ psql_command }} -d {{ dbname }} -tAXc "drop publication if exists {{ pg_publication_name }};
         create publication {{ pg_publication_name }} for all tables;"
 
-    - name: "Create slot for logical replication (database: {{ dbname | default('postgres') }})" 
+    - name: "Create slot for logical replication (database: {{ dbname | default('postgres') }})"
       ansible.builtin.command: >-
         {{ psql_command }} -d {{ dbname }} -tAXc "
         select pg_drop_replication_slot('{{ slot_name }}')
@@ -141,7 +141,7 @@
         label: "{{ pg_publication_name }}_{{ '%02d' % (idx + 1) }}"
 
     # Create multiple slots (for each publication/subscription)
-    - name: "Create slots for logical replication (database: {{ dbname | default('postgres') }})" 
+    - name: "Create slots for logical replication (database: {{ dbname | default('postgres') }})"
       ansible.builtin.command: >-
         {{ psql_command }} -d {{ dbname }} -tAXc "
         select pg_drop_replication_slot('{{ slot_name }}_{{ '%02d' % (idx + 1) }}')
