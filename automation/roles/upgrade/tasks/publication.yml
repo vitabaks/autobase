@@ -11,3 +11,13 @@
   when:
     - inventory_hostname in groups['source_cluster']
     - patroni_cluster_leader
+
+- name: "Advance slots for each database"
+  ansible.builtin.include_tasks: replication_slot_advance.yml
+  loop: "{{ source_databases }}"
+  loop_control:
+    loop_var: dbname
+    label: "{{ dbname }}"
+  when:
+    - inventory_hostname in groups['source_cluster']
+    - patroni_cluster_leader

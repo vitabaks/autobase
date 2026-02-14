@@ -150,18 +150,6 @@
         index_var: idx
         label: "{{ pg_subscription_slot_name }}_{{ '%02d' % (idx + 1) }}"
 
-    # Advance all created slots to the same target LSN to ensure consistency
-    - name: "Advance all created slots to the last LSN position"
-      ansible.builtin.command: >-
-        {{ psql_command }} -d {{ dbname }} -tAXc "select pg_replication_slot_advance(
-        '{{ pg_subscription_slot_name }}_{{ '%02d' % (idx + 1) }}', '{{ multiple_pg_slot_lsn['results'][-1]['stdout'] }}')
-        from pg_replication_slots
-        where slot_name = '{{ pg_subscription_slot_name }}_{{ '%02d' % (idx + 1) }}';"
-      loop: "{{ range(0, pg_publication_count | int) | list }}"
-      loop_control:
-        index_var: idx
-        label: "{{ pg_subscription_slot_name }}_{{ '%02d' % (idx + 1) }}"
-
     - name: "Stop pg_terminator script"
       ansible.builtin.shell: |
         pid=$(cat /tmp/pg_terminator.pid)
