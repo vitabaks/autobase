@@ -1,5 +1,5 @@
 # build-env
-FROM golang:1.25-bookworm AS api-builder
+FROM golang:1.26-bookworm AS api-builder
 WORKDIR /go/src/pg-console
 
 COPY console/service/ .
