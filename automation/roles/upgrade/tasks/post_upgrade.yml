@@ -5,31 +5,29 @@
     - name: Reset wal_keep_segments to original state on the Source Primary
       ansible.builtin.command: >
         {{ psql_command }} -tAXc "alter system reset wal_keep_segments"
-      delegate_to: "{{ source_primary_host | default(omit) }}"
-      run_once: true
+      delegate_to: "{{ delegate_host }}"
       when: pg_old_version | int < 13
 
     - name: Reset wal_keep_size to original state on the Source Primary
       ansible.builtin.command: >
         {{ psql_command }} -tAXc "alter system reset wal_keep_size"
-      delegate_to: "{{ source_primary_host | default(omit) }}"
-      run_once: true
+      delegate_to: "{{ delegate_host }}"
       when: pg_old_version | int >= 13
 
     - name: Reload PostgreSQL configuration on the Source Primary
       ansible.builtin.command: >
         {{ psql_command }} -tAXc "select pg_reload_conf()"
-      delegate_to: "{{ source_primary_host | default(omit) }}"
-      run_once: true
+      delegate_to: "{{ delegate_host }}"
   vars:
     source_primary_host: "{{ (groups.get('source_primary', []) | first) | default('') }}"
+    delegate_host: "{{ (source_primary_host | length > 0) | ternary(source_primary_host, inventory_hostname) }}" # to avoid error with empty host
     psql_command: "{{ pg_old_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres"
   environment:
     PGPASSWORD: "{{ patroni_superuser_password }}"
   when:
     - (pg_wal_keep_gigabytes | default('100') | string) != 'none'
     - (groups.get('target_cluster', []) | length) > 0
-    - source_primary_host | length > 0
+    - patroni_cluster_leader | default(false) | bool
 
 - name: Ensure the current data directory is the new data directory
   ansible.builtin.command: >
