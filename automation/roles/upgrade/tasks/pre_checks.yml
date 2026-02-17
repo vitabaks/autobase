@@ -177,12 +177,12 @@
         - pg_replication_database == "all"
         - inventory_hostname in (groups.get('source_primary') | default([], true))
 
-    - name: "[Prepare] Set variable: pg_replication_database"
+    - name: "Set variable: pg_replication_database"
       ansible.builtin.set_fact:
         pg_replication_database: "{{ hostvars[source_primary_host].datname_result.stdout_lines }}"
       when: pg_replication_database == "all"
 
-    - name: "[Prepare] Set variable: source_databases"
+    - name: "Set variable: source_databases"
       ansible.builtin.set_fact:
         source_databases: >-
           {{
