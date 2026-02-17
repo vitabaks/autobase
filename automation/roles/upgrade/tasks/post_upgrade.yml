@@ -5,21 +5,21 @@
     - name: Reset wal_keep_segments to original state on the Source Primary
       ansible.builtin.command: >
         {{ psql_command }} -tAXc "alter system reset wal_keep_segments"
-      delegate_to: "{{ source_primary_host }}"
+      delegate_to: "{{ source_primary_host | default(omit) }}"
       run_once: true
       when: pg_old_version | int < 13
 
     - name: Reset wal_keep_size to original state on the Source Primary
       ansible.builtin.command: >
         {{ psql_command }} -tAXc "alter system reset wal_keep_size"
-      delegate_to: "{{ source_primary_host }}"
+      delegate_to: "{{ source_primary_host | default(omit) }}"
       run_once: true
       when: pg_old_version | int >= 13
 
     - name: Reload PostgreSQL configuration on the Source Primary
       ansible.builtin.command: >
         {{ psql_command }} -tAXc "select pg_reload_conf()"
-      delegate_to: "{{ source_primary_host }}"
+      delegate_to: "{{ source_primary_host | default(omit) }}"
       run_once: true
   vars:
     source_primary_host: "{{ (groups.get('source_primary', []) | first) | default('') }}"
@@ -28,7 +28,8 @@
     PGPASSWORD: "{{ patroni_superuser_password }}"
   when:
     - (pg_wal_keep_gigabytes | default('100') | string) != 'none'
-    - inventory_hostname in (groups.get('target_cluster') | default([], true))
+    - (groups.get('target_cluster', []) | length) > 0
+    - source_primary_host | length > 0
 
 - name: Ensure the current data directory is the new data directory
   ansible.builtin.command: >
