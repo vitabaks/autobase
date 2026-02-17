@@ -8,25 +8,24 @@
   when: ansible_facts.packages is not defined
   check_mode: false
 
-- name: Make sure the unzip/tar packages are present
-  ansible.builtin.package:
-    name:
-      - unzip
-      - tar
-    state: present
-  register: package_status
-  until: package_status is success
-  delay: 5
-  retries: 3
-  environment: "{{ proxy_env | default({}) }}"
-  when: "'unzip' not in ansible_facts.packages or 'tar' not in ansible_facts.packages"
-  tags: etcd, etcd_install
-
 - name: Expose etcd_bind_address as facts
   ansible.builtin.set_fact:
     etcd_bind_address: "{{ etcd_bind_address | default(bind_address, true) }}"
 
-- block: # install etcd package from repo
+- block: # install etcd package from repo, such as GitHub
+    - name: Make sure the unzip/tar packages are present
+      ansible.builtin.package:
+        name:
+          - unzip
+          - tar
+        state: present
+      register: package_status
+      until: package_status is success
+      delay: 5
+      retries: 3
+      environment: "{{ proxy_env | default({}) }}"
+      when: "'unzip' not in ansible_facts.packages or 'tar' not in ansible_facts.packages"
+
     - name: Download "etcd" package
       ansible.builtin.get_url:
         url: "{{ item }}"
@@ -45,10 +44,10 @@
           - --no-same-owner
         remote_src: true
 
-    - name: Copy "etcd" and "etcdctl" binary files to /usr/local/bin/
+    - name: Copy "etcd" and "etcdctl" binary files to {{ etcd_bin_dir | default('/usr/local/bin') }}
       ansible.builtin.copy:
         src: "/tmp/{{ etcd_package_repo.split('.tar.gz')[0] | basename }}/{{ item }}"
-        dest: /usr/local/bin/
+        dest: "{{ etcd_bin_dir | default('/usr/local/bin') }}"
         mode: u+x,g+x,o+x
         remote_src: true
       loop:
@@ -56,6 +55,7 @@
         - etcdctl
   when:
     - installation_method == "packages"
+    - etcd_installation_method == "binary"
     - etcd_package_repo | length > 0
     - not ansible_check_mode
   tags: etcd, etcd_install
@@ -120,6 +120,36 @@
     src: templates/etcd.service.j2
     dest: /etc/systemd/system/etcd.service
   tags: etcd, etcd_conf
+
+# Install etcd package from RPM or APT repository configured on the system
+# Note: Installation is done after configuration, as Debian automatically starts the service after install.
+- name: Install etcd package
+  ansible.builtin.package:
+    name: "{{ etcd_packages | flatten }}"
+    state: present
+  register: install_etcd_packages
+  until: install_etcd_packages is success
+  delay: 5
+  retries: 3
+  environment: "{{ proxy_env | default({}) }}"
+  when:
+    - installation_method == "packages"
+    - (etcd_installation_method == "rpm" or etcd_installation_method == "deb")
+  tags: etcd, etcd_install
+
+# After installing etcd in RHEL-based system, ownership is reset on /etc/etcd
+# So it is necessary to
+- name: Make sure that etcd directory owner and permissions are correct
+  ansible.builtin.file:
+    path: "{{ etcd_conf_dir | default('/etc/etcd') }}"
+    state: directory
+    owner: etcd
+    group: etcd
+    mode: "0750"
+  tags: etcd, etcd_conf
+  when:
+    - etcd_conf_dir | default('/etc/etcd') == '/etc/etcd'
+    - etcd_installation_method == "rpm"
 
 - name: Start etcd service and check cluster health
   ansible.builtin.include_tasks: start.yml

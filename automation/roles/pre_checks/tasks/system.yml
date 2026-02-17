@@ -23,3 +23,26 @@
   when:
     - removeipc_result.changed
     - ansible_service_mgr == "systemd"
+
+# Ubuntu Server installs 'unattended-upgrades' by default.
+# When packages are upgraded, the 'needrestart' tool automatically restarts
+# services using upgraded libraries, including Patroni, causing unexpected cluster failovers.
+- name: Disable unattended-upgrades to prevent automatic service restarts
+  ansible.builtin.systemd:
+    name: "{{ item }}"
+    state: stopped
+    enabled: false
+    masked: true
+  loop:
+    - apt-daily-upgrade.timer
+    - apt-daily.timer
+    - apt-daily-upgrade.service
+    - apt-daily.service
+    - unattended-upgrades.service
+  loop_control:
+    label: "{{ item }}"
+  failed_when: false
+  when:
+    - ansible_os_family == "Debian"
+    - ansible_service_mgr == "systemd"
+    - disable_unattended_upgrades | bool
