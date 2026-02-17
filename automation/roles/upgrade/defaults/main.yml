@@ -80,10 +80,6 @@ upgrade_copy_files_to_all_server: []
 #  - { src: "files/ru_ru.affix", dest: "/usr/share/postgresql/{{ pg_new_version }}/tsearch_data/ru_ru.affix", owner: "root", group: "root", mode: "0644" }
 #  - { src: "files/ru_ru.dict", dest: "/usr/share/postgresql/{{ pg_new_version }}/tsearch_data/ru_ru.dict", owner: "root", group: "root", mode: "0644" }
 
-############################################################
-# In-place upgrade method settings
-############################################################
-
 # if 'pgbouncer_install' is 'true'
 pgbouncer_pool_pause: true # or 'false' if you don't want to pause pgbouncer pools during upgrade.
 # the maximum waiting time (in seconds) for the pool to be paused. For each iteration of the loop when trying to pause all pools.
