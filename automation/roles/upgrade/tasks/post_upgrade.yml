@@ -22,7 +22,7 @@
       delegate_to: "{{ source_primary_host }}"
       run_once: true
   vars:
-    source_primary_host: "{{ groups.get('source_primary', []) | first }}"
+    source_primary_host: "{{ (groups.get('source_primary', []) | first) | default('') }}"
     psql_command: "{{ pg_old_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres"
   environment:
     PGPASSWORD: "{{ patroni_superuser_password }}"
