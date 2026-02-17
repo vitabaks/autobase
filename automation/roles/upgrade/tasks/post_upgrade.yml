@@ -27,8 +27,8 @@
   environment:
     PGPASSWORD: "{{ patroni_superuser_password }}"
   when:
-    - source_primary_host | default('') | length > 0
     - (pg_wal_keep_gigabytes | default('100') | string) != 'none'
+    - inventory_hostname in (groups.get('target_cluster') | default([], true))
 
 - name: Ensure the current data directory is the new data directory
   ansible.builtin.command: >
