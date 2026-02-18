@@ -97,7 +97,7 @@ pg_slow_active_query_treshold_to_terminate: 100 # (0 = terminate all active back
 pgbackrest_stanza_upgrade: true # perform the "stanza-upgrade" command after the upgrade.
 
 ############################################################
-# Blue-green upgrade method settings
+# Blue-green deployment method settings
 ############################################################
 
 pg_replication_database: "all" # database name for the replication, 'all' for the entire database cluster.
