@@ -33,7 +33,7 @@
   changed_when: false
   when:
     - patroni_standby_cluster.host | default('') | string != ''
-    - (groups.get('source_cluster') | default([], true) | length) == 0
+    - (groups.get('source_cluster', []) | length) == 0
 
 # if 'patroni_standby_cluster_auto_hba' is 'true'
 # Note: The PostgreSQL configuration update is performed after retrieving the patroni_superuser_password.
@@ -43,7 +43,7 @@
     marker: "# {mark} ANSIBLE: TEMPORARY RULE FOR STANDBY CLUSTER"
     insertbefore: BOF
     block: |
-      {% for h in (groups.get('postgres_cluster') | default([], true)) %}
+      {% for h in (groups.get('postgres_cluster', []) ) %}
       {% set addr = (
            hostvars[h].patroni_bind_address
            | default(hostvars[h].bind_address, true)
@@ -53,11 +53,11 @@
       host replication {{ patroni_replication_username }} {{ addr }}/32 {{ pg_password_encryption }}
       {% endfor %}
   delegate_to: "{{ item }}"
-  loop: "{{ groups.get('source_cluster') | default([], true) }}"
+  loop: "{{ groups.get('source_cluster', []) }}"
   vars:
     pg_conf_dir: "{{ source_cluster_postgresql_conf_dir | default(postgresql_conf_dir) }}"
     pg_password_encryption: "{{ source_cluster_postgresql_password_encryption_algorithm | default(postgresql_password_encryption_algorithm) }}"
   when:
     - patroni_standby_cluster_auto_hba | default(true) | bool
-    - (groups.get('source_cluster') | default([], true) | length) > 0
+    - (groups.get('source_cluster', []) | length) > 0
     - inventory_hostname == groups['postgres_cluster'][0] # run once

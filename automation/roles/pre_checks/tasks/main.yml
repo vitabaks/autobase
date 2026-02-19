@@ -68,7 +68,7 @@
     {{ pg_bin_dir }}/psql -h 127.0.0.1 -p {{ pg_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc
     "select pg_reload_conf()"
   delegate_to: "{{ item }}"
-  loop: "{{ groups.get('source_cluster') | default([], true) }}"
+  loop: "{{ groups.get('source_cluster', []) }}"
   vars:
     pg_bin_dir: "{{ source_cluster_postgresql_bin_dir | default(postgresql_bin_dir) }}"
     pg_port: "{{ source_cluster_postgresql_port | default(postgresql_port) }}"
@@ -76,5 +76,5 @@
     PGPASSWORD: "{{ patroni_superuser_password }}"
   when:
     - patroni_standby_cluster_auto_hba | default(true) | bool
-    - (groups.get('source_cluster') | default([], true) | length) > 0
+    - (groups.get('source_cluster', []) | length) > 0
     - inventory_hostname == groups['postgres_cluster'][0] # run once
