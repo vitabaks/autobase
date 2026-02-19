@@ -51,7 +51,7 @@
         - patroni_cluster_leader
   vars:
     psql_command: "{{ pg_old_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }}"
-    source_primary_host: "{{ (groups.get('source_primary') | default([], true) | first) | default('', true) }}"
+    source_primary_host: "{{ (groups.get('source_primary', []) | first) | default('', true) }}"
     source_primary_host_addr: >-
       {{
         hostvars[source_primary_host].patroni_bind_address
@@ -131,7 +131,7 @@
         - patroni_cluster_leader
   vars:
     psql_command: "{{ pg_old_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }}"
-    source_primary_host: "{{ (groups.get('source_primary') | default([], true) | first) | default('', true) }}"
+    source_primary_host: "{{ (groups.get('source_primary', []) | first) | default('', true) }}"
     source_primary_host_addr: >-
       {{
         hostvars[source_primary_host].patroni_bind_address
