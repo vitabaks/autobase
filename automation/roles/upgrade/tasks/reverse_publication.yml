@@ -4,13 +4,13 @@
 
 # One publication (if pg_publication_count = 1)
 - block:
-    - name: "Create a publication for reverse logical replication"
+    - name: "Create a publication for reverse logical replication (database: {{ dbname | default('postgres') }})"
       ansible.builtin.command: >-
         {{ psql_command }} -d {{ dbname }} -tAXc "
         drop publication if exists {{ pg_reverse_publication_name }};
         create publication {{ pg_reverse_publication_name }} for all tables;"
 
-    - name: "Create a slot for reverse logical replication"
+    - name: "Create a slot for reverse logical replication (database: {{ dbname | default('postgres') }})"
       ansible.builtin.command: >-
         {{ psql_command }} -d {{ dbname }} -tAXc "
         select pg_drop_replication_slot('{{ pg_reverse_subscription_slot_name }}')
@@ -29,7 +29,7 @@
 # Multiple publications (if pg_publication_count > 1)
 - block:
     # Split tables (sorted by DML activity) into groups for publications to evenly distribute tables across slots.
-    - name: "Get a list of tables distributed by groups"
+    - name: "Get a list of tables distributed by groups (database: {{ dbname | default('postgres') }})"
       ansible.builtin.shell: |
         {{ psql_command }} -tAXc "
         do \$$
@@ -128,19 +128,21 @@
 
     # Create multiple publications (for each table group)
     # Note: ulimit - will increase stack size and ARG_MAX to prevent error 'Argument list too long'
-    - name: "Create a publications for reverse logical replication"
-      ansible.builtin.command: >-
-        ulimit -S -s {{ create_publication_stack_size | default(32768) }}
+    - name: "Create a publications for reverse logical replication (database: {{ dbname | default('postgres') }})"
+      ansible.builtin.shell: >-
+        ulimit -S -s {{ create_publication_stack_size | default(32768) }};
         {{ psql_command }} -d {{ dbname }} -tAXc "
         drop publication if exists {{ pg_reverse_publication_name }}_{{ '%02d' % (idx + 1) }};
         create publication {{ pg_reverse_publication_name }}_{{ '%02d' % (idx + 1) }} for table {{ item }};"
+      args:
+        executable: /bin/bash
       loop: "{{ tables_groups.stdout_lines | reject('equalto', 'DO') | list }}"
       loop_control:
         index_var: idx
         label: "{{ pg_reverse_publication_name }}_{{ '%02d' % (idx + 1) }}"
 
     # Create multiple slots (for each publication/subscription)
-    - name: "Create a slots for reverse logical replication"
+    - name: "Create a slots for reverse logical replication (database: {{ dbname | default('postgres') }})"
       ansible.builtin.command: >-
         {{ psql_command }} -d {{ dbname }} -tAXc "
         select pg_drop_replication_slot('{{ pg_reverse_subscription_slot_name }}_{{ '%02d' % (idx + 1) }}')
@@ -148,18 +150,6 @@
         where slot_name = '{{ pg_reverse_subscription_slot_name }}_{{ '%02d' % (idx + 1) }}';
         select lsn from pg_create_logical_replication_slot('{{ pg_reverse_subscription_slot_name }}_{{ '%02d' % (idx + 1) }}', 'pgoutput');"
       register: multiple_pg_slot_lsn
-      loop: "{{ range(0, pg_publication_count | int) | list }}"
-      loop_control:
-        index_var: idx
-        label: "{{ pg_reverse_subscription_slot_name }}_{{ '%02d' % (idx + 1) }}"
-
-    # Advance all created slots to the same target LSN to ensure consistency
-    - name: "Advance all created slots to the last LSN position"
-      ansible.builtin.command: >-
-        {{ psql_command }} -d {{ dbname }} -tAXc "select pg_replication_slot_advance(
-        '{{ pg_reverse_subscription_slot_name }}_{{ '%02d' % (idx + 1) }}', '{{ multiple_pg_slot_lsn['results'][-1]['stdout'] }}')
-        from pg_replication_slots
-        where slot_name = '{{ pg_reverse_subscription_slot_name }}_{{ '%02d' % (idx + 1) }}';"
       loop: "{{ range(0, pg_publication_count | int) | list }}"
       loop_control:
         index_var: idx
