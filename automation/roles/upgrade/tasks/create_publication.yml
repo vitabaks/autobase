@@ -131,10 +131,13 @@
     # Create multiple publications (for each table group)
     # Note: ulimit - will increase stack size and ARG_MAX to prevent error 'Argument list too long'
     - name: "Create publications for logical replication (database: {{ dbname | default('postgres') }})"
-      ansible.builtin.command: >-
-        ulimit -S -s {{ create_publication_stack_size | default(32768) }}
-        {{ psql_command }} -d {{ dbname }} -tAXc "drop publication if exists {{ pg_publication_name }}_{{ '%02d' % (idx + 1) }};
+      ansible.builtin.shell: >-
+        ulimit -S -s {{ create_publication_stack_size | default(32768) }};
+        {{ psql_command }} -d {{ dbname }} -tAXc "
+        drop publication if exists {{ pg_publication_name }}_{{ '%02d' % (idx + 1) }};
         create publication {{ pg_publication_name }}_{{ '%02d' % (idx + 1) }} for table {{ item }};"
+      args:
+        executable: /bin/bash
       loop: "{{ tables_groups.stdout_lines | reject('equalto', 'DO') | list }}"
       loop_control:
         index_var: idx
