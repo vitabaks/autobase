@@ -14,8 +14,7 @@
       ansible.builtin.command: >-
         {{ psql_command }} -d {{ dbname }} -tAXc "
         select pg_drop_replication_slot('{{ pg_reverse_subscription_slot_name }}')
-        from pg_replication_slots
-        where slot_name = '{{ pg_reverse_subscription_slot_name }}';
+        from pg_replication_slots where slot_name = '{{ pg_reverse_subscription_slot_name }}';
         select lsn from pg_create_logical_replication_slot('{{ pg_reverse_subscription_slot_name }}', 'pgoutput');"
   vars:
     psql_command: "{{ pg_old_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }}"
@@ -146,8 +145,7 @@
       ansible.builtin.command: >-
         {{ psql_command }} -d {{ dbname }} -tAXc "
         select pg_drop_replication_slot('{{ pg_reverse_subscription_slot_name }}_{{ '%02d' % (idx + 1) }}')
-        from pg_replication_slots
-        where slot_name = '{{ pg_reverse_subscription_slot_name }}_{{ '%02d' % (idx + 1) }}';
+        from pg_replication_slots where slot_name = '{{ pg_reverse_subscription_slot_name }}_{{ '%02d' % (idx + 1) }}';
         select lsn from pg_create_logical_replication_slot('{{ pg_reverse_subscription_slot_name }}_{{ '%02d' % (idx + 1) }}', 'pgoutput');"
       register: multiple_pg_slot_lsn
       loop: "{{ range(0, pg_publication_count | int) | list }}"

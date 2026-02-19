@@ -6,15 +6,15 @@
 - block:
     - name: "Create publication for logical replication (database: {{ dbname | default('postgres') }})"
       ansible.builtin.command: >-
-        {{ psql_command }} -d {{ dbname }} -tAXc "drop publication if exists {{ pg_publication_name }};
+        {{ psql_command }} -d {{ dbname }} -tAXc "
+        drop publication if exists {{ pg_publication_name }};
         create publication {{ pg_publication_name }} for all tables;"
 
     - name: "Create slot for logical replication (database: {{ dbname | default('postgres') }})"
       ansible.builtin.command: >-
         {{ psql_command }} -d {{ dbname }} -tAXc "
         select pg_drop_replication_slot('{{ slot_name }}')
-        from pg_replication_slots
-        where slot_name = '{{ slot_name }}';
+        from pg_replication_slots where slot_name = '{{ slot_name }}';
         select lsn from pg_create_logical_replication_slot('{{ slot_name }}', 'pgoutput');"
       register: pg_slot_lsn
       vars:
@@ -148,8 +148,7 @@
       ansible.builtin.command: >-
         {{ psql_command }} -d {{ dbname }} -tAXc "
         select pg_drop_replication_slot('{{ slot_name }}_{{ '%02d' % (idx + 1) }}')
-        from pg_replication_slots
-        where slot_name = '{{ slot_name }}_{{ '%02d' % (idx + 1) }}';
+        from pg_replication_slots where slot_name = '{{ slot_name }}_{{ '%02d' % (idx + 1) }}';
         select lsn from pg_create_logical_replication_slot('{{ slot_name }}_{{ '%02d' % (idx + 1) }}', 'pgoutput');"
       register: multiple_pg_slot_lsn
       loop: "{{ range(0, pg_publication_count | int) | list }}"
