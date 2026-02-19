@@ -454,7 +454,9 @@
     psql_command: "{{ pg_old_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres"
   environment:
     PGPASSWORD: "{{ patroni_superuser_password }}"
-  when: pg_old_version | string is version('10', '>=')
+  when:
+    - pg_old_version | string is version('10', '>=')
+    - inventory_hostname not in groups.get('source_cluster', [])
 
 # Stop, if long-running transactions detected
 - block:
@@ -489,7 +491,9 @@
     psql_command: "{{ pg_old_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres"
   environment:
     PGPASSWORD: "{{ patroni_superuser_password }}"
-  when: pg_old_version | string is version('10', '<')
+  when:
+    - pg_old_version | string is version('10', '<')
+    - inventory_hostname not in groups.get('source_cluster', [])
 
 # Stop, if long-running transactions detected (for 9x)
 - block:
