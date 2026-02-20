@@ -54,7 +54,7 @@
     - name: Add temporary local hba rule (during the upgrade)
       ansible.builtin.blockinfile:
         path: "{{ pg_old_confdir }}/pg_hba.conf"
-        marker: "# {mark} ANSIBLE TEMPORARY pg_upgrade RULE"
+        marker: "# {mark} ANSIBLE: TEMPORARY RULE for pg_upgrade"
         insertbefore: BOF
         content: "local all all trust"
 
@@ -226,7 +226,7 @@
     - name: Add temporary hba rule for logical replication
       ansible.builtin.blockinfile:
         path: "{{ pg_old_confdir }}/pg_hba.conf"
-        marker: "# {mark} ANSIBLE: TEMPORARY RULE FOR pg_upgrade"
+        marker: "# {mark} ANSIBLE: TEMPORARY RULE for logical replication"
         insertbefore: BOF
         content: "host all {{ patroni_superuser_username }} {{ primary_host }}/32 trust"
       vars:
