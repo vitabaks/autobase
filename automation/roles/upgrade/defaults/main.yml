@@ -109,21 +109,23 @@ pg_publication_name: "pg_upgrade_publication"
 pg_subscription_name: "pg_upgrade_subscription"
 pg_subscription_slot_name: "{{ pg_subscription_name }}_slot" # base prefix for logical replication slot names; each slot name includes the database name (and _01, _02, ... suffix if pg_publication_count > 1)
 
-# Reverse logical replication (rollback without losing changes)
-pg_reverse_logical_replication: true # enable reverse logical replication (source <- target).
-pg_reverse_publication_name: "reverse_{{ pg_publication_name }}"
-pg_reverse_subscription_name: "reverse_{{ pg_subscription_name }}"
-pg_reverse_subscription_slot_name: "reverse_{{ pg_subscription_slot_name }}"
-
 pg_wal_keep_gigabytes: 100 # or 'none' to not change the wal_keep_segments/wal_keep_size parameter.
 # pg_wal_keep_gigabytes - the number of WAL files (in gigabytes) to hold in the source cluster.
 # To guarantee that the necessary WAL files are available to reach recovery_target_lsn via streaming replication for the leader of the target cluster.
 # After performing the upgrade procedure, the parameter will be reset to original state.
 
-# Switchover
-pg_switchover_no_lag_wait_timeout: 10 # the maximum waiting time (in seconds) until the logical replication lag is 0 bytes.
+# --------------------------------------
+# Switchover (pg_logical_switchover.yml)
+# --------------------------------------
+pg_switchover_no_lag_wait_timeout: 10 # (seconds) "Plan A": wait until the logical replication lag is 0 bytes.
 pg_switchover_force_mode: false # "Plan B": switch traffic with a small replication lag.
 pg_switchover_force_mode_lag_bytes: 1048576 # 1 MiB. Allowed lag (in bytes) in force mode.
+
+# Reverse logical replication (rollback without losing changes)
+pg_reverse_logical_replication: true # enable reverse logical replication (source <- target).
+pg_reverse_publication_name: "reverse_{{ pg_publication_name }}"
+pg_reverse_subscription_name: "reverse_{{ pg_subscription_name }}"
+pg_reverse_subscription_slot_name: "reverse_{{ pg_subscription_slot_name }}"
 
 # Sequences
 pg_sequences_increase_value: 1000000 # add +N to the current value of the sequences (received from the old cluster) in the new cluster.
