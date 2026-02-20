@@ -170,8 +170,6 @@
         {{ psql_command }} -tAXc "select datname from pg_catalog.pg_database where not datistemplate"
       register: datname_result
       changed_when: false
-      environment:
-        PGPASSWORD: "{{ patroni_superuser_password }}"
       when:
         - pg_replication_database == "all"
         - inventory_hostname in groups.get('source_primary', [])
