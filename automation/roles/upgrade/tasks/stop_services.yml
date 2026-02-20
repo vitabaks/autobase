@@ -1,7 +1,6 @@
 ---
 - name: "Execute CHECKPOINT before stopping PostgreSQL"
-  ansible.builtin.command: >
-    {{ psql_command }} -tAXc "CHECKPOINT"
+  ansible.builtin.command: "{{ psql_command }} -tAXc 'CHECKPOINT'"
   async: "{{ pg_start_stop_timeout | int }}" # run the command asynchronously
   poll: 0
   vars:

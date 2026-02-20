@@ -24,7 +24,7 @@
     - patroni_cluster_leader
 
 - name: "Execute CHECKPOINT before stopping PostgreSQL"
-  ansible.builtin.command: "{{ psql_command }} -tAXc \"CHECKPOINT\""
+  ansible.builtin.command: "{{ psql_command }} -tAXc 'CHECKPOINT'"
   async: 3600  # run the command asynchronously
   poll: 0
   register: checkpoint_result
