@@ -45,7 +45,7 @@
     "react-redux": "^9.2.0",
     "react-router-dom": "^7.9.5",
     "react-toastify": "^11.0.5",
-    "swiper": "^12.0.3",
+    "swiper": "^12.1.2",
     "yaml": "^2.8.1",
     "yup": "^1.7.1"
   },
