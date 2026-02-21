@@ -204,16 +204,19 @@
       ansible.builtin.include_role:
         name: vitabaks.autobase.upgrade
         tasks_from: stop_target_primary
+      when: inventory_hostname in groups['primary']
 
     - name: Create a publication and slot on Source Primary
       ansible.builtin.include_role:
         name: vitabaks.autobase.upgrade
         tasks_from: publication
+      when: inventory_hostname in groups['source_primary']
 
     - name: Reach recovery_target_lsn on Target Primary
       ansible.builtin.include_role:
         name: vitabaks.autobase.upgrade
         tasks_from: recovery_target
+      when: inventory_hostname in groups['primary']
   tags:
     - upgrade
     - logical-replication
