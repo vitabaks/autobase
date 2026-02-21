@@ -2,7 +2,7 @@
 # Blue-green upgrade method: Drop subscriptions.
 
 # One subscription (if pg_publication_count = 1)
-- name: '[Stop logical replication] Drop Subscription'
+- name: "[Stop logical replication] Drop subscription in database {{ dbname | default('postgres') }}"
   ansible.builtin.command: >-
     {{ psql_command }} -d {{ dbname }} -tAXc "
     alter subscription {{ subscription_name | default(pg_subscription_name) }} disable;
@@ -17,7 +17,7 @@
     - patroni_cluster_leader
 
 # Multiple subscriptions (if pg_publication_count > 1)
-- name: '[Stop logical replication] Drop Subscriptions'
+- name: "[Stop logical replication] Drop subscriptions in database: {{ dbname | default('postgres') }}"
   ansible.builtin.command: >-
     {{ psql_command }} -d {{ dbname }} -tAXc "
     alter subscription {{ subscription_name | default(pg_subscription_name) }}_{{ '%02d' % (idx + 1) }} disable;
