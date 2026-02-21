@@ -8,9 +8,7 @@
   loop_control:
     loop_var: dbname
     label: "{{ dbname }}"
-  when:
-    - inventory_hostname in groups['source_cluster']
-    - patroni_cluster_leader
+  when: patroni_cluster_leader
 
 - name: "Advance slots for each database"
   ansible.builtin.include_tasks: replication_slot_advance.yml
@@ -19,5 +17,5 @@
     loop_var: dbname
     label: "{{ dbname }}"
   when:
-    - inventory_hostname in groups['source_cluster']
     - patroni_cluster_leader
+    - reverse_replication | default(false) | bool # skip for reverse replication
