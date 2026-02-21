@@ -259,7 +259,6 @@
         label: "{{ source_primary_host_addr }}"
       when: inventory_hostname in groups.get('primary', [])
 
-    # if 'pg_reverse_logical_replication' is 'true'
     - name: "[Pre-Check] Test access from the source to the target database"
       ansible.builtin.command: >-
         {{ pg_old_bindir }}/psql -w -h {{ target_primary_host_addr }} -p {{ postgresql_port }}
@@ -269,9 +268,7 @@
       loop_control:
         loop_var: dbname
         label: "{{ target_primary_host_addr }}"
-      when:
-        - inventory_hostname in groups.get('source_primary', [])
-        - pg_reverse_logical_replication | default(false) | bool
+      when: inventory_hostname in groups.get('source_primary', [])
 
     # Replica identity
     - name: "[Pre-Check] Replica identity checks per database"
