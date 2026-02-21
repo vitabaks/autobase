@@ -1,54 +1,47 @@
 ---
 # Blue-green upgrade method: Drop publications and replication slots.
-
-# One publication (if pg_publication_count = 1)
 - block:
-    - name: '[Clean up logical replication] Drop Publication'
-      ansible.builtin.command: >-
-        {{ psql_command }} -d {{ dbname }} -tAXc "
-        drop publication if exists {{ publication_name | default(pg_publication_name) }}"
+    # One publication (if pg_publication_count = 1)
+    - block:
+        - name: '[Clean up logical replication] Drop Publication'
+          ansible.builtin.command: >-
+            {{ psql_command }} -d {{ dbname }} -tAXc "
+            drop publication if exists {{ publication_name }}"
 
-    - name: '[Clean up logical replication] Drop Replication slot'
-      ansible.builtin.command: >-
-        {{ psql_command }} -d {{ dbname }} -tAXc "
-        select pg_drop_replication_slot('{{ logical_slot_name | default(slot_name) }}')
-        from pg_replication_slots
-        where slot_name = '{{ logical_slot_name | default(slot_name) }}'"
+        - name: '[Clean up logical replication] Drop Replication slot'
+          ansible.builtin.command: >-
+            {{ psql_command }} -d {{ dbname }} -tAXc "
+            select pg_drop_replication_slot('{{ slot_name }}')
+            from pg_replication_slots
+            where slot_name = '{{ slot_name }}'"
+      when: pg_publication_count | int == 1
+
+    # Multiple publications (if pg_publication_count > 1)
+    - block:
+        - name: '[Clean up logical replication] Drop Publications'
+          ansible.builtin.command: >-
+            {{ psql_command }} -tAXc "
+            drop publication if exists {{ publication_name }}_{{ '%02d' % (idx + 1) }}"
+          loop: "{{ range(0, pg_publication_count | int) | list }}"
+          loop_control:
+            index_var: idx
+            label: "{{ publication_name }}_{{ '%02d' % (idx + 1) }}"
+
+        - name: '[Clean up logical replication] Drop Replication slots'
+          ansible.builtin.command: >-
+            {{ psql_command }} -d {{ dbname }} -tAXc "
+            select pg_drop_replication_slot('{{ slot_name }}_{{ '%02d' % (idx + 1) }}')
+            from pg_replication_slots
+            where slot_name = '{{ slot_name }}_{{ '%02d' % (idx + 1) }}'"
+          loop: "{{ range(0, pg_publication_count | int) | list }}"
+          loop_control:
+            index_var: idx
+            label: "{{ slot_name }}_{{ '%02d' % (idx + 1) }}"
+      when: pg_publication_count | int > 1
   vars:
+    publication_name: "{{ pg_publication_name if not reverse_replication | default(false) | bool else pg_reverse_publication_name }}"
+    subscription_slot_name: "{{ pg_subscription_slot_name if not reverse_replication | default(false) | bool else pg_reverse_subscription_slot_name }}"
+    slot_name: "{{ (subscription_slot_name ~ '_' ~ dbname) | lower | regex_replace('[^a-z0-9_]+', '_') }}"
     psql_command: "{{ pg_old_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }}"
-    slot_name: "{{ (pg_subscription_slot_name ~ '_' ~ dbname) | lower | regex_replace('[^a-z0-9_]+', '_') }}"
   environment:
     PGPASSWORD: "{{ patroni_superuser_password }}"
-  when:
-    - pg_publication_count | int == 1
-    - patroni_cluster_leader
-
-# Multiple publications (if pg_publication_count > 1)
-- block:
-    - name: '[Clean up logical replication] Drop Publications'
-      ansible.builtin.command: >-
-        {{ psql_command }} -tAXc "
-        drop publication if exists {{ publication_name | default(pg_publication_name) }}_{{ '%02d' % (idx + 1) }}"
-      loop: "{{ range(0, pg_publication_count | int) | list }}"
-      loop_control:
-        index_var: idx
-        label: "{{ publication_name | default(pg_publication_name) }}_{{ '%02d' % (idx + 1) }}"
-
-    - name: '[Clean up logical replication] Drop Replication slots'
-      ansible.builtin.command: >-
-        {{ psql_command }} -d {{ dbname }} -tAXc "
-        select pg_drop_replication_slot('{{ logical_slot_name | default(slot_name) }}_{{ '%02d' % (idx + 1) }}')
-        from pg_replication_slots
-        where slot_name = '{{ logical_slot_name | default(slot_name) }}_{{ '%02d' % (idx + 1) }}'"
-      loop: "{{ range(0, pg_publication_count | int) | list }}"
-      loop_control:
-        index_var: idx
-        label: "{{ logical_slot_name | default(slot_name) }}_{{ '%02d' % (idx + 1) }}"
-  vars:
-    psql_command: "{{ pg_old_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }}"
-    slot_name: "{{ (pg_subscription_slot_name ~ '_' ~ dbname) | lower | regex_replace('[^a-z0-9_]+', '_') }}"
-  environment:
-    PGPASSWORD: "{{ patroni_superuser_password }}"
-  when:
-    - pg_publication_count | int > 1
-    - patroni_cluster_leader
