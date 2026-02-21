@@ -105,13 +105,9 @@
       ansible.builtin.command: >-
         {{ psql_command }} -d {{ dbname }} -Xc "
         select slot_name, pg_size_pretty(pg_wal_lsn_diff(pg_current_wal_lsn(), confirmed_flush_lsn)) as lag
-        from pg_replication_slots where slot_name like '{{ pg_subscription_slot_name }}%'"
+        from pg_replication_slots where slot_name like '{{ slot_name }}%'"
       register: pg_multiple_logical_slot_lag
       changed_when: false
-      loop: "{{ range(0, pg_publication_count | int) | list }}"
-      loop_control:
-        index_var: idx
-        label: "{{ slot_name }}_{{ '%02d' % (idx + 1) }}"
       when:
         - inventory_hostname in groups['source_cluster']
         - patroni_cluster_leader
