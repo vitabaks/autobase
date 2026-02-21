@@ -4,10 +4,10 @@
     - name: "Make sure that the logical replication lag is no more than {{ max_replication_lag_bytes | default(0) | human_readable }}"
       ansible.builtin.command: >-
         {{ psql_command }} -tAXc "
-          select pg_wal_lsn_diff(pg_current_wal_lsn(),confirmed_flush_lsn) as lag_bytes
-          from pg_replication_slots
-          where slot_name like '{{ pg_subscription_slot_name }}%'"
-          order by lag_bytes desc limit 1"
+        select pg_wal_lsn_diff(pg_current_wal_lsn(),confirmed_flush_lsn) as lag_bytes
+        from pg_replication_slots
+        where slot_name like '{{ pg_subscription_slot_name }}%'
+        order by lag_bytes desc limit 1"
       register: pg_lag_bytes
       changed_when: false
       failed_when: false
