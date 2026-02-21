@@ -91,7 +91,7 @@
       when: hostvars[item]['patroni_leader_result']['status'] == 503
       loop: "{{ groups['source_cluster'] }}"
       changed_when: false
-  
+
     - name: '[Prepare] Add Target Cluster host to group "primary" (in-memory inventory)'
       ansible.builtin.add_host:
         name: "{{ item }}"
