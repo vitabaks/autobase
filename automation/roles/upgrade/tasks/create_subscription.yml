@@ -1,16 +1,15 @@
 ---
-# Blue-green upgrade method: Create subscriptions on the target cluster
-# for logical replication from the source cluster (source -> target).
+# Blue-green upgrade method: Create subscriptions for logical replication.
 
 # One subscription (if pg_publication_count = 1)
 - block:
     - name: "Create subscription for logical replication (database: {{ dbname | default('postgres') }})"
       ansible.builtin.shell: >-
-        {{ psql_command }} -d {{ dbname }} -tAXc "drop subscription if exists {{ pg_subscription_name }}";
-        {{ psql_command }} -d {{ dbname }} -tAXc "create subscription {{ pg_subscription_name }}
+        {{ psql_command }} -d {{ dbname }} -tAXc "drop subscription if exists {{ subscription_name }}";
+        {{ psql_command }} -d {{ dbname }} -tAXc "create subscription {{ subscription_name }}
         connection 'host={{ source_primary_host_addr }} port={{ postgresql_port }}
         user={{ patroni_superuser_username }} dbname={{ dbname }}'
-        publication {{ pg_publication_name }}
+        publication {{ publication_name }}
         with (copy_data = false, create_slot = false, slot_name = '{{ slot_name }}')"
       when:
         - inventory_hostname in groups['target_cluster']
@@ -49,7 +48,8 @@
         - inventory_hostname in groups['source_cluster']
         - patroni_cluster_leader
   vars:
-    psql_command: "{{ pg_old_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }}"
+    pg_bindir: "{{ pg_old_bindir if inventory_hostname in groups['source_cluster'] else pg_new_bindir }}"
+    psql_command: "{{ pg_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }}"
     source_primary_host: "{{ (groups.get('source_primary', []) | first) | default('', true) }}"
     source_primary_host_addr: >-
       {{
@@ -57,7 +57,10 @@
         | default(hostvars[source_primary_host].bind_address, true)
         | default(hostvars[source_primary_host].inventory_hostname, true)
       }}
-    slot_name: "{{ (pg_subscription_slot_name ~ '_' ~ dbname) | lower | regex_replace('[^a-z0-9_]+', '_') }}"
+    publication_name: "{{ pg_publication_name if not reverse_replication | default(false) | bool else pg_reverse_publication_name }}"
+    subscription_name: "{{ pg_subscription_name if not reverse_replication | default(false) | bool else pg_reverse_subscription_name }}"
+    subscription_slot_name: "{{ pg_subscription_slot_name if not reverse_replication | default(false) | bool else pg_reverse_subscription_slot_name }}"
+    slot_name: "{{ (subscription_slot_name ~ '_' ~ dbname) | lower | regex_replace('[^a-z0-9_]+', '_') }}"
   environment:
     PGPASSWORD: "{{ patroni_superuser_password }}"
   when: pg_publication_count | int == 1
@@ -67,11 +70,11 @@
     # Create multiple subscriptions (for each slot/publication)
     - name: "Create subscription for logical replication (database: {{ dbname | default('postgres') }})"
       ansible.builtin.shell: >-
-        {{ psql_command }} -d {{ dbname }} -tAXc "drop subscription if exists {{ pg_subscription_name }}_{{ '%02d' % (idx + 1) }}";
-        {{ psql_command }} -d {{ dbname }} -tAXc "create subscription {{ pg_subscription_name }}_{{ '%02d' % (idx + 1) }}
+        {{ psql_command }} -d {{ dbname }} -tAXc "drop subscription if exists {{ subscription_name }}_{{ '%02d' % (idx + 1) }}";
+        {{ psql_command }} -d {{ dbname }} -tAXc "create subscription {{ subscription_name }}_{{ '%02d' % (idx + 1) }}
         connection 'host={{ source_primary_host_addr }} port={{ postgresql_port }}
         user={{ patroni_superuser_username }} dbname={{ dbname }}'
-        publication {{ pg_publication_name }}_{{ '%02d' % (idx + 1) }}
+        publication {{ publication_name }}_{{ '%02d' % (idx + 1) }}
         with (copy_data = false, create_slot = false, slot_name = '{{ slot_name }}_{{ '%02d' % (idx + 1) }}')"
       loop: "{{ range(0, pg_publication_count | int) | list }}"
       loop_control:
@@ -120,7 +123,8 @@
         - inventory_hostname in groups['source_cluster']
         - patroni_cluster_leader
   vars:
-    psql_command: "{{ pg_old_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }}"
+    pg_bindir: "{{ pg_old_bindir if inventory_hostname in groups['source_cluster'] else pg_new_bindir }}"
+    psql_command: "{{ pg_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }}"
     source_primary_host: "{{ (groups.get('source_primary', []) | first) | default('', true) }}"
     source_primary_host_addr: >-
       {{
@@ -128,7 +132,10 @@
         | default(hostvars[source_primary_host].bind_address, true)
         | default(hostvars[source_primary_host].inventory_hostname, true)
       }}
-    slot_name: "{{ (pg_subscription_slot_name ~ '_' ~ dbname) | lower | regex_replace('[^a-z0-9_]+', '_') }}"
+    publication_name: "{{ pg_publication_name if not reverse_replication | default(false) | bool else pg_reverse_publication_name }}"
+    subscription_name: "{{ pg_subscription_name if not reverse_replication | default(false) | bool else pg_reverse_subscription_name }}"
+    subscription_slot_name: "{{ pg_subscription_slot_name if not reverse_replication | default(false) | bool else pg_reverse_subscription_slot_name }}"
+    slot_name: "{{ (subscription_slot_name ~ '_' ~ dbname) | lower | regex_replace('[^a-z0-9_]+', '_') }}"
   environment:
     PGPASSWORD: "{{ patroni_superuser_password }}"
   when: pg_publication_count | int > 1

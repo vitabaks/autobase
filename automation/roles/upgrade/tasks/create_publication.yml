@@ -1,14 +1,13 @@
 ---
-# Blue-green upgrade method: Create publications and replication slots on the source cluster
-# for logical replication to the target cluster (source -> target).
+# Blue-green upgrade method: Create publications and slots for logical replication.
 
 # One publication (if pg_publication_count = 1)
 - block:
     - name: "Create publication for logical replication (database: {{ dbname | default('postgres') }})"
       ansible.builtin.command: >-
         {{ psql_command }} -d {{ dbname }} -tAXc "
-        drop publication if exists {{ pg_publication_name }};
-        create publication {{ pg_publication_name }} for all tables;"
+        drop publication if exists {{ publication_name }};
+        create publication {{ publication_name }} for all tables;"
 
     - name: "Create slot for logical replication (database: {{ dbname | default('postgres') }})"
       ansible.builtin.command: >-
@@ -17,14 +16,17 @@
         from pg_replication_slots where slot_name = '{{ slot_name }}';
         select lsn from pg_create_logical_replication_slot('{{ slot_name }}', 'pgoutput');"
       register: pg_slot_lsn
-      vars:
-        slot_name: "{{ (pg_subscription_slot_name ~ '_' ~ dbname) | lower | regex_replace('[^a-z0-9_]+', '_') }}"
 
     - name: "Set variable: target_lsn"
       ansible.builtin.set_fact:
         target_lsn: "{{ pg_slot_lsn.stdout | trim }}"
+      when: reverse_replication | default(false) | bool # skip for reverse replication
   vars:
-    psql_command: "{{ pg_old_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }}"
+    publication_name: "{{ pg_publication_name if not reverse_replication | default(false) | bool else pg_reverse_publication_name }}"
+    subscription_slot_name: "{{ pg_subscription_slot_name if not reverse_replication | default(false) | bool else pg_reverse_subscription_slot_name }}"
+    slot_name: "{{ (subscription_slot_name ~ '_' ~ dbname) | lower | regex_replace('[^a-z0-9_]+', '_') }}"
+    pg_bindir: "{{ pg_old_bindir if inventory_hostname in groups['source_cluster'] else pg_new_bindir }}"
+    psql_command: "{{ pg_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }}"
   environment:
     PGPASSWORD: "{{ patroni_superuser_password }}"
   when: pg_publication_count | int == 1
@@ -134,14 +136,14 @@
       ansible.builtin.shell: >-
         ulimit -S -s {{ create_publication_stack_size | default(32768) }};
         {{ psql_command }} -d {{ dbname }} -tAXc "
-        drop publication if exists {{ pg_publication_name }}_{{ '%02d' % (idx + 1) }};
-        create publication {{ pg_publication_name }}_{{ '%02d' % (idx + 1) }} for table {{ item }};"
+        drop publication if exists {{ publication_name }}_{{ '%02d' % (idx + 1) }};
+        create publication {{ publication_name }}_{{ '%02d' % (idx + 1) }} for table {{ item }};"
       args:
         executable: /bin/bash
       loop: "{{ tables_groups.stdout_lines | reject('equalto', 'DO') | list }}"
       loop_control:
         index_var: idx
-        label: "{{ pg_publication_name }}_{{ '%02d' % (idx + 1) }}"
+        label: "{{ publication_name }}_{{ '%02d' % (idx + 1) }}"
 
     # Create multiple slots (for each publication/subscription)
     - name: "Create slots for logical replication (database: {{ dbname | default('postgres') }})"
@@ -155,8 +157,6 @@
       loop_control:
         index_var: idx
         label: "{{ slot_name }}_{{ '%02d' % (idx + 1) }}"
-      vars:
-        slot_name: "{{ (pg_subscription_slot_name ~ '_' ~ dbname) | lower | regex_replace('[^a-z0-9_]+', '_') }}"
 
     - name: "Stop pg_terminator script"
       ansible.builtin.shell: |
@@ -169,8 +169,13 @@
     - name: "Set variable: target_lsn"
       ansible.builtin.set_fact:
         target_lsn: "{{ multiple_pg_slot_lsn['results'][-1]['stdout'] | trim }}"
+      when: reverse_replication | default(false) | bool # skip for reverse replication
   vars:
-    psql_command: "{{ pg_old_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }}"
+    publication_name: "{{ pg_publication_name if not reverse_replication | default(false) | bool else pg_reverse_publication_name }}"
+    subscription_slot_name: "{{ pg_subscription_slot_name if not reverse_replication | default(false) | bool else pg_reverse_subscription_slot_name }}"
+    slot_name: "{{ (subscription_slot_name ~ '_' ~ dbname) | lower | regex_replace('[^a-z0-9_]+', '_') }}"
+    pg_bindir: "{{ pg_old_bindir if inventory_hostname in groups['source_cluster'] else pg_new_bindir }}"
+    psql_command: "{{ pg_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }}"
   environment:
     PGPASSWORD: "{{ patroni_superuser_password }}"
   when: pg_publication_count | int > 1
