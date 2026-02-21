@@ -165,7 +165,7 @@
 # Pre-Checks for blue-green upgrade method
 - block:
     # Get a list of databases from the Source Cluster (if pg_replication_database = "all")
-    - name: "[Prepare] Get a list of databases from the Source Cluster"
+    - name: "[Prepare] Get a list of databases"
       ansible.builtin.command: >
         {{ psql_command }} -tAXc "select datname from pg_catalog.pg_database where not datistemplate"
       register: datname_result
