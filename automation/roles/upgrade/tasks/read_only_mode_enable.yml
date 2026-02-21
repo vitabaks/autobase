@@ -1,0 +1,15 @@
+---
+# Enable read-only mode to prevent writes (blue-green deployment method)
+- block:
+    - name: Enable read-only mode on the source database
+      ansible.builtin.command: >
+        {{ psql_command }} -tAXc "alter system set default_transaction_read_only = 'on'"
+
+    - name: Reload configuration on the source database
+      ansible.builtin.command: >
+        {{ psql_command }} -tAXc "select pg_reload_conf()"
+  vars:
+    psql_command: "{{ pg_old_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres"
+  environment:
+    PGPASSWORD: "{{ patroni_superuser_password }}"
+  when: inventory_hostname in groups['source_primary']

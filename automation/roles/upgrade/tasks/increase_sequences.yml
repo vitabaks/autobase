@@ -1,0 +1,39 @@
+---
+# Increase all sequence values on the target database (blue-green deployment method)
+- block:
+    - name: "Get sequence values from source database ({{ dbname | default('') }})"
+      ansible.builtin.command: >-
+        {{ psql_command }} -d {{ dbname }} -h {{ source_primary_host_addr }} -tAXc "
+        select format(
+          'select setval(%L, %s);',
+          format('%I.%I', schemaname, sequencename),
+          coalesce(last_value, 1) + {{ pg_sequences_increase_value }}
+        ) from pg_sequences;
+        "
+      register: pg_sequences
+      changed_when: false
+
+    - name: "Generate the /tmp/pg_sequences_increase_{{ dbname | default('') }}.sql file"
+      ansible.builtin.copy:
+        content: |
+          begin;
+          {{ pg_sequences.stdout }}
+          commit;
+        dest: "/tmp/pg_sequences_increase_{{ dbname }}.sql"
+
+    # in the new cluster, add +N to the current value of the sequences received from the old cluster
+    - name: "Increase sequence values on target database ({{ dbname | default('') }}). Add +{{ pg_sequences_increase_value | default(0) }} to current value."
+      ansible.builtin.command: "{{ psql_command }} -d {{ dbname }} -h 127.0.0.1 -f /tmp/pg_sequences_increase_{{ dbname }}.sql"
+  vars:
+    source_primary_host: "{{ (groups['source_primary'] | first) | default('', true) }}"
+    source_primary_host_addr: >-
+      {{
+        hostvars[source_primary_host].patroni_bind_address
+        | default(hostvars[source_primary_host].bind_address, true)
+        | default(hostvars[source_primary_host].inventory_hostname, true)
+      }}
+    pg_bindir: "{{ pg_old_bindir if inventory_hostname in groups['source_cluster'] else pg_new_bindir }}"
+    psql_command: "{{ pg_bindir }}/psql -p {{ postgresql_port }} -U {{ patroni_superuser_username }}"
+  environment:
+    PGPASSWORD: "{{ patroni_superuser_password }}"
+  when: inventory_hostname in groups.get('primary', [])

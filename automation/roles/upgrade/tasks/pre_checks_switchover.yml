@@ -1,0 +1,119 @@
+---
+# Pre-Checks for switchover playbook (blue-green deployment method)
+- block:
+    # if pg_replication_database = "all"
+    - name: "[Prepare] Get a list of databases"
+      ansible.builtin.command: >
+        {{ psql_command }} -tAXc "select datname from pg_catalog.pg_database where not datistemplate"
+      register: datname_result
+      changed_when: false
+      when:
+        - pg_replication_database == "all"
+        - inventory_hostname in groups['primary']
+
+    - name: "Set variable: pg_replication_database"
+      ansible.builtin.set_fact:
+        pg_replication_database: "{{ hostvars[target_primary_host].datname_result.stdout_lines }}"
+      when: pg_replication_database == "all"
+
+    - name: "Set variable: source_databases"
+      ansible.builtin.set_fact:
+        source_databases: >-
+          {{
+            pg_replication_database is string
+            | ternary(
+                pg_replication_database.split(',') | map('trim') | reject('equalto', '') | list,
+                (pg_replication_database | default([], true))
+              )
+          }}
+
+    - name: Add temporary hba rule for logical replication
+      ansible.builtin.blockinfile:
+        path: "{{ pg_conf_dir }}/pg_hba.conf"
+        marker: "# {mark} ANSIBLE: TEMPORARY RULE for logical replication"
+        insertbefore: BOF
+        content: "host all {{ patroni_superuser_username }} {{ primary_host }}/32 trust"
+      vars:
+        primary_host: >-
+          {{
+            (inventory_hostname in groups['target_cluster'])
+            | ternary(
+                (hostvars[source_primary_host].patroni_bind_address
+                  | default(hostvars[source_primary_host].bind_address, true)
+                  | default(hostvars[source_primary_host].inventory_hostname, true)
+                ),
+                (hostvars[target_primary_host].patroni_bind_address
+                  | default(hostvars[target_primary_host].bind_address, true)
+                  | default(hostvars[target_primary_host].inventory_hostname, true)
+                )
+              )
+          }}
+        pg_conf_dir: "{{ pg_new_confdir if inventory_hostname in groups['target_cluster'] else pg_old_confdir }}"
+      when: patroni_cluster_leader | default(false)
+
+    - name: Add temporary hba rule for traffic redirection
+      ansible.builtin.blockinfile:
+        path: "{{ pg_new_confdir }}/pg_hba.conf"
+        marker: "# {mark} ANSIBLE: TEMPORARY RULE for traffic redirection"
+        insertbefore: BOF
+        block: |
+          {% for h in groups[target_group] %}
+          {% set addr = (
+              hostvars[h].patroni_bind_address
+              | default(hostvars[h].bind_address, true)
+              | default(hostvars[h].inventory_hostname, true)
+            )
+          %}
+          host all all {{ addr }}/32 {{ postgresql_password_encryption_algorithm }}
+          {% endfor %}
+      vars:
+        target_group: "{{ 'source_cluster' if inventory_hostname in groups['target_cluster'] else 'target_cluster' }}"
+
+    - name: Update the PostgreSQL configuration
+      ansible.builtin.command: "{{ psql_command }} -tAXc 'select pg_reload_conf()'"
+
+    - name: "[Pre-Check] Test access from the source to the target database"
+      ansible.builtin.command: >-
+        {{ pg_bindir }}/psql -w -h {{ target_primary_host_addr }} -p {{ postgresql_port }}
+        -U {{ patroni_superuser_username }} -d {{ dbname }} -tAXc 'select 1'
+      changed_when: false
+      loop: "{{ source_databases }}"
+      loop_control:
+        loop_var: dbname
+        label: "{{ target_primary_host_addr }}"
+      when: inventory_hostname in groups['source_primary']
+
+    - name: "[Pre-Check] Test access from the target to the source database"
+      ansible.builtin.command: >-
+        {{ pg_bindir }}/psql -w -h {{ source_primary_host_addr }} -p {{ postgresql_port }}
+        -U {{ patroni_superuser_username }} -d {{ dbname }} -tAXc 'select 1'
+      changed_when: false
+      loop: "{{ source_databases }}"
+      loop_control:
+        loop_var: dbname
+        label: "{{ source_primary_host_addr }}"
+      when: inventory_hostname in groups['primary']
+
+    - name: "[Pre-Check] Check logical replication slot lag"
+      ansible.builtin.import_tasks: replication_slot_lag.yml
+      when: inventory_hostname in groups['source_primary']
+  vars:
+    source_primary_host: "{{ (groups['source_primary'] | first) | default('', true) }}"
+    source_primary_host_addr: >-
+      {{
+        hostvars[source_primary_host].patroni_bind_address
+        | default(hostvars[source_primary_host].bind_address, true)
+        | default(hostvars[source_primary_host].inventory_hostname, true)
+      }}
+    target_primary_host: "{{ (groups['primary'] | first) | default('', true) }}"
+    target_primary_host_addr: >-
+      {{
+        hostvars[target_primary_host].patroni_bind_address
+        | default(hostvars[target_primary_host].bind_address, true)
+        | default(hostvars[target_primary_host].inventory_hostname, true)
+      }}
+    pg_bindir: "{{ pg_old_bindir if inventory_hostname in groups['source_cluster'] else pg_new_bindir }}"
+    psql_command: "{{ pg_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres"
+  environment:
+    PGPASSWORD: "{{ patroni_superuser_password }}"
+  when: inventory_hostname in groups['source_cluster'] or inventory_hostname in groups['target_cluster']

@@ -2,9 +2,18 @@
 # Blue-green upgrade method: Create subscriptions on the target cluster
 # for logical replication from the source cluster (source -> target).
 
-- name: "Create subscription in each database"
+- name: Create subscription in each database
   ansible.builtin.include_tasks: create_subscription.yml
   loop: "{{ source_databases }}"
   loop_control:
     loop_var: dbname
     label: "{{ dbname }}"
+  when: subscription_state | default('present') == 'present'
+
+- name: Drop subscription in each database
+  ansible.builtin.include_tasks: drop_subscription.yml
+  loop: "{{ source_databases }}"
+  loop_control:
+    loop_var: dbname
+    label: "{{ dbname }}"
+  when: subscription_state | default('present') == 'absent'

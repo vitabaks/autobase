@@ -117,6 +117,7 @@ pg_wal_keep_gigabytes: 100 # or 'none' to not change the wal_keep_segments/wal_k
 # --------------------------------------
 # Switchover (pg_logical_switchover.yml)
 # --------------------------------------
+pg_switchover_max_replication_lag_bytes: 16777216 # (16 MB) to ensure minimal lag before switchover
 pg_switchover_no_lag_wait_timeout: 10 # (seconds) "Plan A": wait until the logical replication lag is 0 bytes.
 pg_switchover_force_mode: false # "Plan B": switch traffic with a small replication lag.
 pg_switchover_force_mode_lag_bytes: 1048576 # 1 MiB. Allowed lag (in bytes) in force mode.
