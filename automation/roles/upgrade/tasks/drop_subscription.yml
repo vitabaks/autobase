@@ -24,6 +24,7 @@
       when: pg_publication_count | int > 1
   vars:
     subscription_name: "{{ pg_subscription_name if not reverse_replication | default(false) | bool else pg_reverse_subscription_name }}"
-    psql_command: "{{ pg_old_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }}"
+    pg_bindir: "{{ pg_old_bindir if inventory_hostname in groups['source_cluster'] else pg_new_bindir }}"
+    psql_command: "{{ pg_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }}"
   environment:
     PGPASSWORD: "{{ patroni_superuser_password }}"
