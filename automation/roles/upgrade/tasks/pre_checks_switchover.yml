@@ -38,7 +38,7 @@
       ansible.builtin.set_fact:
         postgresql_password_encryption_algorithm: "{{ hostvars[target_primary_host].password_encryption_result.stdout }}"
 
-    - name: Add temporary hba rule for logical replication
+    - name: "[Prepare] Add temporary hba rule for logical replication"
       ansible.builtin.blockinfile:
         path: "{{ pg_conf_dir }}/pg_hba.conf"
         marker: "# {mark} ANSIBLE: TEMPORARY RULE for logical replication"
@@ -62,7 +62,7 @@
         pg_conf_dir: "{{ pg_new_confdir if inventory_hostname in groups['target_cluster'] else pg_old_confdir }}"
       when: patroni_cluster_leader | default(false)
 
-    - name: Add temporary hba rule for traffic redirection
+    - name: "[Prepare] Add temporary hba rule for traffic redirection"
       ansible.builtin.blockinfile:
         path: "{{ pg_conf_dir }}/pg_hba.conf"
         marker: "# {mark} ANSIBLE: TEMPORARY RULE for traffic redirection"
