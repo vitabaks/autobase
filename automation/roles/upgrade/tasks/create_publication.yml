@@ -20,7 +20,7 @@
     - name: "Set variable: target_lsn"
       ansible.builtin.set_fact:
         target_lsn: "{{ pg_slot_lsn.stdout | trim }}"
-      when: reverse_replication | default(false) | bool # skip for reverse replication
+      when: not reverse_replication | default(false) | bool # skip for reverse replication
   vars:
     publication_name: "{{ pg_publication_name if not reverse_replication | default(false) | bool else pg_reverse_publication_name }}"
     subscription_slot_name: "{{ pg_subscription_slot_name if not reverse_replication | default(false) | bool else pg_reverse_subscription_slot_name }}"
@@ -169,7 +169,7 @@
     - name: "Set variable: target_lsn"
       ansible.builtin.set_fact:
         target_lsn: "{{ multiple_pg_slot_lsn['results'][-1]['stdout'] | trim }}"
-      when: reverse_replication | default(false) | bool # skip for reverse replication
+      when: not reverse_replication | default(false) | bool # skip for reverse replication
   vars:
     publication_name: "{{ pg_publication_name if not reverse_replication | default(false) | bool else pg_reverse_publication_name }}"
     subscription_slot_name: "{{ pg_subscription_slot_name if not reverse_replication | default(false) | bool else pg_reverse_subscription_slot_name }}"
