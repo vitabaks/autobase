@@ -27,6 +27,17 @@
               )
           }}
 
+    - name: "[Prepare] Get password encryption setting"
+      ansible.builtin.command: >
+        {{ psql_command }} -tAXc "show password_encryption"
+      register: password_encryption_result
+      changed_when: false
+      when: inventory_hostname in groups['primary']
+
+    - name: "Set variable: postgresql_password_encryption_algorithm"
+      ansible.builtin.set_fact:
+        postgresql_password_encryption_algorithm: "{{ hostvars[target_primary_host].password_encryption_result.stdout }}"
+
     - name: Add temporary hba rule for logical replication
       ansible.builtin.blockinfile:
         path: "{{ pg_conf_dir }}/pg_hba.conf"
