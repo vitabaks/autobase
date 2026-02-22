@@ -76,6 +76,24 @@
             | selectattr('value.patroni_leader_result.status', 'equalto', 200)
             | list | length) == 0
 
+    # Stop, if no standby leader in the target cluster
+    - name: The target Patroni cluster has no standby leader
+      ansible.builtin.uri:
+        url: >-
+          {{ patroni_restapi_protocol | default('https') }}://{{ patroni_restapi_connect_addr
+            | default(patroni_bind_address | default(bind_address, true), true) }}:{{ patroni_restapi_port
+            | default('8008') }}/standby-leader
+        status_code: 200
+        ca_path: "{{ patroni_restapi_cafile | default(omit, true) }}"
+      register: patroni_standby_leader_result
+      changed_when: false
+      failed_when: patroni_standby_leader_result.status != 200
+      environment:
+        no_proxy: "{{ patroni_bind_address | default(bind_address, true) }}"
+      when:
+        - inventory_hostname in groups['target_cluster']
+        - patroni_cluster_leader | default(false) | bool
+
     - name: '[Prepare] Add Source Cluster host to group "source_primary" (in-memory inventory)'
       ansible.builtin.add_host:
         name: "{{ item }}"
@@ -99,22 +117,6 @@
       when: hostvars[item]['patroni_leader_result']['status'] == 503
       loop: "{{ groups['target_cluster'] }}"
       changed_when: false
-
-    # Stop, if no standby leader in the target cluster
-    - name: The target Patroni cluster has no standby leader
-      ansible.builtin.uri:
-        url: >-
-          {{ patroni_restapi_protocol | default('https') }}://{{ patroni_restapi_connect_addr
-            | default(patroni_bind_address | default(bind_address, true), true) }}:{{ patroni_restapi_port
-            | default('8008') }}/standby-leader
-        status_code: 200
-        ca_path: "{{ patroni_restapi_cafile | default(omit, true) }}"
-      register: patroni_standby_leader_result
-      changed_when: false
-      failed_when: patroni_standby_leader_result.status != 200
-      environment:
-        no_proxy: "{{ patroni_bind_address | default(bind_address, true) }}"
-      when: inventory_hostname in groups['primary']
 
     - name: "Print Source Patroni Cluster info"
       ansible.builtin.debug:
