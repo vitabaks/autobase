@@ -64,17 +64,25 @@
     # Stop, if no healthy Patroni leader node
     - name: The Patroni cluster is unhealthy
       ansible.builtin.fail:
-        msg: >
-          No healthy leader node detected in cluster '{{ patroni_cluster_name | default('postgres-cluster') }}'.
-          Please ensure the cluster is up and node responds on REST API port ({{ patroni_restapi_port | default('8008') }}).
+        msg: >-
+          No healthy leader node detected in {{ cluster_group }}.
+          Please ensure the cluster is up and nodes respond on REST API port ({{ patroni_restapi_port | default('8008') }}).
+      vars:
+        cluster_group: "{{ 'source_cluster' if inventory_hostname == (groups['source_cluster'] | first) else 'target_cluster' }}"
+        cluster_hosts: "{{ groups[cluster_group] }}"
+        healthy_leaders: >-
+          {{
+            cluster_hosts
+            | map('extract', hostvars)
+            | selectattr('patroni_leader_result.status', 'defined')
+            | selectattr('patroni_leader_result.status', 'equalto', 200)
+            | list
+            | length
+          }}
       when:
-        - (inventory_hostname == groups['source_cluster'][0] or
-           inventory_hostname == groups['target_cluster'][0])
-        - (hostvars
-            | dict2items
-            | selectattr('value.patroni_leader_result.status', 'defined')
-            | selectattr('value.patroni_leader_result.status', 'equalto', 200)
-            | list | length) == 0
+        - inventory_hostname == (groups['source_cluster'] | first) or
+          inventory_hostname == (groups['target_cluster'] | first)
+        - healthy_leaders == 0
 
     # Stop, if no standby leader in the target cluster
     - name: The target Patroni cluster has no standby leader
