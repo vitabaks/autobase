@@ -1,6 +1,10 @@
 ---
 # Pre-Checks for switchover playbook (blue-green deployment method)
 - block:
+    - name: Check logical replication slot lag
+      ansible.builtin.import_tasks: replication_slot_lag.yml
+      when: inventory_hostname in groups['source_primary']
+
     # if pg_replication_database = "all"
     - name: "[Prepare] Get a list of databases"
       ansible.builtin.command: >
@@ -106,9 +110,6 @@
         label: "{{ source_primary_host_addr }}"
       when: inventory_hostname in groups['primary']
 
-    - name: "[Pre-Check] Check logical replication slot lag"
-      ansible.builtin.import_tasks: replication_slot_lag.yml
-      when: inventory_hostname in groups['source_primary']
   vars:
     source_primary_host: "{{ (groups['source_primary'] | first) | default('', true) }}"
     source_primary_host_addr: >-
