@@ -1,7 +1,7 @@
 ---
 # Check the maximum lag of the logical replication slots (blue-green deployment method)
 - block:
-    - name: "Make sure that the logical replication lag is no more than {{ max_replication_lag_bytes | default(0) | human_readable }}"
+    - name: "Ensure logical replication lag is no more than {{ max_replication_lag_bytes | default(0) | human_readable }}"
       ansible.builtin.command: >-
         {{ psql_command }} -tAXc "
         select pg_wal_lsn_diff(pg_current_wal_lsn(),confirmed_flush_lsn) as lag_bytes
@@ -11,7 +11,7 @@
       register: pg_lag_bytes
       changed_when: false
       failed_when: false
-      until: pg_lag_bytes.stdout|int < max_replication_lag_bytes|int
+      until: pg_lag_bytes.stdout|int <= max_replication_lag_bytes|int
       retries: "{{ pg_switchover_no_lag_wait_timeout | default(10) }}"
       delay: 1
 
