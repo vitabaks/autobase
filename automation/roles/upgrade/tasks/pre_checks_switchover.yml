@@ -53,7 +53,7 @@
 
     - name: Add temporary hba rule for traffic redirection
       ansible.builtin.blockinfile:
-        path: "{{ pg_new_confdir }}/pg_hba.conf"
+        path: "{{ pg_conf_dir }}/pg_hba.conf"
         marker: "# {mark} ANSIBLE: TEMPORARY RULE for traffic redirection"
         insertbefore: BOF
         block: |
@@ -67,6 +67,7 @@
           host all all {{ addr }}/32 {{ postgresql_password_encryption_algorithm }}
           {% endfor %}
       vars:
+        pg_conf_dir: "{{ pg_new_confdir if inventory_hostname in groups['target_cluster'] else pg_old_confdir }}"
         target_group: "{{ 'source_cluster' if inventory_hostname in groups['target_cluster'] else 'target_cluster' }}"
 
     - name: Update the PostgreSQL configuration

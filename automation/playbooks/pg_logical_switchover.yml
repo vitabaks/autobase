@@ -168,7 +168,8 @@
         name: vitabaks.autobase.upgrade
         tasks_from: read_only_mode_enable
 
-    # Wait until the lag is 0 bytes, or no more than 'pg_switchover_force_mode_lag_bytes' if force mode is enabled.
+    # Wait until the lag is 0 bytes,
+    # or no more than 'pg_switchover_force_mode_lag_bytes' if force mode is enabled.
     - name: Wait until there is no replication lag
       ansible.builtin.include_role:
         name: vitabaks.autobase.upgrade
