@@ -190,21 +190,6 @@
               )
           }}
 
-    - name: "[Pre-Check] Make sure that is Standby Cluster leader"
-      ansible.builtin.uri:
-        url: >-
-          {{ patroni_restapi_protocol | default('https') }}://{{ patroni_restapi_connect_addr
-            | default(patroni_bind_address | default(bind_address, true), true) }}:{{ patroni_restapi_port
-            | default('8008') }}/standby-leader
-        status_code: 200
-        ca_path: "{{ patroni_restapi_cafile | default(omit, true) }}"
-      register: patroni_standby_leader_result
-      changed_when: false
-      failed_when: patroni_standby_leader_result.status != 200
-      environment:
-        no_proxy: "{{ patroni_bind_address | default(bind_address, true) }}"
-      when: inventory_hostname in groups.get('primary', [])
-
     - name: "[Pre-Check] Make sure that the wal_level parameter is set to 'logical'"
       ansible.builtin.command: >
         {{ psql_command }} -tAXc "show wal_level"
