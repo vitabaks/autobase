@@ -11,11 +11,11 @@
     - inventory_hostname in groups.get('source_primary', [])
     - (groups.get('secondary', []) | length) != (groups.get('source_secondary', []) | length)
 
-- name: Prepare PgBouncer configuration to redirect primary traffic to the target cluster
+- name: Prepare PgBouncer configuration to redirect primary traffic
   ansible.builtin.replace:
     path: "{{ pgbouncer_conf_dir }}/pgbouncer.ini"
-    regexp: '(?m)^(?!\s*[#;])(\s*[^;\n]*\bhost=)[^\s]+'
-    replace: '\1{{ target_primary_host_addr }}'
+    regexp: '(?m)^(\s*[^#;\n]*\bhost=)[^\s]+'
+    replace: '\g<1>{{ target_primary_host_addr }}'
   vars:
     target_primary_host: "{{ (groups.get('primary', []) | first) | default('', true) }}"
     target_primary_host_addr: >-
@@ -26,11 +26,11 @@
       }}
   when: inventory_hostname in groups.get('source_primary', [])
 
-- name: Prepare PgBouncer configuration to redirect replica traffic to the target cluster
+- name: Prepare PgBouncer configuration to redirect replica traffic
   ansible.builtin.replace:
     path: "{{ pgbouncer_conf_dir }}/pgbouncer.ini"
-    regexp: '(?m)^(?!\s*[#;])(\s*[^;\n]*\bhost=)[^\s]+'
-    replace: '\1{{ target_secondary_host_addr }}'
+    regexp: '(?m)^(\s*[^#;\n]*\bhost=)[^\s]+'
+    replace: '\g<1>{{ target_secondary_host_addr }}'
   vars:
     source_secondaries: "{{ groups.get('source_secondary', []) | sort }}"
     target_secondaries: "{{ groups.get('secondary', []) | sort }}"
