@@ -1,15 +1,16 @@
 ---
-- name: "Edit patroni.yml | disable noloadbalance, nosync, nofailover"
+- name: "Edit patroni.yml | restore noloadbalance, nosync, nofailover tags"
   ansible.builtin.replace:
     path: /etc/patroni/patroni.yml
     regexp: "{{ item.regexp }}"
     replace: "{{ item.replace }}"
   loop:
-    - { regexp: "noloadbalance: true", replace: "noloadbalance: false" }
-    - { regexp: "nosync: true", replace: "nosync: false" }
-    - { regexp: "nofailover: true", replace: "nofailover: false" }
+    - { regexp: "noloadbalance: true", replace: "noloadbalance: false", tag: "noloadbalance" }
+    - { regexp: "nosync: true", replace: "nosync: false", tag: "nosync" }
+    - { regexp: "nofailover: true", replace: "nofailover: false", tag: "nofailover" }
   loop_control:
     label: "{{ item.replace }}"
+  when: (item.tag ~ '=true') not in (patroni_tags | default('') | replace(' ', ''))
 
 - name: Reload patroni service
   ansible.builtin.systemd:
@@ -31,7 +32,7 @@
   environment:
     no_proxy: "{{ patroni_bind_address | default(bind_address, true) }}"
 
-# Warming up caches after reboot (is 'reboot_host_post_delay' is defined)
+# Warming up caches after reboot (if 'reboot_host_post_delay' is defined)
 - name: "Wait {{ reboot_host_post_delay | default('') }} minutes for caches to warm up after reboot"
   ansible.builtin.pause:
     minutes: "{{ reboot_host_post_delay }}"
