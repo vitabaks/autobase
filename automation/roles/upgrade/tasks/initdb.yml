@@ -101,6 +101,8 @@
     {% endif %}
     {% if (hostvars[groups['primary'][0]].pg_settings.stdout | from_json).data_checksums == 'on' %}
     --data-checksums
+    {% elif pg_new_version | int >= 18 and (hostvars[groups['primary'][0]].pg_settings.stdout | from_json).data_checksums == 'off' %}
+    --no-data-checksums
     {% endif %}
   when:
     - ansible_os_family == "Debian"
@@ -126,6 +128,8 @@
     {% endif %}
     {% if (pg_settings.stdout | from_json).data_checksums == 'on' %}
     --data-checksums
+    {% elif pg_new_version | int >= 18 and (hostvars[groups['primary'][0]].pg_settings.stdout | from_json).data_checksums == 'off' %}
+    --no-data-checksums
     {% endif %}
   when:
     - inventory_hostname in groups['primary']

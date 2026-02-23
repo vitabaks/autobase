@@ -12,7 +12,7 @@
 
     - name: Check if member already exists in etcd cluster
       ansible.builtin.command: >
-        /usr/local/bin/etcdctl member list
+        {{ etcd_bin_dir | default('/usr/local/bin') }}/etcdctl member list
         --endpoints={{ etcd_existing_endpoints }}
         {% if etcd_tls_enable | default(false) | bool %}
         --cacert={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_ca_crt | default('ca.crt') }}
@@ -27,7 +27,7 @@
 
     - name: Add new etcd member to existing cluster
       ansible.builtin.command: >
-        /usr/local/bin/etcdctl member add {{ hostvars[etcd_node].ansible_hostname }}
+        {{ etcd_bin_dir | default('/usr/local/bin') }}/etcdctl member add {{ hostvars[etcd_node].ansible_hostname }}
         --peer-urls={{ patroni_etcd_protocol | default('http', true) }}://{{ etcd_node_bind_address }}:2380
         --endpoints={{ etcd_existing_endpoints }}
         {% if etcd_tls_enable | default(false) | bool %}

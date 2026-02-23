@@ -20,6 +20,8 @@ This role installs and configures [etcd](https://etcd.io/), a distributed, relia
 | `etcd_client_cert_auth` | `true` if not etcd_on_dedicated_nodes else `false` | Enable etcd client certificate authentication.  |
 | `patroni_etcd_protocol` | `https` if etcd_tls_enable else `http` | Scheme for etcd endpoints used by etcdctl. |
 | `etcd_package_repo` | `"https://github.com/etcd-io/etcd/releases/download/v{{ etcd_version }}/etcd-v{{ etcd_version }}-linux-{{ etcd_architecture_map[ansible_architecture] }}.tar.gz"` | Binary URL for installation. |
+| `etcd_installation_method` | `binary` | Install method. When set to `"{{ pkg_type }}"`, system package manager is used and `etcd_package_repo` is ignored. |
+| `etcd_bin_dir` | `/usr/bin` if etcd_installation_method == pkg_type else `/usr/local/bin` }}` | Installation directory for etcd. |
 
 ## Dependencies
 

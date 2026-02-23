@@ -10,15 +10,21 @@
 [![Molecule](https://github.com/vitabaks/autobase/actions/workflows/molecule.yml/badge.svg)](https://github.com/vitabaks/autobase/actions/workflows/molecule.yml)
 [![GitHub license](https://img.shields.io/github/license/vitabaks/autobase)](https://github.com/vitabaks/autobase/blob/master/LICENSE)
 
-**Autobase for PostgreSQL®** is an open-source alternative to cloud-managed databases (DBaaS) such as Amazon RDS, Google Cloud SQL, Azure Database, and more.
+**Autobase for PostgreSQL®** is an open-source alternative to cloud-managed databases (DBaaS) such as Amazon RDS, Google Cloud SQL, Azure Database, and others.
 
 This automated database platform enables you to create and manage production-ready, highly available PostgreSQL clusters. It simplifies the deployment process, reduces operational costs, and makes database management accessible—even for teams without specialized expertise.
 
 **Automate deployment, failover, backups, restore, upgrades, scaling, and more with ease.**
 
+Say goodbye to manual database management 👋
+
 ## Documentation
 
-Autobase documentation can be found [here](https://autobase.tech). Feedback, bug-reports, requests... [welcome](https://github.com/vitabaks/autobase/issues)!
+Autobase documentation can be found [here](https://autobase.tech/docs).
+
+## Support
+
+Autobase support packages are described [here](https://autobase.tech/docs/support).
 
 ## Quick start
 
@@ -62,8 +68,7 @@ Refer to the [Deployment](https://autobase.tech/docs/category/deployment) sectio
 The command line mode is suitable for advanced users who require greater flexibility and control over the deployment and management of their PostgreSQL clusters.
 While the Console (UI) is designed for ease of use and is suitable for most users, the command line provides powerful options for those experienced in automation and configuration.
 
-> [!NOTE]
-> All dependencies and source code are bundled into the `autobase/automation` docker image. This means the deployment process comes down to simply launching a container with a few variable overrides.
+Note: All dependencies and source code are bundled into the `autobase/automation` docker image. This means the deployment process comes down to simply launching a container with a few variable overrides.
 
 1. Prepare your inventory
 
@@ -168,7 +173,7 @@ _Table of results of daily automated testing of cluster deployment:_
 
 Autobase has been actively developed for over 5 years (since 2019) and is trusted by companies worldwide, including in production environments with high loads and demanding reliability requirements. Our mission is to provide an open-source DBaaS that delivers reliability, flexibility, and cost-efficiency.
 
-**The project will remain open-source forever**, but to ensure its continuous growth and development, we rely on [sponsorship](https://autobase.tech/docs/sponsor). By subscribing to [Autobase packages](https://autobase.tech/docs/support), you gain access to personalized support from the project authors and PostgreSQL experts, ensuring the reliability of your database infrastructure.
+**The project will remain open-source forever**, but to ensure its continuous growth and development, we rely on [sponsorship](https://autobase.tech/docs/sponsor). By subscribing to [Autobase packages](https://autobase.tech/docs/support), you gain access to personalized support from the project authors and PostgreSQL experts.
 
 ## Star us
 

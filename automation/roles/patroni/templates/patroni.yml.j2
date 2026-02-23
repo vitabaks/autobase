@@ -156,6 +156,8 @@ bootstrap:
     - locale: {{ postgresql_locale }}
   {% if postgresql_data_checksums|bool %}
     - data-checksums
+  {% elif postgresql_version | int >= 18 %}
+    - no-data-checksums
   {% endif %}
 
   pg_hba:  # Add following lines to pg_hba.conf after running 'initdb'
@@ -285,7 +287,7 @@ tags:
 {% if 'noloadbalance=' not in normalized_tags %}
   noloadbalance: false
 {% endif %}
-{% if 'nofailover=' not in normalized_tags %}
+{% if 'nofailover=' not in normalized_tags and 'failover_priority=' not in normalized_tags %}
   nofailover: false
 {% endif %}
 {% if 'clonefrom=' not in normalized_tags %}
