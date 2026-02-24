@@ -32,7 +32,7 @@ export const sidebarData = (t: TFunction) => {
   if (DBDESK_URL) {
     items.push({
       icon: DbdeskIcon,
-      label: t('SQL Editor', { ns: 'shared', defaultValue: 'SQL Editor' }),
+      label: t('sqlEditor', { ns: 'shared' }),
       path: RouterPaths.sqlEditor.absolutePath,
     });
   }

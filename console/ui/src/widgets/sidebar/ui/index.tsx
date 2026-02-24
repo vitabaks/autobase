@@ -16,13 +16,22 @@ const Sidebar = () => {
   const isLesserThan1600 = useMediaQuery('(max-width: 1600px)');
 
   // Track whether sidebar was force-collapsed by the SQL Editor route
-  const forcedCollapseRef = useRef(false);
+  const prevIsSqlEditorRef = useRef(false);
   const prevCollapsedRef = useRef(isCollapsed);
+
+  // Keep a ref in sync with isCollapsed so effects can read it without depending on it
+  const isCollapsedRef = useRef(isCollapsed);
+  isCollapsedRef.current = isCollapsed;
 
   const toggleSidebarCollapse = () => {
     setIsCollapsed((prev) => {
       const newValue = !prev;
       localStorage.setItem('isSidebarCollapsed', String(newValue));
+      // If user manually toggles while on SQL Editor, update the saved state
+      // so leaving SQL Editor restores to the user's latest preference
+      if (location.pathname?.startsWith(RouterPaths.sqlEditor.absolutePath)) {
+        prevCollapsedRef.current = newValue;
+      }
       return newValue;
     });
   };
@@ -35,16 +44,21 @@ const Sidebar = () => {
     if ((!isCollapsed && isLesserThan1600) || (isCollapsed && !isLesserThan1600)) toggleSidebarCollapse();
   }, [isLesserThan1600]);
 
-  // Auto-collapse sidebar when on SQL Editor route, restore when leaving
+  // Auto-collapse sidebar when entering SQL Editor route, restore when leaving
   const isSqlEditor = location.pathname?.startsWith(RouterPaths.sqlEditor.absolutePath);
 
   useEffect(() => {
-    if (isSqlEditor && !isCollapsed) {
-      prevCollapsedRef.current = false;
-      forcedCollapseRef.current = true;
-      setIsCollapsed(true);
-    } else if (!isSqlEditor && forcedCollapseRef.current) {
-      forcedCollapseRef.current = false;
+    const wasOnSqlEditor = prevIsSqlEditorRef.current;
+    prevIsSqlEditorRef.current = isSqlEditor;
+
+    if (isSqlEditor && !wasOnSqlEditor) {
+      // Entering SQL Editor — save current state and force collapse
+      prevCollapsedRef.current = isCollapsedRef.current;
+      if (!isCollapsedRef.current) {
+        setIsCollapsed(true);
+      }
+    } else if (!isSqlEditor && wasOnSqlEditor) {
+      // Leaving SQL Editor — restore previous state
       setIsCollapsed(prevCollapsedRef.current);
     }
   }, [isSqlEditor]);

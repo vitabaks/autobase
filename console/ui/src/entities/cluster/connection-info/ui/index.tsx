@@ -57,7 +57,7 @@ const ConnectionInfo: FC<ConnectionInfoProps> = ({ connectionInfo, servers }) =>
 
     address = rewriteHost(address);
 
-    return `postgresql://${encodeURIComponent(user)}:${encodeURIComponent(password)}@${address}:${port}/postgres`;
+    return `postgresql://${encodeURIComponent(user)}:${encodeURIComponent(password)}@${encodeURIComponent(address)}:${encodeURIComponent(port)}/postgres`;
   };
 
   const hasConnectionData = connectionInfo?.address || connectionInfo?.superuser || (servers?.length ?? 0) > 0;
@@ -82,7 +82,7 @@ const ConnectionInfo: FC<ConnectionInfoProps> = ({ connectionInfo, servers }) =>
               }
             }}
             sx={{ mt: 2 }}>
-            {t('SQL Editor', { ns: 'shared', defaultValue: 'Open in SQL Editor' })}
+            {t('openInSqlEditor', { ns: 'shared' })}
           </Button>
         )}
       </AccordionDetails>

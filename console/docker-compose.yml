@@ -65,7 +65,7 @@ services:
     image: ${DBDESK_IMAGE:-dbdesk/studio:latest}
     container_name: dbdesk-studio
     ports:
-      - 9876:9876
+      - 9876:9876  # nginx (frontend + /api/ proxy); Express listens internally on PORT
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://localhost:6789/health"]
       interval: 10s
@@ -74,7 +74,7 @@ services:
     restart: unless-stopped
     environment:
       - PORT=6789
-      - CORS_ORIGIN=*
+      - CORS_ORIGIN=${CORS_ORIGIN:-http://localhost}
       - NODE_ENV=production
     networks:
       - autobase

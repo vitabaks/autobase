@@ -8,7 +8,7 @@ const SqlEditorRoutes = () => (
   <Route
     path={RouterPaths.sqlEditor.absolutePath}
     handle={{
-      breadcrumb: { label: 'SQL Editor', ns: 'shared' },
+      breadcrumb: { label: 'sqlEditor', ns: 'shared' },
     }}
     element={<SqlEditor />}
   />
