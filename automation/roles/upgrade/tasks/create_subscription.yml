@@ -41,9 +41,9 @@
 
     - name: "Result of setting up logical replication (database: {{ dbname | default('postgres') }})"
       ansible.builtin.debug:
-        msg: >-
-          The logical replication setup is completed in database {{ dbname | default('postgres') }}. Current replication lag:
-          {{ pg_logical_slot_lag.stdout }}
+        msg:
+          - "The logical replication setup is completed in database {{ dbname | default('postgres') }}."
+          - "Current replication lag: {{ pg_logical_slot_lag.stdout }}"
       when:
         - inventory_hostname in groups['source_cluster']
         - patroni_cluster_leader
