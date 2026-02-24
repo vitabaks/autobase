@@ -164,7 +164,7 @@
 
 # Pre-Checks for blue-green upgrade method
 - block:
-    # Get a list of databases from the Source Cluster (if pg_replication_database = "all")
+    # Get a list of databases from the source cluster (if pg_replication_database = "all")
     - name: "[Prepare] Get a list of databases"
       ansible.builtin.command: >
         {{ psql_command }} -tAXc "select datname from pg_catalog.pg_database where not datistemplate"
@@ -288,21 +288,21 @@
         - inventory_hostname in groups.get('primary', [])
         - restore_command_result.stdout | default('') | length > 0
 
-    # Increase the number of WAL files to hold in the Source Cluster (if 'pg_wal_keep_gigabytes' != 'none').
+    # Increase the number of WAL files to hold in the source cluster (if 'pg_wal_keep_gigabytes' != 'none').
     # To guarantee that the necessary WAL files are available to reach recovery_target_lsn via streaming replication.
     - block:
-        - name: "Increase the wal_keep_segments parameter to {{ wal_keep_segments_value }} ({{ wal_keep_size_value }}) on the Source Primary"
+        - name: "Increase the wal_keep_segments parameter to {{ wal_keep_segments_value }} ({{ wal_keep_size_value }}) on the source primary"
           ansible.builtin.command: >
             {{ psql_command }} -tAXc "alter system set wal_keep_segments = '{{ wal_keep_segments_value }}'"
           when: pg_old_version|int < 13
 
         # for PostgreSQL 13 and higher
-        - name: "Increase the wal_keep_size parameter to {{ wal_keep_size_value }} on the Source Primary"
+        - name: "Increase the wal_keep_size parameter to {{ wal_keep_size_value }} on the source primary"
           ansible.builtin.command: >
             {{ psql_command }} -tAXc "alter system set wal_keep_size = '{{ wal_keep_size_value }}'"
           when: pg_old_version|int >= 13
 
-        - name: Update the PostgreSQL configuration on the Source Primary
+        - name: Update the PostgreSQL configuration on the source primary
           ansible.builtin.command: >
             {{ psql_command }} -tAXc "select pg_reload_conf()"
       vars:
@@ -375,7 +375,7 @@
 - name: "Pre-Check error. High replication lag"
   ansible.builtin.fail:
     msg:
-      - "High replication lag ({{ pg_lag_bytes.stdout | int | human_readable }}) on the Patroni Cluster"
+      - "High replication lag ({{ pg_lag_bytes.stdout | int | human_readable }}) on the Patroni cluster"
       - "Please try again later."
   when:
     - pg_lag_bytes.stdout is defined
@@ -406,7 +406,7 @@
 - name: "Pre-Check error. High replication lag"
   ansible.builtin.fail:
     msg:
-      - "High replication lag ({{ pg_lag_bytes_9x.stdout | int | human_readable }}) on the Patroni Cluster"
+      - "High replication lag ({{ pg_lag_bytes_9x.stdout | int | human_readable }}) on the Patroni cluster"
       - "Please try again later."
   when:
     - pg_lag_bytes_9x.stdout is defined
@@ -520,7 +520,7 @@
   delay: 5
   retries: 3
 
-- name: "[Pre-Check] Rsync Checks: create testrsync file on Primary"
+- name: "[Pre-Check] Rsync Checks: create testrsync file on primary"
   become: true
   become_user: postgres
   ansible.builtin.file:

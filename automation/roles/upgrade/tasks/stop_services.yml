@@ -49,7 +49,7 @@
 
     - name: "Replication lag detected"
       ansible.builtin.fail:
-        msg: "There's a replication lag in the PostgreSQL Cluster. Please try again later."
+        msg: "There's a replication lag in the PostgreSQL cluster. Please try again later."
   when:
     - pg_lag_bytes.stdout is defined
     - pg_lag_bytes.stdout|int >= max_replication_lag_bytes|int
@@ -86,7 +86,7 @@
 
     - name: "Replication lag detected"
       ansible.builtin.fail:
-        msg: "There's a replication lag in the PostgreSQL Cluster. Please try again later."
+        msg: "There's a replication lag in the PostgreSQL cluster. Please try again later."
   when:
     - pg_lag_bytes_9x.stdout is defined
     - pg_lag_bytes_9x.stdout|int >= max_replication_lag_bytes|int
@@ -99,13 +99,13 @@
     - pgbouncer_pool_pause | bool
 
 # Stop PostgreSQL (if replication lag is 0 bytes)
-- name: Stop PostgreSQL on the Leader
+- name: Stop PostgreSQL on the leader
   ansible.builtin.command: >-
     {{ pg_old_bindir }}/pg_ctl -D {{ pg_old_datadir }} stop -m fast -w -t {{ pg_start_stop_timeout }}
   when:
     - inventory_hostname in groups['primary']
 
-- name: Stop PostgreSQL on the Replica
+- name: Stop PostgreSQL on the replica
   ansible.builtin.command: >-
     {{ pg_old_bindir }}/pg_ctl -D {{ pg_old_datadir }} stop -m fast -w -t {{ pg_start_stop_timeout }}
   when:

@@ -112,7 +112,7 @@
     - pg_new_confdir != pg_new_datadir
 
 # Use initdb, if the PostgreSQL configuration is located in the data directory.
-- name: Initialize new PostgreSQL data directory on the Primary
+- name: Initialize new PostgreSQL data directory on the primary
   ansible.builtin.command: >-
     {{ pg_new_bindir }}/initdb
     --pgdata={{ pg_new_datadir }}

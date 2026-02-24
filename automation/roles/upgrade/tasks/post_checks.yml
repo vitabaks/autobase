@@ -26,7 +26,7 @@
     - inventory_hostname in groups['primary']
     - pg_replication_state.stdout | int == 0
 
-- name: Create a table "test_replication" with 10000 rows on the Primary
+- name: Create a table "test_replication" with 10000 rows on the primary
   ansible.builtin.command: >-
     {{ psql_command }} -tAXc "drop table IF EXISTS test_replication;
     create table test_replication as select generate_series(1, 10000)"
@@ -72,19 +72,19 @@
 - name: Print the result of checking the number of records
   ansible.builtin.debug:
     msg:
-      - "The PostgreSQL Replication is OK for replica {{ ansible_hostname }}"
-      - "The number of records in the test_replication table the same as the Primary ({{ count_test.stdout }} rows)"
+      - "The PostgreSQL replication is OK for replica {{ ansible_hostname }}"
+      - "The number of records in the test_replication table the same as the primary ({{ count_test.stdout }} rows)"
   when:
     - inventory_hostname in groups['secondary']
     - count_test.stdout is defined
     - count_test.stdout | int == 10000
 
-# Error, if the number of records in the "test_replication" table does not match the Primary.
+# Error, if the number of records in the "test_replication" table does not match the primary.
 - name: "Post-Check error. The number of records does not match"
   ansible.builtin.debug:
     msg:
-      - "The PostgreSQL Replication is NOT OK for replica {{ ansible_hostname }}"
-      - "The number of records in the test_replication table does not match the Primary ({{ count_test.stdout }} rows)."
+      - "The PostgreSQL replication is NOT OK for replica {{ ansible_hostname }}"
+      - "The number of records in the test_replication table does not match the primary ({{ count_test.stdout }} rows)."
       - "Please check the replication status and PostgreSQL logs."
   failed_when: count_test.stdout | int != 10000
   ignore_errors: true # show the error and continue the playbook execution

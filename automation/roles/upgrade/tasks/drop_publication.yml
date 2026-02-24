@@ -8,7 +8,7 @@
             {{ psql_command }} -d {{ dbname }} -tAXc "
             drop publication if exists {{ publication_name }}"
 
-        - name: '[Clean up logical replication] Drop Replication slot'
+        - name: '[Clean up logical replication] Drop replication slot'
           ansible.builtin.command: >-
             {{ psql_command }} -d {{ dbname }} -tAXc "
             select pg_drop_replication_slot('{{ slot_name }}')
@@ -27,7 +27,7 @@
             index_var: idx
             label: "{{ publication_name }}_{{ '%02d' % (idx + 1) }}"
 
-        - name: '[Clean up logical replication] Drop Replication slots'
+        - name: '[Clean up logical replication] Drop replication slots'
           ansible.builtin.command: >-
             {{ psql_command }} -d {{ dbname }} -tAXc "
             select pg_drop_replication_slot('{{ slot_name }}_{{ '%02d' % (idx + 1) }}')

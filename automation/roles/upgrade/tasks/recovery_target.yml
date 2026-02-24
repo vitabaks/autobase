@@ -2,7 +2,7 @@
 # Blue-green upgrade method: reach recovery target LSN on the standby cluster leader node.
 
 # Set recovery parameters to ensure the target PostgreSQL instance is recovered to the replication slot LSN.
-- name: "Specify recovery parameters on the standby cluster Leader"
+- name: "Specify recovery parameters on the standby cluster leader"
   ansible.builtin.lineinfile:
     path: '{{ pg_old_confdir }}/postgresql.conf'
     regexp: '{{ item.regexp }}'
@@ -30,7 +30,7 @@
     - inventory_hostname in groups['target_cluster']
     - patroni_cluster_leader
 
-- name: "Start PostgreSQL on standby cluster Leader to reach recovery_target_lsn"
+- name: "Start PostgreSQL on standby cluster leader to reach recovery_target_lsn"
   ansible.builtin.command: >-
     {{ pg_old_bindir }}/pg_ctl start -D {{ pg_old_datadir }} -w -t {{ pg_start_stop_timeout }}
     -o '--config-file={{ pg_old_confdir }}/postgresql.conf'

@@ -2,19 +2,19 @@
 
 # for blue-green upgrade method
 - block:
-    - name: Reset wal_keep_segments to original state on the Source Primary
+    - name: Reset wal_keep_segments to original state on the source primary
       ansible.builtin.command: >
         {{ psql_command }} -tAXc "alter system reset wal_keep_segments"
       delegate_to: "{{ delegate_host }}"
       when: pg_old_version | int < 13
 
-    - name: Reset wal_keep_size to original state on the Source Primary
+    - name: Reset wal_keep_size to original state on the source primary
       ansible.builtin.command: >
         {{ psql_command }} -tAXc "alter system reset wal_keep_size"
       delegate_to: "{{ delegate_host }}"
       when: pg_old_version | int >= 13
 
-    - name: Reload PostgreSQL configuration on the Source Primary
+    - name: Reload PostgreSQL configuration on the source primary
       ansible.builtin.command: >
         {{ psql_command }} -tAXc "select pg_reload_conf()"
       delegate_to: "{{ delegate_host }}"

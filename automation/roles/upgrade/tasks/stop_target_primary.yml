@@ -47,7 +47,7 @@
     - inventory_hostname in groups['target_cluster']
     - patroni_cluster_leader
 
-- name: "Stop PostgreSQL on the Standby Cluster Leader"
+- name: "Stop PostgreSQL on the standby cluster leader"
   ansible.builtin.command: >-
     {{ pg_old_bindir }}/pg_ctl -D {{ pg_old_datadir }} stop -w -t {{ pg_start_stop_timeout }}
   register: pg_ctl_stop_result
