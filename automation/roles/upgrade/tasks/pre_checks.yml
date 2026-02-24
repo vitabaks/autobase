@@ -206,33 +206,6 @@
         - patroni_cluster_leader | default(false)
         - pg_wal_level.stdout | default('') != "logical"
 
-    - name: Add temporary hba rule for logical replication
-      ansible.builtin.blockinfile:
-        path: "{{ pg_old_confdir }}/pg_hba.conf"
-        marker: "# {mark} ANSIBLE: TEMPORARY RULE for logical replication"
-        insertbefore: BOF
-        content: "host all {{ patroni_superuser_username }} {{ primary_host }}/32 trust"
-      vars:
-        primary_host: >-
-          {{
-            (inventory_hostname in groups.get('target_cluster', []))
-            | ternary(
-                (hostvars[source_primary_host].patroni_bind_address
-                  | default(hostvars[source_primary_host].bind_address, true)
-                  | default(hostvars[source_primary_host].inventory_hostname, true)
-                ),
-                (hostvars[target_primary_host].patroni_bind_address
-                  | default(hostvars[target_primary_host].bind_address, true)
-                  | default(hostvars[target_primary_host].inventory_hostname, true)
-                )
-              )
-          }}
-      when: patroni_cluster_leader | default(false)
-
-    - name: Update the PostgreSQL configuration
-      ansible.builtin.command: "{{ pg_old_bindir }}/pg_ctl reload -D {{ pg_old_datadir }}"
-      when: patroni_cluster_leader | default(false)
-
     - name: "[Pre-Check] Test access from the target to the source database"
       ansible.builtin.command: >-
         {{ pg_old_bindir }}/psql -w -h {{ source_primary_host_addr }} -p {{ postgresql_port }}

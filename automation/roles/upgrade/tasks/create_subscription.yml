@@ -8,9 +8,10 @@
         {{ psql_command }} -d {{ dbname }} -tAXc "drop subscription if exists {{ subscription_name }}";
         {{ psql_command }} -d {{ dbname }} -tAXc "create subscription {{ subscription_name }}
         connection 'host={{ source_primary_host_addr }} port={{ postgresql_port }}
-        user={{ patroni_superuser_username }} dbname={{ dbname }}'
+        user={{ patroni_superuser_username }} password={{ patroni_superuser_password }} dbname={{ dbname }}'
         publication {{ publication_name }}
         with (copy_data = false, create_slot = false, slot_name = '{{ slot_name }}')"
+      no_log: true
       when:
         - inventory_hostname in groups['target_cluster']
         - patroni_cluster_leader
