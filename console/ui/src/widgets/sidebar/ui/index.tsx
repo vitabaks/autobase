@@ -3,8 +3,9 @@ import SidebarItem from '@entities/sidebar-item';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router-dom';
 import { Box, Divider, Drawer, IconButton, List, Stack, Toolbar, useMediaQuery } from '@mui/material';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import CollapseIcon from '@shared/assets/collapseIcon.svg?react';
+import RouterPaths from '@app/router/routerPathsConfig';
 
 const Sidebar = () => {
   const { t } = useTranslation('shared');
@@ -13,6 +14,10 @@ const Sidebar = () => {
   const [isCollapsed, setIsCollapsed] = useState(localStorage.getItem('isSidebarCollapsed')?.toString() === 'true');
 
   const isLesserThan1600 = useMediaQuery('(max-width: 1600px)');
+
+  // Track whether sidebar was force-collapsed by the SQL Editor route
+  const forcedCollapseRef = useRef(false);
+  const prevCollapsedRef = useRef(isCollapsed);
 
   const toggleSidebarCollapse = () => {
     setIsCollapsed((prev) => {
@@ -29,6 +34,20 @@ const Sidebar = () => {
   useEffect(() => {
     if ((!isCollapsed && isLesserThan1600) || (isCollapsed && !isLesserThan1600)) toggleSidebarCollapse();
   }, [isLesserThan1600]);
+
+  // Auto-collapse sidebar when on SQL Editor route, restore when leaving
+  const isSqlEditor = location.pathname?.startsWith(RouterPaths.sqlEditor.absolutePath);
+
+  useEffect(() => {
+    if (isSqlEditor && !isCollapsed) {
+      prevCollapsedRef.current = false;
+      forcedCollapseRef.current = true;
+      setIsCollapsed(true);
+    } else if (!isSqlEditor && forcedCollapseRef.current) {
+      forcedCollapseRef.current = false;
+      setIsCollapsed(prevCollapsedRef.current);
+    }
+  }, [isSqlEditor]);
 
   return (
     <Drawer

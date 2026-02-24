@@ -31,7 +31,7 @@ const OverviewCluster: FC = () => {
         />
       </Grid>
       <Grid item size={{ xs: 6 }}>
-        <ConnectionInfo connectionInfo={connectionInfo} />
+        <ConnectionInfo connectionInfo={connectionInfo} servers={cluster.data?.servers} />
       </Grid>
       <Grid item size={{ xs: 6 }}>
         <ClusterInfo

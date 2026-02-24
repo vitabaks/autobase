@@ -10,7 +10,7 @@ import { ConnectionInfoProps } from '@entities/cluster/connection-info/model/typ
 export const useGetConnectionInfoConfig = ({
   connectionInfo,
 }: {
-  connectionInfo: ConnectionInfoProps;
+  connectionInfo: ConnectionInfoProps['connectionInfo'];
 }): { title: string; children: React.ReactNode }[] => {
   const { t } = useTranslation(['clusters', 'shared']);
   const [isPasswordHidden, setIsPasswordHidden] = useState(true);
