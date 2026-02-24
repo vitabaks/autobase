@@ -19,7 +19,7 @@
       ansible.builtin.import_role:
         name: vitabaks.autobase.common
 
-    - name: "[Prepare] Get Patroni Cluster Name"
+    - name: "[Prepare] Get Patroni cluster name"
       ansible.builtin.uri:
         url: >-
           {{ patroni_restapi_protocol | default('https') }}://{{ patroni_restapi_connect_addr
@@ -36,7 +36,7 @@
       ansible.builtin.set_fact:
         patroni_cluster_name: "{{ patroni_result.json.patroni.scope }}"
 
-    - name: "[Prepare] Get Patroni Cluster Leader Node"
+    - name: "[Prepare] Get Patroni cluster leader node"
       ansible.builtin.uri:
         url: >-
           {{ patroni_restapi_protocol | default('https') }}://{{ patroni_restapi_connect_addr
@@ -84,8 +84,7 @@
           inventory_hostname == (groups['target_cluster'] | first)
         - healthy_leaders == 0
 
-    # Stop, if no standby leader in the target cluster
-    - name: The target Patroni cluster has no standby leader
+    - name: Ensure the target Patroni cluster leader is a standby leader
       ansible.builtin.uri:
         url: >-
           {{ patroni_restapi_protocol | default('https') }}://{{ patroni_restapi_connect_addr
@@ -95,14 +94,37 @@
         ca_path: "{{ patroni_restapi_cafile | default(omit, true) }}"
       register: patroni_standby_leader_result
       changed_when: false
-      failed_when: patroni_standby_leader_result.status != 200
+      failed_when: false
+      check_mode: false
       environment:
         no_proxy: "{{ patroni_bind_address | default(bind_address, true) }}"
       when:
         - inventory_hostname in groups['target_cluster']
         - patroni_cluster_leader | default(false) | bool
 
-    - name: '[Prepare] Add Source Cluster host to group "source_primary" (in-memory inventory)'
+    # Stop, if no standby leader in the target cluster
+    - name: The Patroni standby cluster is unhealthy
+      ansible.builtin.fail:
+        msg: >-
+          No healthy standby leader node detected in target_cluster.
+          Please ensure the standby cluster is up and nodes respond on REST API port ({{ patroni_restapi_port | default('8008') }}).
+      vars:
+        cluster_hosts: "{{ groups['target_cluster'] }}"
+        healthy_standby_leaders: >-
+          {{
+            cluster_hosts
+            | map('extract', hostvars)
+            | selectattr('patroni_standby_leader_result.status', 'defined')
+            | selectattr('patroni_standby_leader_result.status', 'equalto', 200)
+            | list
+            | length
+          }}
+      when:
+        - inventory_hostname in groups['target_cluster']
+        - patroni_cluster_leader | default(false) | bool
+        - healthy_standby_leaders == 0
+
+    - name: '[Prepare] Add source cluster host to group "source_primary" (in-memory inventory)'
       ansible.builtin.add_host:
         name: "{{ item }}"
         groups: source_primary
@@ -110,7 +132,7 @@
       loop: "{{ groups['source_cluster'] }}"
       changed_when: false
 
-    - name: '[Prepare] Add Target Cluster host to group "primary" (in-memory inventory)'
+    - name: '[Prepare] Add target cluster host to group "primary" (in-memory inventory)'
       ansible.builtin.add_host:
         name: "{{ item }}"
         groups: primary
@@ -118,7 +140,7 @@
       loop: "{{ groups['target_cluster'] }}"
       changed_when: false
 
-    - name: '[Prepare] Add Target Cluster hosts to group "secondary" (in-memory inventory)'
+    - name: '[Prepare] Add target cluster hosts to group "secondary" (in-memory inventory)'
       ansible.builtin.add_host:
         name: "{{ item }}"
         groups: secondary
@@ -126,18 +148,18 @@
       loop: "{{ groups['target_cluster'] }}"
       changed_when: false
 
-    - name: "Print Source Patroni Cluster info"
+    - name: "Print source Patroni cluster info"
       ansible.builtin.debug:
         msg:
-          - "Source Cluster Name: {{ patroni_cluster_name }}"
-          - "Source Cluster Leader: {{ ansible_hostname }}"
+          - "Source cluster name: {{ patroni_cluster_name }}"
+          - "Source cluster leader: {{ ansible_hostname }}"
       when: inventory_hostname in groups['source_primary']
 
-    - name: "Print Target Patroni Cluster info"
+    - name: "Print target Patroni cluster info"
       ansible.builtin.debug:
         msg:
-          - "Target Cluster Name: {{ patroni_cluster_name }}"
-          - "Target Cluster Leader: {{ ansible_hostname }}"
+          - "Target cluster name: {{ patroni_cluster_name }}"
+          - "Target cluster leader: {{ ansible_hostname }}"
       when: inventory_hostname in groups['primary']
   tags:
     - always
@@ -226,19 +248,19 @@
   become_user: postgres
   any_errors_fatal: true
   tasks:
-    - name: Stop PostgreSQL on Target primary
+    - name: Stop PostgreSQL on target primary
       ansible.builtin.include_role:
         name: vitabaks.autobase.upgrade
         tasks_from: stop_target_primary
       when: inventory_hostname in groups['primary']
 
-    - name: Create a publication and slot on Source Primary
+    - name: Create a publication and slot on source primary
       ansible.builtin.include_role:
         name: vitabaks.autobase.upgrade
         tasks_from: publication
       when: inventory_hostname in groups['source_primary']
 
-    - name: Reach recovery_target_lsn on Target Primary
+    - name: Reach recovery_target_lsn on target primary
       ansible.builtin.include_role:
         name: vitabaks.autobase.upgrade
         tasks_from: recovery_target
@@ -284,7 +306,7 @@
         name: vitabaks.autobase.upgrade
         tasks_from: checkpoint_location
 
-    - name: Upgrade Primary
+    - name: Upgrade primary
       ansible.builtin.include_role:
         name: vitabaks.autobase.upgrade
         tasks_from: upgrade_primary
@@ -325,7 +347,7 @@
   become_user: postgres
   any_errors_fatal: true
   tasks:
-    - name: Create a subscription on Target Primary
+    - name: Create a subscription on target primary
       ansible.builtin.include_role:
         name: vitabaks.autobase.upgrade
         tasks_from: subscription

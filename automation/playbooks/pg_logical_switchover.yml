@@ -19,7 +19,7 @@
       ansible.builtin.import_role:
         name: vitabaks.autobase.common
 
-    - name: "[Prepare] Get Patroni Cluster Name"
+    - name: "[Prepare] Get Patroni cluster name"
       ansible.builtin.uri:
         url: >-
           {{ patroni_restapi_protocol | default('https') }}://{{ patroni_restapi_connect_addr
@@ -36,7 +36,7 @@
       ansible.builtin.set_fact:
         patroni_cluster_name: "{{ patroni_result.json.patroni.scope }}"
 
-    - name: "[Prepare] Get Patroni Cluster Leader Node"
+    - name: "[Prepare] Get Patroni cluster leader Node"
       ansible.builtin.uri:
         url: >-
           {{ patroni_restapi_protocol | default('https') }}://{{ patroni_restapi_connect_addr
@@ -84,7 +84,7 @@
           inventory_hostname == (groups['target_cluster'] | first)
         - healthy_leaders == 0
 
-    - name: '[Prepare] Add Source Cluster host to group "source_primary" (in-memory inventory)'
+    - name: '[Prepare] Add source cluster host to group "source_primary" (in-memory inventory)'
       ansible.builtin.add_host:
         name: "{{ item }}"
         groups: source_primary
@@ -92,7 +92,7 @@
       loop: "{{ groups['source_cluster'] }}"
       changed_when: false
 
-    - name: '[Prepare] Add Source Cluster host to group "source_secondary" (in-memory inventory)'
+    - name: '[Prepare] Add source cluster host to group "source_secondary" (in-memory inventory)'
       ansible.builtin.add_host:
         name: "{{ item }}"
         groups: source_secondary
@@ -100,7 +100,7 @@
       loop: "{{ groups['source_cluster'] }}"
       changed_when: false
 
-    - name: '[Prepare] Add Target Cluster host to group "primary" (in-memory inventory)'
+    - name: '[Prepare] Add target cluster host to group "primary" (in-memory inventory)'
       ansible.builtin.add_host:
         name: "{{ item }}"
         groups: primary
@@ -108,7 +108,7 @@
       loop: "{{ groups['target_cluster'] }}"
       changed_when: false
 
-    - name: '[Prepare] Add Target Cluster hosts to group "secondary" (in-memory inventory)'
+    - name: '[Prepare] Add target cluster hosts to group "secondary" (in-memory inventory)'
       ansible.builtin.add_host:
         name: "{{ item }}"
         groups: secondary
@@ -116,18 +116,18 @@
       loop: "{{ groups['target_cluster'] }}"
       changed_when: false
 
-    - name: "Print Source Patroni Cluster info"
+    - name: "Print source Patroni cluster info"
       ansible.builtin.debug:
         msg:
-          - "Source Cluster Name: {{ patroni_cluster_name }}"
-          - "Source Cluster Leader: {{ ansible_hostname }}"
+          - "Source cluster name: {{ patroni_cluster_name }}"
+          - "Source cluster leader: {{ ansible_hostname }}"
       when: inventory_hostname in groups.get('source_primary', [])
 
-    - name: "Print Target Patroni Cluster info"
+    - name: "Print target Patroni cluster info"
       ansible.builtin.debug:
         msg:
-          - "Target Cluster Name: {{ patroni_cluster_name }}"
-          - "Target Cluster Leader: {{ ansible_hostname }}"
+          - "Target cluster name: {{ patroni_cluster_name }}"
+          - "Target cluster leader: {{ ansible_hostname }}"
       when: inventory_hostname in groups.get('primary', [])
 
   tasks:
