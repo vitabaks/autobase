@@ -43,3 +43,15 @@
         | default(hostvars[target_secondary_host].inventory_hostname, true)
       }}
   when: inventory_hostname in groups.get('source_secondary', [])
+
+# if self-signed certificates are used (tls_cert_generate = true)
+# Target cluster uses a different CA, so PgBouncer on source may fail to verify TLS when connecting to Postgres on target
+# This prevents: "could not accept SSL connection: certificate verify failed"
+- name: Temporarily disable TLS from PgBouncer to Postgres during redirect
+  ansible.builtin.lineinfile:
+    path: "{{ pgbouncer_conf_dir }}/pgbouncer.ini"
+    regexp: '^\s*server_tls_sslmode\s*='
+    line: "server_tls_sslmode = disable"
+  when:
+    - tls_cert_generate | default(false) | bool
+    - inventory_hostname in groups.get('source_cluster', [])
