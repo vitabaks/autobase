@@ -19,7 +19,7 @@
     label: "{{ item.name }}"
   when:
     - postgresql_users | default('') | length > 0
-    - patroni_standby_cluster.host | default('') | length < 1 # do not perform on the Standby Cluster
+    - patroni_standby_cluster.host | default('') | length < 1 # do not perform on the standby cluster
   tags: postgresql_users
 
 - name: Grant roles to users
@@ -38,5 +38,5 @@
   when:
     - postgresql_users | default('') | length > 0
     - item.role | default('') | length > 0
-    - patroni_standby_cluster.host | default('') | length < 1 # do not perform on the Standby Cluster
+    - patroni_standby_cluster.host | default('') | length < 1 # do not perform on the standby cluster
   tags: postgresql_users

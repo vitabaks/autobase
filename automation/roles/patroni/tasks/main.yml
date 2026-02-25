@@ -589,7 +589,7 @@
           become_user: postgres
       when:
         - inventory_hostname == groups['master'][0]
-        - patroni_standby_cluster.host | default('') | length < 1 # do not perform on the Standby Cluster
+        - patroni_standby_cluster.host | default('') | length < 1 # do not perform on the standby cluster
 
     - name: Prepare PostgreSQL | check PostgreSQL is started
       become: true
@@ -893,7 +893,7 @@
       failed_when: false
       when: patroni_cluster_bootstrap_method == "wal-g"
 
-    - name: Wait for the Standby cluster initialization to complete
+    - name: Wait for the standby cluster initialization to complete
       ansible.builtin.uri:
         url: "{{ patroni_restapi_protocol }}://{{ patroni_restapi_connect_addr | default(patroni_bind_address | default(bind_address, true), true) }}:\
           {{ patroni_restapi_port }}/standby-leader"
@@ -1048,7 +1048,7 @@
     - patroni_cluster_bootstrap_method != "initdb"
     - (pgbackrest_install | bool or wal_g_install | bool)
     - (cluster_scaling is not defined or not cluster_scaling | bool)
-    - patroni_standby_cluster.host | default('') | length < 1 # do not perform on the Standby Cluster
+    - patroni_standby_cluster.host | default('') | length < 1 # do not perform on the standby cluster
   become: true
   become_user: postgres
   tags: patroni, point_in_time_recovery

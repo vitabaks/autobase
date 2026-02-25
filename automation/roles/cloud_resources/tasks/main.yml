@@ -36,9 +36,9 @@
     - ssh_key_content | length < 1
     - not (postgresql_cluster_maintenance|default(false)|bool) # exclude for config_pgcluster.yml
     - not (cluster_scaling | default(false) | bool) # exclude for cluster scaling
-    - patroni_standby_cluster.host | default('') | length < 1 # exclude for Standby Cluster
+    - patroni_standby_cluster.host | default('') | length < 1 # exclude for standby cluster
 
-# if ssh_key_name or ssh_key_content is not specified (for cluster scaling or Standby Cluster)
+# if ssh_key_name or ssh_key_content is not specified (for cluster scaling or standby cluster)
 - block:
     - name: Generate a unique temporary SSH key name
       ansible.builtin.set_fact:

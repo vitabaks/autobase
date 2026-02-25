@@ -1,8 +1,8 @@
 ---
-# Parse, validate, and register Source Cluster hosts from patroni_standby_cluster.host variable,
+# Parse, validate, and register source cluster hosts from patroni_standby_cluster.host variable,
 # then add replication access rules to pg_hba.conf on source nodes.
 
-- name: "Parse Source Cluster hosts (patroni_standby_cluster.host)"
+- name: "Parse source cluster hosts (patroni_standby_cluster.host)"
   ansible.builtin.set_fact:
     source_cluster_hosts: >-
       {{
@@ -13,7 +13,7 @@
         | list
       }}
 
-- name: "Validate Source Cluster IP addresses"
+- name: "Validate source cluster IP addresses"
   ansible.builtin.assert:
     that:
       - source_cluster_hosts | reject('match', '^\\d+\\.\\d+\\.\\d+\\.\\d+$') | list | length == 0
@@ -22,7 +22,7 @@
       {{ source_cluster_hosts | reject('match', '^\\d+\\.\\d+\\.\\d+\\.\\d+$') | list }}
   run_once: true # noqa run-once
 
-- name: 'Add Source Cluster hosts to group "source_cluster" (in-memory inventory)'
+- name: 'Add source cluster hosts to group "source_cluster" (in-memory inventory)'
   ansible.builtin.add_host:
     name: "{{ item }}"
     groups: source_cluster
@@ -37,10 +37,10 @@
 
 # if 'patroni_standby_cluster_auto_hba' is 'true'
 # Note: The PostgreSQL configuration update is performed after retrieving the patroni_superuser_password.
-- name: "Add hba rule on the Source Cluster for Standby Cluster"
+- name: "Add hba rule on the source cluster for standby cluster"
   ansible.builtin.blockinfile:
     path: "{{ pg_conf_dir }}/pg_hba.conf"
-    marker: "# {mark} ANSIBLE: TEMPORARY RULE FOR STANDBY CLUSTER"
+    marker: "# {mark} ANSIBLE: TEMPORARY RULE FOR standby cluster"
     insertbefore: BOF
     block: |
       {% for h in (groups.get('postgres_cluster', []) ) %}

@@ -105,11 +105,11 @@ This role installs and configures [Patroni](https://github.com/patroni/patroni),
 | ------------------- | ------- | ------------------------------------------------ |
 | `patroni_callbacks` | `[]`    | List of callback configurations (action:script). |
 
-### Standby Cluster Configuration
+### Standby cluster configuration
 
 | Variable                                           | Default  | Description                                                                         |
 | -------------------------------------------------- | -------- | ----------------------------------------------------------------------------------- |
-| `patroni_standby_cluster`                          | `{}`     | Standby Cluster Configuration. See below.                                           |
+| `patroni_standby_cluster`                          | `{}`     | Standby cluster configuration. See below.                                           |
 | `patroni_standby_cluster.host`                     | `""`     | IP address of main cluster host                                                     |
 | `patroni_standby_cluster.port`                     | `"5432"` | port of main cluster host                                                           |
 | `patroni_standby_cluster.primary_slot_name`        | `""`     | which slot on the remote primary to use for replication (optional)                  |
