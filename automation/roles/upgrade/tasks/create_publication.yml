@@ -25,11 +25,15 @@
     publication_name: "{{ pg_publication_name if not reverse_replication | default(false) | bool else pg_reverse_publication_name }}"
     subscription_slot_name: "{{ pg_subscription_slot_name if not reverse_replication | default(false) | bool else pg_reverse_subscription_slot_name }}"
     slot_name: "{{ (subscription_slot_name ~ '_' ~ dbname) | lower | regex_replace('[^a-z0-9_]+', '_') }}"
+    publisher_group: "{{ 'target_cluster' if reverse_replication | default(false) | bool else 'source_cluster' }}"
     pg_bindir: "{{ pg_old_bindir if inventory_hostname in groups['source_cluster'] else pg_new_bindir }}"
     psql_command: "{{ pg_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }}"
   environment:
     PGPASSWORD: "{{ patroni_superuser_password }}"
-  when: pg_publication_count | int == 1
+  when:
+    - inventory_hostname in (groups.get(publisher_group, []) | default([], true))
+    - patroni_cluster_leader | default(false) | bool
+    - pg_publication_count | int == 1
 
 # Multiple publications (if pg_publication_count > 1)
 - block:
@@ -174,8 +178,12 @@
     publication_name: "{{ pg_publication_name if not reverse_replication | default(false) | bool else pg_reverse_publication_name }}"
     subscription_slot_name: "{{ pg_subscription_slot_name if not reverse_replication | default(false) | bool else pg_reverse_subscription_slot_name }}"
     slot_name: "{{ (subscription_slot_name ~ '_' ~ dbname) | lower | regex_replace('[^a-z0-9_]+', '_') }}"
+    publisher_group: "{{ 'target_cluster' if reverse_replication | default(false) | bool else 'source_cluster' }}"
     pg_bindir: "{{ pg_old_bindir if inventory_hostname in groups['source_cluster'] else pg_new_bindir }}"
     psql_command: "{{ pg_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }}"
   environment:
     PGPASSWORD: "{{ patroni_superuser_password }}"
-  when: pg_publication_count | int > 1
+  when:
+    - inventory_hostname in (groups.get(publisher_group, []) | default([], true))
+    - patroni_cluster_leader | default(false) | bool
+    - pg_publication_count | int > 1
