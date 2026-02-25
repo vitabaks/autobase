@@ -42,56 +42,7 @@
       ansible.builtin.set_fact:
         postgresql_password_encryption_algorithm: "{{ hostvars[target_primary_host].password_encryption_result.stdout }}"
 
-    # During blue-green traffic redirection PgBouncer instances will start connecting to the target cluster (old -> new).
-    # Those PgBouncer-to-Postgres connections come from different node IPs than in the original topology,
-    # so PostgreSQL must temporarily allow them in pg_hba.conf.
-    #
-    # We prepend rules at BOF to ensure they take precedence over existing stricter entries and avoid failures like:
-    # "no pg_hba.conf entry ..." and "password required" when PgBouncer reconnects during switchover.
-    # The first rule allows the PgBouncer auth user to connect without password (trust) to keep auth_query working,
-    # the second rule allows normal clients with the configured password encryption method.
-    - block:
-        - name: "[Prepare] Add temporary hba rule for traffic redirection"
-          ansible.builtin.blockinfile:
-            path: "{{ pg_new_confdir }}/pg_hba.conf"
-            marker: "# {mark} ANSIBLE: TEMPORARY RULE for traffic redirection"
-            insertbefore: BOF
-            block: |
-              {% for h in groups['source_cluster'] %}
-              {% set addr = (
-                  hostvars[h].patroni_bind_address
-                  | default(hostvars[h].bind_address, true)
-                  | default(hostvars[h].inventory_hostname, true)
-                )
-              %}
-              host all {{ pgbouncer_auth_username }} {{ addr }}/32 trust
-              host all all {{ addr }}/32 {{ postgresql_password_encryption_algorithm }}
-              {% endfor %}
-          when: inventory_hostname in groups['target_cluster']
-
-        - name: Update the PostgreSQL configuration
-          ansible.builtin.command: "{{ psql_command }} -tAXc 'select pg_reload_conf()'"
-
-        - name: "[Pre-Check] Test access from the source to the target database"
-          ansible.builtin.command: >-
-            {{ pg_bindir }}/psql -h {{ target_primary_host_addr }} -p {{ postgresql_port }}
-            -U {{ patroni_superuser_username }} -d {{ dbname }} -tAXc 'select 1'
-          changed_when: false
-          loop: "{{ source_databases }}"
-          loop_control:
-            loop_var: dbname
-            label: "host={{ target_primary_host_addr }} dbname={{ dbname }}"
-          when: inventory_hostname in groups['source_primary']
-      when: pgbouncer_install | default(false) | bool
-
   vars:
-    target_primary_host: "{{ (groups['primary'] | first) | default('', true) }}"
-    target_primary_host_addr: >-
-      {{
-        hostvars[target_primary_host].patroni_bind_address
-        | default(hostvars[target_primary_host].bind_address, true)
-        | default(hostvars[target_primary_host].inventory_hostname, true)
-      }}
     pg_bindir: "{{ pg_old_bindir if inventory_hostname in groups['source_cluster'] else pg_new_bindir }}"
     psql_command: "{{ pg_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres"
   environment:
