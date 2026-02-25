@@ -224,3 +224,4 @@
         msg:
           - "Switchover completed!"
           - "Final step: switch application services to the target cluster."
+      when: inventory_hostname in groups.get('primary', [])
