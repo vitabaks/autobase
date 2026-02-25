@@ -585,6 +585,9 @@ patroni_log_loggers_urllib3: warning # or 'debug'
 
 patroni_watchdog_mode: automatic # or 'off', 'required'
 patroni_watchdog_device: /dev/watchdog
+# Whether to automatically configure the softdog
+# If false, ensure that /dev/watchdog is available and can be used by the postgres user.
+patroni_watchdog_configure_softdog: true
 
 patroni_postgresql_use_pg_rewind: true # or 'false'
 # try to use pg_rewind on the former leader when it joins cluster as a replica.
