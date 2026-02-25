@@ -92,7 +92,7 @@
 
 - name: Test access from the source to the target database
   ansible.builtin.command: >-
-    {{ pg_old_bindir }}/psql -h {{ target_primary_host_addr }} -p {{ postgresql_port }}
+    {{ pg_old_bindir }}/psql -w -h {{ target_primary_host_addr }} -p {{ postgresql_port }}
     -U {{ patroni_superuser_username }} -d {{ dbname }} -tAXc 'select 1'
   changed_when: false
   loop: "{{ source_databases }}"
