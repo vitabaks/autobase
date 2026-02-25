@@ -193,9 +193,7 @@
         tasks_from: publication
       vars:
         reverse_replication: true
-      when:
-        - inventory_hostname in groups.get('primary', [])
-        - pg_reverse_logical_replication | default(true) | bool
+      when: pg_reverse_logical_replication | default(true) | bool
 
     - name: Redirect database traffic to the target cluster
       ansible.builtin.include_role:
@@ -207,6 +205,7 @@
       ansible.builtin.include_role:
         name: vitabaks.autobase.upgrade
         tasks_from: read_only_mode_disable
+      when: pg_reverse_logical_replication | default(true) | bool
 
     - name: Start reverse logical replication
       ansible.builtin.include_role:
@@ -214,9 +213,7 @@
         tasks_from: subscription
       vars:
         reverse_replication: true
-      when:
-        - inventory_hostname in groups.get('primary', [])
-        - pg_reverse_logical_replication | default(true) | bool
+      when: pg_reverse_logical_replication | default(true) | bool
 
     # Finish (info)
     - name: Switchover completed
