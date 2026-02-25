@@ -55,7 +55,8 @@
               | default(hostvars[h].inventory_hostname, true)
             )
           %}
-          {{ host_type }} all all {{ addr }}/32 {{ postgresql_password_encryption_algorithm }}
+          host all {{ pgbouncer_auth_username }} {{ addr }}/32 trust
+          host all all {{ addr }}/32 {{ postgresql_password_encryption_algorithm }}
           {% endfor %}
       vars:
         pg_conf_dir: "{{ pg_new_confdir if inventory_hostname in groups['target_cluster'] else pg_old_confdir }}"
