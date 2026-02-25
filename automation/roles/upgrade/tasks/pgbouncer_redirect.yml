@@ -107,4 +107,6 @@
         | default(hostvars[target_primary_host].bind_address, true)
         | default(hostvars[target_primary_host].inventory_hostname, true)
       }}
+  environment:
+    PGPASSWORD: "{{ patroni_superuser_password }}"
   when: inventory_hostname in groups['source_primary']
