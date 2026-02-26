@@ -167,6 +167,7 @@
       ansible.builtin.include_role:
         name: vitabaks.autobase.upgrade
         tasks_from: read_only_mode_enable
+      when: inventory_hostname in groups.get('source_primary', [])
 
     # Wait until the lag is 0 bytes,
     # or no more than 'pg_switchover_force_mode_lag_bytes' if force mode is enabled.
@@ -207,7 +208,9 @@
       ansible.builtin.include_role:
         name: vitabaks.autobase.upgrade
         tasks_from: read_only_mode_disable
-      when: pg_reverse_logical_replication | default(true) | bool
+      when:
+        - pg_reverse_logical_replication | default(true) | bool
+        - inventory_hostname in groups.get('source_primary', [])
 
     - name: Start reverse logical replication
       ansible.builtin.include_role:
