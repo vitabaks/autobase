@@ -6,9 +6,7 @@
     psql_command: "{{ pg_old_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres"
   environment:
     PGPASSWORD: "{{ patroni_superuser_password }}"
-  when:
-    - inventory_hostname in groups['target_cluster']
-    - not patroni_cluster_leader
+  when: inventory_hostname in groups['secondary']
 
 # Disable auto failover – we need this to be able to stop PostgreSQL
 - name: "Pause Patroni on the target cluster before stopping PostgreSQL"
@@ -19,9 +17,7 @@
     PATH: "{{ ansible_env.PATH }}:/usr/bin:/usr/local/bin"
   register: pause_result
   failed_when: "'Cluster is already paused' not in pause_result.stderr and pause_result.rc != 0"
-  when:
-    - inventory_hostname in groups['target_cluster']
-    - patroni_cluster_leader
+  when: inventory_hostname in groups['primary']
 
 - name: "Execute CHECKPOINT before stopping PostgreSQL"
   ansible.builtin.command: "{{ psql_command }} -tAXc 'CHECKPOINT'"
@@ -32,9 +28,7 @@
     psql_command: "{{ pg_old_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres"
   environment:
     PGPASSWORD: "{{ patroni_superuser_password }}"
-  when:
-    - inventory_hostname in groups['target_cluster']
-    - patroni_cluster_leader
+  when: inventory_hostname in groups['primary']
 
 - name: "Wait for the CHECKPOINT to complete"
   ansible.builtin.async_status:
@@ -43,9 +37,7 @@
   until: checkpoint_job_result.finished
   retries: 360
   delay: 10
-  when:
-    - inventory_hostname in groups['target_cluster']
-    - patroni_cluster_leader
+  when: inventory_hostname in groups['primary']
 
 - name: "Stop PostgreSQL on the standby cluster leader"
   ansible.builtin.command: >-
@@ -54,6 +46,4 @@
   until: pg_ctl_stop_result.rc == 0
   retries: "{{ (pg_start_stop_timeout | int) // 10 }}"
   delay: 10
-  when:
-    - inventory_hostname in groups['target_cluster']
-    - patroni_cluster_leader
+  when: inventory_hostname in groups['primary']

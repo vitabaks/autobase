@@ -26,9 +26,7 @@
       line: '#restore_command = '''''
   loop_control:
     label: '{{ item.line }}'
-  when:
-    - inventory_hostname in groups['target_cluster']
-    - patroni_cluster_leader
+  when: inventory_hostname in groups['primary']
 
 - name: "Start PostgreSQL on standby cluster leader to reach recovery_target_lsn"
   ansible.builtin.command: >-
@@ -39,9 +37,7 @@
   async: "{{ pg_start_stop_timeout }}" # run the command asynchronously
   poll: 0
   register: pg_ctl_start_result
-  when:
-    - inventory_hostname in groups['target_cluster']
-    - patroni_cluster_leader
+  when: inventory_hostname in groups['primary']
 
 - name: "Wait for the PostgreSQL start to complete (log: /tmp/pg_start_recovery_target.log)"
   ansible.builtin.async_status:
@@ -50,9 +46,7 @@
   until: pg_ctl_start_job_result.finished
   retries: "{{ (pg_start_stop_timeout | int) // 10 }}"
   delay: 10
-  when:
-    - inventory_hostname in groups['target_cluster']
-    - patroni_cluster_leader
+  when: inventory_hostname in groups['primary']
 
 - name: "Wait until the recovery is complete"
   ansible.builtin.command: "{{ psql_command }} -tAXc 'select pg_is_in_recovery()'"
@@ -64,9 +58,7 @@
     psql_command: "{{ pg_old_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }}"
   environment:
     PGPASSWORD: "{{ patroni_superuser_password }}"
-  when:
-    - inventory_hostname in groups['target_cluster']
-    - patroni_cluster_leader
+  when: inventory_hostname in groups['primary']
 
 - name: "Get the current PostgreSQL log file"
   ansible.builtin.shell: |
@@ -77,9 +69,7 @@
   register: pg_log_filename
   changed_when: false
   ignore_errors: true
-  when:
-    - inventory_hostname in groups['target_cluster']
-    - patroni_cluster_leader
+  when: inventory_hostname in groups['primary']
 
 - name: "Check the PostgreSQL log file"
   ansible.builtin.shell: >
@@ -90,25 +80,21 @@
   register: pg_log_result
   changed_when: false
   ignore_errors: true
-  when:
-    - inventory_hostname in groups['target_cluster']
-    - patroni_cluster_leader
+  when: inventory_hostname in groups['primary']
 
 # Stop, if target LSN not reached
 - name: "Result of checking the PostgreSQL log - fail"
   ansible.builtin.fail:
     msg: "Recovery target (LSN \"{{ hostvars[groups['source_primary'][0]]['target_lsn'] }}\") has not been reached"
   when:
-    - inventory_hostname in groups['target_cluster']
-    - patroni_cluster_leader
+    - inventory_hostname in groups['primary']
     - pg_log_result.stdout | length < 1
 
 - name: "Result of checking the PostgreSQL log"
   ansible.builtin.debug:
     msg: "{{ pg_log_result.stdout }}"
   when:
-    - inventory_hostname in groups['target_cluster']
-    - patroni_cluster_leader
+    - inventory_hostname in groups['primary']
     - pg_log_result.stdout | length > 0
 
 # Resume and check physical replication
@@ -118,9 +104,7 @@
     psql_command: "{{ pg_old_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres"
   environment:
     PGPASSWORD: "{{ patroni_superuser_password }}"
-  when:
-    - inventory_hostname in groups['target_cluster']
-    - not patroni_cluster_leader
+  when: inventory_hostname in groups['secondary']
 
 - name: "Wait until physical replication becomes active"
   ansible.builtin.command: >-
@@ -136,9 +120,7 @@
     psql_command: "{{ pg_old_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres"
   environment:
     PGPASSWORD: "{{ patroni_superuser_password }}"
-  when:
-    - inventory_hostname in groups['target_cluster']
-    - not patroni_cluster_leader
+  when: inventory_hostname in groups['secondary']
 
 - name: "Wait until physical replication lag is 0 bytes"
   ansible.builtin.command: >-
@@ -156,6 +138,4 @@
     psql_command: "{{ pg_old_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres"
   environment:
     PGPASSWORD: "{{ patroni_superuser_password }}"
-  when:
-    - inventory_hostname in groups['target_cluster']
-    - patroni_cluster_leader
+  when: inventory_hostname in groups['primary']
