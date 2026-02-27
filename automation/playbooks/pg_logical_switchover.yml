@@ -121,14 +121,14 @@
         msg:
           - "Source cluster name: {{ patroni_cluster_name }}"
           - "Source cluster leader: {{ ansible_hostname }}"
-      when: inventory_hostname in groups.get('source_primary', [])
+      when: inventory_hostname in groups['source_primary']
 
     - name: "Print target Patroni cluster info"
       ansible.builtin.debug:
         msg:
           - "Target cluster name: {{ patroni_cluster_name }}"
           - "Target cluster leader: {{ ansible_hostname }}"
-      when: inventory_hostname in groups.get('primary', [])
+      when: inventory_hostname in groups['primary']
 
   tasks:
     - name: Get current passwords
@@ -167,7 +167,7 @@
       ansible.builtin.include_role:
         name: vitabaks.autobase.upgrade
         tasks_from: read_only_mode_enable
-      when: inventory_hostname in groups.get('source_primary', [])
+      when: inventory_hostname in groups['source_primary']
 
     # Wait until the lag is 0 bytes,
     # or no more than 'pg_switchover_force_mode_lag_bytes' if force mode is enabled.
@@ -178,7 +178,7 @@
       vars:
         max_replication_lag_bytes: "{{ pg_switchover_force_mode_lag_bytes if pg_switchover_force_mode | bool else 0 }}"
         read_only_mode_enabled: true
-      when: inventory_hostname in groups.get('source_primary', [])
+      when: inventory_hostname in groups['source_primary']
 
     - name: Delete the previous subscription
       ansible.builtin.include_role:
@@ -186,7 +186,7 @@
         tasks_from: subscription
       vars:
         subscription_state: absent
-      when: inventory_hostname in groups.get('primary', [])
+      when: inventory_hostname in groups['primary']
 
     - name: Create publication and slot for reverse replication
       ansible.builtin.include_role:
@@ -202,7 +202,7 @@
         tasks_from: pgbouncer_restart
       when:
         - pgbouncer_install | default(false) | bool
-        - inventory_hostname in groups.get('source_cluster', [])
+        - inventory_hostname in groups['source_cluster']
 
     - name: Disable read-only mode on the source cluster
       ansible.builtin.include_role:
@@ -210,7 +210,7 @@
         tasks_from: read_only_mode_disable
       when:
         - pg_reverse_logical_replication | default(true) | bool
-        - inventory_hostname in groups.get('source_primary', [])
+        - inventory_hostname in groups['source_primary']
 
     - name: Start reverse logical replication
       ansible.builtin.include_role:
@@ -226,4 +226,4 @@
         msg:
           - "Switchover completed!"
           - "Final step: switch application services to the target cluster."
-      when: inventory_hostname in groups.get('primary', [])
+      when: inventory_hostname in groups['primary']
