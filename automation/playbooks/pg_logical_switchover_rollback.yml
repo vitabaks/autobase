@@ -141,6 +141,11 @@
         postgresql_cluster_maintenance: true
       when: patroni_superuser_password | default('') | length < 1
 
+    - name: Perform pre-checks
+      ansible.builtin.include_role:
+        name: vitabaks.autobase.upgrade
+        tasks_from: pre_checks_switchover
+
     - name: Disable read-only mode on the old cluster (if enabled)
       ansible.builtin.include_role:
         name: vitabaks.autobase.upgrade
