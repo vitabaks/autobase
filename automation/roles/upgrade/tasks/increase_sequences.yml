@@ -32,8 +32,8 @@
         | default(hostvars[source_primary_host].bind_address, true)
         | default(hostvars[source_primary_host].inventory_hostname, true)
       }}
-    pg_bindir: "{{ pg_old_bindir if (postgresql_data_dir | regex_replace('/+$', '')) == (pg_old_datadir | regex_replace('/+$', '')) else pg_new_bindir }}"
-    psql_command: "{{ pg_bindir }}/psql -p {{ postgresql_port }} -U {{ patroni_superuser_username }}"
+    psql_command: "psql -p {{ postgresql_port }} -U {{ patroni_superuser_username }}"
   environment:
+    PATH: "{{ ansible_env.PATH }}:{{ pg_new_bindir }}:{{ pg_old_bindir }}"
     PGPASSWORD: "{{ patroni_superuser_password }}"
   when: inventory_hostname in groups.get('primary', [])

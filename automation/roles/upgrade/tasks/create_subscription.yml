@@ -41,8 +41,6 @@
           - "Current replication lag: {{ pg_logical_slot_lag.stdout }}"
       when: inventory_hostname in (groups.get(publisher_group, []) | default([], true))
   vars:
-    pg_bindir: "{{ pg_old_bindir if (postgresql_data_dir | regex_replace('/+$', '')) == (pg_old_datadir | regex_replace('/+$', '')) else pg_new_bindir }}"
-    psql_command: "{{ pg_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }}"
     publication_name: "{{ pg_publication_name if not reverse_replication | default(false) | bool else pg_reverse_publication_name }}"
     subscription_name: "{{ pg_subscription_name if not reverse_replication | default(false) | bool else pg_reverse_subscription_name }}"
     subscription_slot_name: "{{ pg_subscription_slot_name if not reverse_replication | default(false) | bool else pg_reverse_subscription_slot_name }}"
@@ -57,7 +55,9 @@
         | default(hostvars[publisher_primary_host].bind_address, true)
         | default(hostvars[publisher_primary_host].inventory_hostname, true)
       }}
+    psql_command: "psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }}"
   environment:
+    PATH: "{{ ansible_env.PATH }}:{{ pg_new_bindir }}:{{ pg_old_bindir }}"
     PGPASSWORD: "{{ patroni_superuser_password }}"
   ignore_errors: true # show the error and continue the playbook execution
   when:
@@ -114,8 +114,6 @@
         msg: "{{ pg_multiple_logical_slot_lag.stdout_lines }}"
       when: inventory_hostname in (groups.get(publisher_group, []) | default([], true))
   vars:
-    pg_bindir: "{{ pg_old_bindir if (postgresql_data_dir | regex_replace('/+$', '')) == (pg_old_datadir | regex_replace('/+$', '')) else pg_new_bindir }}"
-    psql_command: "{{ pg_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }}"
     source_primary_host: "{{ (groups.get('source_primary', []) | first) | default('', true) }}"
     publication_name: "{{ pg_publication_name if not reverse_replication | default(false) | bool else pg_reverse_publication_name }}"
     subscription_name: "{{ pg_subscription_name if not reverse_replication | default(false) | bool else pg_reverse_subscription_name }}"
@@ -131,7 +129,9 @@
         | default(hostvars[publisher_primary_host].bind_address, true)
         | default(hostvars[publisher_primary_host].inventory_hostname, true)
       }}
+    psql_command: "psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }}"
   environment:
+    PATH: "{{ ansible_env.PATH }}:{{ pg_new_bindir }}:{{ pg_old_bindir }}"
     PGPASSWORD: "{{ patroni_superuser_password }}"
   ignore_errors: true # show the error and continue the playbook execution
   when:

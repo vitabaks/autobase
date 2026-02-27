@@ -37,8 +37,8 @@
         - pg_lag_bytes.stdout is defined
         - pg_lag_bytes.stdout|int > max_replication_lag_bytes|int
   vars:
-    pg_bindir: "{{ pg_old_bindir if (postgresql_data_dir | regex_replace('/+$', '')) == (pg_old_datadir | regex_replace('/+$', '')) else pg_new_bindir }}"
-    psql_command: "{{ pg_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres"
+    psql_command: "psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres"
   environment:
+    PATH: "{{ ansible_env.PATH }}:{{ pg_new_bindir }}:{{ pg_old_bindir }}"
     PGPASSWORD: "{{ patroni_superuser_password }}"
   when: inventory_hostname in groups['source_primary']
