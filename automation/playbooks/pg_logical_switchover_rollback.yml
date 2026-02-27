@@ -122,14 +122,14 @@
         msg:
           - "Source cluster name: {{ patroni_cluster_name }}"
           - "Source cluster leader: {{ ansible_hostname }}"
-      when: inventory_hostname in groups.get('source_primary', [])
+      when: inventory_hostname in groups['source_primary']
 
     - name: "(ROLLBACK) Print target Patroni cluster info"
       ansible.builtin.debug:
         msg:
           - "Target cluster name: {{ patroni_cluster_name }}"
           - "Target cluster leader: {{ ansible_hostname }}"
-      when: inventory_hostname in groups.get('primary', [])
+      when: inventory_hostname in groups['primary']
 
   tasks:
     - name: Get current passwords
@@ -145,13 +145,13 @@
       ansible.builtin.include_role:
         name: vitabaks.autobase.upgrade
         tasks_from: read_only_mode_disable
-      when: inventory_hostname in groups.get('primary', [])
+      when: inventory_hostname in groups['primary']
 
     - name: Enable read-only mode on the new cluster
       ansible.builtin.include_role:
         name: vitabaks.autobase.upgrade
         tasks_from: read_only_mode_enable
-      when: inventory_hostname in groups.get('source_primary', [])
+      when: inventory_hostname in groups['source_primary']
 
     # Wait until the lag is 0 bytes,
     # or no more than 'pg_switchover_force_mode_lag_bytes' if force mode is enabled.
@@ -162,7 +162,7 @@
       vars:
         max_replication_lag_bytes: "{{ pg_switchover_force_mode_lag_bytes if pg_switchover_force_mode | bool else 0 }}"
         read_only_mode_enabled: true
-      when: inventory_hostname in groups.get('source_primary', [])
+      when: inventory_hostname in groups['source_primary']
 
     - name: Increase all sequence values on the old cluster
       ansible.builtin.include_role:
@@ -175,7 +175,7 @@
         tasks_from: pgbouncer_restore
       when:
         - pgbouncer_install | default(false) | bool
-        - inventory_hostname in groups.get('target_cluster', [])
+        - inventory_hostname in groups['target_cluster']
 
     - name: Delete the reverse subscription on the old cluster
       ansible.builtin.include_role:
@@ -185,11 +185,11 @@
         subscription_state: absent
         reverse_replication: true
       when:
-        - inventory_hostname in groups.get('primary', [])
+        - inventory_hostname in groups['primary']
         - pg_reverse_logical_replication | default(true) | bool
 
     # Finish (info)
     - name: Rollback completed
       ansible.builtin.debug:
         msg: "Rollback completed. The source cluster ({{ patroni_cluster_name }}) is now the primary cluster again."
-      when: inventory_hostname in groups.get('primary', [])
+      when: inventory_hostname in groups['primary']
