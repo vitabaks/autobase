@@ -110,7 +110,7 @@
     # Display the logical replication lag for each slot
     - name: "Result of setting up logical replication (database: {{ dbname | default('postgres') }})"
       ansible.builtin.debug:
-        msg: "{{ pg_multiple_logical_slot_lag.stdout }}"
+        msg: "{{ pg_multiple_logical_slot_lag.stdout_lines }}"
       when: inventory_hostname in (groups.get(publisher_group, []) | default([], true))
   vars:
     pg_bindir: "{{ pg_old_bindir if (postgresql_data_dir | regex_replace('/+$', '')) == (pg_old_datadir | regex_replace('/+$', '')) else pg_new_bindir }}"
