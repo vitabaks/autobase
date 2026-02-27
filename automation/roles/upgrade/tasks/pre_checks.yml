@@ -203,7 +203,7 @@
         msg:
           - "The wal_level parameter is not set to 'logical'. Current value: {{ pg_wal_level.stdout }}"
       when:
-        - patroni_cluster_leader | default(false)
+        - patroni_cluster_leader | default(false) | bool
         - pg_wal_level.stdout | default('') != "logical"
 
     - name: "[Pre-Check] Test access from the target to the source database"
