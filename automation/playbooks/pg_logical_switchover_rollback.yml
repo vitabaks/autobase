@@ -180,8 +180,8 @@
         tasks_from: pgbouncer_restore
       when:
         - pgbouncer_install | default(false) | bool
-        - inventory_hostname in groups['source_primary'] or
-          inventory_hostname in groups['source_secondary']
+        - inventory_hostname in groups['primary'] or
+          inventory_hostname in groups['secondary']
 
     - name: Delete the reverse subscription on the old cluster
       ansible.builtin.include_role:
