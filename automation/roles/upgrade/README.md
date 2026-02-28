@@ -1,18 +1,28 @@
-## PostgreSQL in-place major upgrade
+## PostgreSQL major upgrade
 
-This role is designed for in-place major upgrades of PostgreSQL (e.g., from version 17 to 18).
+This role is designed for in-place or blue-green upgrade methods (e.g., from version 17 to 18).
 
-#### Compatibility
+#### How it works:
 
-The upgrade is supported starting from PostgreSQL 9.3 and up to the latest PostgreSQL version.
+TBD
 
-#### Requirements
+For in-place upgrade method, we use hard links instead of copying files to reduce downtime. There is no need to plan additional disk space.
 
-There is no need to plan additional disk space, because when upgrading PostgreSQL using hard links instead of copying files. However, it is required that the `pg_old_datadir` and `pg_new_datadir` are located within the same top-level directory (`pg_upper_datadir` variable).
+#### Database Downtime Considerations
+
+To minimize or even eliminate errors during database upgrades (depending on the workload and timeouts), we pause the PgBouncer pools. From an application's perspective, this does not result in terminated database connections. Instead, applications might experience a temporary increase in query latency while the PgBouncer pools are paused.
+
+On average, the PgBouncer pause duration is approximately 30 seconds. However, for larger databases, this pause might be extended due to longer `pg_upgrade` and `rsync` procedures. The default maximum wait time for a request during a pause is set to 2 minutes (controlled by the `query_wait_timeout` pgbouncer parameter). If the pause exceeds this duration, connections will be terminated with a timeout error.
+
+## Compatibility
+
+The upgrade is supported starting from PostgreSQL 9.3 for in-place upgrade method, or PostgreSQL 10 for blue-green upgrade method.
+
+## Requirements
 
 Specify the current (old) version of PostgreSQL in the `pg_old_version` variable and target version of PostgreSQL for the upgrade in the `pg_new_version` variable.
 
-#### Recommendations
+## Recommendations
 
 1. Before upgrading to a new major version, it's recommended to update PostgreSQL and its extensions. Additionally, consider updating Patroni and the entire system.
 
@@ -20,7 +30,7 @@ Specify the current (old) version of PostgreSQL in the `pg_old_version` variable
 
 2. Before moving forward, execute preliminary checks to ensure that your database schema is compatible with the upcoming PostgreSQL version and that the cluster is ready for the upgrade.
 
-   To do this, run the `pg_upgrade.yml` playbook using the tags '`pre-checks,upgrade-check`'.
+   To do this, run the playbook using the tags '`pre-checks,upgrade-check`'.
 
    If any errors arise, such as schema object incompatibilities, resolve these issues and repeat the checks.
 
@@ -30,34 +40,7 @@ Specify the current (old) version of PostgreSQL in the `pg_old_version` variable
 
    Upon seeing these messages, proceed to run the playbook without any tags to initiate the upgrade.
 
-### Upgrade
-
-```bash
-ansible-playbook pg_upgrade.yml -e "pg_old_version=17 pg_new_version=18"
-```
-
-#### Database Downtime Considerations
-
-To minimize or even eliminate errors during database upgrades (depending on the workload and timeouts), we pause the PgBouncer pools. From an application's perspective, this does not result in terminated database connections. Instead, applications might experience a temporary increase in query latency while the PgBouncer pools are paused.
-
-On average, the PgBouncer pause duration is approximately 30 seconds. However, for larger databases, this pause might be extended due to longer `pg_upgrade` and `rsync` procedures. The default maximum wait time for a request during a pause is set to 2 minutes (controlled by the `query_wait_timeout` pgbouncer parameter). If the pause exceeds this duration, connections will be terminated with a timeout error.
-
-### Rollback
-
-This playbook performs a rollback of a PostgreSQL upgrade.
-
-Note: In some scenarios, if errors occur, the pg_upgrade.yml playbook may automatically initiate a rollback. Alternatively, if the automatic rollback does not occur, you can manually execute the pg_upgrade_rollback.yml playbook to revert the changes.
-
-```bash
-ansible-playbook pg_upgrade_rollback.yml
-```
-
-It's designed to be used when a PostgreSQL upgrade hasn't been fully completed and the new version hasn't been started.
-The rollback operation is performed by starting the Patroni cluster with the old version of PostgreSQL using the same PGDATA.
-The playbook first checks the health of the current cluster, verifies the version of PostgreSQL, and ensures the new PostgreSQL is not running.
-If these checks pass, the playbook switches back to the old PostgreSQL paths and restarts the Patroni service.
-
-### Variables
+## Variables
 
 | Variable Name                                | Description                                                                                                                                                                           | Default Value |
 | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------: |
@@ -95,11 +78,71 @@ If these checks pass, the playbook switches back to the old PostgreSQL paths and
 
 Note: For variables marked as "Derived value", the default value is determined based on other variables. Please see the [upgrade.yml](../upgrade/defaults/main.yml) variable file.
 
+## Upgrade
+
+**In-place upgrade method:**
+
+Use `pg_upgrade` playbook, example:
+
+```bash
+ansible-playbook pg_upgrade.yml -i inventory -e "pg_old_version=17 pg_new_version=18"
+```
+
+**Blue-green upgrade method:**
+
+Use `pg_logical_upgrade` playbook, example:
+
+inventory
+```yaml
+---
+all:
+  vars:
+    # upgrade settings
+    pg_old_version: 17 # the current (old) version of PostgreSQL
+    pg_new_version: 18 # the target (new) version of PostgreSQL for the upgrade
+    pg_replication_database: "all" # dbname for replication, 'all' for the entire cluster
+    # connection settings
+    ansible_ssh_user: root
+    ansible_ssh_private_key_file: /home/ubuntu/.ssh/id_rsa
+  children:
+    source_cluster:
+      hosts:
+        10.142.0.21:
+        10.142.0.22:
+        10.142.0.23:
+    target_cluster:
+      hosts:
+        10.142.0.24:
+        10.142.0.26:
+        10.142.0.43:
+```
+
+Run playbook
+```bash
+ansible-playbook pg_logical_upgrade.yml -i inventory.yml
+```
+
+### Rollback
+
+This playbook performs a rollback of a PostgreSQL upgrade.
+
+Note: In some scenarios, if errors occur, the pg_upgrade.yml playbook may automatically initiate a rollback.
+Alternatively, if the automatic rollback does not occur, you can manually execute the pg_upgrade_rollback.yml playbook to revert the changes.
+
+```bash
+ansible-playbook pg_upgrade_rollback.yml
+```
+
+It's designed to be used when a PostgreSQL upgrade hasn't been fully completed and the new version hasn't been started.
+The rollback operation is performed by starting the Patroni cluster with the old version of PostgreSQL using the same PGDATA.
+The playbook first checks the health of the current cluster, verifies the version of PostgreSQL, and ensures the new PostgreSQL is not running.
+If these checks pass, the playbook switches back to the old PostgreSQL paths and restarts the Patroni service.
+
 ---
 
 ### Upgrade Plan:
 
-#### 1. PRE-UPGRADE: Perform Pre-Checks
+#### PRE-UPGRADE: Perform Pre-Checks
 
 - **Make sure that the required variables are specified**
   - Notes: `pg_old_version` and `pg_new_version` variables
@@ -119,22 +162,20 @@ Note: For variables marked as "Derived value", the default value is determined b
   - Note: This check is necessary to avoid the risk of deleting the current data directory
   - Stop, if the current data directory is the same as `pg_new_datadir`.
   - Stop, if the current WAL directory is the same as `pg_new_wal_dir` (if a custom wal dir is used).
-- **Perform pre-checks for blue-green upgrade method (pg_upgrade_logical.yml)**
-  - Make sure that is Standby Cluster leader
+- **Perform pre-checks and preparation for blue-green upgrade method (pg_upgrade_logical.yml)**
+  - Get a list of databases from the source cluster
+    - Note: if `pg_replication_database` == "`all`" (default: all)
   - Make sure that the wal_level parameter is set to 'logical'
-  - Add temporary hba rule for logical replication
-    - Note: a trust rule between the source and target primary hosts for `patroni_superuser_username`
-    - Update the PostgreSQL configuration
+    - Stop, if wal_level != logical
   - Test access from the target cluster to the source database
   - Test access from the source cluster to the target database
-    - Note: if `pg_reverse_logical_replication` is `true` (default: true)
   - Make sure there are no tables with replica identity "nothing"
   - Make sure that tables with replica identity "default" have primary key
   - Set REPLICA IDENTITY FULL for tables without primary key
     - Note: if `pg_allow_replica_identity_full` is `true` (default: true)
   - Make sure that the 'restore_command' parameter is not specified
     - if 'restore_command' is specified: comment out recovery_conf in patroni.yml
-  - Increase the wal_keep_segments/wal_keep_size parameter on the Source Primary
+  - Increase the wal_keep_segments/wal_keep_size parameter on the source primary
     - if `pg_wal_keep_gigabytes` != `none` (default: 100)
     - Note: To guarantee that the necessary WAL files are available to reach recovery_target_lsn via streaming replication.
 - **Make sure that physical replication is active**
@@ -147,7 +188,7 @@ Note: For variables marked as "Derived value", the default value is determined b
   - Create and copy ssh keys between database servers (if not configured)
 - **Perform Rsync Checks**
   - Make sure that the rsync package are installed
-  - Create 'testrsync' file on Primary
+  - Create 'testrsync' file on primary
   - Test rsync and ssh key access
   - Cleanup 'testrsync' file
 - **Check if PostgreSQL tablespaces exist**
@@ -158,14 +199,14 @@ Note: For variables marked as "Derived value", the default value is determined b
   - Ensure correct permissions for PgBouncer unix socket directory
   - Test access via unix socket to be able to perform 'PAUSE' command
 
-#### 2. PRE-UPGRADE: Install new PostgreSQL packages
+#### PRE-UPGRADE: Install new PostgreSQL packages
 
 - Clean yum/dnf cache (for RedHat based) or Update apt cache for (Debian based)
 - Install new PostgreSQL packages
 - Install TimescaleDB package for new PostgreSQL
   - Note: if 'enable_timescale' is 'true'
 
-#### 3. PRE-UPGRADE: Initialize new db, schema compatibility check, and pg_upgrade --check
+#### PRE-UPGRADE: Initialize new db, schema compatibility check, and pg_upgrade --check
 
 - **Initialize new PostgreSQL**
   - Make sure new PostgreSQL data directory exists
@@ -177,7 +218,7 @@ Note: For variables marked as "Derived value", the default value is determined b
   - Get the current encoding and data_checksums settings
   - Initialize new PostgreSQL data directory
     - for Debain based: on all database servers to create default config files
-    - for RedHat based: on the Primary only
+    - for RedHat based: on the primary only
 - **Copy files specified in the `copy_files_to_all_server` variable**, [optional]
   - Notes: for example, it may be necessary for Postgres Full-Text Search (FTS) files
 - **Schema compatibility check**
@@ -202,7 +243,36 @@ Note: For variables marked as "Derived value", the default value is determined b
   - Verify the two clusters are compatible (`pg_upgrade --check`)
   - Print the result of the pg_upgrade check
 
-#### 4. PRE-UPGRADE: Prepare the Patroni configuration
+#### PRE-UPGRADE: Create a publication/slot and reach recovery_target_lsn"
+  - Note: for blue-green upgrade method (pg_upgrade_logical.yml)
+  - Stop PostgreSQL on target primary
+    - Pause WAL replay (recovery) on the target cluster replicas
+    - Pause Patroni on the target cluster before stopping PostgreSQL
+    - Execute CHECKPOINT before stopping PostgreSQL
+    - Wait for the CHECKPOINT to complete
+    - Stop PostgreSQL on the standby cluster leader
+  - Create a publication and logical replication slot for each database
+    - Get a list of tables distributed by groups
+      - Note: Split tables (sorted by DML activity) into groups for publications to evenly distribute tables across slots.
+      - if `pg_publication_count` more than 1 (default: 1)
+    - Start pg_terminator script
+      - Note: Monitor locks and terminate the 'create publication' blockers
+    - Create publications for logical replication
+    - Create slots for logical replication
+    - Stop pg_terminator script
+    - Set variable: target_lsn
+    - Advance replication slots to target_lsn or each database
+  - Reach recovery_target_lsn on target primary
+    - Specify recovery parameters on the standby cluster leader
+    - Start PostgreSQL on standby cluster leader to reach recovery_target_lsn
+    - Wait for the PostgreSQL start to complete
+    - Wait until the recovery is complete
+    - Check the PostgreSQL log file
+    - Resume WAL replay (recovery) on target cluster replicas
+    - Wait until physical replication becomes active
+    - Wait until physical replication lag is 0 bytes
+
+#### PRE-UPGRADE: Prepare the Patroni configuration
 
 - Backup the patroni.yml configuration file
 - Edit the patroni.yml configuration file
@@ -210,11 +280,11 @@ Note: For variables marked as "Derived value", the default value is determined b
   - **Prepare the PostgreSQL parameters**
     - Notes: Removed or renamed parameters
   - **Remove 'standby_cluster' parameter (if exists)**
-    - Notes: To support upgrades in the Patroni Standby Cluster
+    - Notes: To support upgrades in the Patroni standby cluster
 - **Copy pg_hba.conf to `pg_new_confdir`**
   - Notes: to save pg_hba rules
 
-#### 5. UPGRADE: Upgrade PostgreSQL
+#### UPGRADE: Upgrade PostgreSQL
 
 - **Enable maintenance mode for Patroni cluster** (pause)
 - **Enable maintenance mode for HAProxy** (for 'Type A' scheme)
@@ -238,7 +308,7 @@ Note: For variables marked as "Derived value", the default value is determined b
   - Notes: max wait time: 2 minutes
   - Stop, if replication lag is high
   - Perform rollback
-    - Print error message: "There's a replication lag in the PostgreSQL Cluster. Please try again later"
+    - Print error message: "There's a replication lag in the PostgreSQL cluster. Please try again later"
 - **Perform PAUSE on all pgbouncers servers**
   - Notes: if 'pgbouncer_install' is 'true' and 'pgbouncer_pool_pause' is 'true'
   - Notes: pgbouncer pause script (details in [pgbouncer_pause.yml](tasks/pgbouncer_pause.yml)) performs the following actions:
@@ -249,11 +319,11 @@ Note: For variables marked as "Derived value", the default value is determined b
     - If after that it is still not possible to pause the pgbouncer servers within 60 seconds (`pgbouncer_pool_pause_stop_after` variable) from the start of the script, the script exits with an error.
       - Perform rollback
         - Print error message: "PgBouncer pools could not be paused, please try again later."
-- **Stop PostgreSQL** on the Leader and Replicas
+- **Stop PostgreSQL** on the leader and replicas
   - Check if old PostgreSQL is stopped
   - Check if new PostgreSQL is stopped
-- **Get 'Latest checkpoint location'** on the Leader and Replicas
-  - Print 'Latest checkpoint location' for the Leader and Replicas
+- **Get 'Latest checkpoint location'** on the leader and replicas
+  - Print 'Latest checkpoint location' for the leader and replicas
 - **Check if all 'Latest checkpoint location' values match**
   - if 'Latest checkpoint location' values match
     - Print info message:
@@ -261,13 +331,13 @@ Note: For variables marked as "Derived value", the default value is determined b
   - if 'Latest checkpoint location' values doesn't match
     - Perform rollback
       - Print error message: "Latest checkpoint location' doesn't match on leader and its standbys. Please try again later"
-- **Upgrade the PostgreSQL on the Primary** (using pg_upgrade --link)
+- **Upgrade the PostgreSQL on the primary** (using pg_upgrade --link)
   - Perform rollback, if the upgrade failed
   - Print the result of the pg_upgrade
-- **Make sure that the new data directory are empty on the Replica**
-- **Upgrade the PostgreSQL on the Replica** (using rsync --hard-links)
+- **Make sure that the new data directory are empty on the replica**
+- **Upgrade the PostgreSQL on the replica** (using rsync --hard-links)
   - Wait for the rsync to complete
-- **Upgrade the PostgreSQL tablespaces on the Replica** (using rsync --hard-links)
+- **Upgrade the PostgreSQL tablespaces on the replica** (using rsync --hard-links)
   - Notes: if tablespaces exist
   - Wait for the tablespaces rsync to complete
 - **Synchronize WAL directory** (if `pg_new_wal_dir` is defined) [optional]
@@ -278,15 +348,15 @@ Note: For variables marked as "Derived value", the default value is determined b
   - Create symlink
   - Remove 'pg_wal_old' directory
 - **Remove existing cluster from DCS**
-- **Start Patroni service on the Cluster Leader**
+- **Start Patroni service on the cluster leader**
   - Wait for Patroni port to become open on the host
-  - Check Patroni is healthy on the Leader
-- **Perform RESUME PgBouncer pools on the Leader**
+  - Check Patroni is healthy on the leader
+- **Perform RESUME PgBouncer pools on the leader**
   - Notes: if 'pgbouncer_install' is 'true' and 'pgbouncer_pool_pause' is 'true'
-- **Start Patroni service on the Cluster Replica**
+- **Start Patroni service on the cluster replica**
   - Wait for Patroni port to become open on the host
-  - Check Patroni is healthy on the Replica
-- **Perform RESUME PgBouncer pools on the Replica**
+  - Check Patroni is healthy on the replica
+- **Perform RESUME PgBouncer pools on the replica**
   - Notes: if 'pgbouncer_install' is 'true' and 'pgbouncer_pool_pause' is 'true'
 - **Check PostgreSQL is started and accepting connections**
 - **Disable maintenance mode for HAProxy** (for 'Type A' scheme)
@@ -299,7 +369,14 @@ Note: For variables marked as "Derived value", the default value is determined b
   - Start vip-manager service
   - Make sure that the cluster ip address (VIP) is running
 
-#### 6. POST-UPGRADE: Analyze a PostgreSQL database (update optimizer statistics) and Post-Upgrade tasks
+#### POST-UPGRADE: Create a subscription for logical replication
+  - Note: for blue-green upgrade method (pg_upgrade_logical.yml)
+  - Create a subscription on target primary
+    - Create subscription for logical replication in each database
+    - Make sure that logical replication is active
+    - Check the logical replication lag
+
+#### POST-UPGRADE: Analyze a PostgreSQL database (update optimizer statistics) and Post-Upgrade tasks
 
 - **Run vacuumdb to analyze the PostgreSQL databases**
   - Note: Uses parallel processes equal to 50% of CPU cores ('`vacuumdb_parallel_jobs`' variable)
@@ -318,15 +395,15 @@ Note: For variables marked as "Derived value", the default value is determined b
 - **Perform Post-Checks**
   - Make sure that physical replication is active
     - Note: if no active replication connections found, print error message: "No active replication connections found. Please check the replication status and PostgreSQL logs."
-    - Create a table "test_replication" with 10000 rows on the Primary
+    - Create a table "test_replication" with 10000 rows on the primary
     - Wait until the PostgreSQL replica is synchronized (max wait time: 2 minutes)
     - Drop a table "test_replication"
     - Print the result of checking the number of records
-    - if the number of rows match, print info message: "The PostgreSQL Replication is OK. The number of records in the 'test_replication' table the same as the Primary."
-    - if the number of rows does not match, print error message: "The number of records in the 'test_replication' table does not match the Primary. Please check the replication status and PostgreSQL logs."
+    - if the number of rows match, print info message: "The PostgreSQL replication is OK. The number of records in the 'test_replication' table the same as the primary."
+    - if the number of rows does not match, print error message: "The number of records in the 'test_replication' table does not match the primary. Please check the replication status and PostgreSQL logs."
 - **Perform Post-Upgrade tasks**
   - **Perform tasks for blue-green upgrade method (pg_upgrade_logical.yml)**
-    - Reset the wal_keep_segments/wal_keep_size parameter to original state on the Source Primary
+    - Reset the wal_keep_segments/wal_keep_size parameter to original state on the source primary
   - **Ensure the current data directory is the new data directory**
     - Notes: to prevent deletion the old directory if it is used
   - **Delete the old PostgreSQL data directory**
