@@ -1,5 +1,5 @@
 ---
-- name: "vitabaks.autobase.pg_upgrade | Switchover to the target cluster (blue-green deployment)"
+- name: "vitabaks.autobase.pg_logical_switchover | Switchover to the target cluster (blue-green deployment)"
   hosts: 'source_cluster:target_cluster'
   gather_facts: true
   become: true

@@ -1,5 +1,5 @@
 ---
-- name: "vitabaks.autobase.pg_upgrade | Upgrade PostgreSQL to a new major version (blue-green deployment method)"
+- name: "vitabaks.autobase.pg_logical_upgrade | Upgrade PostgreSQL to a new major version (blue-green deployment method)"
   hosts: 'source_cluster:target_cluster'
   gather_facts: true
   become: true

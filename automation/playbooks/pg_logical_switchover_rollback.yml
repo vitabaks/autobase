@@ -1,5 +1,5 @@
 ---
-- name: "vitabaks.autobase.pg_upgrade | Rollback from target to the source cluster (blue-green deployment)"
+- name: "vitabaks.autobase.pg_logical_switchover_rollback | Rollback from target to the source cluster (blue-green deployment)"
   hosts: 'source_cluster:target_cluster'
   gather_facts: true
   become: true
