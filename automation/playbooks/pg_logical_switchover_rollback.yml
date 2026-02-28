@@ -194,7 +194,7 @@
         - inventory_hostname in groups['primary']
         - pg_reverse_logical_replication | default(true) | bool
 
-    # Finish (info)
+    # info
     - name: Rollback completed
       ansible.builtin.debug:
         msg: "Rollback completed. The source cluster ({{ patroni_cluster_name }}) is now the primary cluster again."
