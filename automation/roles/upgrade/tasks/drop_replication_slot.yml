@@ -1,25 +1,29 @@
 ---
-# Blue-green upgrade method: Drop publications.
+# Blue-green upgrade method: Drop logical replication slots.
 - block:
     # One publication (if pg_publication_count = 1)
-    - name: '[Clean up logical replication] Drop publication'
+    - name: '[Clean up logical replication] Drop replication slot'
       ansible.builtin.command: >-
         {{ psql_command }} -d {{ dbname }} -tAXc "
-        drop publication if exists {{ publication_name }}"
+        select pg_drop_replication_slot('{{ slot_name }}')
+        from pg_replication_slots
+        where slot_name = '{{ slot_name }}'"
       when: pg_publication_count | int == 1
 
     # Multiple publications (if pg_publication_count > 1)
-    - name: '[Clean up logical replication] Drop publications'
+    - name: '[Clean up logical replication] Drop replication slots'
       ansible.builtin.command: >-
-        {{ psql_command }} -tAXc "
-        drop publication if exists {{ publication_name }}_{{ '%02d' % (idx + 1) }}"
+        {{ psql_command }} -d {{ dbname }} -tAXc "
+        select pg_drop_replication_slot('{{ slot_name }}_{{ '%02d' % (idx + 1) }}')
+        from pg_replication_slots
+        where slot_name = '{{ slot_name }}_{{ '%02d' % (idx + 1) }}'"
       loop: "{{ range(0, pg_publication_count | int) | list }}"
       loop_control:
         index_var: idx
-        label: "{{ publication_name }}_{{ '%02d' % (idx + 1) }}"
+        label: "{{ slot_name }}_{{ '%02d' % (idx + 1) }}"
       when: pg_publication_count | int > 1
   vars:
-    publication_name: "{{ pg_publication_name if not reverse_replication | default(false) | bool else pg_reverse_publication_name }}"
+    subscription_slot_name: "{{ pg_subscription_slot_name if not reverse_replication | default(false) | bool else pg_reverse_subscription_slot_name }}"
     slot_name: "{{ (subscription_slot_name ~ '_' ~ dbname) | lower | regex_replace('[^a-z0-9_]+', '_') }}"
     psql_command: "psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }}"
   environment:
