@@ -220,7 +220,7 @@
         reverse_replication: true
       when: pg_reverse_logical_replication | default(true) | bool
 
-    # Finish (info)
+    # info
     - name: Switchover completed
       ansible.builtin.debug:
         msg:
