@@ -67,7 +67,7 @@
         patroni_cluster_leader: false
       when: patroni_leader_result.status != 200
 
-    - name: Get current passwords
+    - name: "[Prepare] Get current passwords"
       ansible.builtin.include_role:
         name: vitabaks.autobase.pre_checks
         tasks_from: passwords
