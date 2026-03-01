@@ -9,3 +9,10 @@
 - name: Restart PgBouncer after configuration changes
   ansible.builtin.include_tasks: pgbouncer_restart.yml
   when: pgbouncer_restore_result.changed | default(false)
+
+- name: Restore PgBouncer TLS setting
+  ansible.builtin.lineinfile:
+    path: "{{ pgbouncer_conf_dir }}/pgbouncer.ini"
+    regexp: '^\s*server_tls_sslmode\s*='
+    line: "server_tls_sslmode = {{ pgbouncer_server_tls_sslmode | default('require') }}"
+  when: tls_cert_generate | default(false) | bool
