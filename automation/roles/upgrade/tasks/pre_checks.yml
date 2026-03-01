@@ -164,32 +164,6 @@
 
 # Pre-Checks for blue-green upgrade method
 - block:
-    # Get a list of databases from the source cluster (if pg_replication_database = "all")
-    - name: "[Prepare] Get a list of databases"
-      ansible.builtin.command: >
-        {{ psql_command }} -tAXc "select datname from pg_catalog.pg_database where not datistemplate"
-      register: datname_result
-      changed_when: false
-      when:
-        - pg_replication_database == "all"
-        - inventory_hostname in groups.get('source_primary', [])
-
-    - name: "Set variable: pg_replication_database"
-      ansible.builtin.set_fact:
-        pg_replication_database: "{{ hostvars[source_primary_host].datname_result.stdout_lines }}"
-      when: pg_replication_database == "all"
-
-    - name: "Set variable: source_databases"
-      ansible.builtin.set_fact:
-        source_databases: >-
-          {{
-            pg_replication_database is string
-            | ternary(
-                pg_replication_database.split(',') | map('trim') | reject('equalto', '') | list,
-                (pg_replication_database | default([], true))
-              )
-          }}
-
     - name: "[Pre-Check] Make sure that the wal_level parameter is set to 'logical'"
       ansible.builtin.command: >
         {{ psql_command }} -tAXc "show wal_level"
