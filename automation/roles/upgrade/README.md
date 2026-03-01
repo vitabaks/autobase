@@ -2,25 +2,41 @@
 
 This role is designed for in-place or blue-green upgrade methods (e.g., from version 17 to 18).
 
-#### How it works:
+**Playbooks**
 
-TBD
+In-place method:
+- `pg_upgrade` - Upgrades the PostgreSQL to a new major version.
+- `pg_upgrade_rollback` - Performs a rollback of a PostgreSQL upgrade.
 
-For in-place upgrade method, we use hard links instead of copying files to reduce downtime. There is no need to plan additional disk space.
+Blue-green method:
+- `pg_logical_upgrade` - Upgrades the target cluster and converting a physical replica into a logical replica.
+- `pg_logical_switchover` - Redirects PostgreSQL traffic from the source cluster to the target cluster with near-zero downtime.
+- `pg_logical_switchover_rollback` - Switches PostgreSQL traffic back to the source cluster.
+- `pg_logical_replication_stop` - Clean up publications, subscriptions, and replication slots.
 
-#### Database Downtime Considerations
+#### How it works
 
-To minimize or even eliminate errors during database upgrades (depending on the workload and timeouts), we pause the PgBouncer pools. From an application's perspective, this does not result in terminated database connections. Instead, applications might experience a temporary increase in query latency while the PgBouncer pools are paused.
+`In-place` method upgrades the current production cluster directly. It is simpler and does not require additional servers, but it usually requires a short maintenance window (typically about 1 minute, depending on workload and environment).
 
-On average, the PgBouncer pause duration is approximately 30 seconds. However, for larger databases, this pause might be extended due to longer `pg_upgrade` and `rsync` procedures. The default maximum wait time for a request during a pause is set to 2 minutes (controlled by the `query_wait_timeout` pgbouncer parameter). If the pause exceeds this duration, connections will be terminated with a timeout error.
+`Blue-green` method upgrades a separate target cluster that is a copy of the current one, so upgrade stages on target do not impact production availability. This method is suitable when downtime must be limited to a few seconds: during switchover, the source cluster is briefly set to read-only, traffic is redirected to target (by updating PgBouncer pool backend IPs), and you can observe stability before switching the application to the address of the new cluster or rolling back to the source cluster if needed. 
+
+Rollback is possible without losing changes made after cutover, because reverse logical replication (source <- target) is created during traffic switching.
+
+**Database Downtime Considerations**
+
+`In-place` To minimize the downtime, we pause PgBouncer pools. This doesn’t terminate application connections, but may temporarily increase query latency while pools are paused. The pause typically lasts ~30-60 seconds, but may be longer for large databases due to pg_upgrade and rsync. The default maximum wait time during a pause is 2 minutes (controlled by the query_wait_timeout parameter).
+
+`Blue-green` A short service impact occurs only during switchover: the source cluster is briefly set to read-only, the remaining logical replication lag is drained, and traffic is redirected to target. Only the write traffic degrades (~10-15 seconds), while the read traffic has near-zero downtime.
 
 ## Compatibility
 
-The upgrade is supported starting from PostgreSQL 9.3 for in-place upgrade method, or PostgreSQL 10 for blue-green upgrade method.
+The upgrade is supported starting from PostgreSQL 9.3 for in-place upgrade method, and starting from PostgreSQL 12 for blue-green upgrade method.
 
 ## Requirements
 
 Specify the current (old) version of PostgreSQL in the `pg_old_version` variable and target version of PostgreSQL for the upgrade in the `pg_new_version` variable.
+
+For the blue-green method, deploy the target cluster in standby cluster mode. Ensure that the target cluster has the same number of PostgreSQL servers as the source cluster. This is important during switchover when configuring PgBouncer to redirect traffic to the target cluster (if PgBouncer is installed).
 
 ## Recommendations
 
@@ -40,7 +56,116 @@ Specify the current (old) version of PostgreSQL in the `pg_old_version` variable
 
    Upon seeing these messages, proceed to run the playbook without any tags to initiate the upgrade.
 
+## Upgrade
+
+### In-place upgrade method
+
+Use `pg_upgrade` playbook, example:
+
+```bash
+ansible-playbook pg_upgrade.yml -i inventory -e "pg_old_version=17 pg_new_version=18"
+```
+
+**Rollback**
+
+It's designed to be used when a PostgreSQL upgrade hasn't been fully completed and the new version hasn't been started.
+
+```bash
+ansible-playbook pg_upgrade_rollback.yml -i inventory
+```
+
+In some scenarios, if errors occur, the pg_upgrade.yml playbook may automatically initiate a rollback. Alternatively, if the automatic rollback does not occur, you can manually execute the pg_upgrade_rollback playbook to revert the changes.
+
+The rollback operation is performed by starting the Patroni cluster with the old version of PostgreSQL using the same PGDATA. The playbook first checks the health of the current cluster, verifies the version of PostgreSQL, and ensures the new PostgreSQL is not running. If these checks pass, the playbook switches back to the old PostgreSQL paths and restarts the Patroni service.
+
+### Blue-green upgrade method
+
+Use `pg_logical_upgrade` playbook, example:
+
+##### 1. Deploy the target (standby cluster)
+
+TIP: During target cluster deployment, it is enough to point the standby cluster to the source cluster by setting either `source_cluster_host` to an IP address of the source cluster host.
+
+Create `inventory.yml` file: describe the nodes of the current and target cluster.
+
+```yaml
+---
+all:
+  vars:
+    # upgrade settings
+    pg_old_version: 17 # the current (old) version of PostgreSQL
+    pg_new_version: 18 # the target (new) version of PostgreSQL for the upgrade
+    pg_replication_database: "all" # dbname for replication, 'all' for the entire cluster
+    pg_publication_count: 1 # number of publications, replication slots and subscriptions
+    # connection settings
+    ansible_ssh_user: root
+    ansible_ssh_private_key_file: /home/ubuntu/.ssh/id_rsa
+  children:
+    source_cluster:
+      hosts:
+        10.142.0.21:
+        10.142.0.22:
+        10.142.0.23:
+    target_cluster:
+      hosts:
+        10.142.0.24:
+        10.142.0.26:
+        10.142.0.43:
+```
+
+##### 2. Upgrade the target cluster:
+
+```bash
+ansible-playbook pg_logical_upgrade.yml -i inventory.yml
+```
+
+##### 3. Switchover to the target cluster:
+
+After pg_logical_upgrade is completed and logical replication is active (source -> target), use `pg_logical_switchover` playbook to switch production traffic to the target cluster.
+
+```bash
+ansible-playbook playbooks/pg_logical_switchover.yml -i inventory.yml
+```
+
+WARNING: If PgBouncer is not installed in your cluster, traffic redirection will not happen automatically.
+In this case, use the following sequence:
+   1. Stop your application
+   2. Run the pg_logical_switchover playbook
+   3. Start your application and point it to the new (target) cluster address
+
+Optionally:
+
+- **Force mode** (allow a small lag during cutover):
+
+    ```bash
+    ansible-playbook playbooks/pg_logical_switchover.yml -i inventory.yml \
+      -e "pg_switchover_force_mode=true pg_switchover_force_mode_lag_bytes=1048576"
+    ```
+
+- **Rollback** after switchover (if you need to move traffic back to the original cluster):
+
+    ```bash
+    ansible-playbook playbooks/pg_logical_switchover_rollback.yml -i inventory.yml
+    ```
+
+##### 4. Switch application to the target cluster
+
+After observing your services and database on the new cluster, if everything is stable, switch your application to the new cluster by updating the connection string with the new cluster address.
+
+##### 5. Stop reverse replication
+
+To clean up logical replication objects after migration (subscriptions, replication slots, and publications), run:
+
+```bash
+ansible-playbook playbooks/pg_logical_replication_stop.yml -i inventory.yml
+```
+
+---
+
+
 ## Variables
+
+Upgrade settings (for both methods):
 
 | Variable Name                                | Description                                                                                                                                                                           | Default Value |
 | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------: |
@@ -76,67 +201,28 @@ Specify the current (old) version of PostgreSQL in the `pg_old_version` variable
 | `pgbackrest_stanza_upgrade`                  | Perform the "stanza-upgrade" command after the upgrade (if 'pgbackrest_install' is 'true').                                                                                           |        `true` |
 | `pg_install_user_password`                  | The Postgres install user (rolname with oid = 10) password. | `{{ patroni_superuser_password }}` |
 
-Note: For variables marked as "Derived value", the default value is determined based on other variables. Please see the [upgrade.yml](../upgrade/defaults/main.yml) variable file.
+Blue-green deployment method settings:
 
-## Upgrade
+| Variable Name                                | Description                                                                                                           | Default Value |
+| -------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- | ------------: |
+| `pg_replication_database`                    | Database name for the replication, 'all' for the entire database cluster.                                             |  `all`        |
+| `pg_allow_replica_identity_full`             | Set REPLICA IDENTITY FULL on tables without primary key.                                                              |  `true`       |
+| `pg_publication_count`                       | Number of publications, replication slots and subscriptions to be created for logical replication (source -> target). |  `1`          |
+| `pg_publication_name`                        | Publication_name name for the logical replication.                                                                    | `pg_upgrade_publication` |
+| `pg_subscription_name`                       | Subscription name for the logical replication.                                                                        | `pg_upgrade_subscription` |
+| `pg_subscription_slot_name`                  | Subscription slot name for the logical replication. Base prefix for logical replication slot names; each slot name includes the database name (and _01, _02, ... suffix if pg_publication_count > 1) | `{{ pg_subscription_name }}_slot` |
+| `pg_wal_keep_gigabytes`                       | The number of WAL files (in gigabytes) to hold in the source cluster. Set '`none`' to not change the wal_keep_segments/wal_keep_size parameter. | `100` |
+| `pg_switchover_max_replication_lag_bytes`    | Maximum allowed logical replication lag (in bytes) before switchover.                                                | `16777216` |
+| `pg_switchover_no_lag_wait_timeout`          | Timeout in seconds for "Plan A": wait until logical replication lag is 0 bytes before switchover.                    | `10` |
+| `pg_switchover_force_mode`                   | Enable "Plan B": allow switchover with a small replication lag.                                                      | `false` |
+| `pg_switchover_force_mode_lag_bytes`         | Allowed logical replication lag (in bytes) for force mode (`pg_switchover_force_mode=true`).                         | `1048576` |
+| `pg_reverse_logical_replication`             | Enable reverse logical replication (source <- target) to support rollback without losing changes.                    | `true` |
+| `pg_reverse_publication_name`                | Publication name for reverse logical replication.                                                                    | `reverse_{{ pg_publication_name }}` |
+| `pg_reverse_subscription_name`               | Subscription name for reverse logical replication.                                                                   | `reverse_{{ pg_subscription_name }}` |
+| `pg_reverse_subscription_slot_name`          | Subscription slot name for reverse logical replication.                                                              | `reverse_{{ pg_subscription_slot_name }}` |
+| `pg_sequences_increase_value`                | Value added (+N) to sequence values in the new cluster before switchover.                                            | `1000000` |
 
-**In-place upgrade method:**
-
-Use `pg_upgrade` playbook, example:
-
-```bash
-ansible-playbook pg_upgrade.yml -i inventory -e "pg_old_version=17 pg_new_version=18"
-```
-
-**Blue-green upgrade method:**
-
-Use `pg_logical_upgrade` playbook, example:
-
-inventory
-```yaml
----
-all:
-  vars:
-    # upgrade settings
-    pg_old_version: 17 # the current (old) version of PostgreSQL
-    pg_new_version: 18 # the target (new) version of PostgreSQL for the upgrade
-    pg_replication_database: "all" # dbname for replication, 'all' for the entire cluster
-    # connection settings
-    ansible_ssh_user: root
-    ansible_ssh_private_key_file: /home/ubuntu/.ssh/id_rsa
-  children:
-    source_cluster:
-      hosts:
-        10.142.0.21:
-        10.142.0.22:
-        10.142.0.23:
-    target_cluster:
-      hosts:
-        10.142.0.24:
-        10.142.0.26:
-        10.142.0.43:
-```
-
-Run playbook
-```bash
-ansible-playbook pg_logical_upgrade.yml -i inventory.yml
-```
-
-### Rollback
-
-This playbook performs a rollback of a PostgreSQL upgrade.
-
-Note: In some scenarios, if errors occur, the pg_upgrade.yml playbook may automatically initiate a rollback.
-Alternatively, if the automatic rollback does not occur, you can manually execute the pg_upgrade_rollback.yml playbook to revert the changes.
-
-```bash
-ansible-playbook pg_upgrade_rollback.yml
-```
-
-It's designed to be used when a PostgreSQL upgrade hasn't been fully completed and the new version hasn't been started.
-The rollback operation is performed by starting the Patroni cluster with the old version of PostgreSQL using the same PGDATA.
-The playbook first checks the health of the current cluster, verifies the version of PostgreSQL, and ensures the new PostgreSQL is not running.
-If these checks pass, the playbook switches back to the old PostgreSQL paths and restarts the Patroni service.
+Note: For more information, see the `upgrade` role [variables](../upgrade/defaults/main.yml) file.
 
 ---
 
@@ -153,7 +239,7 @@ If these checks pass, the playbook switches back to the old PostgreSQL paths and
   - Notes: Install 'pexpect' package if missing
 - **Test PostgreSQL database access using a unix socket**
   - if there is an error (no pg_hba.conf entry):
-    - Add temporary local access rule (during the upgrade)
+    - Add temporary local hba rule (during the upgrade)
     - Update the PostgreSQL configuration
 - **Check the current version of PostgreSQL**
   - Stop, if the current version does not match `pg_old_version`
@@ -162,11 +248,14 @@ If these checks pass, the playbook switches back to the old PostgreSQL paths and
   - Note: This check is necessary to avoid the risk of deleting the current data directory
   - Stop, if the current data directory is the same as `pg_new_datadir`.
   - Stop, if the current WAL directory is the same as `pg_new_wal_dir` (if a custom wal dir is used).
-- **Perform pre-checks and preparation for blue-green upgrade method (pg_upgrade_logical.yml)**
+- **Perform pre-checks and preparation for blue-green upgrade method**
+  - *Note: If the `pg_upgrade_logical` playbook is used*
   - Get a list of databases from the source cluster
     - Note: if `pg_replication_database` == "`all`" (default: all)
   - Make sure that the wal_level parameter is set to 'logical'
-    - Stop, if wal_level != logical
+    - Stop, if wal_level != logicala
+  - Make sure that the max_logical_replication_workers parameter is sufficient
+    - Stop, if max_logical_replication_workers is too low for the number of publications and databases
   - Test access from the target cluster to the source database
   - Test access from the source cluster to the target database
   - Make sure there are no tables with replica identity "nothing"
@@ -244,7 +333,7 @@ If these checks pass, the playbook switches back to the old PostgreSQL paths and
   - Print the result of the pg_upgrade check
 
 #### PRE-UPGRADE: Create a publication/slot and reach recovery_target_lsn"
-  - Note: for blue-green upgrade method (pg_upgrade_logical.yml)
+  - *Note: for blue-green upgrade method (`pg_upgrade_logical` playbook)*
   - Stop PostgreSQL on target primary
     - Pause WAL replay (recovery) on the target cluster replicas
     - Pause Patroni on the target cluster before stopping PostgreSQL
@@ -370,7 +459,7 @@ If these checks pass, the playbook switches back to the old PostgreSQL paths and
   - Make sure that the cluster ip address (VIP) is running
 
 #### POST-UPGRADE: Create a subscription for logical replication
-  - Note: for blue-green upgrade method (pg_upgrade_logical.yml)
+  - *Note: for blue-green upgrade method (`pg_upgrade_logical` playbook)*
   - Create a subscription on target primary
     - Create subscription for logical replication in each database
     - Make sure that logical replication is active
@@ -402,7 +491,8 @@ If these checks pass, the playbook switches back to the old PostgreSQL paths and
     - if the number of rows match, print info message: "The PostgreSQL replication is OK. The number of records in the 'test_replication' table the same as the primary."
     - if the number of rows does not match, print error message: "The number of records in the 'test_replication' table does not match the primary. Please check the replication status and PostgreSQL logs."
 - **Perform Post-Upgrade tasks**
-  - **Perform tasks for blue-green upgrade method (pg_upgrade_logical.yml)**
+  - **Perform tasks for blue-green upgrade method**
+    - *Note: If the `pg_upgrade_logical` playbook is used*
     - Reset the wal_keep_segments/wal_keep_size parameter to original state on the source primary
   - **Ensure the current data directory is the new data directory**
     - Notes: to prevent deletion the old directory if it is used
@@ -412,7 +502,7 @@ If these checks pass, the playbook switches back to the old PostgreSQL paths and
     - Notes: if 'pg_new_wal_dir' is defined
   - **Remove old PostgreSQL packages**
     - Notes: if 'pg_old_packages_remove' is 'true'
-  - **Remove temporary local access rule from pg_hba.conf**
+  - **Remove temporary local hba rule from pg_hba.conf**
     - Notes: if it has been changed
     - Update the PostgreSQL configuration
   - **pgBackRest** (if 'pgbackrest_install' is 'true')
@@ -429,6 +519,51 @@ If these checks pass, the playbook switches back to the old PostgreSQL paths and
   - **Print info messages**
     - List the Patroni cluster members
     - Upgrade completed
+
+## Switchover plan
+
+Note: for blue-green upgrade method (`pg_logical_switchover` playbook)
+
+- **Perform pre-checks**
+  - Ensure logical replication lag is no more than `max_replication_lag_bytes` (default: 10485760)
+  - Print logical replication lag
+- **Prepare pgbouncer configuration**
+  - Note: if `pgbouncer_install` is `true`
+  - Prepare PgBouncer configuration to redirect primary traffic
+    - Note: replase the 'host=' option value to target primary host address
+  - Prepare PgBouncer configuration to redirect replica traffic
+    - Note: replase the 'host=' option value to target secondary hosts address
+  - Temporarily disable TLS from PgBouncer to Postgres during redirect
+    - Note: if self-signed certificates are used (tls_cert_generate = true), target cluster uses a different CA, so PgBouncer on source may fail to verify TLS when connecting to Postgres on target
+- **Increase all sequence values**
+  - Get sequence values for each database
+  - Increase sequence values for each database
+  - Note: Add + `pg_sequences_increase_value` to current value (default: 1000000)
+- **Wait for a window with low replication lag**
+  - Ensure logical replication lag is no more than `pg_switchover_max_replication_lag_bytes` (default: 16777216)
+- **Enable read-only mode on the source cluster**
+  - Set `default_transaction_read_only = 'on'`
+  - Reload PostgreSQL configuration
+- **Wait until there is no replication lag**
+  - Wait until the lag is 0 bytes
+  - or no more than `pg_switchover_force_mode_lag_bytes` (default: 1048576) if force mode is enabled (`pg_switchover_force_mode`)
+- **Delete the previous subscription**
+  - Drop subscription in each database
+- **Create publication and slot for reverse replication**
+  - Create publication and slot for each database
+- **Redirect database traffic to the target cluster**
+  - Note: if `pgbouncer_install` is `true`
+  - Restart pgbouncer service to apply changes
+- **Disable read-only mode on the source cluster**
+  - Reset `default_transaction_read_only` option
+  - Reload PostgreSQL configuration
+- **Start reverse logical replication**
+  - Create subscription in each database
+  - Make sure that logical replication is active
+  - Check the logical replication lag
+- **Print info messages**
+  - Switchover completed
+  - Final step: switch application services to the target cluster
 
 ## Dependencies
 
