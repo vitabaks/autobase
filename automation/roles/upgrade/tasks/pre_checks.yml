@@ -206,6 +206,25 @@
         - patroni_cluster_leader | default(false) | bool
         - pg_wal_level.stdout | default('') != "logical"
 
+    - name: "[Pre-Check] Make sure that the max_logical_replication_workers parameter is sufficient"
+      ansible.builtin.command: >
+        {{ psql_command }} -tAXc "show max_logical_replication_workers"
+      changed_when: false
+      register: pg_max_logical_replication_workers
+      when: patroni_cluster_leader | default(false)
+
+    # Stop, if max_logical_replication_workers is too low for the number of publications and databases
+    - name: "Pre-Check error. max_logical_replication_workers is too low"
+      ansible.builtin.fail:
+        msg:
+          - "The max_logical_replication_workers parameter is too low. Current value: {{ pg_max_logical_replication_workers.stdout | int }}"
+          - "Required minimum value: {{ required_logical_replication_workers }}"
+      vars:
+        required_logical_replication_workers: "{{ (pg_publication_count | int) * (source_databases | length) }}"
+      when:
+        - patroni_cluster_leader | default(false) | bool
+        - pg_max_logical_replication_workers.stdout | int < required_logical_replication_workers | int
+
     - name: "[Pre-Check] Test access from the target to the source database"
       ansible.builtin.command: >-
         {{ pg_old_bindir }}/psql -w -h {{ source_primary_host_addr }} -p {{ postgresql_port }}
