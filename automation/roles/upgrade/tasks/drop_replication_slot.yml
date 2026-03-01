@@ -23,7 +23,7 @@
         label: "{{ slot_name }}_{{ '%02d' % (idx + 1) }}"
       when: pg_publication_count | int > 1
   vars:
-    subscription_slot_name: "{{ pg_subscription_slot_name if not reverse_replication | default(false) | bool else pg_reverse_subscription_slot_name }}"
+    subscription_slot_name: "{{ pg_reverse_subscription_slot_name if not reverse_replication | default(false) | bool else pg_subscription_slot_name }}"
     slot_name: "{{ (subscription_slot_name ~ '_' ~ (dbname | default(''))) | lower | regex_replace('[^a-z0-9_]+', '_') }}"
     psql_command: "psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }}"
   environment:
