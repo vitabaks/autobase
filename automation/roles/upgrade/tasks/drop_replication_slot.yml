@@ -5,22 +5,28 @@
     - name: '[Clean up logical replication] Drop replication slot'
       ansible.builtin.command: >-
         {{ psql_command }} -d {{ dbname }} -tAXc "
-        select pg_drop_replication_slot('{{ slot_name }}')
-        from pg_replication_slots
-        where slot_name = '{{ slot_name }}'"
+        select pg_drop_replication_slot('{{ slot_name }}')"
+      register: drop_slot_result
+      changed_when: "'does not exist' not in (drop_slot_result.stderr | default(''))"
+      failed_when:
+        - drop_slot_result.rc != 0
+        - "'does not exist' not in (drop_slot_result.stderr | default(''))"
       when: pg_publication_count | int == 1
 
     # Multiple publications (if pg_publication_count > 1)
     - name: '[Clean up logical replication] Drop replication slots'
       ansible.builtin.command: >-
         {{ psql_command }} -d {{ dbname }} -tAXc "
-        select pg_drop_replication_slot('{{ slot_name }}_{{ '%02d' % (idx + 1) }}')
-        from pg_replication_slots
-        where slot_name = '{{ slot_name }}_{{ '%02d' % (idx + 1) }}'"
+        select pg_drop_replication_slot('{{ slot_name }}_{{ '%02d' % (idx + 1) }}')"
       loop: "{{ range(0, pg_publication_count | int) | list }}"
       loop_control:
         index_var: idx
         label: "{{ slot_name }}_{{ '%02d' % (idx + 1) }}"
+      register: drop_slot_results
+      changed_when: "'does not exist' not in (drop_slot_results.stderr | default(''))"
+      failed_when:
+        - drop_slot_results.rc != 0
+        - "'does not exist' not in (drop_slot_results.stderr | default(''))"
       when: pg_publication_count | int > 1
   vars:
     subscription_slot_name: "{{ pg_reverse_subscription_slot_name if not reverse_replication | default(false) | bool else pg_subscription_slot_name }}"
