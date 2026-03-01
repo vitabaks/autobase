@@ -59,7 +59,6 @@
   environment:
     PATH: "{{ ansible_env.PATH }}:{{ pg_new_bindir }}:{{ pg_old_bindir }}"
     PGPASSWORD: "{{ patroni_superuser_password }}"
-  ignore_errors: true # show the error and continue the playbook execution
   when:
     - patroni_cluster_leader | default(false) | bool
     - pg_publication_count | int == 1
@@ -133,7 +132,6 @@
   environment:
     PATH: "{{ ansible_env.PATH }}:{{ pg_new_bindir }}:{{ pg_old_bindir }}"
     PGPASSWORD: "{{ patroni_superuser_password }}"
-  ignore_errors: true # show the error and continue the playbook execution
   when:
     - patroni_cluster_leader | default(false) | bool
     - pg_publication_count | int > 1
