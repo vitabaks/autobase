@@ -131,21 +131,21 @@
           - "Target cluster leader: {{ ansible_hostname }}"
       when: inventory_hostname in groups['primary']
 
-  tasks:
-    - name: Get current passwords
+    - name: "[Prepare] Get current passwords"
       ansible.builtin.include_role:
         name: vitabaks.autobase.pre_checks
         tasks_from: passwords
       vars:
-        source_group: source_cluster
+        source_group: "source_cluster"
         postgresql_cluster_maintenance: true
       when: patroni_superuser_password | default('') | length < 1
 
-    - name: Perform pre-checks
+    - name: "[Prepare] Get a list of databases"
       ansible.builtin.include_role:
         name: vitabaks.autobase.upgrade
-        tasks_from: pre_checks_switchover
+        tasks_from: source_databases
 
+  tasks:
     - name: Disable read-only mode on the old cluster (if enabled)
       ansible.builtin.include_role:
         name: vitabaks.autobase.upgrade
