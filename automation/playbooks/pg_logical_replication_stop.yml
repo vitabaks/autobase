@@ -102,5 +102,9 @@
       ansible.builtin.include_role:
         name: vitabaks.autobase.upgrade
         tasks_from: drop_replication_slot
+      loop: "{{ source_databases | default([]) }}"
+      loop_control:
+        loop_var: dbname
+        label: "{{ dbname | default('') }}"
       vars:
         reverse_replication: "{{ true if inventory_hostname in (groups['source_cluster']) else false }}"
