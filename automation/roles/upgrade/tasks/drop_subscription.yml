@@ -7,7 +7,7 @@
         {{ psql_command }} -d {{ dbname }} -tAXc "
         drop subscription if exists {{ subscription_name }}"
       register: drop_sub_result
-      changed_when: "'DROP SUBSCRIPTION' in (drop_sub_result.stdout | default(''))"
+      changed_when: "'does not exist' not in (drop_sub_result.stderr | default(''))"
       when: pg_publication_count | int == 1
 
     - name: "[Stop logical replication] Force drop subscription in database {{ dbname | default('postgres') }}"
@@ -30,6 +30,7 @@
         index_var: idx
         label: "{{ subscription_name }}_{{ '%02d' % (idx + 1) }}"
       register: drop_sub_results
+      changed_when: "'does not exist' not in (drop_sub_results.stderr | default(''))"
       when: pg_publication_count | int > 1
 
     - name: "[Stop logical replication] Force drop subscriptions in database: {{ dbname | default('postgres') }}"
