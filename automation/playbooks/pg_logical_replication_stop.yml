@@ -67,12 +67,26 @@
         patroni_cluster_leader: false
       when: patroni_leader_result.status != 200
 
+    - name: Get current passwords
+      ansible.builtin.include_role:
+        name: vitabaks.autobase.pre_checks
+        tasks_from: passwords
+      vars:
+        source_group: "source_cluster"
+        postgresql_cluster_maintenance: true
+      when: patroni_superuser_password | default('') | length < 1
+
     # if pg_replication_database = "all"
     - name: "[Prepare] Get a list of databases"
       ansible.builtin.command: >
         {{ psql_command }} -tAXc "select datname from pg_catalog.pg_database where not datistemplate"
       register: datname_result
       changed_when: false
+      vars:
+        psql_command: "psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres"
+      environment:
+        PATH: "{{ ansible_env.PATH }}:{{ pg_new_bindir }}:{{ pg_old_bindir }}"
+        PGPASSWORD: "{{ patroni_superuser_password }}"
       when:
         - pg_replication_database == "all"
         - patroni_cluster_leader | default(false) | bool
@@ -97,15 +111,6 @@
       when: patroni_cluster_leader | default(false) | bool
 
   tasks:
-    - name: Get current passwords
-      ansible.builtin.include_role:
-        name: vitabaks.autobase.pre_checks
-        tasks_from: passwords
-      vars:
-        source_group: "source_cluster"
-        postgresql_cluster_maintenance: true
-      when: patroni_superuser_password | default('') | length < 1
-
     - name: Delete the subscription
       ansible.builtin.include_role:
         name: vitabaks.autobase.upgrade
