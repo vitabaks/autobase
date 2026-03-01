@@ -25,7 +25,7 @@
   vars:
     publisher_group: "{{ 'source_cluster' if not reverse_replication | default(false) | bool else 'target_cluster' }}"
     subscription_slot_name: "{{ pg_subscription_slot_name if not reverse_replication | default(false) | bool else pg_reverse_subscription_slot_name }}"
-    slot_name: "{{ (subscription_slot_name ~ '_' ~ dbname) | lower | regex_replace('[^a-z0-9_]+', '_') }}"
+    slot_name: "{{ (subscription_slot_name ~ '_' ~ (dbname | default(''))) | lower | regex_replace('[^a-z0-9_]+', '_') }}"
     psql_command: "psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }}"
   environment:
     PATH: "{{ ansible_env.PATH }}:{{ pg_new_bindir }}:{{ pg_old_bindir }}"
@@ -33,3 +33,4 @@
   when:
     - inventory_hostname in (groups.get(publisher_group, []) | default([], true))
     - patroni_cluster_leader | default(false) | bool
+    - (dbname | default('') | string | length) > 0
