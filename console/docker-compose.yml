@@ -62,7 +62,7 @@ services:
       - autobase
 
   dbdesk-studio:
-    image: docker.io/anuraggoswami/dbdesk-studio:latest
+    image: docker.io/anuraggoswami/dbdesk-studio:1.0.0
     container_name: dbdesk-studio
     ports:
       - 9876:9876  # nginx (frontend + /api/ proxy); Express listens internally on PORT
