@@ -18,7 +18,24 @@ Blue-green method:
 
 `In-place` method upgrades the current production cluster directly. It is simpler and does not require additional servers, but it usually requires a short maintenance window (typically about 1 minute, depending on workload and environment).
 
+Schematic:
+
+```mermaid
+flowchart TD
+    A[Current cluster v17] -->|pg_upgrade using hard-links| B[Current cluster v18]
+```
+
 `Blue-green` method upgrades a separate target cluster that is a copy of the current one, so upgrade stages on target do not impact production availability. This method is suitable when downtime must be limited to a few seconds: during switchover, the source cluster is briefly set to read-only, traffic is redirected to target (by updating PgBouncer pool backend IPs), and you can observe stability before switching the application to the address of the new cluster or rolling back to the source cluster if needed. 
+
+Schematic:
+
+```mermaid
+flowchart LR
+  S[Source cluster/BLUE] -->|physycal replication| T[Target cluster/GREEN]
+  S -->|pg_upgrade on target| T
+  S -->|logical replication| T
+  S -->|switchover: redirect traffic| T
+```
 
 Rollback is possible without losing changes made after cutover, because reverse logical replication (source <- target) is created during traffic switching.
 
