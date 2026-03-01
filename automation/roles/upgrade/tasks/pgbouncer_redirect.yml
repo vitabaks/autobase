@@ -13,9 +13,13 @@
 
 - name: Prepare PgBouncer configuration to redirect primary traffic
   ansible.builtin.replace:
-    path: "{{ pgbouncer_conf_dir }}/pgbouncer.ini"
+    path: "{{ pgbouncer_conf_dir }}/pgbouncer{{ '-%d' % (idx + 1) if idx > 0 else '' }}.ini"
     regexp: '(?m)^(\s*[^#;\n]*\bhost=)[^\s]+'
     replace: '\g<1>{{ target_primary_host_addr }}'
+  loop: "{{ range(0, (pgbouncer_processes | default(1) | int)) | list }}"
+  loop_control:
+    loop_var: idx
+    label: "pgbouncer{{ '-%d' % (idx + 1) if idx > 0 else '' }}.ini"
   vars:
     target_primary_host: "{{ (groups.get('primary', []) | first) | default('', true) }}"
     target_primary_host_addr: >-
@@ -28,9 +32,13 @@
 
 - name: Prepare PgBouncer configuration to redirect replica traffic
   ansible.builtin.replace:
-    path: "{{ pgbouncer_conf_dir }}/pgbouncer.ini"
+    path: "{{ pgbouncer_conf_dir }}/pgbouncer{{ '-%d' % (idx + 1) if idx > 0 else '' }}.ini"
     regexp: '(?m)^(\s*[^#;\n]*\bhost=)[^\s]+'
     replace: '\g<1>{{ target_secondary_host_addr }}'
+  loop: "{{ range(0, (pgbouncer_processes | default(1) | int)) | list }}"
+  loop_control:
+    loop_var: idx
+    label: "pgbouncer{{ '-%d' % (idx + 1) if idx > 0 else '' }}.ini"
   vars:
     source_secondaries: "{{ groups.get('source_secondary', []) | sort }}"
     target_secondaries: "{{ groups.get('secondary', []) | sort }}"
@@ -49,9 +57,13 @@
 # This prevents: "could not accept SSL connection: certificate verify failed"
 - name: Temporarily disable TLS from PgBouncer to Postgres during redirect
   ansible.builtin.lineinfile:
-    path: "{{ pgbouncer_conf_dir }}/pgbouncer.ini"
+    path: "{{ pgbouncer_conf_dir }}/pgbouncer{{ '-%d' % (idx + 1) if idx > 0 else '' }}.ini"
     regexp: '^\s*server_tls_sslmode\s*='
     line: "server_tls_sslmode = disable"
+  loop: "{{ range(0, (pgbouncer_processes | default(1) | int)) | list }}"
+  loop_control:
+    loop_var: idx
+    label: "pgbouncer{{ '-%d' % (idx + 1) if idx > 0 else '' }}.ini"
   when:
     - tls_cert_generate | default(false) | bool
     - inventory_hostname in groups.get('source_cluster', [])

@@ -1,9 +1,13 @@
 ---
 - name: Restore the old PgBouncer configuration
   ansible.builtin.replace:
-    path: "{{ pgbouncer_conf_dir }}/pgbouncer.ini"
+    path: "{{ pgbouncer_conf_dir }}/pgbouncer{{ '-%d' % (idx + 1) if idx > 0 else '' }}.ini"
     regexp: '(?m)^(\s*[^#;\n]*\bhost=)[^\s]+'
     replace: '\g<1>{{ postgresql_unix_socket_dir }}'
+  loop: "{{ range(0, (pgbouncer_processes | default(1) | int)) | list }}"
+  loop_control:
+    loop_var: idx
+    label: "pgbouncer{{ '-%d' % (idx + 1) if idx > 0 else '' }}.ini"
   register: pgbouncer_restore_result
 
 - name: Restart PgBouncer after configuration changes
@@ -12,7 +16,11 @@
 
 - name: Restore PgBouncer TLS setting
   ansible.builtin.lineinfile:
-    path: "{{ pgbouncer_conf_dir }}/pgbouncer.ini"
+    path: "{{ pgbouncer_conf_dir }}/pgbouncer{{ '-%d' % (idx + 1) if idx > 0 else '' }}.ini"
     regexp: '^\s*server_tls_sslmode\s*='
     line: "server_tls_sslmode = {{ pgbouncer_server_tls_sslmode | default('require') }}"
+  loop: "{{ range(0, (pgbouncer_processes | default(1) | int)) | list }}"
+  loop_control:
+    loop_var: idx
+    label: "pgbouncer{{ '-%d' % (idx + 1) if idx > 0 else '' }}.ini"
   when: tls_cert_generate | default(false) | bool
