@@ -12,7 +12,7 @@
     - publication_state | default('present') == 'present'
     - patroni_cluster_leader | default(false) | bool
 
-- name: Drop publication and slot for each database
+- name: Drop publication for each database
   ansible.builtin.include_tasks: drop_publication.yml
   loop: "{{ source_databases }}"
   loop_control:
