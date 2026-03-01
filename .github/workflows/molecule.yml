@@ -24,17 +24,17 @@ jobs:
           - distro: ubuntu2404
             tag: latest
             namespace: geerlingguy
-#          - distro: rockylinux9
-#            tag: latest
-#          - distro: rockylinux10
-#            tag: latest
-#            namespace: geerlingguy
-#          - distro: almalinux9
-#            tag: latest
-#            namespace: glillico
-#          - distro: almalinux10
-#            tag: latest
-#            namespace: glillico
+          - distro: rockylinux9
+            tag: latest
+          - distro: rockylinux10
+            tag: latest
+            namespace: geerlingguy
+          - distro: almalinux9
+            tag: latest
+            namespace: glillico
+          - distro: almalinux10
+            tag: latest
+            namespace: glillico
 
     steps:
       - name: Set TERM environment variable
@@ -52,11 +52,10 @@ jobs:
         run: make bootstrap-dev
 
       - name: Run Molecule tests
-        run: make molecule-test-scenario
+        run: make molecule-test
         env:
           PY_COLORS: "1"
           ANSIBLE_FORCE_COLOR: "1"
           IMAGE_DISTRO: ${{ matrix.config.distro }}
           IMAGE_TAG: ${{ matrix.config.tag }}
           IMAGE_NAMESPACE: ${{ matrix.config.namespace }}
-          MOLECULE_SCENARIO: "pg_upgrade"
