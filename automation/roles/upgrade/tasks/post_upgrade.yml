@@ -122,10 +122,10 @@
 
 # Return the pg_hba.conf file to its original state (if it has been changed)
 - block:
-    - name: Remove temporary local access rule from pg_hba.conf
+    - name: Remove temporary local hba rule from pg_hba.conf
       ansible.builtin.blockinfile:
         path: "{{ pg_new_confdir }}/pg_hba.conf"
-        marker: "# {mark} ANSIBLE TEMPORARY pg_upgrade RULE"
+        marker: "# {mark} ANSIBLE: TEMPORARY RULE for pg_upgrade"
         state: absent
 
     - name: Update the PostgreSQL configuration
