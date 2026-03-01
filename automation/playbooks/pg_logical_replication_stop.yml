@@ -67,6 +67,35 @@
         patroni_cluster_leader: false
       when: patroni_leader_result.status != 200
 
+    # if pg_replication_database = "all"
+    - name: "[Prepare] Get a list of databases"
+      ansible.builtin.command: >
+        {{ psql_command }} -tAXc "select datname from pg_catalog.pg_database where not datistemplate"
+      register: datname_result
+      changed_when: false
+      when:
+        - pg_replication_database == "all"
+        - patroni_cluster_leader | default(false) | bool
+
+    - name: "Set variable: pg_replication_database"
+      ansible.builtin.set_fact:
+        pg_replication_database: "{{ datname_result.stdout_lines | default([]) }}"
+      when:
+        - pg_replication_database == "all"
+        - patroni_cluster_leader | default(false) | bool
+
+    - name: "Set variable: source_databases"
+      ansible.builtin.set_fact:
+        source_databases: >-
+          {{
+            pg_replication_database is string
+            | ternary(
+                pg_replication_database.split(',') | map('trim') | reject('equalto', '') | list,
+                (pg_replication_database | default([], true))
+              )
+          }}
+      when: patroni_cluster_leader | default(false) | bool
+
   tasks:
     - name: Get current passwords
       ansible.builtin.include_role:
