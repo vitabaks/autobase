@@ -8,7 +8,9 @@
   loop_control:
     loop_var: dbname
     label: "{{ dbname }}"
-  when: subscription_state | default('present') == 'present'
+  when:
+    - subscription_state | default('present') == 'present'
+    - patroni_cluster_leader | default(false) | bool
 
 - name: Drop subscription in each database
   ansible.builtin.include_tasks: drop_subscription.yml
@@ -16,4 +18,6 @@
   loop_control:
     loop_var: dbname
     label: "{{ dbname }}"
-  when: subscription_state | default('present') == 'absent'
+  when:
+    - subscription_state | default('present') == 'absent'
+    - patroni_cluster_leader | default(false) | bool

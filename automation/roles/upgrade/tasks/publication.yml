@@ -8,7 +8,9 @@
   loop_control:
     loop_var: dbname
     label: "{{ dbname }}"
-  when: publication_state | default('present') == 'present'
+  when:
+    - publication_state | default('present') == 'present'
+    - patroni_cluster_leader | default(false) | bool
 
 - name: Drop publication and slot for each database
   ansible.builtin.include_tasks: drop_publication.yml
@@ -16,7 +18,9 @@
   loop_control:
     loop_var: dbname
     label: "{{ dbname }}"
-  when: publication_state | default('present') == 'absent'
+  when:
+    - publication_state | default('present') == 'absent'
+    - patroni_cluster_leader | default(false) | bool
 
 - name: Advance slots for each database
   ansible.builtin.include_tasks: replication_slot_advance.yml
@@ -26,4 +30,5 @@
     label: "{{ dbname }}"
   when:
     - publication_state | default('present') == 'present'
+    - patroni_cluster_leader | default(false) | bool
     - not reverse_replication | default(false) | bool # skip for reverse replication
