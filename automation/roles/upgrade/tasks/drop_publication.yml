@@ -1,0 +1,31 @@
+---
+# Blue-green upgrade method: Drop publications.
+- block:
+    # One publication (if pg_publication_count = 1)
+    - name: '[Clean up logical replication] Drop publication'
+      ansible.builtin.command: >-
+        {{ psql_command }} -d {{ dbname }} -tAXc "
+        drop publication if exists {{ publication_name }}"
+      register: drop_pub_result
+      changed_when: "'does not exist' not in (drop_pub_result.stderr | default(''))"
+      when: pg_publication_count | int == 1
+
+    # Multiple publications (if pg_publication_count > 1)
+    - name: '[Clean up logical replication] Drop publications'
+      ansible.builtin.command: >-
+        {{ psql_command }} -tAXc "
+        drop publication if exists {{ publication_name }}_{{ '%02d' % (idx + 1) }}"
+      loop: "{{ range(0, pg_publication_count | int) | list }}"
+      loop_control:
+        index_var: idx
+        label: "{{ publication_name }}_{{ '%02d' % (idx + 1) }}"
+      register: drop_pub_results
+      changed_when: "'does not exist' not in (drop_pub_results.stderr | default(''))"
+      when: pg_publication_count | int > 1
+  vars:
+    publication_name: "{{ pg_publication_name if not reverse_replication | default(false) | bool else pg_reverse_publication_name }}"
+    psql_command: "psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }}"
+  environment:
+    PATH: "{{ ansible_env.PATH }}:{{ pg_new_bindir }}:{{ pg_old_bindir }}"
+    PGPASSWORD: "{{ patroni_superuser_password }}"
+  when: patroni_cluster_leader | default(false) | bool

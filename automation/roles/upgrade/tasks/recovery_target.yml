@@ -1,0 +1,141 @@
+---
+# Blue-green upgrade method: reach recovery target LSN on the standby cluster leader node.
+
+# Set recovery parameters to ensure the target PostgreSQL instance is recovered to the replication slot LSN.
+- name: "Specify recovery parameters on the standby cluster leader"
+  ansible.builtin.lineinfile:
+    path: '{{ pg_old_confdir }}/postgresql.conf'
+    regexp: '{{ item.regexp }}'
+    line: '{{ item.line }}'
+  loop:
+    - regexp: ^recovery_target =
+      line: '#recovery_target = '''''
+    - regexp: ^recovery_target_lsn =
+      line: "recovery_target_lsn = '{{ hostvars[groups['source_primary'][0]]['target_lsn'] }}'"
+    - regexp: ^recovery_target_name =
+      line: '#recovery_target_name = '''''
+    - regexp: ^recovery_target_time =
+      line: '#recovery_target_time = '''''
+    - regexp: ^recovery_target_timeline =
+      line: '#recovery_target_timeline = ''latest'''
+    - regexp: ^recovery_target_xid =
+      line: '#recovery_target_xid = '''''
+    - regexp: ^recovery_target_action =
+      line: recovery_target_action = 'promote'
+    - regexp: ^restore_command =
+      line: '#restore_command = '''''
+  loop_control:
+    label: '{{ item.line }}'
+  when: inventory_hostname in groups['primary']
+
+- name: "Start PostgreSQL on standby cluster leader to reach recovery_target_lsn"
+  ansible.builtin.command: >-
+    {{ pg_old_bindir }}/pg_ctl start -D {{ pg_old_datadir }} -w -t {{ pg_start_stop_timeout }}
+    -o '--config-file={{ pg_old_confdir }}/postgresql.conf'
+    -o '-c archive_mode=off'
+    -l /tmp/pg_start_recovery_target.log
+  async: "{{ pg_start_stop_timeout }}" # run the command asynchronously
+  poll: 0
+  register: pg_ctl_start_result
+  when: inventory_hostname in groups['primary']
+
+- name: "Wait for the PostgreSQL start to complete (log: /tmp/pg_start_recovery_target.log)"
+  ansible.builtin.async_status:
+    jid: "{{ pg_ctl_start_result.ansible_job_id }}"
+  register: pg_ctl_start_job_result
+  until: pg_ctl_start_job_result.finished
+  retries: "{{ (pg_start_stop_timeout | int) // 10 }}"
+  delay: 10
+  when: inventory_hostname in groups['primary']
+
+- name: "Wait until the recovery is complete"
+  ansible.builtin.command: "{{ psql_command }} -tAXc 'select pg_is_in_recovery()'"
+  register: pg_is_in_recovery
+  until: pg_is_in_recovery.stdout == "f"
+  retries: 360
+  delay: 10
+  vars:
+    psql_command: "{{ pg_old_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }}"
+  environment:
+    PGPASSWORD: "{{ patroni_superuser_password }}"
+  when: inventory_hostname in groups['primary']
+
+- name: "Get the current PostgreSQL log file"
+  ansible.builtin.shell: |
+    set -o pipefail;
+    ls -t {{ postgresql_log_dir }} | grep .{{ postgresql_log_format | default('log') }} | head -n 1
+  args:
+    executable: /bin/bash
+  register: pg_log_filename
+  changed_when: false
+  ignore_errors: true
+  when: inventory_hostname in groups['primary']
+
+- name: "Check the PostgreSQL log file"
+  ansible.builtin.shell: >
+    grep -E "recovery stopping after WAL location (LSN)|{{ hostvars[groups['source_primary'][0]]['target_lsn'] }}" \
+    {{ postgresql_log_dir }}/{{ pg_log_filename.stdout }}
+  args:
+    executable: /bin/bash
+  register: pg_log_result
+  changed_when: false
+  ignore_errors: true
+  when: inventory_hostname in groups['primary']
+
+# Stop, if target LSN not reached
+- name: "Result of checking the PostgreSQL log - fail"
+  ansible.builtin.fail:
+    msg: "Recovery target (LSN \"{{ hostvars[groups['source_primary'][0]]['target_lsn'] }}\") has not been reached"
+  when:
+    - inventory_hostname in groups['primary']
+    - pg_log_result.stdout | length < 1
+
+- name: "Result of checking the PostgreSQL log"
+  ansible.builtin.debug:
+    msg: "{{ pg_log_result.stdout }}"
+  when:
+    - inventory_hostname in groups['primary']
+    - pg_log_result.stdout | length > 0
+
+# Resume and check physical replication
+- name: "Resume WAL replay (recovery) on target cluster replicas"
+  ansible.builtin.command: "{{ psql_command }} -tAXc 'select pg_wal_replay_resume()'"
+  vars:
+    psql_command: "{{ pg_old_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres"
+  environment:
+    PGPASSWORD: "{{ patroni_superuser_password }}"
+  when: inventory_hostname in groups['secondary']
+
+- name: "Wait until physical replication becomes active"
+  ansible.builtin.command: >-
+    {{ psql_command }} -tAXc "
+    select count(*) from pg_stat_wal_receiver where status = 'streaming'"
+  register: pg_stat_wal_receiver_state
+  until: pg_stat_wal_receiver_state.stdout|int > 0
+  retries: 60 # max duration 2 minutes
+  delay: 2
+  changed_when: false
+  ignore_errors: true
+  vars:
+    psql_command: "{{ pg_old_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres"
+  environment:
+    PGPASSWORD: "{{ patroni_superuser_password }}"
+  when: inventory_hostname in groups['secondary']
+
+- name: "Wait until physical replication lag is 0 bytes"
+  ansible.builtin.command: >-
+    {{ psql_command }} -tAXc "
+    select pg_wal_lsn_diff(pg_current_wal_lsn(), replay_lsn) as pg_lag_bytes
+    from pg_stat_replication
+    order by pg_lag_bytes desc limit 1"
+  register: pg_lag_bytes
+  until: pg_lag_bytes.stdout|int == 0
+  retries: 60 # max duration 2 minutes
+  delay: 2
+  changed_when: false
+  ignore_errors: true
+  vars:
+    psql_command: "{{ pg_old_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres"
+  environment:
+    PGPASSWORD: "{{ patroni_superuser_password }}"
+  when: inventory_hostname in groups['primary']

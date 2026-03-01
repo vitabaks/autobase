@@ -1,5 +1,5 @@
 ---
-- name: Start Patroni service on the Cluster Leader
+- name: Start Patroni service on the cluster leader
   become: true
   become_user: root
   ansible.builtin.service:
@@ -18,7 +18,7 @@
   when:
     - inventory_hostname in groups['primary']
 
-- name: Check Patroni is healthy on the Leader
+- name: Check Patroni is healthy on the leader
   ansible.builtin.uri:
     url: "{{ patroni_restapi_protocol }}://{{ patroni_restapi_connect_addr | default(patroni_bind_address | default(bind_address, true), true) }}:\
       {{ patroni_restapi_port }}/leader"
@@ -34,14 +34,14 @@
     - inventory_hostname in groups['primary']
 
 # if 'pgbouncer_install' is 'true' and 'pgbouncer_pool_pause' is 'true'
-- name: Perform RESUME PgBouncer pools on the Leader
+- name: Perform RESUME PgBouncer pools on the leader
   ansible.builtin.include_tasks: pgbouncer_resume.yml
   when:
     - inventory_hostname in groups['primary']
     - hostvars[groups['primary'][0]].pgbouncer_pool_pause_result is defined
     - hostvars[groups['primary'][0]].pgbouncer_pool_pause_result is succeeded
 
-- name: Start Patroni service on the Cluster Replica
+- name: Start Patroni service on the cluster replica
   become: true
   become_user: root
   ansible.builtin.service:
@@ -60,7 +60,7 @@
   when:
     - inventory_hostname in groups['secondary']
 
-- name: Check Patroni is healthy on the Replica
+- name: Check Patroni is healthy on the replica
   ansible.builtin.uri:
     url: "{{ patroni_restapi_protocol }}://{{ patroni_restapi_connect_addr | default(patroni_bind_address | default(bind_address, true), true) }}:\
       {{ patroni_restapi_port }}/health"
@@ -76,7 +76,7 @@
     - inventory_hostname in groups['secondary']
 
 # if 'pgbouncer_install' is 'true' and 'pgbouncer_pool_pause' is 'true'
-- name: Perform RESUME PgBouncer pools on the Replica
+- name: Perform RESUME PgBouncer pools on the replica
   ansible.builtin.include_tasks: pgbouncer_resume.yml
   when:
     - inventory_hostname in groups['secondary']

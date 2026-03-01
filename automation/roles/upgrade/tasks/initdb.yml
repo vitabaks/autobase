@@ -38,19 +38,19 @@
     - pgdata_initialized.stat.exists
 
 - name: Get the current install user
-  ansible.builtin.command: >-
-    {{ pg_old_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc
-    "select rolname from pg_roles where oid = 10"
-  environment:
-    PGPASSWORD: "{{ patroni_superuser_password }}"
+  ansible.builtin.command: >
+    {{ psql_command }} -d postgres -tAXc "select rolname from pg_roles where oid = 10"
   changed_when: false
   register: pg_install_user
-  when:
-    - inventory_hostname in groups['primary']
+  vars:
+    psql_command: "{{ pg_old_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }}"
+  environment:
+    PGPASSWORD: "{{ patroni_superuser_password }}"
+  when: inventory_hostname in groups['primary']
 
 - name: Get the current encodig and data_checksums settings
   ansible.builtin.command: >-
-    {{ pg_old_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc "
+    {{ psql_command }} -d postgres -tAXc "
     select row_to_json(pg_settings)
     from (
       select
@@ -64,12 +64,13 @@
         current_setting('data_checksums') as data_checksums,
         current_setting('wal_level') as wal_level
     ) pg_settings"
-  environment:
-    PGPASSWORD: "{{ patroni_superuser_password }}"
   changed_when: false
   register: pg_settings
-  when:
-    - inventory_hostname in groups['primary']
+  vars:
+    psql_command: "{{ pg_old_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }}"
+  environment:
+    PGPASSWORD: "{{ patroni_superuser_password }}"
+  when: inventory_hostname in groups['primary']
 
 - name: Create temporary password file for install user
   ansible.builtin.copy:
@@ -82,7 +83,7 @@
 # for Debian based use pg_createcluster, if the PostgreSQL configuration is not located in the data directory.
 # Note: Patroni failure is possible if the default postgresql config files are missing in the /etc/postgresql/...
 - name: Initialize new PostgreSQL data directory with default config files
-  ansible.builtin.command: >
+  ansible.builtin.command: >-
     /usr/bin/pg_createcluster {{ pg_new_version }} {{ postgresql_cluster_name }}
     --datadir={{ pg_new_datadir }}
     --encoding={{ (hostvars[groups['primary'][0]].pg_settings.stdout | from_json).server_encoding }}
@@ -93,9 +94,11 @@
     --lc-numeric={{ (hostvars[groups['primary'][0]].pg_settings.stdout | from_json).lc_numeric }}
     --lc-time={{ (hostvars[groups['primary'][0]].pg_settings.stdout | from_json).lc_time }}
     --start-conf=manual
-    -- -c wal_level={{ (hostvars[groups['primary'][0]].pg_settings.stdout | from_json).wal_level }}
+    --
     --username={{ hostvars[groups['primary'][0]].pg_install_user.stdout }}
-    --auth-local={{ postgresql_password_encryption_algorithm }}
+    {% if pg_new_version | int >= 16 %}
+    --set wal_level={{ (hostvars[groups['primary'][0]].pg_settings.stdout | from_json).wal_level }}
+    {% endif %}
     {% if pg_install_user_password is defined %}
     --pwfile="{{ postgresql_home_dir }}/.pg_install_user_password"
     {% endif %}
@@ -109,11 +112,9 @@
     - pg_new_confdir != pg_new_datadir
 
 # Use initdb, if the PostgreSQL configuration is located in the data directory.
-- name: Initialize new PostgreSQL data directory on the Primary
-  ansible.builtin.command: >
+- name: Initialize new PostgreSQL data directory on the primary
+  ansible.builtin.command: >-
     {{ pg_new_bindir }}/initdb
-    --auth-local={{ postgresql_password_encryption_algorithm }}
-    --username={{ pg_install_user.stdout }}
     --pgdata={{ pg_new_datadir }}
     --encoding={{ (pg_settings.stdout | from_json).server_encoding }}
     --lc-collate={{ (pg_settings.stdout | from_json).lc_collate }}
@@ -122,7 +123,10 @@
     --lc-monetary={{ (pg_settings.stdout | from_json).lc_monetary }}
     --lc-numeric={{ (pg_settings.stdout | from_json).lc_numeric }}
     --lc-time={{ (pg_settings.stdout | from_json).lc_time }}
-    -c wal_level={{ (hostvars[groups['primary'][0]].pg_settings.stdout | from_json).wal_level }}
+    --username={{ pg_install_user.stdout }}
+    {% if pg_new_version | int >= 16 %}
+    --set wal_level={{ (hostvars[groups['primary'][0]].pg_settings.stdout | from_json).wal_level }}
+    {% endif %}
     {% if pg_install_user_password is defined %}
     --pwfile={{ postgresql_home_dir }}/.pg_install_user_password
     {% endif %}

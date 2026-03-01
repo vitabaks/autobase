@@ -6,7 +6,7 @@
 # 4. If the values match across all nodes, a success message is displayed and the update procedure continues.
 # 5. If there's a mismatch, the previously stopped cluster starts (rollback), and the playbook stops with an error message.
 
-- name: Get 'Latest checkpoint location' on the Leader
+- name: Get 'Latest checkpoint location' on the leader
   ansible.builtin.shell: |
     set -o pipefail;
     {{ pg_old_bindir }}/pg_controldata {{ pg_old_datadir }} | grep 'Latest checkpoint location' | awk '{print $4}'
@@ -17,7 +17,7 @@
   when:
     - inventory_hostname in groups['primary']
 
-- name: Get 'Latest checkpoint location' on the Replicas
+- name: Get 'Latest checkpoint location' on the replicas
   ansible.builtin.shell: |
     set -o pipefail;
     {{ pg_old_bindir }}/pg_controldata {{ pg_old_datadir }} | grep 'Latest checkpoint location' | awk '{print $4}'
@@ -28,13 +28,13 @@
   when:
     - inventory_hostname in groups['secondary']
 
-- name: Print 'Latest checkpoint location' for the Leader
+- name: Print 'Latest checkpoint location' for the leader
   ansible.builtin.debug:
     msg: "Leader's latest checkpoint location: {{ pg_checkpoint_location_leader.stdout }}"
   when:
     - inventory_hostname in groups['primary']
 
-- name: Print 'Latest checkpoint location' for the Replica
+- name: Print 'Latest checkpoint location' for the replica
   ansible.builtin.debug:
     msg: "Replica: {{ ansible_hostname }}, latest checkpoint location: {{ pg_checkpoint_location_replica.stdout }}"
   when:

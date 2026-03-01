@@ -1,0 +1,49 @@
+---
+
+- name: "Pause WAL replay (recovery) on the target cluster replicas"
+  ansible.builtin.command: "{{ psql_command }} -tAXc 'select pg_wal_replay_pause()'"
+  vars:
+    psql_command: "{{ pg_old_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres"
+  environment:
+    PGPASSWORD: "{{ patroni_superuser_password }}"
+  when: inventory_hostname in groups['secondary']
+
+# Disable auto failover – we need this to be able to stop PostgreSQL
+- name: "Pause Patroni on the target cluster before stopping PostgreSQL"
+  become: true
+  become_user: postgres
+  ansible.builtin.command: "patronictl -c {{ patroni_config_file }} pause --wait {{ patroni_cluster_name }}"
+  environment:
+    PATH: "{{ ansible_env.PATH }}:/usr/bin:/usr/local/bin"
+  register: pause_result
+  failed_when: "'Cluster is already paused' not in pause_result.stderr and pause_result.rc != 0"
+  when: inventory_hostname in groups['primary']
+
+- name: "Execute CHECKPOINT before stopping PostgreSQL"
+  ansible.builtin.command: "{{ psql_command }} -tAXc 'CHECKPOINT'"
+  async: 3600  # run the command asynchronously
+  poll: 0
+  register: checkpoint_result
+  vars:
+    psql_command: "{{ pg_old_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres"
+  environment:
+    PGPASSWORD: "{{ patroni_superuser_password }}"
+  when: inventory_hostname in groups['primary']
+
+- name: "Wait for the CHECKPOINT to complete"
+  ansible.builtin.async_status:
+    jid: "{{ checkpoint_result.ansible_job_id }}"
+  register: checkpoint_job_result
+  until: checkpoint_job_result.finished
+  retries: 360
+  delay: 10
+  when: inventory_hostname in groups['primary']
+
+- name: "Stop PostgreSQL on the standby cluster leader"
+  ansible.builtin.command: >-
+    {{ pg_old_bindir }}/pg_ctl -D {{ pg_old_datadir }} stop -w -t {{ pg_start_stop_timeout }}
+  register: pg_ctl_stop_result
+  until: pg_ctl_stop_result.rc == 0
+  retries: "{{ (pg_start_stop_timeout | int) // 10 }}"
+  delay: 10
+  when: inventory_hostname in groups['primary']

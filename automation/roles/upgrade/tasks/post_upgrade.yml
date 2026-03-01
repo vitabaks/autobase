@@ -1,16 +1,47 @@
 ---
-- name: Ensure the current data directory is the new data directory
-  ansible.builtin.command: >-
-    {{ pg_new_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc
-    "show data_directory"
+
+# for blue-green upgrade method
+- block:
+    - name: Reset wal_keep_segments to original state on the source primary
+      ansible.builtin.command: >
+        {{ psql_command }} -tAXc "alter system reset wal_keep_segments"
+      delegate_to: "{{ delegate_host }}"
+      when: pg_old_version | int < 13
+
+    - name: Reset wal_keep_size to original state on the source primary
+      ansible.builtin.command: >
+        {{ psql_command }} -tAXc "alter system reset wal_keep_size"
+      delegate_to: "{{ delegate_host }}"
+      when: pg_old_version | int >= 13
+
+    - name: Reload PostgreSQL configuration on the source primary
+      ansible.builtin.command: >
+        {{ psql_command }} -tAXc "select pg_reload_conf()"
+      delegate_to: "{{ delegate_host }}"
+  vars:
+    source_primary_host: "{{ (groups.get('source_primary', []) | first) | default('') }}"
+    delegate_host: "{{ (source_primary_host | length > 0) | ternary(source_primary_host, inventory_hostname) }}" # to avoid error with empty host
+    psql_command: "{{ pg_old_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres"
   environment:
     PGPASSWORD: "{{ patroni_superuser_password }}"
+  when:
+    - (pg_wal_keep_gigabytes | default('100') | string) != 'none'
+    - (groups.get('target_cluster', []) | length) > 0
+    - patroni_cluster_leader | default(false) | bool
+
+- name: Ensure the current data directory is the new data directory
+  ansible.builtin.command: >
+    {{ psql_command }} -tAXc "show data_directory"
   register: pg_current_datadir
   until: pg_current_datadir is success
   delay: 5
   retries: 3
   changed_when: false
   ignore_errors: true # show the error and continue the playbook execution
+  vars:
+    psql_command: "{{ pg_new_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres"
+  environment:
+    PGPASSWORD: "{{ patroni_superuser_password }}"
 
 - name: Delete the temporary .pgpass entry
   ansible.builtin.lineinfile:
@@ -20,6 +51,7 @@
   no_log: true
   when:
     - inventory_hostname in groups['primary']
+    - pg_install_user_password is defined
 
 # RedHat based
 - name: Delete the old PostgreSQL data directory
@@ -90,10 +122,10 @@
 
 # Return the pg_hba.conf file to its original state (if it has been changed)
 - block:
-    - name: Remove temporary local access rule from pg_hba.conf
+    - name: Remove temporary local hba rule from pg_hba.conf
       ansible.builtin.blockinfile:
         path: "{{ pg_new_confdir }}/pg_hba.conf"
-        marker: "# {mark} ANSIBLE TEMPORARY pg_upgrade RULE"
+        marker: "# {mark} ANSIBLE: TEMPORARY RULE for pg_upgrade"
         state: absent
 
     - name: Update the PostgreSQL configuration
@@ -161,11 +193,11 @@
   become_user: "{{ pgbackrest_repo_user }}"
   ignore_errors: true # show the error and continue the playbook execution
   vars:
-    pgbackrest_delegate: "{{ (groups.get('pgbackrest') | default([], true) | list | first) | default(inventory_hostname, true) }}"
+    pgbackrest_delegate: "{{ (groups.get('pgbackrest', []) | list | first) | default(inventory_hostname, true) }}"
   when:
     - pgbackrest_install | bool
     - (pgbackrest_repo_host | default('')) | length > 0
-    - (groups.get('pgbackrest') | default([], true) | length) > 0
+    - (groups.get('pgbackrest', []) | length) > 0
 
 # WAL-G
 - block:
@@ -224,21 +256,20 @@
   changed_when: false
   environment:
     PATH: "{{ ansible_env.PATH }}:/usr/bin:/usr/local/bin"
-  when: inventory_hostname in groups['primary']
 
 - name: Check the current PostgreSQL version
   run_once: true
-  ansible.builtin.command: >-
-    {{ pg_new_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc
-    "select current_setting('server_version')"
-  environment:
-    PGPASSWORD: "{{ patroni_superuser_password }}"
+  ansible.builtin.command: >
+    {{ psql_command }} -tAXc "select current_setting('server_version')"
   register: postgres_version
   until: postgres_version is success
   delay: 5
   retries: 3
   changed_when: false
-  when: inventory_hostname in groups['primary']
+  vars:
+    psql_command: "{{ pg_new_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres"
+  environment:
+    PGPASSWORD: "{{ patroni_superuser_password }}"
 
 - name: List the Patroni cluster members
   run_once: true

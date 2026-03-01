@@ -1,0 +1,63 @@
+---
+# Parse, validate, and register source cluster hosts from patroni_standby_cluster.host variable,
+# then add replication access rules to pg_hba.conf on source nodes.
+
+- name: "Parse source cluster hosts (patroni_standby_cluster.host)"
+  ansible.builtin.set_fact:
+    source_cluster_hosts: >-
+      {{
+        (patroni_standby_cluster.host | default('') | string)
+        | regex_replace('\\s+', '')
+        | split(',')
+        | reject('equalto', '')
+        | list
+      }}
+
+- name: "Validate source cluster IP addresses"
+  ansible.builtin.assert:
+    that:
+      - source_cluster_hosts | reject('match', '^\\d+\\.\\d+\\.\\d+\\.\\d+$') | list | length == 0
+    fail_msg: >
+      Invalid source cluster IPs:
+      {{ source_cluster_hosts | reject('match', '^\\d+\\.\\d+\\.\\d+\\.\\d+$') | list }}
+  run_once: true # noqa run-once
+
+- name: 'Add source cluster hosts to group "source_cluster" (in-memory inventory)'
+  ansible.builtin.add_host:
+    name: "{{ item }}"
+    groups: source_cluster
+    ansible_ssh_host: "{{ source_cluster_host_public_ip | default(item) }}"
+    # source_cluster_host_public_ip is optional to override SSH host if needed.
+    # Note: it works if only one host is specified in patroni_standby_cluster.host variable.
+  loop: "{{ source_cluster_hosts }}"
+  changed_when: false
+  when:
+    - patroni_standby_cluster.host | default('') | string != ''
+    - (groups.get('source_cluster', []) | length) == 0
+
+# if 'patroni_standby_cluster_auto_hba' is 'true'
+# Note: The PostgreSQL configuration update is performed after retrieving the patroni_superuser_password.
+- name: "Add hba rule on the source cluster for standby cluster"
+  ansible.builtin.blockinfile:
+    path: "{{ pg_conf_dir }}/pg_hba.conf"
+    marker: "# {mark} ANSIBLE: TEMPORARY RULE FOR standby cluster"
+    insertbefore: BOF
+    block: |
+      {% for h in (groups.get('postgres_cluster', []) ) %}
+      {% set addr = (
+           hostvars[h].patroni_bind_address
+           | default(hostvars[h].bind_address, true)
+           | default(hostvars[h].inventory_hostname, true)
+         )
+      %}
+      host replication {{ patroni_replication_username }} {{ addr }}/32 {{ pg_password_encryption }}
+      {% endfor %}
+  delegate_to: "{{ item }}"
+  loop: "{{ groups.get('source_cluster', []) }}"
+  vars:
+    pg_conf_dir: "{{ source_cluster_postgresql_conf_dir | default(postgresql_conf_dir) }}"
+    pg_password_encryption: "{{ source_cluster_postgresql_password_encryption_algorithm | default(postgresql_password_encryption_algorithm) }}"
+  when:
+    - patroni_standby_cluster_auto_hba | default(true) | bool
+    - (groups.get('source_cluster', []) | length) > 0
+    - inventory_hostname == groups['postgres_cluster'][0] # run once

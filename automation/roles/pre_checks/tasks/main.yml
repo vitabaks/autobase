@@ -52,6 +52,29 @@
   ansible.builtin.import_tasks: extensions.yml
   when: inventory_hostname == groups['master'][0]
 
+- name: Perform pre-checks for standby cluster configuration
+  ansible.builtin.import_tasks: standby_cluster.yml
+  when:
+    - inventory_hostname in groups['postgres_cluster']
+    - patroni_standby_cluster.host | default('') | length > 0
+
 - name: Generate passwords
   ansible.builtin.import_tasks: passwords.yml
   when: inventory_hostname in groups['postgres_cluster']
+
+# for standby cluster configuration (if 'patroni_standby_cluster_auto_hba' is 'true')
+- name: Update PostgreSQL configuration on source cluster to apply pg_hba.conf changes
+  ansible.builtin.command: >-
+    {{ pg_bin_dir }}/psql -h 127.0.0.1 -p {{ pg_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc
+    "select pg_reload_conf()"
+  delegate_to: "{{ item }}"
+  loop: "{{ groups.get('source_cluster', []) }}"
+  vars:
+    pg_bin_dir: "{{ source_cluster_postgresql_bin_dir | default(postgresql_bin_dir) }}"
+    pg_port: "{{ source_cluster_postgresql_port | default(postgresql_port) }}"
+  environment:
+    PGPASSWORD: "{{ patroni_superuser_password }}"
+  when:
+    - patroni_standby_cluster_auto_hba | default(true) | bool
+    - (groups.get('source_cluster', []) | length) > 0
+    - inventory_hostname == groups['postgres_cluster'][0] # run once

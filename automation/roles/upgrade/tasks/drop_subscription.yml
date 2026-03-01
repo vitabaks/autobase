@@ -1,0 +1,59 @@
+---
+# Blue-green upgrade method: Drop subscriptions.
+- block:
+    # One subscription (if pg_publication_count = 1)
+    - name: "[Stop logical replication] Drop subscription in database {{ dbname | default('postgres') }}"
+      ansible.builtin.command: >-
+        {{ psql_command }} -d {{ dbname }} -tAXc "
+        drop subscription if exists {{ subscription_name }}"
+      register: drop_sub_result
+      changed_when: "'does not exist' not in (drop_sub_result.stderr | default(''))"
+      when: pg_publication_count | int == 1
+
+    - name: "[Stop logical replication] Force drop subscription in database {{ dbname | default('postgres') }}"
+      ansible.builtin.command: >-
+        {{ psql_command }} -d {{ dbname }} -tAXc "
+        alter subscription {{ subscription_name }} disable;
+        alter subscription {{ subscription_name }} set (slot_name=NONE);
+        drop subscription {{ subscription_name }}"
+      when:
+        - pg_publication_count | int == 1
+        - drop_sub_result.rc != 0
+
+    # Multiple subscriptions (if pg_publication_count > 1)
+    - name: "[Stop logical replication] Drop subscriptions in database: {{ dbname | default('postgres') }}"
+      ansible.builtin.command: >-
+        {{ psql_command }} -d {{ dbname }} -tAXc "
+        drop subscription if exists {{ subscription_name }}_{{ '%02d' % (idx + 1) }}"
+      loop: "{{ range(0, pg_publication_count | int) | list }}"
+      loop_control:
+        index_var: idx
+        label: "{{ subscription_name }}_{{ '%02d' % (idx + 1) }}"
+      register: drop_sub_results
+      changed_when: "'does not exist' not in (drop_sub_results.stderr | default(''))"
+      when: pg_publication_count | int > 1
+
+    - name: "[Stop logical replication] Force drop subscriptions in database: {{ dbname | default('postgres') }}"
+      ansible.builtin.command: >-
+        {{ psql_command }} -d {{ dbname }} -tAXc "
+        alter subscription {{ subscription_name }}_{{ '%02d' % (idx + 1) }} disable;
+        alter subscription {{ subscription_name }}_{{ '%02d' % (idx + 1) }} set (slot_name=NONE);
+        drop subscription {{ subscription_name }}_{{ '%02d' % (idx + 1) }}"
+      loop: "{{ range(0, pg_publication_count | int) | list }}"
+      loop_control:
+        index_var: idx
+        label: "{{ subscription_name }}_{{ '%02d' % (idx + 1) }}"
+      when:
+        - pg_publication_count | int > 1
+        - (drop_sub_results.results | default([]) | selectattr('rc', 'ne', 0) | list | length) > 0
+  vars:
+    subscriber_group: "{{ 'target_cluster' if not reverse_replication | default(false) | bool else 'source_cluster' }}"
+    subscription_name: "{{ pg_subscription_name if not reverse_replication | default(false) | bool else pg_reverse_subscription_name }}"
+    psql_command: "psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }}"
+  environment:
+    PATH: "{{ ansible_env.PATH }}:{{ pg_new_bindir }}:{{ pg_old_bindir }}"
+    PGPASSWORD: "{{ patroni_superuser_password }}"
+  ignore_errors: true
+  when:
+    - inventory_hostname in (groups.get(subscriber_group, []) | default([], true))
+    - patroni_cluster_leader | default(false) | bool
