@@ -44,7 +44,7 @@
     -tAXc "select 1"
   register: socket_access_result
   changed_when: false
-  failed_when: false
+  ignore_errors: true # show error and continue execution
   when: inventory_hostname in groups['primary']
 
 # if 'no pg_hba.conf entry'
@@ -74,6 +74,7 @@
   when:
     - inventory_hostname in groups['primary']
     - socket_access_result.rc != 0
+    - "'no pg_hba.conf entry' in socket_access_result.stderr"
 
 - name: "[Pre-Check] Check the current version of PostgreSQL"
   ansible.builtin.command: >
