@@ -3,28 +3,42 @@ import RouterPaths from '@app/router/routerPathsConfig';
 import ClustersIcon from '@assets/clustersIcon.svg?react';
 import OperationsIcon from '@assets/operationsIcon.svg?react';
 import SettingsIcon from '@assets/settingsIcon.svg?react';
+import DbdeskIcon from '@assets/dbdeskIcon.svg?react';
 import GithubIcon from '@assets/githubIcon.svg?react';
 import DocumentationIcon from '@assets/docsIcon.svg?react';
 import SupportIcon from '@assets/supportIcon.svg?react';
 import SponsorIcon from '@assets/sponsorIcon.svg?react';
+import { DBDESK_URL } from '@shared/config/constants.ts';
 
-export const sidebarData = (t: TFunction) => [
-  {
-    icon: ClustersIcon,
-    label: t('clusters', { ns: 'clusters' }),
-    path: RouterPaths.clusters.absolutePath,
-  },
-  {
-    icon: OperationsIcon,
-    label: t('operations', { ns: 'operations' }),
-    path: RouterPaths.operations.absolutePath,
-  },
-  {
-    icon: SettingsIcon,
-    label: t('settings', { ns: 'settings' }),
-    path: RouterPaths.settings.absolutePath,
-  },
-];
+export const sidebarData = (t: TFunction) => {
+  const items = [
+    {
+      icon: ClustersIcon,
+      label: t('clusters', { ns: 'clusters' }),
+      path: RouterPaths.clusters.absolutePath,
+    },
+    {
+      icon: OperationsIcon,
+      label: t('operations', { ns: 'operations' }),
+      path: RouterPaths.operations.absolutePath,
+    },
+    {
+      icon: SettingsIcon,
+      label: t('settings', { ns: 'settings' }),
+      path: RouterPaths.settings.absolutePath,
+    },
+  ];
+
+  if (DBDESK_URL) {
+    items.push({
+      icon: DbdeskIcon,
+      label: t('sqlEditor', { ns: 'shared' }),
+      path: RouterPaths.sqlEditor.absolutePath,
+    });
+  }
+
+  return items;
+};
 
 export const sidebarLowData = (t: TFunction) => [
   {
