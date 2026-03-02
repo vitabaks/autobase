@@ -29,7 +29,8 @@ const ConnectionInfo: FC<ConnectionInfoProps> = ({ connectionInfo, servers }) =>
 
   const config = useGetConnectionInfoConfig({ connectionInfo });
 
-  const buildConnectionUri = () => {
+  /** Build a structured connection object (no raw URI with embedded credentials). */
+  const buildConnection = () => {
     const user = connectionInfo?.superuser || 'postgres';
     const password = connectionInfo?.password || '';
 
@@ -57,7 +58,15 @@ const ConnectionInfo: FC<ConnectionInfoProps> = ({ connectionInfo, servers }) =>
 
     address = rewriteHost(address);
 
-    return `postgresql://${encodeURIComponent(user)}:${encodeURIComponent(password)}@${encodeURIComponent(address)}:${encodeURIComponent(port)}/postgres`;
+    return { host: address, port, user, password, database: 'postgres' };
+  };
+
+  /** Build a postgresql:// URI for the dbdesk-studio ?uri= query param. */
+  const buildConnectionUri = () => {
+    const { host, port, user, password, database } = buildConnection();
+    const u = encodeURIComponent(user);
+    const p = encodeURIComponent(password);
+    return `postgresql://${u}:${p}@${host}:${port}/${encodeURIComponent(database)}`;
   };
 
   const hasConnectionData = connectionInfo?.address || connectionInfo?.superuser || (servers?.length ?? 0) > 0;
@@ -76,10 +85,8 @@ const ConnectionInfo: FC<ConnectionInfoProps> = ({ connectionInfo, servers }) =>
             size="small"
             startIcon={<StorageIcon />}
             onClick={() => {
-              const connectionUri = buildConnectionUri();
-              if (connectionUri) {
-                navigate(RouterPaths.sqlEditor.absolutePath, { state: { uri: connectionUri } });
-              }
+              const uri = buildConnectionUri();
+              navigate(RouterPaths.sqlEditor.absolutePath, { state: { uri } });
             }}
             sx={{ mt: 2 }}>
             {t('openInSqlEditor', { ns: 'shared' })}

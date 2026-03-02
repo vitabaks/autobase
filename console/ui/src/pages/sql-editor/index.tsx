@@ -16,28 +16,26 @@ const getDbdeskOrigin = (): string | null => {
   }
 };
 
-/** Validate that a string looks like a PostgreSQL connection URI. */
-const isValidPostgresUri = (uri: string): boolean => {
-  try {
-    const url = new URL(uri);
-    return url.protocol === 'postgresql:' || url.protocol === 'postgres:';
-  } catch {
-    return false;
-  }
-};
-
 const SqlEditor: FC = () => {
   const { t } = useTranslation('shared');
   const location = useLocation();
-  const rawUri = (location.state as { uri?: string } | null)?.uri ?? null;
-  const uri = rawUri && isValidPostgresUri(rawUri) ? rawUri : null;
+  const uri = (location.state as { uri?: string } | null)?.uri ?? null;
   const actualTheme = useAppSelector(selectActualTheme);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   const dbdeskOrigin = useMemo(getDbdeskOrigin, []);
 
-  // Build the iframe src: if a connection URI was passed, append it as ?uri= to DBDESK_URL
-  const iframeSrc = uri ? `${DBDESK_URL}?uri=${encodeURIComponent(uri)}` : DBDESK_URL;
+  // Build the iframe src: append ?uri= when a connection URI is provided.
+  // The URI only appears in the iframe's src attribute (not the browser
+  // address bar) and dbdesk-studio navigates away from it immediately
+  // after creating the connection profile.
+  const iframeSrc = useMemo(() => {
+    if (!DBDESK_URL) return '';
+    if (!uri) return DBDESK_URL;
+    const url = new URL(DBDESK_URL);
+    url.searchParams.set('uri', uri);
+    return url.toString();
+  }, [uri]);
 
   // Sync theme to the embedded DBDesk iframe via postMessage
   useEffect(() => {
@@ -85,7 +83,6 @@ const SqlEditor: FC = () => {
         }}
         allow="clipboard-read; clipboard-write"
         onLoad={() => {
-          // Send initial theme once the iframe has loaded
           iframeRef.current?.contentWindow?.postMessage(
             { type: 'dbdesk-set-theme', theme: actualTheme },
             dbdeskOrigin,
