@@ -7,7 +7,7 @@ COPY console/ui/ .
 RUN yarn install --frozen-lockfile --network-timeout 1000000 && yarn vite build
 
 FROM nginx:1.29-bookworm AS runtime
-LABEL maintainer="Vitaliy Kukharik vitabaks@gmail.com"
+LABEL maintainer="Autobase <info@autobase.tech>"
 
 WORKDIR /usr/share/nginx/html
 

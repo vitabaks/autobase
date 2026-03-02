@@ -2,195 +2,15 @@
 - name: Make sure handlers are flushed immediately
   ansible.builtin.meta: flush_handlers
 
-# pip install
-- ansible.builtin.import_tasks: pip.yml
-  when:
-    - patroni_installation_method == "pip"
-    - pip_package not in system_packages
-  vars:
-    pip_package: "python{{ python_version | default('3') }}-pip"
-  tags: patroni, patroni_install, pip
-
-# Patroni install
-- block: # installation_method: "packages" and patroni_installation_method: "pip"
-    - name: Install setuptools
-      ansible.builtin.pip:
-        name: setuptools<66.0.0 # https://github.com/pypa/setuptools/issues/3772
-        state: latest
-        executable: pip3
-        extra_args: "--trusted-host=pypi.python.org --trusted-host=pypi.org --trusted-host=files.pythonhosted.org"
-        umask: "0022"
-      environment:
-        PATH: "{{ ansible_env.PATH }}:/usr/local/bin:/usr/bin"
-        PIP_BREAK_SYSTEM_PACKAGES: "1"
-      when: patroni_pip_requirements_repo | length < 1
-
-    # Use master requirements if patroni_install_version is 'latest' or explicitly forced via patroni_latest_requirements
-    - name: Download Patroni requirements.txt
-      ansible.builtin.get_url:
-        url: >-
-          https://raw.githubusercontent.com/patroni/patroni/{{
-            'refs/heads/master' if patroni_install_version == 'latest' or patroni_latest_requirements | default(false)
-            else 'refs/tags/v' ~ (patroni_install_version | regex_replace('^v', ''))
-          }}/requirements.txt
-        dest: /tmp/requirements.txt
-        timeout: 60
-        validate_certs: false
-      when: patroni_pip_requirements_repo | length < 1
-
-    - name: Install requirements
-      ansible.builtin.pip:
-        requirements: /tmp/requirements.txt
-        executable: pip3
-        extra_args: "--trusted-host=pypi.python.org --trusted-host=pypi.org --trusted-host=files.pythonhosted.org"
-        umask: "0022"
-      environment:
-        PATH: "{{ ansible_env.PATH }}:{{ postgresql_bin_dir }}:/usr/local/bin:/usr/bin"
-        PIP_BREAK_SYSTEM_PACKAGES: "1"
-      when: patroni_pip_requirements_repo | length < 1
-
-    - name: Install patroni
-      ansible.builtin.pip:
-        name: patroni
-        state: latest
-        executable: pip3
-        extra_args: "--trusted-host=pypi.python.org --trusted-host=pypi.org --trusted-host=files.pythonhosted.org"
-        umask: "0022"
-      environment:
-        PATH: "{{ ansible_env.PATH }}:/usr/local/bin:/usr/bin"
-        PIP_BREAK_SYSTEM_PACKAGES: "1"
-      when: patroni_pip_package_repo | length < 1 and patroni_install_version == "latest"
-
-    - name: "Install patroni {{ patroni_install_version | default('') }}"
-      ansible.builtin.pip:
-        name: "patroni=={{ patroni_install_version }}"
-        executable: pip3
-        extra_args: "--trusted-host=pypi.python.org --trusted-host=pypi.org --trusted-host=files.pythonhosted.org"
-        umask: "0022"
-      environment:
-        PATH: "{{ ansible_env.PATH }}:/usr/local/bin:/usr/bin"
-        PIP_BREAK_SYSTEM_PACKAGES: "1"
-      when: patroni_pip_package_repo | length < 1 and patroni_install_version != "latest"
-  when: installation_method == "packages" and patroni_installation_method == "pip"
-  environment: "{{ proxy_env | default({}) }}"
+# if installation_method: "packages"
+- ansible.builtin.import_tasks: install.yml
+  when: installation_method == "packages"
   tags: patroni, patroni_install
 
-- block: # when "patroni_pip_requirements_repo" and "patroni_pip_package_repo" is defined
-    - name: Download patroni requirements
-      ansible.builtin.get_url:
-        url: "{{ item }}"
-        dest: /tmp/
-        timeout: 120
-        validate_certs: false
-      loop: "{{ patroni_pip_requirements_repo }}"
-      when: patroni_pip_requirements_repo | length > 0
-
-    - name: Download patroni package
-      ansible.builtin.get_url:
-        url: "{{ item }}"
-        dest: /tmp/
-        timeout: 60
-        validate_certs: false
-      loop: "{{ patroni_pip_package_repo | list }}"
-      when: patroni_pip_package_repo | length > 0
-
-    - name: Install requirements
-      ansible.builtin.pip:
-        name: "file:///tmp/{{ item }}"
-        executable: pip3
-        extra_args: "--no-index --find-links=file:///tmp --ignore-installed"
-        umask: "0022"
-      loop: "{{ patroni_pip_requirements_repo | map('basename') | list }}"
-      environment:
-        PATH: "{{ ansible_env.PATH }}:/usr/local/bin:/usr/bin"
-        PIP_BREAK_SYSTEM_PACKAGES: "1"
-      when: patroni_pip_requirements_repo | length > 0
-
-    - name: Install patroni
-      ansible.builtin.pip:
-        name: "file:///tmp/{{ item }}"
-        executable: pip3
-        extra_args: "--no-index --find-links=file:///tmp --ignore-installed"
-        umask: "0022"
-      loop: "{{ patroni_pip_package_repo | map('basename') | list }}"
-      environment:
-        PATH: "{{ ansible_env.PATH }}:/usr/local/bin:/usr/bin"
-        PIP_BREAK_SYSTEM_PACKAGES: "1"
-      when: patroni_pip_package_repo | length > 0
-  when: installation_method == "packages" and patroni_installation_method == "pip"
-  tags: patroni, patroni_install
-
-- block: # installation_method: "packages" and patroni_installation_method: "rpm/deb"
-    # Debian
-    - name: Install patroni package
-      ansible.builtin.apt:
-        name: "{{ patroni_packages | flatten }}"
-        state: present
-      register: apt_status
-      until: apt_status is success
-      delay: 5
-      retries: 3
-      when: ansible_os_family == "Debian" and patroni_deb_package_repo | length < 1
-
-    # RedHat
-    - name: Install patroni package
-      ansible.builtin.dnf:
-        name: "{{ patroni_packages | flatten }}"
-        state: present
-        disable_gpg_check: true
-      register: dnf_status
-      until: dnf_status is success
-      delay: 5
-      retries: 3
-      when: ansible_os_family == "RedHat" and patroni_rpm_package_repo | length < 1
-
-    # when patroni_deb_package_repo or patroni_rpm_package_repo URL is defined
-    # Debian
-    - name: Download patroni deb package
-      ansible.builtin.get_url:
-        url: "{{ item }}"
-        dest: /tmp/
-        timeout: 60
-        validate_certs: false
-      loop: "{{ patroni_deb_package_repo | list }}"
-      when: ansible_os_family == "Debian" and patroni_deb_package_repo | length > 0
-
-    - name: Install patroni from deb package
-      ansible.builtin.apt:
-        force_apt_get: true
-        deb: "/tmp/{{ item }}"
-        state: present
-      loop: "{{ patroni_deb_package_repo | map('basename') | list }}"
-      register: deb_package_status
-      until: deb_package_status is success
-      delay: 5
-      retries: 3
-      when: ansible_os_family == "Debian" and patroni_deb_package_repo | length > 0
-
-    # RedHat
-    - name: Download patroni rpm package
-      ansible.builtin.get_url:
-        url: "{{ item }}"
-        dest: /tmp/
-        timeout: 60
-        validate_certs: false
-      loop: "{{ patroni_rpm_package_repo | list }}"
-      when: ansible_os_family == "RedHat" and patroni_rpm_package_repo | length > 0
-
-    - name: Install patroni from rpm package
-      ansible.builtin.dnf:
-        name: "/tmp/{{ item }}"
-        state: present
-        disable_gpg_check: true
-      loop: "{{ patroni_rpm_package_repo | map('basename') | list }}"
-      register: rpm_package_status
-      until: rpm_package_status is success
-      delay: 5
-      retries: 3
-      when: ansible_os_family == "RedHat" and patroni_rpm_package_repo | length > 0
-  environment: "{{ proxy_env | default({}) }}"
-  when: installation_method == "packages" and (patroni_installation_method == "rpm" or patroni_installation_method == "deb")
-  tags: patroni, patroni_install
+# if installation_method: "docker"
+- ansible.builtin.import_tasks: docker.yml
+  when: installation_method == "docker"
+  tags: patroni, docker
 
 # Patroni configure
 - name: Create conf directory
@@ -331,11 +151,13 @@
 
 - name: Copy systemd service file "/etc/systemd/system/patroni.service"
   ansible.builtin.template:
-    src: templates/patroni.service.j2
+    src: "templates/{{ patroni_service_template }}"
     dest: /etc/systemd/system/patroni.service
     owner: postgres
     group: postgres
     mode: "0644"
+  vars:
+    patroni_service_template: "{{ 'patroni-docker.service.j2' if installation_method == 'docker' else 'patroni.service.j2' }}"
   tags: patroni, patroni_conf, patroni_service
 
 - name: Prepare PostgreSQL | create statistics directory (if not already exists)
@@ -414,41 +236,40 @@
         state: directory
         mode: "0700"
 
-    # for Debian based distros only
+    # for Debian based distros only (if installation_method: "packages")
     # patroni bootstrap failure is possible if the PostgreSQL config files are missing
-    - name: Prepare PostgreSQL | make sure PostgreSQL config directory exists
-      ansible.builtin.file:
-        path: /etc/postgresql
-        state: directory
-        owner: postgres
-        group: postgres
-        recurse: true
-      when: ansible_os_family == "Debian" and
-        postgresql_packages|join(" ") is not search("postgrespro")
+    - block:
+        - name: Prepare PostgreSQL | make sure PostgreSQL config directory exists
+          ansible.builtin.file:
+            path: /etc/postgresql
+            state: directory
+            owner: postgres
+            group: postgres
+            recurse: true
 
-    - name: Prepare PostgreSQL | make sure PostgreSQL config files exists
-      ansible.builtin.stat:
-        path: "{{ postgresql_conf_dir }}/postgresql.conf"
-      register: postgresql_conf_file
-      when: ansible_os_family == "Debian" and
-        postgresql_packages|join(" ") is not search("postgrespro")
+        - name: Prepare PostgreSQL | make sure PostgreSQL config files exists
+          ansible.builtin.stat:
+            path: "{{ postgresql_conf_dir }}/postgresql.conf"
+          register: postgresql_conf_file
 
-    - name: Prepare PostgreSQL | generate default PostgreSQL config files
-      become: true
-      become_user: postgres
-      ansible.builtin.command: >
-        /usr/bin/pg_createcluster {{ postgresql_version }} {{ postgresql_cluster_name }}
-        -d {{ postgresql_data_dir }}
-        -p {{ postgresql_port }}
-        -e {{ postgresql_encoding }}
-        --locale {{ postgresql_locale }}
-        --
-        --auth-local {{ postgresql_password_encryption_algorithm }}
-      register: pg_createcluster_result
-      failed_when: pg_createcluster_result.rc != 0
-      when: (ansible_os_family == "Debian" and
-        postgresql_packages|join(" ") is not search("postgrespro")) and
-        not postgresql_conf_file.stat.exists
+        - name: Prepare PostgreSQL | generate default PostgreSQL config files
+          become: true
+          become_user: postgres
+          ansible.builtin.command: >
+            /usr/bin/pg_createcluster {{ postgresql_version }} {{ postgresql_cluster_name }}
+            -d {{ postgresql_data_dir }}
+            -p {{ postgresql_port }}
+            -e {{ postgresql_encoding }}
+            --locale {{ postgresql_locale }}
+            --
+            --auth-local {{ postgresql_password_encryption_algorithm }}
+          register: pg_createcluster_result
+          failed_when: pg_createcluster_result.rc != 0
+          when: not postgresql_conf_file.stat.exists
+      when:
+        - ansible_os_family == "Debian"
+        - installation_method == "packages"
+        - postgresql_packages|join(" ") is not search("postgrespro")
 
     # When performing PITR, we do not clear the directory if pgbackrest is used to be able to use the '--delta restore' option.
     # In all other cases, we must clear the data directory before restore.
@@ -1112,8 +933,9 @@
   when: postgresql_wal_dir is defined and postgresql_wal_dir | length > 0
   tags: patroni, custom_wal_dir, point_in_time_recovery
 
-# disable postgresql from autostart
-- block: # "Debian"
+# Disable postgresql service from autostart (if installation_method: "packages")
+- block:
+    # "Debian"
     - name: Turning off postgresql autostart from config "start.conf" (will be managed by patroni)
       ansible.builtin.copy:
         dest: "{{ postgresql_conf_dir }}/start.conf"
@@ -1121,36 +943,34 @@
         owner: postgres
         group: postgres
         mode: "0644"
+      when: ansible_os_family == "Debian"
 
     - name: Disable "postgresql@{{ postgresql_version | default('') }}-{{ postgresql_cluster_name | default('') }}" service
       ansible.builtin.systemd:
         name: "postgresql@{{ postgresql_version }}-{{ postgresql_cluster_name }}"
         enabled: false
         daemon_reload: true
-  when: ansible_os_family == "Debian" and
-    postgresql_packages|join(" ") is not search("postgrespro")
+      when: ansible_os_family == "Debian" and postgresql_packages|join(" ") is not search("postgrespro")
+
+    # "RedHat"
+    - name: Disable "postgresql-{{ postgresql_version | default('') }}" service (will be managed by patroni)
+      ansible.builtin.systemd:
+        name: "postgresql-{{ postgresql_version }}"
+        enabled: false
+        daemon_reload: true
+      when: ansible_os_family == "RedHat" and postgresql_packages|join(" ") is not search("postgrespro")
+
+    # PostgresPro
+    - name: Disable "postgrespro-std-{{ postgresql_version | default('') }}" service (will be managed by patroni)
+      ansible.builtin.systemd:
+        name: "postgrespro-std-{{ postgresql_version }}"
+        enabled: false
+        daemon_reload: true
+      when: postgresql_packages|join(" ") is search("postgrespro-std")
+  when: installation_method == "packages"
   tags: patroni, postgresql_disable
 
-# "RedHat"
-- name: Disable "postgresql-{{ postgresql_version | default('') }}" service (will be managed by patroni)
-  ansible.builtin.systemd:
-    name: "postgresql-{{ postgresql_version }}"
-    enabled: false
-    daemon_reload: true
-  when: ansible_os_family == "RedHat" and
-    postgresql_packages|join(" ") is not search("postgrespro")
-  tags: patroni, postgresql_disable
-
-# PostgresPro
-- name: Disable "postgrespro-std-{{ postgresql_version | default('') }}" service (will be managed by patroni)
-  ansible.builtin.systemd:
-    name: "postgrespro-std-{{ postgresql_version }}"
-    enabled: false
-    daemon_reload: true
-  when: postgresql_packages|join(" ") is search("postgrespro-std")
-  tags: patroni, postgresql_disable
-
-# PATRONICTL_CONFIG_FILE (patroni v1.6.1 and higher)
+# PATRONICTL_CONFIG_FILE
 - name: Add PATRONICTL_CONFIG_FILE environment variable into /etc/environment
   ansible.builtin.lineinfile:
     dest: "/etc/environment"
@@ -1161,7 +981,8 @@
     group: root
     mode: "0644"
     create: true
-  register: patronictl_env_result
+  ignore_errors: true
+  when: installation_method == "packages"
   tags: patroni, patroni_env
 
 - name: Add PATRONICTL_CONFIG_FILE to /etc/profile.d/patroni.sh

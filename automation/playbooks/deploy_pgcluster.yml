@@ -180,6 +180,12 @@
 
     - role: vitabaks.autobase.hostname
 
+    - role: vitabaks.autobase.docker
+      when:
+        - installation_method | default('packages') == "docker"
+        - docker_install | default(true) | bool
+      tags: docker, docker_install
+
 - name: vitabaks.autobase.deploy_pgcluster | Deploy etcd cluster
   ansible.builtin.import_playbook: etcd_cluster.yml
   when: not dcs_exists | default(false) | bool and dcs_type | default('etcd') == "etcd"

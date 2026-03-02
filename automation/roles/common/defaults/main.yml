@@ -272,6 +272,7 @@ postgresql_data_dir: "\
   {% else %}\
   {{ postgresql_home_dir }}/{{ postgresql_version }}/{{ postgresql_cluster_name }}\
   {% endif %}"
+postgresql_base_dir: "{{ postgresql_data_dir | regex_replace('/$', '') | dirname | dirname }}"
 # You can specify custom WAL dir path. Example: "/pgwal/{{ postgresql_version }}/pg_wal"
 postgresql_wal_dir: "" # if defined, symlink will be created [optional]
 postgresql_conf_dir: "\
@@ -1236,7 +1237,7 @@ packages_from_file: []
 # ----------------------------------------------------------------------------------------------------
 # Redefine the installation method (optional)
 # ----------------------------------------------------------------------------------------------------
-installation_method: "packages" # "packages" = install via deb/rpm packages; "docker" = use container images (TODO).
+installation_method: "packages" # "packages" = install via deb/rpm packages; "docker" = use container images.
 
 # The Patroni package will be installed from the deb/rpm package by default.
 # You also have the option of choosing an installation method using the pip package.
@@ -1259,6 +1260,100 @@ patroni_pip_requirements_repo: []
 #  - "https://<my_repo>/<package_1>.tar.gz"
 #  - "https://<my_repo>/<package_n>.tar.gz"
 pip_package_repo: "https://bootstrap.pypa.io/get-pip.py" # latest version pip3 for python3 (or use "pip-<version>.tar.gz").
+
+############################################################
+# Docker containers (if installation_method: "docker")
+############################################################
+
+docker_install: true # Set to false if you prefer to install Docker manually.
+docker_add_repo: true # Set to false if you prefer to manage the Docker repository yourself.
+
+postgresql_container:
+  name: "postgres"
+  image: "autobase/patroni:{{ postgresql_container.tag }}" # image with Patroni, PostgreSQL, extensions, and backup tools.
+  tag: "postgresql-{{ postgresql_version }}" # major or minor version, e.g. 17 or 17.5
+  options:
+    - "--network host"
+    - "--shm-size=4g"
+  envs:
+    - "PGDATA={{ postgresql_data_dir }}"
+  volumes:
+    - "/etc/patroni:/etc/patroni"
+    - "{{ patroni_log_dir }}:{{ patroni_log_dir }}"
+    - "/etc/postgresql:/etc/postgresql"
+    - "{{ postgresql_base_dir }}:{{ postgresql_base_dir }}"
+    - "{{ postgresql_log_dir }}:{{ postgresql_log_dir }}"
+    - "{{ postgresql_unix_socket_dir }}:{{ postgresql_unix_socket_dir }}"
+    - "{{ tls_dir }}:{{ tls_dir }}"
+  run_command: |
+    bash -c '/usr/bin/patroni --version && \
+      mkdir -p {{ postgresql_conf_dir }} {{ postgresql_data_dir }}; \
+      chown -R postgres:postgres \
+        {{ postgresql_conf_dir }} \
+        {{ postgresql_data_dir }} \
+        {{ postgresql_log_dir }} \
+        {{ postgresql_unix_socket_dir }}; \
+      exec su - postgres -c "/usr/bin/patroni /etc/patroni/patroni.yml"'
+
+# if dcs_type: "etcd" and dcs_exists: false
+etcd_container:
+  name: "etcd"
+  image: "bitnami/etcd:{{ etcd_container.tag }}"
+  tag: "{{ etcd_version }}"
+  options:
+    - "--network host"
+    - "--env-file {{ etcd_conf_dir }}/etcd.conf"
+  envs: []
+  volumes:
+    - "{{ etcd_data_dir }}:{{ etcd_data_dir }}"
+    - "{{ etcd_tls_dir }}:{{ etcd_tls_dir }}"
+  run_command: ""
+
+# if dcs_type: "consul" and dcs_exists: false
+consul_container:
+  name: "consul"
+  image: "bitnami/consul:{{ consul_container.tag }}"
+  tag: "{{ consul_version }}"
+  options:
+    - "--network host"
+  envs: []
+  volumes:
+    - "{{ consul_config_path }}:{{ consul_config_path }}"
+    - "{{ consul_configd_path }}:{{ consul_configd_path }}"
+    - "{{ consul_data_path }}:{{ consul_data_path }}"
+    - "{{ consul_run_path }}:{{ consul_run_path }}"
+    - "{{ consul_tls_dir }}:{{ consul_tls_dir }}"
+  run_command: |
+    consul agent \
+      -config-file={{ consul_config_path }}/config.json \
+      -config-dir={{ consul_configd_path }} \
+      -pid-file={{ consul_run_path }}/consul.pid
+
+# if pgbouncer_install: true
+pgbouncer_container:
+  name: "pgbouncer"
+  image: "bitnami/pgbouncer:{{ pgbouncer_container.tag }}"
+  tag: "{{ pgbouncer_version | default('latest') }}"
+  options:
+    - "--network host"
+  envs: []
+  volumes:
+    - "{{ pgbouncer_conf_dir }}:{{ pgbouncer_conf_dir }}"
+    - "{{ pgbouncer_log_dir }}:{{ pgbouncer_log_dir }}"
+    - "{{ pgbouncer_tls_dir }}:{{ pgbouncer_tls_dir }}"
+
+# if with_haproxy_load_balancing: true
+haproxy_container:
+  name: "haproxy"
+  image: "bitnami/haproxy:{{ haproxy_container.tag }}"
+  tag: "{{ haproxy_version | default('latest') }}"
+  options:
+    - "--network host"
+  envs: []
+  volumes:
+    - "/etc/haproxy:/etc/haproxy"
+    - "/run/haproxy:/run/haproxy"
+  run_command: "haproxy -Ws -f /etc/haproxy/haproxy.cfg -p /run/haproxy/haproxy.pid"
 
 ############################################################
 # Other variables

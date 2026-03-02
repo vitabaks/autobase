@@ -1,0 +1,14 @@
+---
+# Used only for Fedora/Rocky (RedHat OS-Family)
+# https://docs.docker.com/engine/install/fedora/#uninstall-old-versions
+# https://docs.docker.com/engine/install/centos/#uninstall-old-versions
+
+docker_obsolete_packages:
+  - docker
+  - docker-client
+  - docker-client-latest
+  - docker-common
+  - docker-latest
+  - docker-latest-logrotate
+  - docker-logrotate
+  - docker-engine

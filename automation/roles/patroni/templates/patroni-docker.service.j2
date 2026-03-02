@@ -1,0 +1,39 @@
+[Unit]
+Description=Patroni docker wrapper
+Requires=docker.service
+After=docker.service
+
+[Service]
+Type=simple
+TimeoutSec=60
+RestartSec=15
+Restart=always
+
+# Delete patroni container (if any)
+ExecStartPre=-/usr/bin/docker rm -f {{ postgresql_container.name | default('patroni') }}
+
+# Start patroni container
+ExecStart=/usr/bin/docker run -d --name {{ postgresql_container.name | default('patroni') }} \
+  {% for option in postgresql_container.options | default([]) %}
+  {{ option }} \
+  {% endfor %}
+  {% for env in postgresql_container.envs | default([]) %}
+  --env {{ env }} \
+  {% endfor %}
+  {% for volume in postgresql_container.volumes | default([]) %}
+  --volume {{ volume }} \
+  {% endfor %}
+  {% if postgresql_stats_temp_directory_path | default('') != 'none' and postgresql_version | int <= 14 %}
+  --volume {{ postgresql_stats_temp_directory_path }}:{{ postgresql_stats_temp_directory_path }} \
+  {% endif %}
+  {{ postgresql_container.image | default('autobase/patroni:postgresql-' ~ postgresql_version) }} {{ postgresql_container.run_command | default('') }}
+
+# Stop patroni container
+ExecStop=-/usr/bin/docker stop {{ postgresql_container.name | default('patroni') }}
+ExecStopPost=-/usr/bin/docker rm -f {{ postgresql_container.name | default('patroni') }}
+
+# Send HUP to reload from patroni.yml
+ExecReload=/usr/bin/docker exec {{ postgresql_container.name | default('patroni') }} kill -SIGHUP 1
+
+[Install]
+WantedBy=multi-user.target

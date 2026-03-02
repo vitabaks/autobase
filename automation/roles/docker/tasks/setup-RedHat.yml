@@ -1,0 +1,58 @@
+---
+- name: Ensure old versions of Docker are not installed.
+  ansible.builtin.package:
+    name: "{{ docker_obsolete_packages }}"
+    state: absent
+
+- name: Add Docker GPG key.
+  ansible.builtin.rpm_key:
+    key: "{{ docker_yum_gpg_key }}"
+    state: present
+  when: docker_add_repo | bool
+
+- name: Add Docker repository.
+  ansible.builtin.get_url:
+    url: "{{ docker_yum_repo_url }}"
+    dest: '/etc/yum.repos.d/docker-{{ docker_edition }}.repo'
+    owner: root
+    group: root
+    mode: "0644"
+  when: docker_add_repo | bool
+
+- name: Configure Docker Nightly repo.
+  community.general.ini_file:
+    dest: '/etc/yum.repos.d/docker-{{ docker_edition }}.repo'
+    section: 'docker-{{ docker_edition }}-nightly'
+    option: enabled
+    value: '{{ docker_yum_repo_enable_nightly }}'
+    mode: "0644"
+    no_extra_spaces: true
+  when: docker_add_repo | bool
+
+- name: Configure Docker Test repo.
+  community.general.ini_file:
+    dest: '/etc/yum.repos.d/docker-{{ docker_edition }}.repo'
+    section: 'docker-{{ docker_edition }}-test'
+    option: enabled
+    value: '{{ docker_yum_repo_enable_test }}'
+    mode: "0644"
+    no_extra_spaces: true
+  when: docker_add_repo | bool
+
+- name: Configure containerd on RHEL 8.
+  block:
+    - name: Ensure runc is not installed.
+      ansible.builtin.package:
+        name: runc
+        state: absent
+
+    - name: Ensure container-selinux is installed.
+      ansible.builtin.package:
+        name: container-selinux
+        state: present
+
+    - name: Ensure containerd.io is installed.
+      ansible.builtin.package:
+        name: containerd.io
+        state: present
+  when: ansible_distribution_major_version | int == 8
