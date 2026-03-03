@@ -33,10 +33,16 @@ Install [make](https://www.gnu.org/software/make/), [Python3.12](https://www.pyt
 
 Run `make` for Makefile help.
 
+> **Resource requirements**:
+> - `make molecule-converge` — creates 3 containers and deploys a PostgreSQL cluster. **Minimum: 4 GB RAM, 2 CPU cores, 20 GB disk** (8 GB RAM recommended).
+> - `make tests` — runs all test scenarios and is significantly more resource-intensive. **Minimum: 16 GB RAM, 4 CPU cores, 50 GB disk** (32 GB RAM recommended).
+>
+> On systems with limited RAM, use `make molecule-converge` for a quick functional test, then `make molecule-destroy` to clean up.
+
 1. Initialize virtualenv and install dependencies with: `make bootstrap-dev`
 2. Run Prettier formatting: `make prettier`
 3. Lint your code with `make lint`
-4. Test your changes with: `make tests` or `make molecule-converge`
+4. Test your changes with: `make molecule-converge` (lightweight) or `make tests` (all scenarios)
 
 To test a specific distribution, set `distro`, `tag`, and `namespace`:
 
@@ -55,7 +61,7 @@ Use Gitpod for a cloud-based development environment:
 5. Make your changes and commit: `git add .` and `git commit -m "Description of changes"`
 6. Run Prettier formatting: `make prettier`
 7. Test with linters: `make lint`
-8. Test with Molecule: `make tests` or `make molecule-converge`
+8. Test with Molecule: `make molecule-converge` (lightweight) or `make tests` (all scenarios)
 9. Push your changes: `git push origin my-feature-branch`
 
 Keep your Gitpod workspace synced with the main repository.

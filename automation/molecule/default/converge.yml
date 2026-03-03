@@ -24,6 +24,12 @@
         balancer_tags: "datacenter=dc1"
         enable_ssh_key_based_authentication: true
         synchronous_mode: true
+        # Use low memory settings to allow testing on machines with limited RAM (e.g. 8 GB).
+        # 128MB shared_buffers and 512MB effective_cache_size are safe minimums for a
+        # functional test cluster; production sizing should use the defaults (25%/75% of RAM).
+        local_postgresql_parameters:
+          - { option: "shared_buffers", value: "128MB" }
+          - { option: "effective_cache_size", value: "512MB" }
         cacheable: true
       delegate_to: localhost
       run_once: true # noqa run-once
