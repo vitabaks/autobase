@@ -11,6 +11,17 @@
   register: patroni_response
   failed_when: "'running' not in patroni_response.json.state"
 
+- name: Check Patroni dynamic config
+  ansible.builtin.uri:
+    url: >-
+      {{ patroni_restapi_protocol | default('https') }}://{{ patroni_restapi_connect_addr
+        | default(patroni_bind_address | default(bind_address, true), true) }}:{{ patroni_restapi_port
+        | default('8008') }}/config
+    method: GET
+    return_content: true
+    ca_path: "{{ patroni_restapi_cafile | default(omit, true) }}"
+  register: patroni_config_response
+
 # ✅ Verify that variables can be overridden via group_vars
 # 🧪 Ensure that patroni cluster name has the expected value "test-pgcluster" from Molecule inventory group_vars
 - name: Molecule.verify | Assert Patroni cluster scope is correct
@@ -18,5 +29,6 @@
   ansible.builtin.assert:
     that:
       - patroni_response.json.patroni.scope == "test-pgcluster"
+      - patroni_config_response.json.failsafe_mode | default(false) | bool
     fail_msg: "Patroni config error: scope is '{{ patroni_response.json.patroni.scope }}', expected 'test-pgcluster'"
     success_msg: "Patroni config OK: scope is 'test-pgcluster'"

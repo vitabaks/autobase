@@ -28,6 +28,7 @@ patroni_replication_auth_options:
 synchronous_mode: false # or 'true' for enable synchronous database replication
 synchronous_mode_strict: false # if 'true' then block all client writes to the master, when a synchronous replica is not available
 synchronous_node_count: 1 # number of synchronous standby databases
+patroni_failsafe_mode: false # enable Patroni DCS failsafe mode
 
 # Load Balancing
 with_haproxy_load_balancing: false # or 'true' if you want to install and configure the HAProxy load balancers
