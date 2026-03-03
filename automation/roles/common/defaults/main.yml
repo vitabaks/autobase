@@ -24,7 +24,6 @@ patroni_replication_auth_options:
 #  - { option: "sslrootcert", value: "{{ tls_dir ~ '/' ~ tls_ca_cert if tls_cert_generate | bool else '' }}" } # or 'system'
 # Note: if sslmode: verify-full, and your certificate doesn't have IP address in the SAN,
 # set also the option postgresql_connect_addr to ensure TLS certificate validation is successful.
-patroni_failsafe_mode: true # enable Patroni DCS failsafe mode
 
 synchronous_mode: false # or 'true' for enable synchronous database replication
 synchronous_mode_strict: false # if 'true' then block all client writes to the master, when a synchronous replica is not available
@@ -535,6 +534,7 @@ patroni_retry_timeout: 10
 patroni_master_start_timeout: 300
 patroni_maximum_lag_on_failover: 1048576 # (1MB) the maximum bytes a follower may lag to be able to participate in leader election.
 patroni_maximum_lag_on_replica: "100MB" # the maximum of lag that replica can be in order to be available for read-only queries.
+patroni_failsafe_mode: true # enable Patroni DCS failsafe mode
 
 patroni_use_unix_socket: true # specifies that Patroni should prefer to use unix sockets to connect to the cluster.
 patroni_use_unix_socket_repl: true # specifies that Patroni should prefer to use unix sockets for replication user cluster connection.
