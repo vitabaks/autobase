@@ -24,11 +24,11 @@ patroni_replication_auth_options:
 #  - { option: "sslrootcert", value: "{{ tls_dir ~ '/' ~ tls_ca_cert if tls_cert_generate | bool else '' }}" } # or 'system'
 # Note: if sslmode: verify-full, and your certificate doesn't have IP address in the SAN,
 # set also the option postgresql_connect_addr to ensure TLS certificate validation is successful.
+patroni_failsafe_mode: true # enable Patroni DCS failsafe mode
 
 synchronous_mode: false # or 'true' for enable synchronous database replication
 synchronous_mode_strict: false # if 'true' then block all client writes to the master, when a synchronous replica is not available
 synchronous_node_count: 1 # number of synchronous standby databases
-patroni_failsafe_mode: false # enable Patroni DCS failsafe mode
 
 # Load Balancing
 with_haproxy_load_balancing: false # or 'true' if you want to install and configure the HAProxy load balancers

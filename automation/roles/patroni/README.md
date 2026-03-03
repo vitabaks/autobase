@@ -68,7 +68,7 @@ This role installs and configures [Patroni](https://github.com/patroni/patroni),
 | `synchronous_mode`                                    | `false`   | Enable synchronous replication.                                 |
 | `synchronous_mode_strict`                             | `false`   | If true, block writes when no synchronous replica is available. |
 | `synchronous_node_count`                              | `1`       | Number of synchronous standbys.                                 |
-| `patroni_failsafe_mode`                               | `false`   | Enables Patroni DCS failsafe mode.                              |
+| `patroni_failsafe_mode`                               | `true`    | Enables Patroni DCS failsafe mode.                              |
 
 ### Bootstrap Configuration
 
