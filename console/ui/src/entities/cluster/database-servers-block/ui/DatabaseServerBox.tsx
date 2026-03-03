@@ -74,7 +74,22 @@ const DatabaseServerBox: FC<DatabaseServerBlockProps> = ({ index, remove }) => {
           control={control}
           name={`${DATABASE_SERVERS_FIELD_NAMES.DATABASE_SERVERS}.${index}.${DATABASE_SERVERS_FIELD_NAMES.DATABASE_SSH_PORT}`}
           render={({ field: { value, onChange } }) => (
-            <TextField value={value} onChange={onChange} size="small" label={t('sshPort', { ns: 'clusters' })} />
+            <TextField
+              value={value}
+              onChange={onChange}
+              size="small"
+              label={t('sshPort', { ns: 'clusters' })}
+              error={
+                !!errors[DATABASE_SERVERS_FIELD_NAMES.DATABASE_SERVERS]?.[index]?.[
+                  DATABASE_SERVERS_FIELD_NAMES.DATABASE_SSH_PORT
+                ]
+              }
+              helperText={
+                errors?.[DATABASE_SERVERS_FIELD_NAMES.DATABASE_SERVERS]?.[index]?.[
+                  DATABASE_SERVERS_FIELD_NAMES.DATABASE_SSH_PORT
+                ]?.message ?? ' '
+              }
+            />
           )}
         />
         <Controller
