@@ -35,7 +35,7 @@ Run `make` for Makefile help.
 
 > **Resource requirements**:
 > - `make molecule-converge` — creates 3 containers and deploys a PostgreSQL cluster. **Minimum: 4 GB RAM, 2 CPU cores, 20 GB disk** (8 GB RAM recommended).
-> - `make tests` — runs all test scenarios and is significantly more resource-intensive. **Minimum: 16 GB RAM, 4 CPU cores, 50 GB disk** (32 GB RAM recommended).
+> - `make tests` — runs all test scenarios and is significantly more resource-intensive. **Minimum: 8 GB RAM, 4 CPU cores, 20 GB disk** (16 GB RAM recommended).
 >
 > On systems with limited RAM, use `make molecule-converge` for a quick functional test, then `make molecule-destroy` to clean up.
 
