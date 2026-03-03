@@ -7,7 +7,7 @@
 # 2. Count the number of target secondary servers to determine the parallel execution limit.
 # 3. Use xargs to execute the RSync command in parallel for each target secondary server.
 
-- name: Make sure that the new data directory "{{ pg_new_datadir | default('') }}" are empty on the Replica
+- name: Make sure that the new data directory "{{ pg_new_datadir | default('') }}" are empty on the replica
   ansible.builtin.file:
     path: "{{ pg_new_datadir }}"
     state: "{{ item }}"
@@ -23,7 +23,7 @@
 # If the source and target directories are inside versioned directories
 # (example: /pgdata/<pg_old_version>/main -> /pgdata/<pg_new_version>/main)
 - block:
-    - name: "Upgrade the PostgreSQL on the Replica (using rsync --hard-links)"
+    - name: "Upgrade the PostgreSQL on the replica (using rsync --hard-links)"
       vars:
         secondary_servers: "{{ groups['secondary'] | map('extract', hostvars, 'bind_address') | join('\n') }}"
         secondary_count: "{{ groups['secondary'] | length }}"
@@ -55,7 +55,7 @@
 # If the source and target directories are non-versioned directories
 # (example: /pgdata/main -> /pgdata/main<pg_new_version>)
 - block:
-    - name: "Upgrade the PostgreSQL on the Replica (using rsync --hard-links)"
+    - name: "Upgrade the PostgreSQL on the replica (using rsync --hard-links)"
       vars:
         secondary_servers: "{{ groups['secondary'] | join('\n') }}"
         secondary_count: "{{ groups['secondary'] | length }}"
@@ -86,7 +86,7 @@
 
 # Tablespaces (if exists)
 - block:
-    - name: "Upgrade the PostgreSQL tablespaces on the Replica (using rsync --hard-links)"
+    - name: "Upgrade the PostgreSQL tablespaces on the replica (using rsync --hard-links)"
       vars:
         secondary_servers: "{{ groups['secondary'] | join('\n') }}"
         secondary_count: "{{ groups['secondary'] | length }}"

@@ -18,5 +18,5 @@
     default_schema: "{{ 'pg_catalog' if item.ext == 'pg_cron' else 'public' }}"
   when:
     - postgresql_extensions | default('') | length > 0
-    - patroni_standby_cluster.host | default('') | length < 1 # do not perform on the Standby Cluster
+    - patroni_standby_cluster.host | default('') | length < 1 # do not perform on the standby cluster
   tags: postgresql_extensions

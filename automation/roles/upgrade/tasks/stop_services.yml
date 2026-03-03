@@ -1,9 +1,10 @@
 ---
 - name: "Execute CHECKPOINT before stopping PostgreSQL"
-  ansible.builtin.command: >
-    {{ pg_old_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc "CHECKPOINT"
+  ansible.builtin.command: "{{ psql_command }} -tAXc 'CHECKPOINT'"
   async: "{{ pg_start_stop_timeout | int }}" # run the command asynchronously
   poll: 0
+  vars:
+    psql_command: "{{ pg_old_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres"
   environment:
     PGPASSWORD: "{{ patroni_superuser_password }}"
   register: checkpoint_result
@@ -19,17 +20,19 @@
 # Wait for the window to appear without high replication lag before stopping PostgreSQL
 - name: "Wait until replication lag is less than {{ max_replication_lag_bytes | default('') | human_readable }}"
   ansible.builtin.command: >-
-    {{ pg_old_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc
-    "select coalesce(max(pg_wal_lsn_diff(pg_current_wal_lsn(),replay_lsn)),1) as pg_lag_bytes
+    {{ psql_command }} -tAXc "
+      select coalesce(max(pg_wal_lsn_diff(pg_current_wal_lsn(),replay_lsn)),1)
       from pg_stat_replication"
-  environment:
-    PGPASSWORD: "{{ patroni_superuser_password }}"
   register: pg_lag_bytes
   until: pg_lag_bytes.stdout|int < max_replication_lag_bytes|int
   retries: 60 # max wait time: 2 minutes
   delay: 2
   changed_when: false
   failed_when: false
+  vars:
+    psql_command: "{{ pg_old_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres"
+  environment:
+    PGPASSWORD: "{{ patroni_superuser_password }}"
   when:
     - inventory_hostname in groups['primary']
     - pg_old_version | string is version('10', '>=')
@@ -46,7 +49,7 @@
 
     - name: "Replication lag detected"
       ansible.builtin.fail:
-        msg: "There's a replication lag in the PostgreSQL Cluster. Please try again later."
+        msg: "There's a replication lag in the PostgreSQL cluster. Please try again later."
   when:
     - pg_lag_bytes.stdout is defined
     - pg_lag_bytes.stdout|int >= max_replication_lag_bytes|int
@@ -54,17 +57,19 @@
 # for compatibility with Postgres 9.x
 - name: "Wait until replication lag is less than {{ max_replication_lag_bytes | default('') | human_readable }}"
   ansible.builtin.command: >-
-    {{ pg_old_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc
-    "select coalesce(max(pg_xlog_location_diff(pg_current_xlog_location(),replay_location)),1) as pg_lag_bytes
+    {{ psql_command }} -tAXc "
+      select coalesce(max(pg_xlog_location_diff(pg_current_xlog_location(),replay_location)),1)
       from pg_stat_replication"
-  environment:
-    PGPASSWORD: "{{ patroni_superuser_password }}"
   register: pg_lag_bytes_9x
   until: pg_lag_bytes_9x.stdout|int < max_replication_lag_bytes|int
   retries: 60 # max wait time: 2 minutes
   delay: 2
   changed_when: false
   failed_when: false
+  vars:
+    psql_command: "{{ pg_old_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres"
+  environment:
+    PGPASSWORD: "{{ patroni_superuser_password }}"
   when:
     - inventory_hostname in groups['primary']
     - pg_old_version | string is version('10', '<')
@@ -81,7 +86,7 @@
 
     - name: "Replication lag detected"
       ansible.builtin.fail:
-        msg: "There's a replication lag in the PostgreSQL Cluster. Please try again later."
+        msg: "There's a replication lag in the PostgreSQL cluster. Please try again later."
   when:
     - pg_lag_bytes_9x.stdout is defined
     - pg_lag_bytes_9x.stdout|int >= max_replication_lag_bytes|int
@@ -94,13 +99,13 @@
     - pgbouncer_pool_pause | bool
 
 # Stop PostgreSQL (if replication lag is 0 bytes)
-- name: Stop PostgreSQL on the Leader
+- name: Stop PostgreSQL on the leader
   ansible.builtin.command: >-
     {{ pg_old_bindir }}/pg_ctl -D {{ pg_old_datadir }} stop -m fast -w -t {{ pg_start_stop_timeout }}
   when:
     - inventory_hostname in groups['primary']
 
-- name: Stop PostgreSQL on the Replica
+- name: Stop PostgreSQL on the replica
   ansible.builtin.command: >-
     {{ pg_old_bindir }}/pg_ctl -D {{ pg_old_datadir }} stop -m fast -w -t {{ pg_start_stop_timeout }}
   when:

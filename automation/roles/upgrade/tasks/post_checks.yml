@@ -1,19 +1,18 @@
 ---
 - name: Make sure that physical replication is active
-  ansible.builtin.command: >-
-    {{ pg_new_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc
-    "select count(*) from pg_stat_replication
-    where application_name != 'pg_basebackup'"
-  environment:
-    PGPASSWORD: "{{ patroni_superuser_password }}"
+  ansible.builtin.command: >
+    {{ psql_command }} -tAXc "select count(*) from pg_stat_replication where application_name != 'pg_basebackup'"
   register: pg_replication_state
   until: pg_replication_state.stdout | int > 0
   retries: 30 # max wait time: 1 minute
   delay: 2
   changed_when: false
   failed_when: false
-  when:
-    - inventory_hostname in groups['primary']
+  vars:
+    psql_command: "{{ pg_new_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres"
+  environment:
+    PGPASSWORD: "{{ patroni_superuser_password }}"
+  when: inventory_hostname in groups['primary']
 
 # Error, if no active replication connections found.
 - name: "Post-Check error. No active replication connections found."
@@ -27,41 +26,43 @@
     - inventory_hostname in groups['primary']
     - pg_replication_state.stdout | int == 0
 
-- name: Create a table "test_replication" with 10000 rows on the Primary
+- name: Create a table "test_replication" with 10000 rows on the primary
   ansible.builtin.command: >-
-    {{ pg_new_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc
-    "drop table IF EXISTS test_replication;
+    {{ psql_command }} -tAXc "drop table IF EXISTS test_replication;
     create table test_replication as select generate_series(1, 10000)"
-  environment:
-    PGPASSWORD: "{{ patroni_superuser_password }}"
   register: create_table_result
   until: create_table_result is success
   delay: 5
   retries: 3
   ignore_errors: true # show the error and continue the playbook execution
-  when:
-    - inventory_hostname in groups['primary']
-
-- name: Wait until the PostgreSQL replica is synchronized
-  ansible.builtin.command: >-
-    {{ pg_new_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc
-    "select count(*) from test_replication"
+  vars:
+    psql_command: "{{ pg_new_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres"
   environment:
     PGPASSWORD: "{{ patroni_superuser_password }}"
+  when: inventory_hostname in groups['primary']
+
+- name: Wait until the PostgreSQL replica is synchronized
+  ansible.builtin.command: >
+    {{ psql_command }} -tAXc "select count(*) from test_replication"
   register: count_test
   until: count_test.stdout | int == 10000
   retries: 60 # max wait time: 2 minutes
   delay: 2
   changed_when: false
   failed_when: false
+  vars:
+    psql_command: "{{ pg_new_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres"
+  environment:
+    PGPASSWORD: "{{ patroni_superuser_password }}"
   when:
     - inventory_hostname in groups['secondary']
     - create_table_result is success
 
 - name: Drop a table "test_replication"
-  ansible.builtin.command: >-
-    {{ pg_new_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc
-    "drop table IF EXISTS test_replication"
+  ansible.builtin.command: >
+    {{ psql_command }} -tAXc "drop table IF EXISTS test_replication"
+  vars:
+    psql_command: "{{ pg_new_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres"
   environment:
     PGPASSWORD: "{{ patroni_superuser_password }}"
   when:
@@ -71,19 +72,19 @@
 - name: Print the result of checking the number of records
   ansible.builtin.debug:
     msg:
-      - "The PostgreSQL Replication is OK for replica {{ ansible_hostname }}"
-      - "The number of records in the test_replication table the same as the Primary ({{ count_test.stdout }} rows)"
+      - "The PostgreSQL replication is OK for replica {{ ansible_hostname }}"
+      - "The number of records in the test_replication table the same as the primary ({{ count_test.stdout }} rows)"
   when:
     - inventory_hostname in groups['secondary']
     - count_test.stdout is defined
     - count_test.stdout | int == 10000
 
-# Error, if the number of records in the "test_replication" table does not match the Primary.
+# Error, if the number of records in the "test_replication" table does not match the primary.
 - name: "Post-Check error. The number of records does not match"
   ansible.builtin.debug:
     msg:
-      - "The PostgreSQL Replication is NOT OK for replica {{ ansible_hostname }}"
-      - "The number of records in the test_replication table does not match the Primary ({{ count_test.stdout }} rows)."
+      - "The PostgreSQL replication is NOT OK for replica {{ ansible_hostname }}"
+      - "The number of records in the test_replication table does not match the primary ({{ count_test.stdout }} rows)."
       - "Please check the replication status and PostgreSQL logs."
   failed_when: count_test.stdout | int != 10000
   ignore_errors: true # show the error and continue the playbook execution

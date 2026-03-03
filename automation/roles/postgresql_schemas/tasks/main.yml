@@ -15,5 +15,5 @@
   loop: "{{ postgresql_schemas | flatten(1) }}"
   when:
     - postgresql_schemas | default('') | length > 0
-    - patroni_standby_cluster.host | default('') | length < 1 # do not perform on the Standby Cluster
+    - patroni_standby_cluster.host | default('') | length < 1 # do not perform on the standby cluster
   tags: postgresql_schemas

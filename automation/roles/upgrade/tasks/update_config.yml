@@ -254,7 +254,7 @@
 
 # TODO: Prepare the parameters for PostgreSQL 19 and etc.
 
-# To support upgrades in the Patroni Standby Cluster.
+# To support upgrades in the Patroni standby cluster.
 - name: "Edit patroni.yml | remove parameter: standby_cluster (if exists)"
   ansible.builtin.replace:
     path: "{{ patroni_config_file }}"

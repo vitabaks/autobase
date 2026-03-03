@@ -1,0 +1,34 @@
+---
+# Blue-green upgrade method: Create publications and replication slots on the source cluster
+# for logical replication to the target cluster (source -> target).
+
+- name: Create publication and slot for each database
+  ansible.builtin.include_tasks: create_publication.yml
+  loop: "{{ source_databases }}"
+  loop_control:
+    loop_var: dbname
+    label: "{{ dbname }}"
+  when:
+    - publication_state | default('present') == 'present'
+    - patroni_cluster_leader | default(false) | bool
+
+- name: Drop publication for each database
+  ansible.builtin.include_tasks: drop_publication.yml
+  loop: "{{ source_databases }}"
+  loop_control:
+    loop_var: dbname
+    label: "{{ dbname }}"
+  when:
+    - publication_state | default('present') == 'absent'
+    - patroni_cluster_leader | default(false) | bool
+
+- name: Advance slots for each database
+  ansible.builtin.include_tasks: replication_slot_advance.yml
+  loop: "{{ source_databases }}"
+  loop_control:
+    loop_var: dbname
+    label: "{{ dbname }}"
+  when:
+    - publication_state | default('present') == 'present'
+    - patroni_cluster_leader | default(false) | bool
+    - not reverse_replication | default(false) | bool # skip for reverse replication

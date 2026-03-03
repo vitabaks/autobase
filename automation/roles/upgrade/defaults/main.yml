@@ -2,9 +2,9 @@
 ---
 # Variables for the pg_upgrade.yml playbook
 
-# Note: There is no need to plan additional disk space, because when updating PostgreSQL, hard links are used instead of copying files.
-# However, it is required that the pg_old_datadir and pg_new_datadir are located within the same top-level directory (pg_upper_datadir).
-# https://www.postgresql.org/docs/current/pgupgrade.html
+############################################################
+# Upgrade settings (for both methods)
+############################################################
 
 # PostgreSQL versions
 pg_old_version: "" # specify the current (old) version of PostgreSQL
@@ -68,8 +68,8 @@ vacuumdb_analyze_timeout: 3600 # seconds. The maximum duration of analyze comman
 # terminate active queries that are longer than the specified time (in seconds) during the collection of statistics.
 vacuumdb_analyze_terminate_treshold: 0 # (0 = do not terminate active backends)
 
-# Do not perform an upgrade if
-max_replication_lag_bytes: 10485760 # 10 MiB - Maximum allowed replication lag in bytes
+# Do not perform an upgrade/switchover if
+max_replication_lag_bytes: 104857600 # 100 MiB - Maximum allowed replication lag in bytes
 max_transaction_sec: 15 # Maximum allowed duration for a transactions in seconds
 
 # (optional) Copy any files located in the "files" directory to all servers
@@ -95,3 +95,38 @@ pg_slow_active_query_treshold_to_terminate: 100 # (0 = terminate all active back
 
 # if 'pgbackrest_install' is 'true'
 pgbackrest_stanza_upgrade: true # perform the "stanza-upgrade" command after the upgrade.
+
+############################################################
+# Blue-green deployment method settings
+############################################################
+
+pg_replication_database: "all" # database name for the replication, 'all' for the entire database cluster.
+
+pg_allow_replica_identity_full: true # set REPLICA IDENTITY FULL on tables without primary key.
+
+pg_publication_count: 1 # number of publications, replication slots and subscriptions to be created for logical replication (source -> target).
+pg_publication_name: "pg_upgrade_publication"
+pg_subscription_name: "pg_upgrade_subscription"
+pg_subscription_slot_name: "{{ pg_subscription_name }}_slot" # base prefix for logical replication slot names; each slot name includes the database name (and _01, _02, ... suffix if pg_publication_count > 1)
+
+pg_wal_keep_gigabytes: 100 # or 'none' to not change the wal_keep_segments/wal_keep_size parameter.
+# pg_wal_keep_gigabytes - the number of WAL files (in gigabytes) to hold in the source cluster.
+# To guarantee that the necessary WAL files are available to reach recovery_target_lsn via streaming replication for the leader of the target cluster.
+# After performing the upgrade procedure, the parameter will be reset to original state.
+
+# --------------------------------------
+# Switchover (pg_logical_switchover.yml)
+# --------------------------------------
+pg_switchover_max_replication_lag_bytes: 16777216 # (16 MB) to ensure minimal lag before switchover
+pg_switchover_no_lag_wait_timeout: 10 # (seconds) "Plan A": wait until the logical replication lag is 0 bytes.
+pg_switchover_force_mode: false # "Plan B": switch traffic with a small replication lag.
+pg_switchover_force_mode_lag_bytes: 1048576 # 1 MiB. Allowed lag (in bytes) in force mode.
+
+# Reverse logical replication (rollback without losing changes)
+pg_reverse_logical_replication: true # enable reverse logical replication (source <- target).
+pg_reverse_publication_name: "reverse_{{ pg_publication_name }}"
+pg_reverse_subscription_name: "reverse_{{ pg_subscription_name }}"
+pg_reverse_subscription_slot_name: "reverse_{{ pg_subscription_slot_name }}"
+
+# Sequences
+pg_sequences_increase_value: 1000000 # add +N to the current value of the sequences (received from the old cluster) in the new cluster.

@@ -1,0 +1,10 @@
+---
+# Increase all sequence values on the target database (blue-green deployment method)
+
+- name: Increase sequence values for each database
+  ansible.builtin.include_tasks: increase_sequences.yml
+  loop: "{{ source_databases }}"
+  loop_control:
+    loop_var: dbname
+    label: "{{ dbname }}"
+  when: inventory_hostname in groups.get('primary', [])

@@ -1,0 +1,44 @@
+---
+# Check the maximum lag of the logical replication slots (blue-green deployment method)
+- block:
+    - name: "Ensure logical replication lag is no more than {{ max_replication_lag_bytes | default(0) | human_readable }}"
+      ansible.builtin.command: >-
+        {{ psql_command }} -tAXc "
+        select pg_wal_lsn_diff(pg_current_wal_lsn(),confirmed_flush_lsn) as lag_bytes
+        from pg_replication_slots
+        where slot_name like '{{ pg_subscription_slot_name }}%'
+        order by lag_bytes desc limit 1"
+      register: pg_lag_bytes
+      changed_when: false
+      failed_when: false
+      until: pg_lag_bytes.stdout|int <= max_replication_lag_bytes|int
+      retries: "{{ pg_switchover_no_lag_wait_timeout | default(10) }}"
+      delay: 1
+
+    - name: "Print logical replication lag"
+      ansible.builtin.debug:
+        msg: "Current replication lag: {{ pg_lag_bytes.stdout | int | human_readable }}"
+      when:
+        - pg_lag_bytes.stdout is defined
+        - pg_lag_bytes.stdout|int <= max_replication_lag_bytes|int
+
+    - block: # stop, if logical replication lag is high
+        - name: Disable read-only mode (rollback changes)
+          ansible.builtin.import_tasks: read_only_mode_disable.yml
+          when: read_only_mode_enabled | default(false) | bool
+
+        - name: "Pre-Check error. High logical replication lag"
+          ansible.builtin.fail:
+            msg:
+              - "High logical replication lag ({{ pg_lag_bytes.stdout | int | human_readable }}) detected."
+              - "Maximum allowed lag is {{ max_replication_lag_bytes | int | human_readable }}."
+              - "Please try again later."
+      when:
+        - pg_lag_bytes.stdout is defined
+        - pg_lag_bytes.stdout|int > max_replication_lag_bytes|int
+  vars:
+    psql_command: "psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres"
+  environment:
+    PATH: "{{ ansible_env.PATH }}:{{ pg_new_bindir }}:{{ pg_old_bindir }}"
+    PGPASSWORD: "{{ patroni_superuser_password }}"
+  when: inventory_hostname in groups['source_primary']

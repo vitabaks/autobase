@@ -98,6 +98,6 @@
       when: exists_func_user.stdout == "f"
   when:
     - pgbouncer_auth_user | bool
-    - patroni_standby_cluster.host | default('') | length < 1 # do not perform on the Standby Cluster
+    - patroni_standby_cluster.host | default('') | length < 1 # do not perform on the standby cluster
     - inventory_hostname == groups['master'][0] or (groups['primary'] is defined and inventory_hostname in groups['primary'])
   tags: pgbouncer, pgbouncer_conf, pgbouncer_auth_query

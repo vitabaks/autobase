@@ -1,0 +1,25 @@
+---
+# Pre-Checks for switchover playbook (blue-green deployment method)
+- block:
+    - name: "[Prepare] Get password encryption setting"
+      ansible.builtin.command: >
+        {{ psql_command }} -tAXc "show password_encryption"
+      register: password_encryption_result
+      changed_when: false
+      when: inventory_hostname in groups['primary']
+
+    - name: "Set variable: postgresql_password_encryption_algorithm"
+      ansible.builtin.set_fact:
+        postgresql_password_encryption_algorithm: "{{ hostvars[target_primary_host].password_encryption_result.stdout }}"
+
+    - name: Check logical replication slot lag
+      ansible.builtin.import_tasks: replication_slot_lag.yml
+      when: inventory_hostname in groups['source_primary']
+
+  vars:
+    target_primary_host: "{{ (groups.get('primary', []) | first) | default('', true) }}"
+    psql_command: "psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres"
+  environment:
+    PATH: "{{ ansible_env.PATH }}:{{ pg_new_bindir }}:{{ pg_old_bindir }}"
+    PGPASSWORD: "{{ patroni_superuser_password }}"
+  when: inventory_hostname in groups['source_cluster'] or inventory_hostname in groups['target_cluster']

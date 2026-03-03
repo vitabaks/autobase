@@ -1,0 +1,110 @@
+---
+- name: "vitabaks.autobase.pg_logical_replication_stop | Stop logical replication (clean up publications, subscriptions, and replication slots)"
+  hosts: 'source_cluster:target_cluster'
+  gather_facts: true
+  become: true
+  become_user: postgres
+  any_errors_fatal: true
+  pre_tasks:
+    - name: Gather package facts
+      ansible.builtin.package_facts:
+        manager: auto
+      check_mode: false
+
+    - name: Define bind_address
+      ansible.builtin.include_role:
+        name: vitabaks.autobase.bind_address
+
+    - name: Set default variables
+      ansible.builtin.import_role:
+        name: vitabaks.autobase.common
+
+    - name: "[Prepare] Get Patroni cluster leader Node"
+      ansible.builtin.uri:
+        url: >-
+          {{ patroni_restapi_protocol | default('https') }}://{{ patroni_restapi_connect_addr
+            | default(patroni_bind_address | default(bind_address, true), true) }}:{{ patroni_restapi_port
+            | default('8008') }}/leader
+        status_code: 200
+        ca_path: "{{ patroni_restapi_cafile | default(omit, true) }}"
+      register: patroni_leader_result
+      changed_when: false
+      failed_when: false
+      check_mode: false
+      environment:
+        no_proxy: "{{ patroni_bind_address | default(bind_address, true) }}"
+
+    # Stop, if no healthy Patroni leader node
+    - name: The Patroni cluster is unhealthy
+      ansible.builtin.fail:
+        msg: >-
+          No healthy leader node detected in {{ cluster_group }}.
+          Please ensure the cluster is up and nodes respond on REST API port ({{ patroni_restapi_port | default('8008') }}).
+      vars:
+        cluster_group: "{{ 'source_cluster' if inventory_hostname == (groups['source_cluster'] | first) else 'target_cluster' }}"
+        cluster_hosts: "{{ groups[cluster_group] }}"
+        healthy_leaders: >-
+          {{
+            cluster_hosts
+            | map('extract', hostvars)
+            | selectattr('patroni_leader_result.status', 'defined')
+            | selectattr('patroni_leader_result.status', 'equalto', 200)
+            | list
+            | length
+          }}
+      when:
+        - inventory_hostname == (groups['source_cluster'] | first) or
+          inventory_hostname == (groups['target_cluster'] | first)
+        - healthy_leaders == 0
+
+    - name: "[Prepare] Set variable: patroni_cluster_leader: true"
+      ansible.builtin.set_fact:
+        patroni_cluster_leader: true
+      when: patroni_leader_result.status == 200
+
+    - name: "[Prepare] Set variable: patroni_cluster_leader: false"
+      ansible.builtin.set_fact:
+        patroni_cluster_leader: false
+      when: patroni_leader_result.status != 200
+
+    - name: "[Prepare] Get current passwords"
+      ansible.builtin.include_role:
+        name: vitabaks.autobase.pre_checks
+        tasks_from: passwords
+      vars:
+        source_group: "source_cluster"
+        postgresql_cluster_maintenance: true
+      when: patroni_superuser_password | default('') | length < 1
+
+    - name: "[Prepare] Get a list of databases"
+      ansible.builtin.include_role:
+        name: vitabaks.autobase.upgrade
+        tasks_from: source_databases
+
+  tasks:
+    - name: Delete the subscription
+      ansible.builtin.include_role:
+        name: vitabaks.autobase.upgrade
+        tasks_from: subscription
+      vars:
+        subscription_state: absent
+        reverse_replication: "{{ true if inventory_hostname in (groups['source_cluster']) else false }}"
+
+    - name: Delete the publication
+      ansible.builtin.include_role:
+        name: vitabaks.autobase.upgrade
+        tasks_from: publication
+      vars:
+        publication_state: absent
+        reverse_replication: "{{ true if inventory_hostname in (groups['source_cluster']) else false }}"
+
+    - name: Delete the replication slot
+      ansible.builtin.include_role:
+        name: vitabaks.autobase.upgrade
+        tasks_from: drop_replication_slot
+      loop: "{{ source_databases | default([]) }}"
+      loop_control:
+        loop_var: dbname
+        label: "{{ dbname | default('') }}"
+      vars:
+        reverse_replication: "{{ true if inventory_hostname in (groups['source_cluster']) else false }}"

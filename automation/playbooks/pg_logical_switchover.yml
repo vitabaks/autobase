@@ -1,0 +1,234 @@
+---
+- name: "vitabaks.autobase.pg_logical_switchover | Switchover to the target cluster (blue-green deployment)"
+  hosts: 'source_cluster:target_cluster'
+  gather_facts: true
+  become: true
+  become_user: postgres
+  any_errors_fatal: true
+  pre_tasks:
+    - name: Gather package facts
+      ansible.builtin.package_facts:
+        manager: auto
+      check_mode: false
+
+    - name: Define bind_address
+      ansible.builtin.include_role:
+        name: vitabaks.autobase.bind_address
+
+    - name: Set default variables
+      ansible.builtin.import_role:
+        name: vitabaks.autobase.common
+
+    - name: "[Prepare] Get Patroni cluster name"
+      ansible.builtin.uri:
+        url: >-
+          {{ patroni_restapi_protocol | default('https') }}://{{ patroni_restapi_connect_addr
+            | default(patroni_bind_address | default(bind_address, true), true) }}:{{ patroni_restapi_port
+            | default('8008') }}/patroni
+        status_code: 200
+        ca_path: "{{ patroni_restapi_cafile | default(omit, true) }}"
+      register: patroni_result
+      changed_when: false
+      environment:
+        no_proxy: "{{ patroni_bind_address | default(bind_address, true) }}"
+
+    - name: "[Prepare] Set variable: patroni_cluster_name"
+      ansible.builtin.set_fact:
+        patroni_cluster_name: "{{ patroni_result.json.patroni.scope }}"
+
+    - name: "[Prepare] Get Patroni cluster leader Node"
+      ansible.builtin.uri:
+        url: >-
+          {{ patroni_restapi_protocol | default('https') }}://{{ patroni_restapi_connect_addr
+            | default(patroni_bind_address | default(bind_address, true), true) }}:{{ patroni_restapi_port
+            | default('8008') }}/leader
+        status_code: 200
+        ca_path: "{{ patroni_restapi_cafile | default(omit, true) }}"
+      register: patroni_leader_result
+      changed_when: false
+      failed_when: false
+      check_mode: false
+      environment:
+        no_proxy: "{{ patroni_bind_address | default(bind_address, true) }}"
+
+    - name: "[Prepare] Set variable: patroni_cluster_leader: true"
+      ansible.builtin.set_fact:
+        patroni_cluster_leader: true
+      when: patroni_leader_result.status == 200
+
+    - name: "[Prepare] Set variable: patroni_cluster_leader: false"
+      ansible.builtin.set_fact:
+        patroni_cluster_leader: false
+      when: patroni_leader_result.status != 200
+
+    # Stop, if no healthy Patroni leader node
+    - name: The Patroni cluster is unhealthy
+      ansible.builtin.fail:
+        msg: >-
+          No healthy leader node detected in {{ cluster_group }}.
+          Please ensure the cluster is up and nodes respond on REST API port ({{ patroni_restapi_port | default('8008') }}).
+      vars:
+        cluster_group: "{{ 'source_cluster' if inventory_hostname == (groups['source_cluster'] | first) else 'target_cluster' }}"
+        cluster_hosts: "{{ groups[cluster_group] }}"
+        healthy_leaders: >-
+          {{
+            cluster_hosts
+            | map('extract', hostvars)
+            | selectattr('patroni_leader_result.status', 'defined')
+            | selectattr('patroni_leader_result.status', 'equalto', 200)
+            | list
+            | length
+          }}
+      when:
+        - inventory_hostname == (groups['source_cluster'] | first) or
+          inventory_hostname == (groups['target_cluster'] | first)
+        - healthy_leaders == 0
+
+    - name: '[Prepare] Add source cluster host to group "source_primary" (in-memory inventory)'
+      ansible.builtin.add_host:
+        name: "{{ item }}"
+        groups: source_primary
+      when: hostvars[item]['patroni_leader_result']['status'] == 200
+      loop: "{{ groups['source_cluster'] }}"
+      changed_when: false
+
+    - name: '[Prepare] Add source cluster host to group "source_secondary" (in-memory inventory)'
+      ansible.builtin.add_host:
+        name: "{{ item }}"
+        groups: source_secondary
+      when: hostvars[item]['patroni_leader_result']['status'] == 503
+      loop: "{{ groups['source_cluster'] }}"
+      changed_when: false
+
+    - name: '[Prepare] Add target cluster host to group "primary" (in-memory inventory)'
+      ansible.builtin.add_host:
+        name: "{{ item }}"
+        groups: primary
+      when: hostvars[item]['patroni_leader_result']['status'] == 200
+      loop: "{{ groups['target_cluster'] }}"
+      changed_when: false
+
+    - name: '[Prepare] Add target cluster hosts to group "secondary" (in-memory inventory)'
+      ansible.builtin.add_host:
+        name: "{{ item }}"
+        groups: secondary
+      when: hostvars[item]['patroni_leader_result']['status'] == 503
+      loop: "{{ groups['target_cluster'] }}"
+      changed_when: false
+
+    - name: "Print source Patroni cluster info"
+      ansible.builtin.debug:
+        msg:
+          - "Source cluster name: {{ patroni_cluster_name }}"
+          - "Source cluster leader: {{ ansible_hostname }}"
+      when: inventory_hostname in groups['source_primary']
+
+    - name: "Print target Patroni cluster info"
+      ansible.builtin.debug:
+        msg:
+          - "Target cluster name: {{ patroni_cluster_name }}"
+          - "Target cluster leader: {{ ansible_hostname }}"
+      when: inventory_hostname in groups['primary']
+
+    - name: "[Prepare] Get current passwords"
+      ansible.builtin.include_role:
+        name: vitabaks.autobase.pre_checks
+        tasks_from: passwords
+      vars:
+        source_group: "source_cluster"
+        postgresql_cluster_maintenance: true
+      when: patroni_superuser_password | default('') | length < 1
+
+    - name: "[Prepare] Get a list of databases"
+      ansible.builtin.include_role:
+        name: vitabaks.autobase.upgrade
+        tasks_from: source_databases
+
+  tasks:
+    - name: Perform pre-checks
+      ansible.builtin.include_role:
+        name: vitabaks.autobase.upgrade
+        tasks_from: pre_checks_switchover
+
+    - name: Prepare pgbouncer configuration
+      ansible.builtin.include_role:
+        name: vitabaks.autobase.upgrade
+        tasks_from: pgbouncer_redirect
+      when: pgbouncer_install | default(false) | bool
+
+    - name: Increase all sequence values
+      ansible.builtin.include_role:
+        name: vitabaks.autobase.upgrade
+        tasks_from: sequences
+
+    - name: Wait for a window with low replication lag
+      ansible.builtin.include_role:
+        name: vitabaks.autobase.upgrade
+        tasks_from: replication_slot_lag
+      vars:
+        max_replication_lag_bytes: "{{ pg_switchover_max_replication_lag_bytes }}"
+
+    - name: Enable read-only mode on the source cluster
+      ansible.builtin.include_role:
+        name: vitabaks.autobase.upgrade
+        tasks_from: read_only_mode_enable
+      when: inventory_hostname in groups['source_primary']
+
+    # Wait until the lag is 0 bytes,
+    # or no more than 'pg_switchover_force_mode_lag_bytes' if force mode is enabled.
+    - name: Wait until there is no replication lag
+      ansible.builtin.include_role:
+        name: vitabaks.autobase.upgrade
+        tasks_from: replication_slot_lag
+      vars:
+        max_replication_lag_bytes: "{{ pg_switchover_force_mode_lag_bytes if pg_switchover_force_mode | bool else 0 }}"
+        read_only_mode_enabled: true
+      when: inventory_hostname in groups['source_primary']
+
+    - name: Delete the previous subscription
+      ansible.builtin.include_role:
+        name: vitabaks.autobase.upgrade
+        tasks_from: subscription
+      vars:
+        subscription_state: absent
+      when: inventory_hostname in groups['primary']
+
+    - name: Create publication and slot for reverse replication
+      ansible.builtin.include_role:
+        name: vitabaks.autobase.upgrade
+        tasks_from: publication
+      vars:
+        reverse_replication: true
+      when: pg_reverse_logical_replication | default(true) | bool
+
+    - name: Redirect database traffic to the target cluster
+      ansible.builtin.include_role:
+        name: vitabaks.autobase.upgrade
+        tasks_from: pgbouncer_restart
+      when:
+        - pgbouncer_install | default(false) | bool
+        - inventory_hostname in groups['source_cluster']
+
+    - name: Disable read-only mode on the source cluster
+      ansible.builtin.include_role:
+        name: vitabaks.autobase.upgrade
+        tasks_from: read_only_mode_disable
+      when:
+        - pg_reverse_logical_replication | default(true) | bool
+        - inventory_hostname in groups['source_primary']
+
+    - name: Start reverse logical replication
+      ansible.builtin.include_role:
+        name: vitabaks.autobase.upgrade
+        tasks_from: subscription
+      vars:
+        reverse_replication: true
+      when: pg_reverse_logical_replication | default(true) | bool
+
+    # info
+    - name: Switchover completed
+      ansible.builtin.debug:
+        msg:
+          - "Switchover completed!"
+          - "Final step: switch application services to the target cluster."
+      when: inventory_hostname in groups['primary']

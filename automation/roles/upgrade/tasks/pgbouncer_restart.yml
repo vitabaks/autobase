@@ -1,0 +1,7 @@
+---
+- name: Restart pgbouncer service
+  become: true
+  become_user: root
+  ansible.builtin.service:
+    name: pgbouncer
+    state: restarted

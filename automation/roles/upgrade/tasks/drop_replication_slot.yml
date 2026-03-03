@@ -1,0 +1,40 @@
+---
+# Blue-green upgrade method: Drop logical replication slots.
+- block:
+    # One publication (if pg_publication_count = 1)
+    - name: '[Clean up logical replication] Drop replication slot'
+      ansible.builtin.command: >-
+        {{ psql_command }} -d {{ dbname }} -tAXc "
+        select pg_drop_replication_slot('{{ slot_name }}')"
+      register: drop_slot_result
+      changed_when: "'does not exist' not in (drop_slot_result.stderr | default(''))"
+      failed_when:
+        - drop_slot_result.rc != 0
+        - "'does not exist' not in (drop_slot_result.stderr | default(''))"
+      when: pg_publication_count | int == 1
+
+    # Multiple publications (if pg_publication_count > 1)
+    - name: '[Clean up logical replication] Drop replication slots'
+      ansible.builtin.command: >-
+        {{ psql_command }} -d {{ dbname }} -tAXc "
+        select pg_drop_replication_slot('{{ slot_name }}_{{ '%02d' % (idx + 1) }}')"
+      loop: "{{ range(0, pg_publication_count | int) | list }}"
+      loop_control:
+        index_var: idx
+        label: "{{ slot_name }}_{{ '%02d' % (idx + 1) }}"
+      register: drop_slot_results
+      changed_when: "'does not exist' not in (drop_slot_results.stderr | default(''))"
+      failed_when:
+        - drop_slot_results.rc != 0
+        - "'does not exist' not in (drop_slot_results.stderr | default(''))"
+      when: pg_publication_count | int > 1
+  vars:
+    subscription_slot_name: "{{ pg_reverse_subscription_slot_name if not reverse_replication | default(false) | bool else pg_subscription_slot_name }}"
+    slot_name: "{{ (subscription_slot_name ~ '_' ~ (dbname | default(''))) | lower | regex_replace('[^a-z0-9_]+', '_') }}"
+    psql_command: "psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }}"
+  environment:
+    PATH: "{{ ansible_env.PATH }}:{{ pg_new_bindir }}:{{ pg_old_bindir }}"
+    PGPASSWORD: "{{ patroni_superuser_password }}"
+  when:
+    - patroni_cluster_leader | default(false) | bool
+    - (dbname | default('') | string | length) > 0
