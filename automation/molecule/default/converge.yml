@@ -30,6 +30,7 @@
         local_postgresql_parameters:
           - { option: "shared_buffers", value: "128MB" }
           - { option: "effective_cache_size", value: "512MB" }
+        patroni_failsafe_mode: true
         cacheable: true
       delegate_to: localhost
       run_once: true # noqa run-once

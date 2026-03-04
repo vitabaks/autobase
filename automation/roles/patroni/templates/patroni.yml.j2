@@ -116,6 +116,7 @@ bootstrap:
     synchronous_mode: {{ synchronous_mode |string |d(false, true) |lower }}
     synchronous_mode_strict: {{ synchronous_mode_strict |string |d(false, true) |lower }}
     synchronous_node_count: {{ synchronous_node_count |d(1, true) |int }}
+    failsafe_mode: {{ patroni_failsafe_mode |string |d(true, true) |lower }}
     postgresql:
       use_pg_rewind: {{ patroni_postgresql_use_pg_rewind |string |d(false, true) |lower }}
       use_slots: true
