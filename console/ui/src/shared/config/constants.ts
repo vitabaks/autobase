@@ -11,7 +11,6 @@ export const CLUSTER_OVERVIEW_POLLING_INTERVAL = getEnvVariable('VITE_CLUSTER_OV
 export const OPERATIONS_POLLING_INTERVAL = getEnvVariable('VITE_OPERATIONS_POLLING_INTERVAL');
 export const OPERATION_LOGS_POLLING_INTERVAL = getEnvVariable('VITE_OPERATION_LOGS_POLLING_INTERVAL');
 export const DBDESK_URL = getEnvVariable('VITE_DBDESK_URL');
-export const DBDESK_HOST_REWRITE = getEnvVariable('VITE_DBDESK_HOST_REWRITE');
 
 export const PAGINATION_LIMIT_OPTIONS = Object.freeze([
   { value: 5, label: 5 },

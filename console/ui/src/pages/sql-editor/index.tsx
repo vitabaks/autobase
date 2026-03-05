@@ -10,7 +10,7 @@ import { selectActualTheme } from '@app/redux/slices/themeSlice/themeSelectors.t
 const getDbdeskOrigin = (): string | null => {
   if (!DBDESK_URL) return null;
   try {
-    return new URL(DBDESK_URL).origin;
+    return new URL(DBDESK_URL, window.location.origin).origin;
   } catch {
     return null;
   }
@@ -32,7 +32,7 @@ const SqlEditor: FC = () => {
   const iframeSrc = useMemo(() => {
     if (!DBDESK_URL) return '';
     if (!uri) return DBDESK_URL;
-    const url = new URL(DBDESK_URL);
+    const url = new URL(DBDESK_URL, window.location.origin);
     url.searchParams.set('uri', uri);
     return url.toString();
   }, [uri]);
@@ -55,7 +55,7 @@ const SqlEditor: FC = () => {
           {t('sqlEditor', { ns: 'shared' })}
         </Typography>
         <Typography color="text.secondary" sx={{ mt: 1 }}>
-          DBDesk Studio URL is not configured. Set the <code>PG_CONSOLE_DBDESK_URL</code> environment variable.
+          DBDesk Studio is not available. To enable it, deploy the dbdesk-studio service.
         </Typography>
       </Box>
     );
@@ -74,7 +74,7 @@ const SqlEditor: FC = () => {
         ref={iframeRef}
         src={iframeSrc}
         title={t('sqlEditor', { ns: 'shared' })}
-        sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+        sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-popups-to-escape-sandbox allow-downloads"
         style={{
           width: '100%',
           height: '100%',

@@ -64,6 +64,8 @@ services:
     environment:
       - PG_CONSOLE_AUTHORIZATION_TOKEN=${AUTH_TOKEN}
       - PG_CONSOLE_API_HOST=autobase-console-api
+      - PG_CONSOLE_DBDESK_HOST=dbdesk-studio
+      - PG_CONSOLE_DBDESK_PORT=${PG_CONSOLE_DBDESK_PORT:-9876}
     networks:
       - autobase
       - caddy
