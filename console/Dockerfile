@@ -1,6 +1,6 @@
 # dbdesk-studio image (frontend + Express backend)
 ARG DBDESK_STUDIO_VERSION=1.0.0
-FROM docker.io/anuraggoswami/dbdesk-studio:${DBDESK_STUDIO_VERSION} AS dbdesk-studio
+FROM docker.io/bhavikagarwal2001/dbdesk-studio:${DBDESK_STUDIO_VERSION} AS dbdesk-studio
 
 # Node.js runtime binary (for dbdesk-studio Express server)
 FROM node:22-bookworm-slim AS node-runtime
