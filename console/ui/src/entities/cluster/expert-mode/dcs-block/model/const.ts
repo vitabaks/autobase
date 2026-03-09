@@ -5,12 +5,14 @@ export const DCS_BLOCK_FIELD_NAMES = Object.freeze({
   DCS_DATABASES: 'dcsDatabases',
   DCS_DATABASE_HOSTNAME: 'dcsDatabaseHostname',
   DCS_DATABASE_IP_ADDRESS: 'dcsDatabaseIpAddress',
+  DCS_DATABASE_SSH_PORT: 'dcsDatabaseSshPort',
   DCS_DATABASE_PORT: 'dcsDatabasePort',
 });
 
 export const DCS_DATABASES_DEFAULT_VALUES = Object.freeze({
   [DCS_BLOCK_FIELD_NAMES.DCS_DATABASE_HOSTNAME]: '',
   [DCS_BLOCK_FIELD_NAMES.DCS_DATABASE_IP_ADDRESS]: '',
+  [DCS_BLOCK_FIELD_NAMES.DCS_DATABASE_SSH_PORT]: '',
   [DCS_BLOCK_FIELD_NAMES.DCS_DATABASE_PORT]: '2379',
 });
 
@@ -23,6 +25,11 @@ export const getCorrectFields = ({ watchIsDeployToDcsCluster, watchIsDeployToDbS
     fields.push({
       fieldName: DCS_BLOCK_FIELD_NAMES.DCS_DATABASE_IP_ADDRESS,
       label: t('ipAddress'),
+    });
+    fields.push({
+      fieldName: DCS_BLOCK_FIELD_NAMES.DCS_DATABASE_SSH_PORT,
+      label: t('sshPort'),
+      required: false,
     });
     if (watchDcsType === DCS_TYPES.ETCD) {
       fields.push({ fieldName: DCS_BLOCK_FIELD_NAMES.DCS_DATABASE_PORT, label: t('port') });
@@ -37,6 +44,11 @@ export const getCorrectFields = ({ watchIsDeployToDcsCluster, watchIsDeployToDbS
       {
         fieldName: DCS_BLOCK_FIELD_NAMES.DCS_DATABASE_IP_ADDRESS,
         label: t('ipAddress'),
+      },
+      {
+        fieldName: DCS_BLOCK_FIELD_NAMES.DCS_DATABASE_SSH_PORT,
+        label: t('sshPort'),
+        required: false,
       },
     );
   }
