@@ -6,7 +6,7 @@ require (
 	github.com/docker/docker v28.5.2+incompatible
 	github.com/docker/go-connections v0.6.0
 	github.com/gdex-lab/go-render v1.0.1
-	github.com/go-openapi/errors v0.22.6
+	github.com/go-openapi/errors v0.22.7
 	github.com/go-openapi/loads v0.23.2
 	github.com/go-openapi/runtime v0.29.2
 	github.com/go-openapi/strfmt v0.25.0
@@ -16,11 +16,11 @@ require (
 	github.com/jessevdk/go-flags v1.6.1
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/mitchellh/mapstructure v1.5.0
-	github.com/pressly/goose/v3 v3.26.0
+	github.com/pressly/goose/v3 v3.27.0
 	github.com/rs/zerolog v1.34.0
 	github.com/segmentio/asm v1.2.1
 	go.openly.dev/pointy v1.3.0
-	golang.org/x/sync v0.19.0
+	golang.org/x/sync v0.20.0
 	gotest.tools/v3 v3.5.2
 )
 
