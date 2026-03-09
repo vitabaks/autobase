@@ -2,6 +2,10 @@
 - name: Restart pgbouncer service
   become: true
   become_user: root
-  ansible.builtin.service:
-    name: pgbouncer
+  ansible.builtin.systemd:
+    name: pgbouncer{{ '-%d' % (idx + 1) if idx > 0 else '' }}
     state: restarted
+  loop: "{{ range(0, (pgbouncer_processes | default(1) | int)) | list }}"
+  loop_control:
+    loop_var: idx
+    label: "pgbouncer{{ '-%d' % (idx + 1) if idx > 0 else '' }}.ini"
