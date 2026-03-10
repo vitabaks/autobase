@@ -26,11 +26,6 @@ export const getCorrectFields = ({ watchIsDeployToDcsCluster, watchIsDeployToDbS
       fieldName: DCS_BLOCK_FIELD_NAMES.DCS_DATABASE_IP_ADDRESS,
       label: t('ipAddress'),
     });
-    fields.push({
-      fieldName: DCS_BLOCK_FIELD_NAMES.DCS_DATABASE_SSH_PORT,
-      label: t('sshPort'),
-      required: false,
-    });
     if (watchDcsType === DCS_TYPES.ETCD) {
       fields.push({ fieldName: DCS_BLOCK_FIELD_NAMES.DCS_DATABASE_PORT, label: t('port') });
     }
