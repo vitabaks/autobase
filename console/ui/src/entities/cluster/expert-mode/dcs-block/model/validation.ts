@@ -41,6 +41,15 @@ export const DcsBlockSchema = (t: TFunction) =>
                             (value) => !Number.isNaN(Number(value)),
                           )
                       : yup.string().optional(),
+                  [DCS_BLOCK_FIELD_NAMES.DCS_DATABASE_SSH_PORT]: yup
+                    .string()
+                    .optional()
+                    .test('should be only numbers', t('onlyNumbers', { ns: 'validation' }), (value) =>
+                      !value ? true : !Number.isNaN(Number(value)),
+                    )
+                    .test('valid ssh port', t('sshPortRange', { ns: 'validation' }), (value) =>
+                      !value ? true : Number(value) >= 1 && Number(value) <= 65535,
+                    ),
                   [DCS_BLOCK_FIELD_NAMES.DCS_DATABASE_HOSTNAME]:
                     isDeployNewCluster && !isDeployToDbServers
                       ? yup.string().required(t('requiredField', { ns: 'validation' }))
