@@ -57,5 +57,7 @@
   "invalid": "Invalid",
   "locale": "Locale",
   "somethingWentWrongWhileRendering": "Something went wrong while rendering",
-  "none": "None"
+  "none": "None",
+  "sqlEditor": "SQL Editor",
+  "openInSqlEditor": "Open in SQL Editor"
 }
