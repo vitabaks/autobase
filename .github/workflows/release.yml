@@ -125,6 +125,15 @@ jobs:
         env:
           TAG: ${{ steps.tag.outputs.tag }}
 
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Build release image (arm64)
+        run: make docker-build
+        env:
+          TAG: ${{ steps.tag.outputs.tag }}
+          DOCKER_BUILD_PLATFORM: linux/arm64
+
       - name: Push release image
         if: ${{ env.DOCKER_REGISTRY_USER != '' && env.DOCKER_REGISTRY_PASSWORD != '' }}
         run: make docker-push
@@ -132,4 +141,3 @@ jobs:
           TAG: ${{ steps.tag.outputs.tag }}
           DOCKER_REGISTRY_USER: ${{ secrets.DOCKER_USERNAME }}
           DOCKER_REGISTRY_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
-
