@@ -5,13 +5,25 @@ on:
   push:
     branches:
       - master
+    tags:
+      - "*"
   pull_request:
     branches:
       - master
+  workflow_dispatch:
+    inputs:
+      run_arm64:
+        description: "Run arm64 Docker build validation"
+        type: boolean
+        required: false
+        default: false
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      # Run arm64 only on master/tag pushes, or when manually requested in workflow_dispatch.
+      RUN_ARM64: ${{ (github.event_name != 'pull_request' && (github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/'))) || (github.event_name == 'workflow_dispatch' && github.event.inputs.run_arm64 == 'true') }}
 
     steps:
       - name: Set TERM environment variable
@@ -40,6 +52,7 @@ jobs:
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
+        if: ${{ env.RUN_ARM64 == 'true' }}
 
       - name: Set up Python
         uses: actions/setup-python@v6
@@ -59,6 +72,7 @@ jobs:
           DOCKER_BUILD_PLATFORM: linux/amd64
 
       - name: Run Docker build (arm64)
+        if: ${{ env.RUN_ARM64 == 'true' }}
         run: make docker-build
         env:
           TAG: ${{ env.TAG }}
