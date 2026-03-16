@@ -38,6 +38,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
@@ -49,10 +52,17 @@ jobs:
       - name: Run Docker lint
         run: make docker-lint
 
-      - name: Run Docker build
+      - name: Run Docker build (amd64)
         run: make docker-build
         env:
           TAG: ${{ env.TAG }}
+          DOCKER_BUILD_PLATFORM: linux/amd64
+
+      - name: Run Docker build (arm64)
+        run: make docker-build
+        env:
+          TAG: ${{ env.TAG }}
+          DOCKER_BUILD_PLATFORM: linux/arm64
 
       # push latest image
       - name: Run Docker push
