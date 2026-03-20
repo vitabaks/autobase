@@ -74,7 +74,7 @@ services:
     restart: unless-stopped
     environment:
       - PORT=6789
-      - CORS_ORIGIN=${CORS_ORIGIN:-http://localhost}
+      - CORS_ORIGIN=${CORS_ORIGIN:-*}
       - NODE_ENV=production
     networks:
       - autobase
