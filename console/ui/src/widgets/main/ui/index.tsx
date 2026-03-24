@@ -1,17 +1,24 @@
 import { FC, Suspense } from 'react';
 import { Divider, Stack, Toolbar, useTheme } from '@mui/material';
-import { Outlet } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
 import Breadcrumbs from '@features/bradcrumbs';
 import Spinner from '@shared/ui/spinner';
 
 const Main: FC = () => {
   const theme = useTheme();
+  const location = useLocation();
+  const isSqlEditor = location.pathname.startsWith('/sql-editor');
+
   return (
     <main style={{ display: 'flex', overflow: 'auto', width: '100%', padding: '8px' }}>
       <Stack width="100%">
         <Toolbar sx={{ backgroundColor: theme.palette.background.default }} />
-      <Breadcrumbs />
-      <Divider />
+      {!isSqlEditor && (
+        <>
+          <Breadcrumbs />
+          <Divider />
+        </>
+      )}
       <Suspense fallback={<Spinner />}>
         <Outlet />
       </Suspense>

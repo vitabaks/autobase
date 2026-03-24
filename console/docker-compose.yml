@@ -76,6 +76,8 @@ services:
       - PORT=6789
       - CORS_ORIGIN=${CORS_ORIGIN:-*}
       - NODE_ENV=production
+      - ALLOWED_DB_TYPES=postgres
+      - DEFAULT_SSL_MODE=require
     networks:
       - autobase
 
