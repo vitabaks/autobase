@@ -1,0 +1,55 @@
+# yamllint disable rule:line-length
+---
+# Create a connection profile in dbdesk-studio for the deployed PostgreSQL cluster.
+# This is best-effort: it runs only when dbdesk-studio is reachable
+# (e.g., when the deployment is executed from the autobase console).
+
+- name: "Determine cluster primary connection details for dbdesk-studio"
+  run_once: true
+  ansible.builtin.set_fact:
+    _dbdesk_connection_host: >-
+      {%- if cluster_vip is defined and cluster_vip | length > 0 -%}
+        {{ cluster_vip }}
+      {%- elif with_haproxy_load_balancing | bool and groups['balancers'] is defined and groups['balancers'] | length > 0 -%}
+        {{ hostvars[groups['balancers'][0]]['haproxy_bind_address']
+           | default(hostvars[groups['balancers'][0]]['bind_address'], true) }}
+      {%- else -%}
+        {{ hostvars[groups['master'][0]]['patroni_bind_address']
+           | default(hostvars[groups['master'][0]]['bind_address'], true) }}
+      {%- endif -%}
+    _dbdesk_connection_port: >-
+      {%- if with_haproxy_load_balancing | bool -%}
+        {{ haproxy_listen_port.master }}
+      {%- elif pgbouncer_install | bool -%}
+        {{ pgbouncer_listen_port }}
+      {%- else -%}
+        {{ postgresql_port }}
+      {%- endif -%}
+
+- name: "Create dbdesk-studio connection for '{{ patroni_cluster_name }}'"
+  run_once: true
+  delegate_to: localhost
+  ansible.builtin.uri:
+    url: "{{ dbdesk_studio_url | default('http://dbdesk-studio:6789') }}/api/connections"
+    method: POST
+    body_format: json
+    body:
+      name: "{{ patroni_cluster_name }}"
+      type: "postgres"
+      options:
+        host: "{{ _dbdesk_connection_host | trim }}"
+        port: "{{ _dbdesk_connection_port | trim | int }}"
+        database: "postgres"
+        user: "{{ patroni_superuser_username }}"
+        password: "{{ patroni_superuser_password }}"
+        sslMode: "{{ dbdesk_ssl_mode | default('require') }}"
+    status_code: [200, 201]
+    timeout: 10
+  ignore_errors: true
+  register: _dbdesk_connection_result
+
+- name: "dbdesk-studio connection created"
+  run_once: true
+  ansible.builtin.debug:
+    msg: "Connection '{{ patroni_cluster_name }}' registered in dbdesk-studio ({{ _dbdesk_connection_host | trim }}:{{ _dbdesk_connection_port | trim }})"
+  when: _dbdesk_connection_result is success

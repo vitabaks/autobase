@@ -72,17 +72,22 @@ services:
       timeout: 5s
       retries: 5
     restart: unless-stopped
+    volumes:
+      - dbdesk_studio_data:/data
     environment:
       - PORT=6789
       - CORS_ORIGIN=${CORS_ORIGIN:-*}
       - NODE_ENV=production
       - DEFAULT_SSL_MODE=require
+      - STORAGE_PATH=/data
     networks:
       - autobase
 
 volumes:
   console_postgres:
     name: console_postgres
+  dbdesk_studio_data:
+    name: dbdesk_studio_data
 
 networks:
   autobase:
