@@ -70,7 +70,7 @@ Optional settings for automatic registration PostgreSQL clusters in the [dbdesk-
 ```
 KEY                                   TYPE                DEFAULT                              REQUIRED    DESCRIPTION
 PG_CONSOLE_DBDESK_STUDIO_ENABLED      True or False       true                                             Enable automatic dbdesk-studio registration after successful cluster deploy
-PG_CONSOLE_DBDESK_STUDIO_URL          String              http://dbdesk-studio:6789                        dbdesk-studio base URL
+PG_CONSOLE_DBDESK_STUDIO_API_URL      String              http://dbdesk-studio:6789                        dbdesk-studio API base URL
 PG_CONSOLE_DBDESK_STUDIO_SSLMODE      String              require                                          SSL mode for dbdesk-studio postgres connection profiles
 PG_CONSOLE_DBDESK_STUDIO_TIMEOUT      Duration            5s                                               HTTP timeout for dbdesk-studio health and registration requests
 ```
