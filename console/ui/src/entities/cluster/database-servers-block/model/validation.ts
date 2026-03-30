@@ -22,6 +22,14 @@ export const DatabaseServersBlockSchema = (t: TFunction) =>
                   .test('should be a correct IP', t('shouldBeACorrectV4Ip', { ns: 'validation' }), (value) =>
                     ipRegex.v4({ exact: true }).test(value),
                   ),
+                [DATABASE_SERVERS_FIELD_NAMES.DATABASE_SSH_PORT]: yup
+                  .string()
+                  .test('only numbers', t('onlyNumbers', { ns: 'validation' }), (value) =>
+                    value ? /^\d+$/.test(value) : true,
+                  )
+                  .test('valid ssh port', t('sshPortRange', { ns: 'validation' }), (value) =>
+                    value ? Number(value) >= 1 && Number(value) <= 65535 : true,
+                  ),
                 [DATABASE_SERVERS_FIELD_NAMES.DATABASE_LOCATION]: yup.string(),
               }),
             )

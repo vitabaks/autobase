@@ -62,6 +62,7 @@
   "connectionInfo": "Connection info",
   "clusterInfo": "Cluster info",
   "ipAddress": "IP Address",
+  "sshPort": "SSH port",
   "port": "Port",
   "backups": "Backups",
   "backupsEnabled": "Backups enabled",

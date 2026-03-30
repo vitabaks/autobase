@@ -31,6 +31,15 @@ export const LoadBalancerBlockSchema = (t: TFunction) =>
                     .test('should be a correct IP', t('shouldBeACorrectV4Ip', { ns: 'validation' }), (value) =>
                       ipRegex.v4({ exact: true }).test(value),
                     ),
+                  [LOAD_BALANCERS_FIELD_NAMES.LOAD_BALANCER_DATABASES_SSH_PORT]: yup
+                    .string()
+                    .optional()
+                    .test('should be only numbers', t('onlyNumbers', { ns: 'validation' }), (value) =>
+                      !value ? true : !Number.isNaN(Number(value)),
+                    )
+                    .test('valid ssh port', t('sshPortRange', { ns: 'validation' }), (value) =>
+                      !value ? true : Number(value) >= 1 && Number(value) <= 65535,
+                    ),
                 }),
               )
             : schema.notRequired(),

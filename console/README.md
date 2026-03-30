@@ -43,7 +43,7 @@ The Console stack consists of the following core components:
 2. Clone the repository:
 
    ```sh
-   git clone https://github.com/vitabaks/autobase.git
+   git clone https://github.com/autobase-tech/autobase.git
    ```
 
 3. Navigate to the `console` directory:
@@ -85,4 +85,4 @@ The Console stack consists of the following core components:
 - Data is persisted in Docker volumes: `console_postgres` and `caddy_data`
 - The Caddy network is created automatically by Docker Compose
 - All services are configured to restart automatically unless stopped manually.
-- Additional [environment variables](https://github.com/vitabaks/autobase/tree/master/console/service#configuration) can be configured based on your project needs.
+- Additional [environment variables](https://github.com/autobase-tech/autobase/tree/main/console/service#configuration) can be configured based on your project needs.

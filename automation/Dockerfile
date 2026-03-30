@@ -1,5 +1,5 @@
 FROM debian:bookworm-slim
-LABEL maintainer="Vitaliy Kukharik vitabaks@gmail.com"
+LABEL maintainer="Autobase <info@autobase.tech>"
 
 USER root
 

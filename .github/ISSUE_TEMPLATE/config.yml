@@ -2,7 +2,7 @@
 blank_issues_enabled: false
 contact_links:
   - name: "Question"
-    url: https://github.com/vitabaks/autobase/discussions/new?category=q-a
+    url: https://github.com/autobase-tech/autobase/discussions/new?category=q-a
     about: Ask a question about Autobase
   - name: "Commercial support"
     url: https://autobase.tech/docs/support

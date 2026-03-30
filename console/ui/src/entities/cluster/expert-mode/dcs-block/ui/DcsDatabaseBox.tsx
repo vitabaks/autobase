@@ -24,7 +24,7 @@ const DcsDatabaseBox: FC<DcsDatabaseBoxProps> = ({ index, remove, fields = [] })
       ) : null}
       <Stack direction="column" gap={1}>
         <Typography fontWeight="bold">{`${t('server')} ${index + 1}`}</Typography>
-        {fields.map(({ fieldName, label }) => (
+        {fields.map(({ fieldName, label, required = true }) => (
           <Controller
             key={fieldName}
             control={control}
@@ -32,7 +32,7 @@ const DcsDatabaseBox: FC<DcsDatabaseBoxProps> = ({ index, remove, fields = [] })
             render={({ field }) => (
               <TextField
                 {...field}
-                required
+                required={required}
                 size="small"
                 label={label}
                 error={!!errors[DCS_BLOCK_FIELD_NAMES.DCS_DATABASES]?.[index]?.[fieldName]}

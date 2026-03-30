@@ -13,7 +13,7 @@ where
     'pgrouting', 'timescaledb');
 
 -- Adds shared_cpu BOOLEAN field to cloud_instances
--- ref: https://github.com/vitabaks/autobase/issues/784
+-- ref: https://github.com/autobase-tech/autobase/issues/784
 alter table only public.cloud_instances
   add column shared_cpu boolean default false;
 

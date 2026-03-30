@@ -1,0 +1,44 @@
+---
+# Installs pg_auto_reindexer and configures cron jobs for automatic PostgreSQL index maintenance.
+# https://github.com/vitabaks/pg_auto_reindexer
+
+- name: Install pg_auto_reindexer
+  ansible.builtin.get_url:
+    url: "https://raw.githubusercontent.com/vitabaks/pg_auto_reindexer/refs/heads/main/pg_auto_reindexer"
+    dest: "/usr/local/bin/pg_auto_reindexer"
+    owner: root
+    group: root
+    mode: "0755"
+    timeout: 60
+    validate_certs: false
+  environment: "{{ proxy_env | default({}) }}"
+  tags: pg_auto_reindexer, pg_auto_reindexer_install
+
+# For PostgreSQL 11 and below, pg_repack is used for index maintenance
+- name: Install pg_repack package
+  ansible.builtin.package:
+    name: "{{ pg_repack_package }}"
+    state: present
+  vars:
+    pg_repack_package: >-
+      {% if ansible_os_family == 'Debian' %}
+      postgresql-{{ postgresql_version }}-repack
+      {% else %}
+      pg_repack_{{ postgresql_version }}
+      {% endif %}
+  register: package_status
+  until: package_status is success
+  delay: 5
+  retries: 3
+  environment: "{{ proxy_env | default({}) }}"
+  when:
+    - installation_method == "packages"
+    - postgresql_version | int <= 11
+  tags: pg_auto_reindexer, pg_auto_reindexer_install
+
+- name: Configure pg_auto_reindexer cron jobs
+  ansible.builtin.include_role:
+    name: vitabaks.autobase.cron
+  vars:
+    cron_jobs: "{{ postgresql_index_maintenance_cron_jobs }}"
+  tags: pg_auto_reindexer, pg_auto_reindexer_cron

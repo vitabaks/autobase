@@ -32,11 +32,11 @@ collections:
 
 1. Prepare your inventory file
 
-Note: It should follow the example [inventory](https://github.com/vitabaks/autobase/blob/master/automation/inventory.example) structure and include required groups such as `master`, `replica` (as part of the `postgres_cluster` group), `etcd_cluster`, and others.
+Note: It should follow the example [inventory](https://github.com/autobase-tech/autobase/blob/main/automation/inventory.example) structure and include required groups such as `master`, `replica` (as part of the `postgres_cluster` group), `etcd_cluster`, and others.
 
 2. Prepare your variables file
 
-Refer to the default [variables](https://github.com/vitabaks/autobase/blob/master/automation/roles/common/defaults/main.yml) for all configurable options. You can override them via group_vars, host_vars, or directly in your inventory.
+Refer to the default [variables](https://github.com/autobase-tech/autobase/blob/main/automation/roles/common/defaults/main.yml) for all configurable options. You can override them via group_vars, host_vars, or directly in your inventory.
 
 3. Run the Autobase playbook
 

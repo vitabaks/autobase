@@ -340,6 +340,9 @@
     - role: vitabaks.autobase.postgresql_extensions
       when: inventory_hostname == groups['master'][0]
 
+    - role: vitabaks.autobase.postgresql_index_maintenance
+      when: postgresql_index_maintenance | default(false) | bool
+
     - role: vitabaks.autobase.netdata
 
   tasks:

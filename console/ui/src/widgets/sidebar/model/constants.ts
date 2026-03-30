@@ -44,7 +44,7 @@ export const sidebarLowData = (t: TFunction) => [
   {
     icon: GithubIcon,
     label: t('github', { ns: 'shared' }),
-    path: 'https://github.com/vitabaks/autobase',
+    path: 'https://github.com/autobase-tech/autobase',
   },
   {
     icon: DocumentationIcon,

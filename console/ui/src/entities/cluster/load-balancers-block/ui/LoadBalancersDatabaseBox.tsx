@@ -66,6 +66,27 @@ const LoadBalancersDatabaseBox: FC<LoadBalancersDatabaseBoxProps> = ({ index, re
             />
           )}
         />
+        <Controller
+          control={control}
+          name={`${LOAD_BALANCERS_FIELD_NAMES.LOAD_BALANCER_DATABASES}.${index}.${LOAD_BALANCERS_FIELD_NAMES.LOAD_BALANCER_DATABASES_SSH_PORT}`}
+          render={({ field }) => (
+            <TextField
+              {...field}
+              size="small"
+              label={t('sshPort')}
+              error={
+                !!errors[LOAD_BALANCERS_FIELD_NAMES.LOAD_BALANCER_DATABASES]?.[index]?.[
+                  LOAD_BALANCERS_FIELD_NAMES.LOAD_BALANCER_DATABASES_SSH_PORT
+                ]
+              }
+              helperText={
+                errors?.[LOAD_BALANCERS_FIELD_NAMES.LOAD_BALANCER_DATABASES]?.[index]?.[
+                  LOAD_BALANCERS_FIELD_NAMES.LOAD_BALANCER_DATABASES_SSH_PORT
+                ]?.message as string
+              }
+            />
+          )}
+        />
       </Stack>
     </Card>
   );

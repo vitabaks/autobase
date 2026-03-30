@@ -4,10 +4,10 @@ name: "Docker"
 on:
   push:
     branches:
-      - master
+      - main
   pull_request:
     branches:
-      - master
+      - main
 
 jobs:
   build:
@@ -29,7 +29,7 @@ jobs:
 
       - name: Set TAG
         run: |
-          if [[ "${{ env.REF_NAME }}" == "master" ]]; then
+          if [[ "${{ env.REF_NAME }}" == "main" ]]; then
             echo "TAG=latest" >> $GITHUB_ENV
           else
             echo "TAG=${{ env.REF_NAME }}" >> $GITHUB_ENV
@@ -48,15 +48,20 @@ jobs:
 
       - name: Run Docker lint
         run: make docker-lint
+        if: ${{ github.event_name == 'pull_request' }}
 
       - name: Run Docker build
         run: make docker-build
+        if: ${{ github.event_name == 'pull_request' }}
         env:
           TAG: ${{ env.TAG }}
 
-      # push latest image
-      - name: Run Docker push
-        if: ${{ env.DOCKER_REGISTRY_USER != '' && env.DOCKER_REGISTRY_PASSWORD != '' && github.event_name != 'pull_request' }}
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+        if: ${{ github.event_name != 'pull_request' }}
+
+      - name: Build and Push latest image
+        if: ${{ github.event_name != 'pull_request' && env.DOCKER_REGISTRY_USER != '' && env.DOCKER_REGISTRY_PASSWORD != '' }}
         run: make docker-push
         env:
           TAG: ${{ env.TAG }}

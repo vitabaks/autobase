@@ -102,6 +102,9 @@
 - pg_probackup
 - - pg_probackup_repo
 - - pg_probackup_install
+- pg_auto_reindexer
+- - pg_auto_reindexer_install
+- - pg_auto_reindexer_cron
 - cron
 - netdata
 - ssh_public_keys

@@ -120,16 +120,13 @@ jobs:
         env:
           ANSIBLE_GALAXY_TOKEN: ${{ secrets.ANSIBLE_GALAXY_TOKEN }}
 
-      - name: Build release image
-        run: make docker-build
-        env:
-          TAG: ${{ steps.tag.outputs.tag }}
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
 
-      - name: Push release image
+      - name: Build and Push release image
         if: ${{ env.DOCKER_REGISTRY_USER != '' && env.DOCKER_REGISTRY_PASSWORD != '' }}
         run: make docker-push
         env:
           TAG: ${{ steps.tag.outputs.tag }}
           DOCKER_REGISTRY_USER: ${{ secrets.DOCKER_USERNAME }}
           DOCKER_REGISTRY_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
-

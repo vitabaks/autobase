@@ -211,6 +211,9 @@
     - role: vitabaks.autobase.postgresql_privs
       when: inventory_hostname in groups['primary']
 
+    - role: vitabaks.autobase.postgresql_index_maintenance
+      when: postgresql_index_maintenance | default(false) | bool
+
     - role: vitabaks.autobase.wal_g
       when: wal_g_install | default(false) | bool
 

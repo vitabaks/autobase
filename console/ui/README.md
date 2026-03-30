@@ -19,7 +19,7 @@ To run this project locally, follow these steps:
 1. **Clone repository**
 
 ```
-git clone https://github.com/vitabaks/autobase.git
+git clone https://github.com/autobase-tech/autobase.git
 cd autobase/console/ui
 ```
 

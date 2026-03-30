@@ -4,7 +4,7 @@ import { DCS_BLOCK_FIELD_NAMES } from './const';
 export interface DcsDatabaseBoxProps {
   index: number;
   remove?: UseFieldArrayRemove;
-  fields: Record<string, string>[];
+  fields: { fieldName: string; label: string; required?: boolean }[];
 }
 
 export interface DcsBlockFormValues {
@@ -14,6 +14,7 @@ export interface DcsBlockFormValues {
   [DCS_BLOCK_FIELD_NAMES.DCS_DATABASES]?: {
     [DCS_BLOCK_FIELD_NAMES.DCS_DATABASE_HOSTNAME]?: string;
     [DCS_BLOCK_FIELD_NAMES.DCS_DATABASE_IP_ADDRESS]?: string;
+    [DCS_BLOCK_FIELD_NAMES.DCS_DATABASE_SSH_PORT]?: string;
     [DCS_BLOCK_FIELD_NAMES.DCS_DATABASE_PORT]?: string;
   }[];
 }

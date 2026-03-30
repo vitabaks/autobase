@@ -33,7 +33,7 @@ restapi:
 {% if patroni_restapi_password | default('') | length > 0 %}
   authentication:
     username: {{ patroni_restapi_username | default('patroni') }}
-    password: {{ patroni_restapi_password }}
+    password: "{{ patroni_restapi_password }}"
 {% else %}
 #  authentication:
 #    username: username
@@ -62,13 +62,14 @@ etcd3:
   username: {{ patroni_etcd_username | default('') }}
   {% endif %}
   {% if patroni_etcd_password | default('') | length > 0 %}
-  password: {{ patroni_etcd_password }}
+  password: "{{ patroni_etcd_password }}"
   {% endif %}
 {% endif %}
 
 {% if dcs_type == 'consul' %}
 consul:
   host: {{ patroni_consul_host | default('127.0.0.1:8500') }}
+  register_service: true
   {% if consul_tls_enable | default(false) | bool %}
   scheme: https
   cacert: {{ patroni_consul_cacert | default('/etc/patroni/tls/consul/ca.crt') }}
@@ -116,6 +117,7 @@ bootstrap:
     synchronous_mode: {{ synchronous_mode |string |d(false, true) |lower }}
     synchronous_mode_strict: {{ synchronous_mode_strict |string |d(false, true) |lower }}
     synchronous_node_count: {{ synchronous_node_count |d(1, true) |int }}
+    failsafe_mode: {{ patroni_failsafe_mode |string |d(true, true) |lower }}
     postgresql:
       use_pg_rewind: {{ patroni_postgresql_use_pg_rewind |string |d(false, true) |lower }}
       use_slots: true
@@ -180,7 +182,7 @@ postgresql:
   authentication:
     replication:
       username: {{ patroni_replication_username }}
-      password: {{ patroni_replication_password }}
+      password: "{{ patroni_replication_password }}"
 {% for parameter in patroni_replication_auth_options %}
 {%   if parameter.option == 'sslrootcert' and parameter.value | length > 0 %}
       {{ parameter.option }}: {{ parameter.value }}
@@ -190,7 +192,7 @@ postgresql:
 {% endfor %}
     superuser:
       username: {{ patroni_superuser_username }}
-      password: {{ patroni_superuser_password }}
+      password: "{{ patroni_superuser_password }}"
 {% for parameter in patroni_superuser_auth_options %}
 {%   if parameter.option == 'sslrootcert' and parameter.value | length > 0 %}
       {{ parameter.option }}: {{ parameter.value }}

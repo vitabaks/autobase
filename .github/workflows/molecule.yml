@@ -4,10 +4,10 @@ name: Molecule
 on:
   push:
     branches:
-      - master
+      - main
   pull_request:
     branches:
-      - master
+      - main
 
 jobs:
   test:
@@ -16,25 +16,12 @@ jobs:
       fail-fast: false
       matrix:
         config:
-          - distro: debian13
-            tag: latest
-          - distro: debian12
-            tag: latest
-            namespace: geerlingguy
           - distro: ubuntu2404
             tag: latest
             namespace: geerlingguy
-          - distro: rockylinux9
-            tag: latest
           - distro: rockylinux10
             tag: latest
             namespace: geerlingguy
-          - distro: almalinux9
-            tag: latest
-            namespace: glillico
-          - distro: almalinux10
-            tag: latest
-            namespace: glillico
 
     steps:
       - name: Set TERM environment variable
