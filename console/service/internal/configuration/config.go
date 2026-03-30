@@ -53,6 +53,12 @@ type Config struct {
 		RunEvery time.Duration `default:"1m" desc:"ClusterWatcher run interval"`
 		PoolSize int64         `default:"4" desc:"Amount of async request from ClusterWatcher"`
 	}
+	DbDesk struct {
+		Enabled bool          `envconfig:"dbdesk_studio_enabled" default:"true" desc:"Enable automatic dbdesk-studio registration after successful cluster deploy"`
+		URL     string        `envconfig:"dbdesk_studio_url" default:"http://dbdesk-studio:6789" desc:"dbdesk-studio base URL"`
+		SSLMode string        `envconfig:"dbdesk_studio_sslmode" default:"require" desc:"SSL mode for dbdesk-studio postgres connection profiles"`
+		Timeout time.Duration `envconfig:"dbdesk_studio_timeout" default:"5s" desc:"HTTP timeout for dbdesk-studio health and registration requests"`
+	}
 }
 
 const cfgPrefix = "PG_CONSOLE"

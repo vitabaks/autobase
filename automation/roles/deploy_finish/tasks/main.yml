@@ -354,7 +354,3 @@
     superuser_password: "{{ '********' if mask_password | default(false) | bool else patroni_superuser_password }}"
   when: cloud_provider | default('') | lower == 'hetzner' and cloud_load_balancer | default(true) | bool
   tags: conn_info, cluster_info, cluster_status
-
-# Create dbdesk-studio connection
-- ansible.builtin.import_tasks: create_dbdesk_connection.yml
-  tags: dbdesk_connection, conn_info, cluster_info

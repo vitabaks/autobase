@@ -208,6 +208,11 @@ func (lw *logWatcher) collectContainerLog(ctx context.Context, op *storage.Opera
 		log.Error().Err(err).Msg("failed to update cluster status in db")
 	} else {
 		log.Trace().Any("cluster", updatedCluster).Msg("cluster was updated in db")
+
+		// Register connection in dbdesk-studio only for successful initial deploy operations.
+		if op.Type == storage.OperationTypeDeploy && updatedOperation != nil && updatedOperation.Status == storage.OperationStatusSuccess {
+			lw.registerClusterInDbDesk(ctx, clusterInfo.Name, updatedCluster.ConnectionInfo, log)
+		}
 	}
 }
 
