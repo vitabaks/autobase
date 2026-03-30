@@ -111,6 +111,7 @@ COPY --from=dbdesk-studio /usr/share/nginx/html /usr/share/nginx/dbdesk
 COPY --from=dbdesk-studio /app /opt/dbdesk-studio
 
 VOLUME /var/lib/postgresql
+VOLUME /opt/dbdesk-studio
 
 # Console DB
 EXPOSE ${POSTGRES_PORT}
