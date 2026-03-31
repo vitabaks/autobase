@@ -79,15 +79,15 @@
     - (groups.get('source_cluster', []) | length) > 0
     - inventory_hostname == groups['postgres_cluster'][0] # run once
 
-- name: Validate postgresql_index_maintenance_start/stop format
+- name: Validate postgresql_index_maintenance.start/stop format
   ansible.builtin.assert:
     that:
-      - (postgresql_index_maintenance_start | string) is match('^([01][0-9]|2[0-3])[0-5][0-9]$')
-      - (postgresql_index_maintenance_stop | string) is match('^([01][0-9]|2[0-3])[0-5][0-9]$')
+      - (postgresql_index_maintenance.start | string) is match('^([01][0-9]|2[0-3])[0-5][0-9]$')
+      - (postgresql_index_maintenance.stop | string) is match('^([01][0-9]|2[0-3])[0-5][0-9]$')
     fail_msg: >-
       Invalid index maintenance window format.
-      Variables 'postgresql_index_maintenance_start' and 'postgresql_index_maintenance_stop'
+      Variables 'postgresql_index_maintenance.start' and 'postgresql_index_maintenance.stop'
       must be in HHMM format (e.g. 0000, 0130, 2359).
   when:
-    - postgresql_index_maintenance | default(false) | bool
+    - postgresql_index_maintenance.enabled | default(false) | bool
     - inventory_hostname == groups['postgres_cluster'][0] # run once

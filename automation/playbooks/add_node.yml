@@ -340,7 +340,7 @@
         (cluster_vip is defined and cluster_vip | length > 0)
 
     - role: vitabaks.autobase.postgresql_index_maintenance
-      when: postgresql_index_maintenance | default(false) | bool
+      when: postgresql_index_maintenance.enabled | default(false) | bool
 
     - role: vitabaks.autobase.netdata
 
