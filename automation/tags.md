@@ -60,7 +60,7 @@
 - - - haproxy_conf
 - - - haproxy_selinux
 - - confd
-- - - get_confd
+- - - confd_install
 - - - confd_conf
 - - - - confd_toml
 - - - - haproxy_toml

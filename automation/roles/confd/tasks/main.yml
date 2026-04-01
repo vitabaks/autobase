@@ -1,17 +1,32 @@
 ---
 # install confd package from repo
-- name: Download and copy "confd" binary file to /usr/local/bin/
-  ansible.builtin.get_url:
-    url: "{{ item }}"
-    dest: /usr/local/bin/confd
-    mode: u+x,g+x,o+x
-    timeout: 60
-    validate_certs: false
-  loop:
-    - "{{ confd_package_repo }}"
+- block:
+    - name: Download confd package
+      ansible.builtin.get_url:
+        url: "{{ confd_package_repo }}"
+        dest: "/tmp/{{ confd_package_repo | basename }}"
+        timeout: 60
+        validate_certs: false
+
+    - name: Extract confd into /tmp/
+      ansible.builtin.unarchive:
+        src: "/tmp/{{ confd_package_repo | basename }}"
+        dest: /tmp/confd/
+        extra_opts:
+          - --no-same-owner
+        remote_src: true
+
+    - name: Copy confd binary file to /usr/local/bin/
+      ansible.builtin.copy:
+        src: /tmp/confd/confd
+        dest: /usr/local/bin/confd
+        mode: u+x,g+x,o+x
+        remote_src: true
   environment: "{{ proxy_env | default({}) }}"
-  when: installation_method == "packages" and confd_package_repo | length > 0
-  tags: get_confd, confd
+  when:
+    - installation_method == "packages"
+    - (confd_package_repo | default('') | length) > 0
+  tags: confd, confd_install
 
 - name: Create conf directories
   ansible.builtin.file:
