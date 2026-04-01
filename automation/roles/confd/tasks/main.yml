@@ -18,7 +18,7 @@
 
     - name: Copy confd binary file to /usr/local/bin/
       ansible.builtin.copy:
-        src: "/tmp/{{ confd_package_repo.split('.tar.gz')[0] | basename }}/confd"
+        src: /tmp/confd
         dest: /usr/local/bin/confd
         mode: u+x,g+x,o+x
         remote_src: true
