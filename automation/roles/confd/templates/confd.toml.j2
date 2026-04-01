@@ -1,4 +1,4 @@
-backend = "etcdv3"
+backend = "etcd"
 nodes = [
 {% if not dcs_exists|bool %}
   {% for host in groups['etcd_cluster'] %}
