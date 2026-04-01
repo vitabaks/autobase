@@ -156,4 +156,5 @@
         - (mount[0].src | length > 0 or lsblk_disk.stdout | default('') | length > 0)
         - ((postgresql_data_dir_mount_fstype is defined and postgresql_data_dir_mount_fstype == 'zfs') or
           (postgresql_data_dir_mount_fstype is not defined and mount[0].fstype == 'zfs'))
+  when: mount | length > 0
   tags: mount, zpool
