@@ -7,7 +7,7 @@ Installs and configures [confd](https://github.com/kelseyhightower/confd) to ren
 | Variable | Default | Description |
 |----------|---------|-------------|
 | confd_install | true  | Install confd service. |
-| confd_version | 0.16.0  | The confd version to install. |
+| confd_version | 0.33.1  | The confd version to install. |
 | confd_package_repo | `https://github.com/abtreece/confd/releases/download/v{{ confd_version }}/confd-{{ confd_version }}-linux-{{ confd_architecture_map[ansible_architecture] }}.tar.gz` | URL to download confd binary (used when installation_method=packages). |
 | confd_etcd_tls_dir | /etc/confd/tls/etcd | Destination for etcd TLS certs used by confd. |
 | confd_etcd_client_cakey | ca.crt | CA filename. |
