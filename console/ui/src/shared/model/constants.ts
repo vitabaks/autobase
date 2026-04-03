@@ -4,6 +4,8 @@ export const AUTHENTICATION_METHODS = Object.freeze({
   PASSWORD: 'password',
 });
 
+export const HEADER_HEIGHT = '56px';
+
 export const LOCAL_STORAGE_ITEMS = Object.freeze({
   IS_EXPERT_MODE: 'isExpertMode',
   IS_YAML_ENABLED: 'isYamlEnabled',

@@ -6,6 +6,7 @@ import { Box, Divider, Drawer, IconButton, List, Stack, Toolbar, useMediaQuery }
 import { useEffect, useRef, useState } from 'react';
 import CollapseIcon from '@shared/assets/collapseIcon.svg?react';
 import RouterPaths from '@app/router/routerPathsConfig';
+import { HEADER_HEIGHT } from '@shared/model/constants.ts';
 
 const Sidebar = () => {
   const { t } = useTranslation('shared');
@@ -76,7 +77,7 @@ const Sidebar = () => {
           transition: 'width .1s ease-in-out',
         },
       }}>
-      <Toolbar />
+      <Toolbar sx={{ minHeight: `${HEADER_HEIGHT} !important` }} />
       <Stack direction="column" height="100%" width="100%" alignItems="flex-start" justifyContent="center">
         <List sx={{ width: '100%' }}>
           {sidebarData(t).map((item) => (

@@ -16,10 +16,21 @@ const SidebarItemContent: FC<SidebarItemProps> = ({
   return (
     <ListItemButton
       sx={{
-        gap: '12px',
-        borderLeft: `3px solid ${isActive ? theme.palette.primary.main : 'transparent'}`,
+        gap: isCollapsed ? 0 : '12px',
+        position: 'relative',
         height: '50px',
+        px: isCollapsed ? 0 : '16px',
+        justifyContent: isCollapsed ? 'center' : 'flex-start',
         color: 'text.primary',
+        '&::before': {
+          content: '""',
+          position: 'absolute',
+          left: 0,
+          top: 0,
+          bottom: 0,
+          width: '3px',
+          backgroundColor: isActive ? theme.palette.primary.main : 'transparent',
+        },
         '&:hover': {
           backgroundColor: 'action.hover',
         },
@@ -29,7 +40,11 @@ const SidebarItemContent: FC<SidebarItemProps> = ({
       component={Link}>
       <ListItemIcon
         sx={{
-          minWidth: 'fit-content',
+          minWidth: 0,
+          width: '30px',
+          margin: 0,
+          display: 'flex',
+          justifyContent: 'center',
           color: 'text.primary',
           '& svg': {
             fill: 'currentColor',

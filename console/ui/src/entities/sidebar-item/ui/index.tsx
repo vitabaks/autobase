@@ -14,7 +14,7 @@ const SidebarItem: FC<SidebarItemProps> = ({ path, label, icon, isActive, isColl
       }}>
       {isCollapsed ? (
         <Tooltip title={label} arrow placement="right">
-          <Box>
+          <Box sx={{ width: '100%' }}>
             <SidebarItemContent
               path={path}
               label={label}

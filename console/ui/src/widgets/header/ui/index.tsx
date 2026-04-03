@@ -4,6 +4,7 @@ import Logo from '@shared/assets/AutobaseLogo.svg?react';
 import LogoutButton from '@features/logout-button';
 import ThemeToggle from '@features/theme-toggle';
 import { useGetProjectsQuery } from '@shared/api/api/projects.ts';
+import { HEADER_HEIGHT } from '@shared/model/constants.ts';
 import { setProject } from '@app/redux/slices/projectSlice/projectSlice.ts';
 import { selectCurrentProject } from '@app/redux/slices/projectSlice/projectSelectors.ts';
 import { useAppDispatch, useAppSelector } from '@app/redux/store/hooks.ts';
@@ -34,7 +35,7 @@ const Header: FC = () => {
       })}
       elevation={0}
     >
-      <Toolbar sx={{ paddingLeft: '16px !important' }}>
+      <Toolbar sx={{ minHeight: `${HEADER_HEIGHT} !important`, paddingLeft: '12px !important' }}>
         <Stack direction="row" justifyContent="space-between" alignItems="center" width="100%">
           <Stack direction="row" alignItems="center" gap="26px">
             <Stack direction="row" alignItems="center" gap="16px" marginLeft="4px">

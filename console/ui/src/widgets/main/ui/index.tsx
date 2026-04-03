@@ -3,6 +3,7 @@ import { Divider, Stack, Toolbar, useTheme } from '@mui/material';
 import { Outlet, useLocation } from 'react-router-dom';
 import Breadcrumbs from '@features/bradcrumbs';
 import Spinner from '@shared/ui/spinner';
+import { HEADER_HEIGHT } from '@shared/model/constants.ts';
 
 const Main: FC = () => {
   const theme = useTheme();
@@ -12,7 +13,7 @@ const Main: FC = () => {
   return (
     <main style={{ display: 'flex', overflow: 'auto', width: '100%', padding: '8px' }}>
       <Stack width="100%">
-        <Toolbar sx={{ backgroundColor: theme.palette.background.default }} />
+        <Toolbar sx={{ minHeight: `${HEADER_HEIGHT} !important`, backgroundColor: theme.palette.background.default }} />
       {!isSqlEditor && (
         <>
           <Breadcrumbs />
