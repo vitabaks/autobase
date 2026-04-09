@@ -812,7 +812,7 @@ pgbackrest_server_conf:
     - { option: "repo1-block", value: "y" }
     - { option: "archive-check", value: "y" }
     - { option: "archive-copy", value: "n" }
-    - { option: "backup-standby", value: "y" }
+    - { option: "backup-standby", value: "{{ 'y' if groups['postgres_cluster'] | length > 1 else 'n' }}" }
     - { option: "start-fast", value: "y" }
     - { option: "stop-auto", value: "y" }
     - { option: "link-all", value: "y" }
