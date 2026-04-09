@@ -212,7 +212,7 @@
   ansible.builtin.include_role:
     name: vitabaks.autobase.cron
   vars:
-    cron_jobs: "{{ pgbackrest_cron_jobs }}"
+    cron_jobs: "{{ pgbackrest_cron_jobs_repo }}"
   when:
     - "'pgbackrest' in group_names"
     - pgbackrest_repo_host | default('') | length > 0
