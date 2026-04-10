@@ -7,12 +7,13 @@
     password: "{{ item.password | default(omit) }}"
     encrypted: true
     role_attr_flags: "{{ item.flags | default('LOGIN') }}"
+    conn_limit: "{{ item.conn_limit | default(omit) }}"
     login_host: "127.0.0.1"
     login_port: "{{ postgresql_port }}"
     login_user: "{{ patroni_superuser_username }}"
     login_password: "{{ patroni_superuser_password }}"
     login_db: "postgres"
-    state: present
+    state: "{{ item.state | default('present') }}"
   ignore_errors: true
   loop: "{{ postgresql_users | flatten(1) }}"
   loop_control:
@@ -30,7 +31,7 @@
     login_port: "{{ postgresql_port }}"
     login_user: "{{ patroni_superuser_username }}"
     login_password: "{{ patroni_superuser_password }}"
-    state: present
+    state: "{{ item.state | default('present') }}"
   ignore_errors: true
   loop: "{{ postgresql_users | flatten(1) }}"
   loop_control:

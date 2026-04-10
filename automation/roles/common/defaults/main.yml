@@ -296,7 +296,7 @@ postgresql_stats_temp_directory_size: "1024m"
 postgresql_users:
   - { name: "{{ pgbouncer_auth_username }}", password: "{{ pgbouncer_auth_password }}", flags: "LOGIN", role: "" }
 #  - { name: "monitoring_auth_username", password: "monitoring_user_password", flags: "LOGIN", role: "pg_monitor" } # monitoring Service Account
-#  - { name: "mydb-user", password: "mydb-user-pass", flags: "SUPERUSER" }
+#  - { name: "mydb-user", password: "mydb-user-pass", flags: "SUPERUSER", conn_limit: "10" }
 #  - { name: "", password: "", flags: "NOSUPERUSER" }
 #  - { name: "", password: "", flags: "NOSUPERUSER" }
 #  - { name: "", password: "", flags: "NOLOGIN" }
