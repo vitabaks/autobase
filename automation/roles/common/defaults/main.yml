@@ -831,6 +831,20 @@ pgbackrest_patroni_cluster_clean_bootstrap: false  # false: use delta restore fo
 
 # By default, the cron jobs is created on the database server.
 # If 'repo_host' is defined, the cron jobs will be created on the pgbackrest server.
+#
+# On database servers, the pg_is_in_recovery() guard prevents replicas from triggering backups.
+# On a dedicated backup server (repo_host), the guard is omitted because there is no local
+# PostgreSQL instance — psql would fail silently and backups would never run.
+pgbackrest_full_backup_command: >-
+  {{ 'pgbackrest --stanza=' ~ pgbackrest_stanza ~ ' --type=full backup'
+     if pgbackrest_repo_host | default('') | length > 0
+     else "if [ $(psql -tAXc 'select pg_is_in_recovery()') = 'f' ]; then pgbackrest --stanza=" ~ pgbackrest_stanza ~ " --type=full backup; fi" }}
+
+pgbackrest_diff_backup_command: >-
+  {{ 'pgbackrest --stanza=' ~ pgbackrest_stanza ~ ' --type=diff backup'
+     if pgbackrest_repo_host | default('') | length > 0
+     else "if [ $(psql -tAXc 'select pg_is_in_recovery()') = 'f' ]; then pgbackrest --stanza=" ~ pgbackrest_stanza ~ " --type=diff backup; fi" }}
+
 pgbackrest_cron_jobs:
   - name: "pgBackRest: Full Backup"
     file: "/etc/cron.d/pgbackrest-{{ patroni_cluster_name }}"
@@ -840,7 +854,7 @@ pgbackrest_cron_jobs:
     day: "*"
     month: "*"
     weekday: "0"
-    job: "if [ $(psql -tAXc 'select pg_is_in_recovery()') = 'f' ]; then pgbackrest --stanza={{ pgbackrest_stanza }} --type=full backup; fi"
+    job: "{{ pgbackrest_full_backup_command }}"
   - name: "pgBackRest: Diff Backup"
     file: "/etc/cron.d/pgbackrest-{{ patroni_cluster_name }}"
     user: "postgres"
@@ -849,31 +863,7 @@ pgbackrest_cron_jobs:
     day: "*"
     month: "*"
     weekday: "1-6"
-    job: "if [ $(psql -tAXc 'select pg_is_in_recovery()') = 'f' ]; then pgbackrest --stanza={{ pgbackrest_stanza }} --type=diff backup; fi"
-
-# Cron jobs for a dedicated pgbackrest (repo_host) server.
-# The pg_is_in_recovery guard is omitted because there is no local PostgreSQL
-# instance on the backup server — the guard would always fail silently,
-# preventing scheduled backups from ever running.
-pgbackrest_cron_jobs_repo:
-  - name: "pgBackRest: Full Backup"
-    file: "/etc/cron.d/pgbackrest-{{ patroni_cluster_name }}"
-    user: "postgres"
-    minute: "00"
-    hour: "{{ pgbackrest_backup_hour | default('3') }}"
-    day: "*"
-    month: "*"
-    weekday: "0"
-    job: "pgbackrest --stanza={{ pgbackrest_stanza }} --type=full backup"
-  - name: "pgBackRest: Diff Backup"
-    file: "/etc/cron.d/pgbackrest-{{ patroni_cluster_name }}"
-    user: "postgres"
-    minute: "00"
-    hour: "{{ pgbackrest_backup_hour | default('3') }}"
-    day: "*"
-    month: "*"
-    weekday: "1-6"
-    job: "pgbackrest --stanza={{ pgbackrest_stanza }} --type=diff backup"
+    job: "{{ pgbackrest_diff_backup_command }}"
 
 # PITR mode (if patroni_cluster_bootstrap_method: "pgbackrest" or "wal-g"):
 # 1) The database cluster directory will be cleaned (for "wal-g") or overwritten (for "pgbackrest" --delta restore).
