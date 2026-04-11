@@ -5,13 +5,14 @@
   community.postgresql.postgresql_ext:
     name: "{{ item.ext | regex_replace('^pgvector', 'vector') }}"
     schema: "{{ item.schema | default(default_schema) }}"
+    version: "{{ item.version | default(omit) }}"
     cascade: "{{ item.cascade | default(true) }}"
     login_db: "{{ item.db }}"
     login_host: "127.0.0.1"
     login_port: "{{ postgresql_port }}"
     login_user: "{{ patroni_superuser_username }}"
     login_password: "{{ patroni_superuser_password }}"
-    state: present
+    state: "{{ item.state | default('present') }}"
   ignore_errors: true
   loop: "{{ postgresql_extensions | flatten(1) }}"
   vars:

@@ -327,8 +327,8 @@ postgresql_privs: []
 # List of database extensions to be created
 postgresql_extensions: []
 #  - { ext: "pg_stat_statements", db: "postgres" }
-#  - { ext: "pg_stat_statements", db: "mydatabase" }
-#  - { ext: "pg_stat_statements", db: "mydatabase", schema: "myschema" }
+#  - { ext: "pg_stat_statements", db: "mydatabase", schema: "myschema", version: "1.10" }
+#  - { ext: "pg_stat_statements", db: "test", state: "absent" }
 #  - { ext: "pg_stat_statements", db: "" }
 #  - { ext: "pg_stat_statements", db: "" }
 #  - { ext: "pg_repack", db: "" }  # postgresql-<version>-repack package is required
