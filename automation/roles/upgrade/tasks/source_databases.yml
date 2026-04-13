@@ -23,10 +23,13 @@
       ansible.builtin.set_fact:
         source_databases: >-
           {{
-            pg_replication_database is string
-            | ternary(
-                pg_replication_database.split(',') | map('trim') | reject('equalto', '') | list,
-                (pg_replication_database | default([], true))
-              )
+            (
+              pg_replication_database
+              if pg_replication_database is sequence and pg_replication_database is not string
+              else (pg_replication_database | default('', true) | string).split(',')
+            )
+            | map('trim')
+            | reject('equalto', '')
+            | list
           }}
   when: patroni_cluster_leader | default(false) | bool
