@@ -48,7 +48,7 @@
     target_secondaries: "{{ groups.get('secondary', []) | sort }}"
     target_hosts_for_replicas: "{{ target_secondaries if (target_secondaries | length) > 0 else groups.get('primary', []) }}"
     source_idx: "{{ source_secondaries.index(inventory_hostname) }}"
-    target_secondary_host: "{{ target_hosts_for_replicas[source_idx % (target_hosts_for_replicas | length)] }}"
+    target_secondary_host: "{{ target_hosts_for_replicas[(source_idx | int) % (target_hosts_for_replicas | length)] }}"
     target_secondary_host_addr: >-
       {{
         hostvars[target_secondary_host].patroni_bind_address
