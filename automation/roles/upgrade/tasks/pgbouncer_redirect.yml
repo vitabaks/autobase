@@ -1,15 +1,16 @@
 ---
 # Prepare PgBouncer config to redirect traffic to the target cluster (blue-green deployment method)
 
-- name: "Pre-Check error. Fail if replica counts mismatch between source and target clusters"
-  ansible.builtin.fail:
+- name: "Pre-check notice. Source and target replica counts differ"
+  ansible.builtin.debug:
     msg: >-
-      Replica count mismatch:
-      source secondary={{ (groups.get('source_secondary', []) | length) }},
-      target secondary={{ (groups.get('secondary', []) | length) }}
-  when:
-    - inventory_hostname in groups.get('source_primary', [])
-    - (groups.get('secondary', []) | length) != (groups.get('source_secondary', []) | length)
+      Replica count mismatch detected:
+      source secondary={{ groups.get('source_secondary', []) | length }},
+      target secondary={{ groups.get('secondary', []) | length }}.
+      PgBouncer redirection will use deterministic modulo mapping across target replicas,
+      and fallback to target primary when target replicas are absent.
+  when: (groups.get('secondary', []) | length) != (groups.get('source_secondary', []) | length)
+  run_once: true
 
 - name: Prepare PgBouncer configuration to redirect primary traffic
   ansible.builtin.replace:
@@ -30,6 +31,9 @@
       }}
   when: inventory_hostname in groups.get('source_primary', [])
 
+# PgBouncer traffic redirection supports different numbers of source and target replicas:
+# source replicas are mapped to target replicas deterministically by index (modulo target replica count).
+# If the target cluster has no replicas, replica traffic is redirected to the target primary.
 - name: Prepare PgBouncer configuration to redirect replica traffic
   ansible.builtin.replace:
     path: "{{ pgbouncer_conf_dir }}/pgbouncer{{ '-%d' % (idx + 1) if idx > 0 else '' }}.ini"
@@ -42,8 +46,9 @@
   vars:
     source_secondaries: "{{ groups.get('source_secondary', []) | sort }}"
     target_secondaries: "{{ groups.get('secondary', []) | sort }}"
+    target_hosts_for_replicas: "{{ target_secondaries if (target_secondaries | length) > 0 else groups.get('primary', []) }}"
     source_idx: "{{ source_secondaries.index(inventory_hostname) }}"
-    target_secondary_host: "{{ target_secondaries[source_idx] }}"
+    target_secondary_host: "{{ target_hosts_for_replicas[source_idx % (target_hosts_for_replicas | length)] }}"
     target_secondary_host_addr: >-
       {{
         hostvars[target_secondary_host].patroni_bind_address

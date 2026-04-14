@@ -53,7 +53,7 @@ The upgrade is supported starting from PostgreSQL 9.3 for in-place upgrade metho
 
 Specify the current (old) version of PostgreSQL in the `pg_old_version` variable and target version of PostgreSQL for the upgrade in the `pg_new_version` variable.
 
-For the blue-green method, deploy the target cluster in standby cluster mode. Ensure that the target cluster has the same number of PostgreSQL servers as the source cluster. This is important during switchover when configuring PgBouncer to redirect traffic to the target cluster (if PgBouncer is installed).
+For the blue-green method, deploy the target cluster in standby cluster mode. See `patroni_standby_cluster` variable.
 
 ## Recommendations
 
@@ -549,7 +549,7 @@ Note: for blue-green upgrade method (`pg_logical_switchover` playbook)
   - Prepare PgBouncer configuration to redirect primary traffic
     - Note: replace the 'host=' option value with the target primary host address
   - Prepare PgBouncer configuration to redirect replica traffic
-    - Note: replace the 'host=' option value with the target secondary hosts addresses
+    - Note: replace the 'host=' option value with target hosts addresses using deterministic mapping by replica index; if target has no replicas, use target primary
   - Temporarily disable TLS from PgBouncer to Postgres during redirect
     - Note: if self-signed certificates are used (tls_cert_generate = true), target cluster uses a different CA, so PgBouncer on source may fail to verify TLS when connecting to Postgres on target
 - **Increase all sequence values**
