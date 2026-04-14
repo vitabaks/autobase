@@ -29,7 +29,7 @@
     - pg_replication_state.stdout | int == 0
     - not ansible_check_mode
 
-- name: "[Pre-Check] Make sure there is no high replication lag (more than {{ max_replication_lag_bytes | default('') | human_readable }})"
+- name: "[Pre-Check] Make sure there is no high replication lag (more than {{ max_replication_lag_bytes | default(0) | int | human_readable }})"
   ansible.builtin.command: >-
     {{ postgresql_bin_dir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc
     "select pg_wal_lsn_diff(pg_current_wal_lsn(),replay_lsn) pg_lag_bytes

@@ -318,7 +318,7 @@
     - inventory_hostname in groups['primary']
     - pg_replication_state.stdout | int == 0
 
-- name: "[Pre-Check] Make sure there is no high replication lag (more than {{ max_replication_lag_bytes | default('') | human_readable }})"
+- name: "[Pre-Check] Make sure there is no high replication lag (more than {{ max_replication_lag_bytes | default(0) | int | human_readable }})"
   ansible.builtin.command: >-
     {{ psql_command }} -tAXc "
       select pg_wal_lsn_diff(pg_current_wal_lsn(),replay_lsn) as pg_lag_bytes
@@ -349,7 +349,7 @@
     - pg_lag_bytes.stdout|int >= max_replication_lag_bytes|int
 
 # for compatibility with Postgres 9.x
-- name: "[Pre-Check] Make sure there is no high replication lag (more than {{ max_replication_lag_bytes | default('') | human_readable }})"
+- name: "[Pre-Check] Make sure there is no high replication lag (more than {{ max_replication_lag_bytes | default(0) | int | human_readable }})"
   ansible.builtin.command: >-
     {{ psql_command }} -tAXc "
       select pg_xlog_location_diff(pg_current_xlog_location(),replay_location) as pg_lag_bytes
