@@ -39,6 +39,24 @@
   delay: 10
   when: inventory_hostname in groups['primary']
 
+# Stop Patroni to prevent PostgreSQL from restarting after it is stopped
+- name: "Stop Patroni service on the standby cluster leader before stopping PostgreSQL"
+  become: true
+  become_user: root
+  ansible.builtin.service:
+    name: patroni
+    state: stopped
+  when: inventory_hostname in groups['primary']
+
+- name: "Wait for Patroni REST API to stop on the standby cluster leader"
+  ansible.builtin.wait_for:
+    port: "{{ patroni_restapi_port | default('8008') }}"
+    host: "{{ patroni_bind_address | default(bind_address, true) }}"
+    state: stopped
+    timeout: 60
+    delay: 2
+  when: inventory_hostname in groups['primary']
+
 - name: "Stop PostgreSQL on the standby cluster leader"
   ansible.builtin.command: >-
     {{ pg_old_bindir }}/pg_ctl -D {{ pg_old_datadir }} stop -w -t {{ pg_start_stop_timeout }}

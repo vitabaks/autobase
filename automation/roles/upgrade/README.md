@@ -356,6 +356,8 @@ Note: For more information, see the `upgrade` role [variables](../upgrade/defaul
     - Pause Patroni on the target cluster before stopping PostgreSQL
     - Execute CHECKPOINT before stopping PostgreSQL
     - Wait for the CHECKPOINT to complete
+    - Stop Patroni service on the standby cluster leader before stopping PostgreSQL
+    - Wait for Patroni REST API to stop on the standby cluster leader
     - Stop PostgreSQL on the standby cluster leader
   - Create a publication and logical replication slot for each database
     - Get a list of tables distributed by groups
