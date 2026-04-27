@@ -64,7 +64,7 @@
         fstype: "{{ item.fstype | default(postgresql_data_dir_mount_fstype | default('ext4', true), true) }}"
       loop: "{{ mount }}"
       when:
-        - item.src | default('') | regex_search('^/dev/')
+        - (item.src | default('')) is match('^/dev/')
         - ((postgresql_data_dir_mount_fstype is defined and postgresql_data_dir_mount_fstype != 'zfs') or
           (postgresql_data_dir_mount_fstype is not defined and item.fstype != 'zfs'))
 
