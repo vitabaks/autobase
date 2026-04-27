@@ -10,7 +10,7 @@ This role configures filesystems and mount points:
 |---|---|---|
 | mount | [] | List of mount definitions. Each item may include: path, src, fstype, opts, state. See below for item fields. |
 | mount[].path | "/pgdata" | Mount point path. Used as fallback for the first item when auto-provisioning. |
-| mount[].src | "" | Device UUID=... or device path. If empty and cloud_provider is set, the role will try to detect an empty disk and fill the UUID automatically for the first item. |
+| mount[].src | "" | Device UUID=... or device path. If empty and cloud_provider is set, the role will try to auto-detect exactly one writable, unmounted data disk and fill the UUID automatically for the first item. |
 | mount[].fstype | "ext4" | Filesystem type (e.q., ext4, xfs). Use "zfs" to create a zpool and mount it. |
 | mount[].opts | "defaults,noatime" | Mount options (not applicable to zfs creation). |
 | mount[].state | "mounted" | Desired state (mounted, present, absent, etc.). |
@@ -19,6 +19,8 @@ This role configures filesystems and mount points:
 
 Notes:
 - The role relies on lsblk and jq for disk detection; ensure jq is available (it is installed by the common role by default).
+- If no candidate disk is detected during auto-provisioning, the role fails and asks you to attach a data volume or set `mount[].src` explicitly.
+- If multiple candidate disks are detected, the role fails and asks you to set `mount[].src` explicitly.
 - ZFS packages are installed per OS family (Ubuntu/Debian/RedHat) and the zfs module is loaded automatically.
 
 ## Example:
