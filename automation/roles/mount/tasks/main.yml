@@ -57,6 +57,17 @@
         - ((postgresql_data_dir_mount_fstype is defined and postgresql_data_dir_mount_fstype != 'zfs') or
           (postgresql_data_dir_mount_fstype is not defined and (mount | first | default({})).fstype | default('') != 'zfs'))
 
+    # Explicit /dev paths skip auto-detection, so create the filesystem here before mounting.
+    - name: Create filesystem on explicitly specified devices
+      community.general.filesystem:
+        dev: "{{ item.src }}"
+        fstype: "{{ item.fstype | default(postgresql_data_dir_mount_fstype | default('ext4', true), true) }}"
+      loop: "{{ mount }}"
+      when:
+        - item.src | default('') | regex_search('^/dev/')
+        - ((postgresql_data_dir_mount_fstype is defined and postgresql_data_dir_mount_fstype != 'zfs') or
+          (postgresql_data_dir_mount_fstype is not defined and item.fstype != 'zfs'))
+
     # UUID
     - name: Get UUID of the disk "/dev/{{ lsblk_disk_device | default('') }}"
       ansible.builtin.shell: |
