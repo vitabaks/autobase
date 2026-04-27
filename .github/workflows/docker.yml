@@ -57,7 +57,7 @@ jobs:
           TAG: ${{ env.TAG }}
 
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
+        uses: docker/setup-qemu-action@v4
         if: ${{ github.event_name != 'pull_request' }}
 
       - name: Build and Push latest image
