@@ -269,6 +269,7 @@
     - role: vitabaks.autobase.add_repository
     - role: vitabaks.autobase.packages
     - role: vitabaks.autobase.sudo
+    - role: vitabaks.autobase.mount
     - role: vitabaks.autobase.swap
     - role: vitabaks.autobase.sysctl
     - role: vitabaks.autobase.transparent_huge_pages
