@@ -4,11 +4,11 @@ go 1.24
 
 require (
 	github.com/docker/docker v28.5.2+incompatible
-	github.com/docker/go-connections v0.6.0
+	github.com/docker/go-connections v0.7.0
 	github.com/gdex-lab/go-render v1.0.1
 	github.com/go-openapi/errors v0.22.7
 	github.com/go-openapi/loads v0.23.3
-	github.com/go-openapi/runtime v0.29.3
+	github.com/go-openapi/runtime v0.29.4
 	github.com/go-openapi/strfmt v0.26.1
 	github.com/google/uuid v1.6.0
 	github.com/goombaio/namegenerator v0.0.0-20181006234301-989e774b106e
@@ -16,8 +16,8 @@ require (
 	github.com/jessevdk/go-flags v1.6.1
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/mitchellh/mapstructure v1.5.0
-	github.com/pressly/goose/v3 v3.27.0
-	github.com/rs/zerolog v1.34.0
+	github.com/pressly/goose/v3 v3.27.1
+	github.com/rs/zerolog v1.35.1
 	github.com/segmentio/asm v1.2.1
 	go.openly.dev/pointy v1.3.0
 	golang.org/x/sync v0.20.0
