@@ -137,7 +137,6 @@
         state: present
         sysctl_file: "{{ sysctl_file | default('/etc/sysctl.d/autobase.sysctl.conf') }}"
         reload: true
-      become: true
       when:
         - shared_buffers_gb | default(0) | int >= (min_shared_buffers_gb | default(8))
         - huge_pages_total.stdout | default(0) | int < huge_pages_required | int
