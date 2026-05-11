@@ -32,7 +32,7 @@
 
     - name: "HugePages | Set variable: shared_buffers_gb"
       ansible.builtin.set_fact:
-        shared_buffers_gb: "{{ (shared_buffers_value | int) // 1024 }}"
+        shared_buffers_gb: "{{ (shared_buffers_value | int) / 1024 }}"
       when: shared_buffers_unit == 'mb'
 
     - name: "HugePages | Set variable: shared_buffers_gb"
@@ -70,7 +70,7 @@
         huge_pages_required: >-
           {{
             (
-              (shared_buffers_gb | default(0) | int
+              (shared_buffers_gb | default(0) | float
               + additional_huge_pages_gb | default(1))
               * 1024 * 1024
             )
@@ -119,11 +119,28 @@
               (sysctl_conf.postgres_cluster
               | rejectattr('name', 'equalto', 'vm.nr_hugepages')
               | list)
-              + [ { 'name': 'vm.nr_hugepages', 'value': huge_pages_required } ]
+              + [ { 'name': 'vm.nr_hugepages', 'value': huge_pages_required | int } ]
             }}
       when:
         - shared_buffers_gb | default(0) | int >= (min_shared_buffers_gb | default(8))
         - huge_pages_total.stdout | default(0) | int  < huge_pages_required | int
+        - not sysctl_conf_vm_nr_hugepages_sufficient | default(false)
+        - huge_pages_auto_conf | bool
+        - sysctl_set | bool
+
+    # Apply vm.nr_hugepages immediately (set_fact does not persist across plays)
+    - name: "HugePages | Apply vm.nr_hugepages={{ huge_pages_required }} to the OS"
+      ansible.posix.sysctl:
+        name: "vm.nr_hugepages"
+        value: "{{ huge_pages_required | int }}"
+        sysctl_set: true
+        state: present
+        sysctl_file: "{{ sysctl_file | default('/etc/sysctl.d/autobase.sysctl.conf') }}"
+        reload: true
+      become: true
+      when:
+        - shared_buffers_gb | default(0) | int >= (min_shared_buffers_gb | default(8))
+        - huge_pages_total.stdout | default(0) | int < huge_pages_required | int
         - not sysctl_conf_vm_nr_hugepages_sufficient | default(false)
         - huge_pages_auto_conf | bool
         - sysctl_set | bool
