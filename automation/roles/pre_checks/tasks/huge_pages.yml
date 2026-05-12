@@ -128,7 +128,8 @@
         - huge_pages_auto_conf | bool
         - sysctl_set | bool
 
-    # Apply vm.nr_hugepages immediately (set_fact does not persist across plays)
+    # Apply vm.nr_hugepages immediately at the OS level instead of waiting for
+    # later processing of the sysctl_conf variable.
     - name: "HugePages | Apply vm.nr_hugepages={{ huge_pages_required }} to the OS"
       ansible.posix.sysctl:
         name: "vm.nr_hugepages"
