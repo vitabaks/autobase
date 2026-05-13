@@ -13,7 +13,7 @@
     login_user: "{{ patroni_superuser_username }}"
     login_password: "{{ patroni_superuser_password }}"
     state: "{{ item.state | default('present') }}"
-  ignore_errors: true
+  ignore_errors: "{{ postgresql_extensions_ignore_errors | default(false) }}"
   loop: "{{ postgresql_extensions | flatten(1) }}"
   vars:
     default_schema: "{{ 'pg_catalog' if item.ext == 'pg_cron' else 'public' }}"
