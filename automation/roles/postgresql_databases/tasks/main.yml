@@ -19,7 +19,7 @@
     login_password: "{{ patroni_superuser_password }}"
     state: "{{ item.state | default('present') }}"
     force: "{{ 'true' if item.state | default('present') == 'absent' else 'false' }}"
-  ignore_errors: true
+  ignore_errors: "{{ postgresql_databases_ignore_errors | default(false) }}"
   loop: "{{ postgresql_databases | flatten(1) }}"
   when:
     - postgresql_databases | default('') | length > 0
