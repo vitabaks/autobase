@@ -1,0 +1,10 @@
+import { describe, expect, it } from 'vitest';
+import { configValidationSchema } from '@shared/model/validation.ts';
+
+describe('configValidationSchema', () => {
+  const t = ((key: string) => key) as never;
+
+  it('accepts values with colon for equal-separated format', () => {
+    expect(configValidationSchema(t).isValidSync('AWS_ENDPOINT=http://YOUR_MINIO_ADDRESS:9000')).toBe(true);
+  });
+});

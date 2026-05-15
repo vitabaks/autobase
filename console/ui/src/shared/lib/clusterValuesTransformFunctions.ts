@@ -33,10 +33,17 @@ import { isEmpty } from 'lodash';
 export const convertModalParametersToArray = (value?: string) =>
   value?.length
     ? value.split(/[\n\r]/).map((item) => {
-        const values = item.split(/[:=]/);
+        const delimiterIndex = item.search(/[:=]/);
+        if (delimiterIndex < 0) {
+          return {
+            option: item.trim(),
+            value: '',
+          };
+        }
+
         return {
-          option: values?.[0].trim(), // due to splitting rule, values might have unnecessary whitespaces that needs to be removed
-          value: values?.[1].trim(),
+          option: item.slice(0, delimiterIndex).trim(),
+          value: item.slice(delimiterIndex + 1).trim(),
         };
       })
     : value;
