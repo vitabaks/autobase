@@ -11,4 +11,22 @@ describe('convertModalParametersToArray', () => {
       },
     ]);
   });
+
+  it('keeps colons in value for colon-separated parameters', () => {
+    expect(convertModalParametersToArray('AWS_ENDPOINT:http://YOUR_MINIO_ADDRESS:9000')).toEqual([
+      {
+        option: 'AWS_ENDPOINT',
+        value: 'http://YOUR_MINIO_ADDRESS:9000',
+      },
+    ]);
+  });
+
+  it('returns empty value when delimiter is missing', () => {
+    expect(convertModalParametersToArray('AWS_ENDPOINT')).toEqual([
+      {
+        option: 'AWS_ENDPOINT',
+        value: '',
+      },
+    ]);
+  });
 });

@@ -7,4 +7,8 @@ describe('configValidationSchema', () => {
   it('accepts values with colon for equal-separated format', () => {
     expect(configValidationSchema(t).isValidSync('AWS_ENDPOINT=http://YOUR_MINIO_ADDRESS:9000')).toBe(true);
   });
+
+  it('accepts values with colon for colon-separated format', () => {
+    expect(configValidationSchema(t).isValidSync('AWS_ENDPOINT:http://YOUR_MINIO_ADDRESS:9000')).toBe(true);
+  });
 });
