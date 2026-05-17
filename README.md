@@ -139,7 +139,7 @@ RedHat and Debian based distros.
 ###### Supported Linux Distributions:
 
 - **Debian**: 11, 12, 13
-- **Ubuntu**: 22.04, 24.04
+- **Ubuntu**: 22.04, 24.04, 26.04
 - **CentOS Stream**: 9, 10
 - **Oracle Linux**: 8, 9, 10
 - **Rocky Linux**: 8, 9, 10
@@ -158,8 +158,8 @@ _Table of results of daily automated testing of cluster deployment:_
 |--------------|:----------:|
 | Debian 12 | [![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/autobase-tech/autobase/schedule_pg_debian12.yml?branch=main)](https://github.com/autobase-tech/autobase/actions/workflows/schedule_pg_debian12.yml) |
 | Debian 13 | [![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/autobase-tech/autobase/schedule_pg_debian13.yml?branch=main)](https://github.com/autobase-tech/autobase/actions/workflows/schedule_pg_debian13.yml) |
-| Ubuntu 22.04 | [![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/autobase-tech/autobase/schedule_pg_ubuntu2204.yml?branch=main)](https://github.com/autobase-tech/autobase/actions/workflows/schedule_pg_ubuntu2204.yml) |
 | Ubuntu 24.04 | [![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/autobase-tech/autobase/schedule_pg_ubuntu2204.yml?branch=main)](https://github.com/autobase-tech/autobase/actions/workflows/schedule_pg_ubuntu2404.yml) |
+| Ubuntu 26.04 | [![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/autobase-tech/autobase/schedule_pg_ubuntu2604.yml?branch=main)](https://github.com/autobase-tech/autobase/actions/workflows/schedule_pg_ubuntu2604.yml) |
 | CentOS Stream 9 | [![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/autobase-tech/autobase/schedule_pg_centosstream9.yml?branch=main)](https://github.com/autobase-tech/autobase/actions/workflows/schedule_pg_centosstream9.yml) |
 | CentOS Stream 10 | [![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/autobase-tech/autobase/schedule_pg_centosstream10.yml?branch=main)](https://github.com/autobase-tech/autobase/actions/workflows/schedule_pg_centosstream10.yml) |
 | Oracle Linux 9 | [![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/autobase-tech/autobase/schedule_pg_oracle_linux9.yml?branch=main)](https://github.com/autobase-tech/autobase/actions/workflows/schedule_pg_oracle_linux9.yml) |

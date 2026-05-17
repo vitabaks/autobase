@@ -1,5 +1,5 @@
 ---
-name: scheduled PostgreSQL (Ubuntu 22.04)
+name: scheduled PostgreSQL (Ubuntu 26.04)
 
 on:
   schedule:
@@ -30,4 +30,4 @@ jobs:
         env:
           PY_COLORS: "1"
           ANSIBLE_FORCE_COLOR: "1"
-          IMAGE_DISTRO: ubuntu2204
+          IMAGE_DISTRO: ubuntu2604

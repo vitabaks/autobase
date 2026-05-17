@@ -19,6 +19,9 @@ jobs:
           - distro: ubuntu2404
             tag: latest
             namespace: geerlingguy
+          - distro: ubuntu2604
+            tag: latest
+            namespace: geerlingguy
           - distro: rockylinux10
             tag: latest
             namespace: geerlingguy
