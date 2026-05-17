@@ -130,7 +130,7 @@
 
     # Apply vm.nr_hugepages immediately at the OS level instead of waiting for
     # later processing of the sysctl_conf variable.
-    - name: "HugePages | Apply vm.nr_hugepages={{ huge_pages_required }} to the OS"
+    - name: "HugePages | Apply vm.nr_hugepages={{ huge_pages_required | default('') }} to the OS"
       ansible.posix.sysctl:
         name: "vm.nr_hugepages"
         value: "{{ huge_pages_required | int }}"
