@@ -32,20 +32,24 @@ import { isEmpty } from 'lodash';
  */
 export const convertModalParametersToArray = (value?: string) =>
   value?.length
-    ? value.split(/[\n\r]/).map((item) => {
-        const delimiterIndex = item.search(/[:=]/);
-        if (delimiterIndex < 0) {
-          return {
-            option: item.trim(),
-            value: '',
-          };
-        }
+    ? value
+        .split(/\r?\n/)
+        .map((item) => item.trim())
+        .filter(Boolean)
+        .map((item) => {
+          const delimiterIndex = item.search(/[:=]/);
+          if (delimiterIndex < 0) {
+            return {
+              option: item.trim(),
+              value: '',
+            };
+          }
 
-        return {
-          option: item.slice(0, delimiterIndex).trim(),
-          value: item.slice(delimiterIndex + 1).trim(),
-        };
-      })
+          return {
+            option: item.slice(0, delimiterIndex).trim(),
+            value: item.slice(delimiterIndex + 1).trim(),
+          };
+        })
     : value;
 
 /**

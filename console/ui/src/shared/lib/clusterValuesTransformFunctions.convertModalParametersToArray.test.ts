@@ -29,4 +29,21 @@ describe('convertModalParametersToArray', () => {
       },
     ]);
   });
+
+  it('parses mixed separators and ignores empty lines', () => {
+    expect(
+      convertModalParametersToArray(
+        'AWS_ENDPOINT=http://YOUR_MINIO_ADDRESS:9000\r\nWALG_S3_PREFIX:s3://bucket/path\r\n',
+      ),
+    ).toEqual([
+      {
+        option: 'AWS_ENDPOINT',
+        value: 'http://YOUR_MINIO_ADDRESS:9000',
+      },
+      {
+        option: 'WALG_S3_PREFIX',
+        value: 's3://bucket/path',
+      },
+    ]);
+  });
 });
