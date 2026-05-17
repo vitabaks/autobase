@@ -100,6 +100,10 @@
       ansible.builtin.set_fact:
         gcp_network_name: "{{ server_network if server_network is defined and server_network | length > 0 else 'default' }}"
 
+    - name: "Set variable: gcp_region"
+      ansible.builtin.set_fact:
+        gcp_region: "{{ server_location[:-2] if server_location[-2:] | regex_search('-[a-z]$') else server_location }}"
+
     - name: "GCP: Gather information about network"
       google.cloud.gcp_compute_network_info:
         auth_kind: "serviceaccount"
@@ -109,7 +113,7 @@
           - name = "{{ gcp_network_name }}"
       register: gcp_network_info
 
-    - name: "GCP: Gather information about subnetworks"
+    - name: "GCP: Gather information about regional subnetworks"
       google.cloud.gcp_compute_subnetwork_info:
         auth_kind: "serviceaccount"
         service_account_contents: "{{ gcp_service_account_contents }}"
@@ -117,12 +121,12 @@
         region: "{{ (item | split('/regions/'))[1] | split('/subnetworks/') | first }}"
         filters:
           - name = "{{ item | split('/subnetworks/') | last }}"
-      loop: "{{ gcp_network_info.resources[0].subnetworks | default([]) }}"
+      loop: "{{ gcp_network_info.resources[0].subnetworks | default([]) | select('search', '/regions/' ~ gcp_region ~ '/') | list }}"
       loop_control:
         label: "{{ item | split('/subnetworks/') | last }}"
       register: gcp_subnetwork_info
 
-    - name: "GCP: Extract ip_ranges for network '{{ gcp_network_name | default('default') }}'"
+    - name: "GCP: Extract regional ip_ranges for network '{{ gcp_network_name | default('default') }}'"
       ansible.builtin.set_fact:
         gcp_network_ip_ranges: >-
           {{
