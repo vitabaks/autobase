@@ -101,18 +101,35 @@
         gcp_network_name: "{{ server_network if server_network is defined and server_network | length > 0 else 'default' }}"
 
     - name: "GCP: Gather information about network"
+      google.cloud.gcp_compute_network_info:
+        auth_kind: "serviceaccount"
+        service_account_contents: "{{ gcp_service_account_contents }}"
+        project: "{{ gcp_project | default(project_info.resources[0].projectNumber) }}"
+        filters:
+          - name = "{{ gcp_network_name }}"
+      register: gcp_network_info
+
+    - name: "GCP: Gather information about subnetworks"
       google.cloud.gcp_compute_subnetwork_info:
         auth_kind: "serviceaccount"
         service_account_contents: "{{ gcp_service_account_contents }}"
         project: "{{ gcp_project | default(project_info.resources[0].projectNumber) }}"
-        region: "{{ server_location[:-2] if server_location[-2:] | regex_search('-[a-z]$') else server_location }}"
+        region: "{{ (item | split('/regions/'))[1] | split('/subnetworks/') | first }}"
         filters:
-          - name = "{{ gcp_network_name }}"
-      register: subnetwork_info
+          - name = "{{ item | split('/subnetworks/') | last }}"
+      loop: "{{ gcp_network_info.resources[0].subnetworks | default([]) }}"
+      loop_control:
+        label: "{{ item | split('/subnetworks/') | last }}"
+      register: gcp_subnetwork_info
 
-    - name: "GCP: Extract ip_range for network '{{ gcp_network_name | default('default') }}'"
+    - name: "GCP: Extract ip_ranges for network '{{ gcp_network_name | default('default') }}'"
       ansible.builtin.set_fact:
-        gcp_network_ip_range: "{{ subnetwork_info.resources[0].ipCidrRange }}"
+        gcp_network_ip_ranges: >-
+          {{
+            gcp_subnetwork_info.results | default([])
+            | map(attribute='resources') | map('default', []) | list | flatten
+            | map(attribute='ipCidrRange') | list | unique
+          }}
 
     # Firewall
     - name: "GCP: Create or modify SSH public firewall rule"
@@ -199,8 +216,7 @@
         allowed:
           - ip_protocol: tcp
             ports: "{{ allowed_ports }}"
-        source_ranges:
-          - "{{ gcp_network_ip_range }}"
+        source_ranges: "{{ gcp_network_ip_ranges }}"
         target_tags:
           - "{{ patroni_cluster_name }}" # Only VMs with this tag will be affected
         network:

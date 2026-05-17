@@ -122,6 +122,13 @@
             server_network: "{{ default_vpc_subnet_info.subnets[0].id }}"
       when: server_network | length < 1
 
+    - name: "AWS: Gather information about VPC '{{ vpc_id | default('') }}'"
+      amazon.aws.ec2_vpc_net_info:
+        region: "{{ server_location }}"
+        filters:
+          vpc-id: "{{ vpc_id }}"
+      register: vpc_info
+
     # Security Group (Firewall)
     - name: "AWS: Create or modify Security Group"
       amazon.aws.ec2_security_group:
@@ -132,7 +139,12 @@
         region: "{{ server_location }}"
         rules: "{{ rules }}"
       vars:
-        vpc_subnet_info: "{{ custom_vpc_subnet_info if custom_vpc_subnet_info.subnets | default('') | length > 0 else default_vpc_subnet_info }}"
+        vpc_cidr_blocks: >-
+          {{
+            vpc_info.vpcs[0].cidr_block_association_set | default([])
+            | map(attribute='cidr_block') | list
+            | default([vpc_info.vpcs[0].cidr_block], true)
+          }}
         rules: >-
           {{
             ([
@@ -175,21 +187,22 @@
               'rule_desc': 'Netdata internal access',
               'proto': 'tcp',
               'ports': [netdata_port | default('19999')],
-              'cidr_ip': vpc_subnet_info.subnets[0].cidr_block }] if netdata_install | bool else []) +
+              'cidr_ip': vpc_cidr_blocks }] if netdata_install | bool else []) +
             ([{
               'rule_desc': 'PgBouncer internal access',
               'proto': 'tcp',
               'ports': [pgbouncer_listen_port | default('6432')],
-              'cidr_ip': vpc_subnet_info.subnets[0].cidr_block }] if pgbouncer_install | bool else []) +
+              'cidr_ip': vpc_cidr_blocks }] if pgbouncer_install | bool else []) +
             ([{
               'rule_desc': 'PostgreSQL internal access',
               'proto': 'tcp',
               'ports': [postgresql_port | default('5432')],
-              'cidr_ip': vpc_subnet_info.subnets[0].cidr_block }]) +
+              'cidr_ip': vpc_cidr_blocks }]) +
             ([{
               'rule_desc': 'Patroni REST API internal access',
               'proto': 'tcp',
-              'ports': [patroni_restapi_port | default('8008')], 'cidr_ip': vpc_subnet_info.subnets[0].cidr_block }]) +
+              'ports': [patroni_restapi_port | default('8008')],
+              'cidr_ip': vpc_cidr_blocks }]) +
             ([{
               'rule_desc': 'HAProxy internal access',
               'proto': 'tcp',
@@ -200,7 +213,7 @@
                 haproxy_listen_port.replicas_async | default('5003'),
                 haproxy_listen_port.stats | default('7000')
               ],
-              'cidr_ip': vpc_subnet_info.subnets[0].cidr_block
+              'cidr_ip': vpc_cidr_blocks
             }] if with_haproxy_load_balancing | bool else []) +
             ([{
               'rule_desc': 'etcd internal access',
@@ -209,7 +222,7 @@
                 etcd_client_port | default('2379'),
                 etcd_peer_port | default('2380')
               ],
-              'cidr_ip': vpc_subnet_info.subnets[0].cidr_block
+              'cidr_ip': vpc_cidr_blocks
             }] if dcs_type == 'etcd' else []) +
             ([{
               'rule_desc': 'Consul internal access',
@@ -222,13 +235,13 @@
                 consul_ports_serf_wan | default('8302'),
                 consul_ports_server | default('8300')
               ],
-              'cidr_ip': vpc_subnet_info.subnets[0].cidr_block
+              'cidr_ip': vpc_cidr_blocks
             }] if dcs_type == 'consul' else []) +
             [{
               'rule_desc': 'SSH internal access',
               'proto': 'tcp',
               'ports': [ansible_ssh_port | default(22)],
-              'cidr_ip': vpc_subnet_info.subnets[0].cidr_block
+              'cidr_ip': vpc_cidr_blocks
             }]
           }}
       register: ec2_security_group_result
