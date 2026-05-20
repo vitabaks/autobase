@@ -1232,6 +1232,7 @@ system_os_specific_packages:
     - moreutils
     - dnsutils
     - curl
+    - locales-all
   RedHat:
     - python{{ python_version }}-devel
     - python{{ python_version }}-libselinux
@@ -1263,7 +1264,8 @@ install_perf: false # or 'true' to install "perf" (Linux profiling with performa
 # RedHat
 # The glibc-langpack package includes the basic information required to support the language in your applications.
 glibc_langpack:
-  - "glibc-langpack-en"
+  - "glibc-all-langpacks"
+#  - "glibc-langpack-en"
 #  - "glibc-langpack-ru"
 #  - "glibc-langpack-de"
 
