@@ -13,7 +13,9 @@
         name: "{{ item.language_country }}.{{ item.encoding }}"
         state: present
       loop: "{{ locale_gen | flatten(1) }}"
-      when: ansible_os_family == "Debian"
+      when:
+        - ansible_os_family == "Debian"
+        - "'locales-all' not in ansible_facts.packages"
 
     # RedHat
     - name: Install glibc-langpack

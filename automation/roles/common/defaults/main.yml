@@ -939,7 +939,7 @@ timezone: ""
 # timezone: "Europe/Berlin"
 
 # Generate locale
-# (except RHEL,use glibc-langpack)
+# (if locales-all is not installed, e.g. on Debian/Ubuntu)
 locale_gen:
   - { language_country: "en_US", encoding: "UTF-8" }
 #  - { language_country: "ru_RU", encoding: "UTF-8" }
