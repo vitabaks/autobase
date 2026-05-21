@@ -15,6 +15,7 @@
       loop: "{{ locale_gen | flatten(1) }}"
       when:
         - ansible_os_family == "Debian"
+        - "'locales' in ansible_facts.packages"
         - "'locales-all' not in ansible_facts.packages"
         - "'locales-all' not in system_packages"
 
