@@ -16,6 +16,7 @@
       when:
         - ansible_os_family == "Debian"
         - "'locales-all' not in ansible_facts.packages"
+        - "'locales-all' not in system_packages"
 
     # RedHat
     - name: Install glibc-langpack
