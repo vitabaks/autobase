@@ -25,6 +25,10 @@
         name: "{{ item }}"
       loop: "{{ glibc_langpack }}"
       environment: "{{ proxy_env | default({}) }}"
+      register: langpack_install_result
+      until: langpack_install_result is succeeded
+      retries: 3
+      delay: 5
       when:
         - ansible_os_family == "RedHat"
         - item not in ansible_facts.packages
