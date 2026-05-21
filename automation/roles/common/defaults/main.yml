@@ -472,16 +472,14 @@ postgresql_pgpass:
 
 # Index maintenance
 # Automatic reindexing of PostgreSQL indexes (bloat cleanup) using pg_auto_reindexer
-postgresql_index_maintenance_enabled: true # set to 'false' to disable pg_auto_reindexer
 postgresql_index_maintenance:
-  enabled: "{{ postgresql_index_maintenance_enabled }}"
+  enabled: "{{ postgresql_index_maintenance_enabled | default(true) }}"
   start: "0000" # start time for index maintenance in HHMM format
   stop: "0600" # stop time for index maintenance in HHMM format
   bloat_threshold: 30 # percentage of bloat for reindexing
   size_threshold: 1024 # index size in MB for reindexing
   jobs: 1 # number of parallel workers (no more than max_parallel_workers parameter)
-
-postgresql_index_maintenance_cron_jobs:
+  cron_jobs:
   - name: "pg_auto_reindexer: weekdays"
     user: "root"
     file: "/etc/cron.d/pg_auto_reindexer"
