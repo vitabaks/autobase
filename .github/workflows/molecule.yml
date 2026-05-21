@@ -16,12 +16,18 @@ jobs:
       fail-fast: false
       matrix:
         config:
-          - distro: ubuntu2604
+          - distro: debian12
             tag: latest
             namespace: geerlingguy
-          - distro: rockylinux10
+          - distro: debian13
             tag: latest
             namespace: geerlingguy
+#          - distro: ubuntu2604
+#            tag: latest
+#            namespace: geerlingguy
+#          - distro: rockylinux10
+#            tag: latest
+#            namespace: geerlingguy
 
     steps:
       - name: Set TERM environment variable
