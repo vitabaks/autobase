@@ -1232,6 +1232,7 @@ system_os_specific_packages:
     - moreutils
     - dnsutils
     - curl
+    - locales
     - locales-all
   RedHat:
     - python{{ python_version }}-devel
