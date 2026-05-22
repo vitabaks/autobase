@@ -3,6 +3,35 @@
 SEARCH_DIR="/usr/share/nginx/html/"
 NGINX_CONF="/etc/nginx/nginx.conf"
 
+# file_env VAR — if ${VAR}_FILE is set, replace ${VAR} with the file's contents.
+# Mirrors the convention used by the official postgres/mysql images so the
+# console can consume Docker Secrets mounted under /run/secrets.
+file_env() {
+    var="$1"
+    fileVar="${var}_FILE"
+    eval "varVal=\${$var-}"
+    eval "fileVarVal=\${$fileVar-}"
+    if [ -n "$varVal" ] && [ -n "$fileVarVal" ]; then
+        echo "error: both $var and $fileVar are set; choose one" >&2
+        exit 1
+    fi
+    if [ -n "$fileVarVal" ]; then
+        if [ ! -r "$fileVarVal" ]; then
+            echo "error: secret file '$fileVarVal' for $var is not readable" >&2
+            exit 1
+        fi
+        # $(cat ...) trims any trailing newlines per POSIX, matching the
+        # postgres image's file_env behavior.
+        secretVal=$(cat "$fileVarVal")
+        export "$var=$secretVal"
+    fi
+    unset varVal fileVarVal secretVal
+}
+
+# Resolve Docker Secret-backed env vars before deriving downstream values.
+file_env PG_CONSOLE_AUTHORIZATION_TOKEN
+file_env VITE_AUTH_TOKEN
+
 # Set default values for environment variables if they are not set
 export VITE_API_URL=${VITE_API_URL:-${PG_CONSOLE_API_URL:-"/api/v1"}}
 export VITE_AUTH_TOKEN=${VITE_AUTH_TOKEN:-${PG_CONSOLE_AUTHORIZATION_TOKEN:-"auth_token"}}

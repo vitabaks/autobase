@@ -66,6 +66,10 @@ const cfgPrefix = "PG_CONSOLE"
 func ReadConfig() (*Config, error) {
 	cfg := Config{}
 
+	if err := resolveFileSecrets(cfgPrefix); err != nil {
+		return nil, fmt.Errorf("failed to resolve file-backed secrets: %s", err.Error())
+	}
+
 	err := envconfig.Process(cfgPrefix, &cfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse config: %s", err.Error())
@@ -80,4 +84,23 @@ func PrintUsage() {
 	if err != nil {
 		fmt.Printf("failed to print envconfig usage: %s", err.Error())
 	}
+}
+
+// Redacted returns a copy of the config safe for logging. Secret-bearing
+// fields are masked: non-empty values become "[REDACTED]", empty values become
+// "[unset]". This preserves the diagnostic value of the startup config dump
+// (operators can confirm whether a secret was loaded at all) without writing
+// the cleartext value to logs.
+func (c *Config) Redacted() Config {
+	mask := func(v string) string {
+		if v == "" {
+			return "[unset]"
+		}
+		return "[REDACTED]"
+	}
+	out := *c
+	out.Authorization.Token = mask(out.Authorization.Token)
+	out.Db.Password = mask(out.Db.Password)
+	out.EncryptionKey = mask(out.EncryptionKey)
+	return out
 }

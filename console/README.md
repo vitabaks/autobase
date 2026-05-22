@@ -86,3 +86,27 @@ The Console stack consists of the following core components:
 - The Caddy network is created automatically by Docker Compose
 - All services are configured to restart automatically unless stopped manually.
 - Additional [environment variables](https://github.com/autobase-tech/autobase/tree/main/console/service#configuration) can be configured based on your project needs.
+
+## Using Docker Secrets
+
+Sensitive values (auth token, database password) can be supplied via files
+mounted under `/run/secrets` instead of plain-text env vars in `.env`. Every
+console image honors the `_FILE` convention used by the official postgres
+image: if `FOO_FILE` is set, its file contents are loaded as `FOO`. Setting
+both `FOO` and `FOO_FILE` is an error.
+
+A ready-to-use override is provided at `docker-compose.secrets.yml`:
+
+```sh
+mkdir -p ./secrets && chmod 700 ./secrets
+printf '%s' 'your-secret-token' > ./secrets/auth_token
+printf '%s' 'your-db-password'  > ./secrets/db_password
+chmod 600 ./secrets/*
+
+docker compose -f docker-compose.yml -f docker-compose.secrets.yml up -d
+# or, with Caddy:
+docker compose -f docker-compose.caddy.yml -f docker-compose.secrets.yml up -d
+```
+
+For a Swarm deployment, replace the `file:` sources in the override with
+`external: true` and create the secrets via `docker secret create`.

@@ -7,3 +7,5 @@ __pycache__/
 molecule/**/tmp
 .ansible
 .ansible-lint-env
+# Docker Secrets directory created by docker-compose.secrets.yml
+console/secrets/
