@@ -6,6 +6,7 @@
 - - install_extensions
 - install_packages
 - - install_postgres
+- - install_extensions
 - - install_packages_from_file
 - sudo
 - firewall
