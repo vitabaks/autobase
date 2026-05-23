@@ -1,5 +1,5 @@
 ---
-- name: vitabaks.autobase.config_pgcluster | Configure PostgreSQL HA Cluster (based on "Patroni")
+- name: vitabaks.autobase.config_pgcluster | Configure PostgreSQL Cluster
   hosts: postgres_cluster:etcd_cluster
   become: true
   become_method: sudo

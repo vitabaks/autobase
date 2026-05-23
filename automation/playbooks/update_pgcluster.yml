@@ -1,5 +1,5 @@
 ---
-- name: vitabaks.autobase.update_pgcluster | Update PostgreSQL HA Cluster (based on "Patroni")
+- name: vitabaks.autobase.update_pgcluster | Update PostgreSQL Cluster
   hosts: postgres_cluster
   gather_facts: true
   become: true
@@ -265,7 +265,7 @@
       run_once: true # noqa run-once
       ansible.builtin.debug:
         msg:
-          - "PostgreSQL HA cluster update completed."
+          - "PostgreSQL Cluster update completed."
           - "Current version: {{ postgres_version.stdout }}"
       when: not any_update_failed
 
@@ -274,7 +274,7 @@
       run_once: true # noqa run-once
       ansible.builtin.debug:
         msg:
-          - "Update of PostgreSQL HA cluster completed with errors. Check the Ansible log."
+          - "Update of PostgreSQL Cluster completed with errors. Check the Ansible log."
           - "Current version: {{ postgres_version.stdout }}"
       when: any_update_failed
   tags:

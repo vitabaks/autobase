@@ -1,5 +1,5 @@
 ---
-- name: vitabaks.autobase.remove_cluster | Remove PostgreSQL HA Cluster
+- name: vitabaks.autobase.remove_cluster | Remove PostgreSQL Cluster
   hosts: postgres_cluster:pgbackrest
   become: true
   gather_facts: true

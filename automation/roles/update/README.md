@@ -1,6 +1,6 @@
-## Update the PostgreSQL HA Cluster
+## Update the PostgreSQL Cluster
 
-This role is designed to update the PostgreSQL HA cluster to a new minor version (for example, 17.1->17.2, and etc).
+This role is designed to update the PostgreSQL Cluster to a new minor version (for example, 17.1->17.2, and etc).
 
 By default, only PostgreSQL packages defined in the `postgresql_packages` variable are updated. In addition, you can update Patroni or the entire system.
 

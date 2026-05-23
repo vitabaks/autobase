@@ -1,5 +1,5 @@
 ---
-- name: vitabaks.autobase.restart_pgcluster | Restart PostgreSQL HA Cluster
+- name: vitabaks.autobase.restart_pgcluster | Restart PostgreSQL Cluster
   hosts: postgres_cluster
   gather_facts: true
   become: true
