@@ -78,7 +78,7 @@ When using load balancing for read-only traffic (the "Type A" and "Type C" schem
   - Wait for active transactions to complete
 - Stop Services
   - Execute CHECKPOINT before stopping PostgreSQL
-  - Stop Patroni service on the Cluster Replica
+  - Stop Patroni service on the replica
 - Update PostgreSQL
   - if `target` variable is not defined or `target=postgres`
   - Install the latest version of PostgreSQL packages
@@ -116,7 +116,7 @@ When using load balancing for read-only traffic (the "Type A" and "Type C" schem
   - Wait for active transactions to complete
 - Stop Services
   - Execute CHECKPOINT before stopping PostgreSQL
-  - Stop Patroni service on the old Cluster Leader
+  - Stop Patroni service on the leader
 - Update PostgreSQL
   - if `target` variable is not defined or `target=postgres`
   - Install the latest version of PostgreSQL packages
