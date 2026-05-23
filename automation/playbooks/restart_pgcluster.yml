@@ -15,16 +15,11 @@
     - name: Define bind_address
       ansible.builtin.import_role:
         name: vitabaks.autobase.bind_address
-      when: bind_address is not defined or bind_address | string | length < 1
+      when: bind_address is not defined
 
     - name: Set default variables
       ansible.builtin.import_role:
         name: vitabaks.autobase.common
-
-    - name: "[Prepare] Set maintenance variable"
-      ansible.builtin.set_fact:
-        postgresql_cluster_maintenance: true
-      when: postgresql_cluster_maintenance is not defined
 
     - name: "[Prepare] Get Patroni Cluster Leader Node"
       ansible.builtin.uri:
@@ -81,17 +76,6 @@
       changed_when: false
       check_mode: false
 
-    - name: Get current Patroni passwords
-      ansible.builtin.import_role:
-        name: vitabaks.autobase.pre_checks
-        tasks_from: passwords
-      vars:
-        source_group: primary
-      when:
-        - patroni_superuser_password | default('') | length < 1 or
-          patroni_replication_password | default('') | length < 1 or
-          patroni_restapi_password | default('') | length < 1
-
     - name: "Print Patroni Cluster info"
       ansible.builtin.debug:
         msg:
@@ -100,6 +84,15 @@
       when:
         - groups.get('primary', []) | length > 0
         - inventory_hostname in groups['primary']
+
+    - name: Get current Patroni passwords
+      ansible.builtin.import_role:
+        name: vitabaks.autobase.pre_checks
+        tasks_from: passwords
+      vars:
+        source_group: "source_cluster"
+        postgresql_cluster_maintenance: true
+      when: patroni_superuser_password | default('') | length < 1
 
 - name: vitabaks.autobase.restart_pgcluster | Restart patroni on secondary
   hosts: secondary
