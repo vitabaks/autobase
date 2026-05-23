@@ -29,13 +29,18 @@
             | default('8008') }}/leader
         status_code: 200
         ca_path: "{{ patroni_restapi_cafile | default(omit, true) }}"
-      register: patroni_leader_result
+      register: restart_patroni_leader_result
       changed_when: false
       failed_when: false
       check_mode: false
       environment:
         no_proxy: "{{ patroni_bind_address | default(bind_address, true) }}"
-      when: patroni_leader_result is not defined
+      when:
+        - (groups.get('postgres_cluster', [])
+            | map('extract', hostvars)
+            | selectattr('patroni_leader_result.status', 'defined')
+            | selectattr('patroni_leader_result.status', 'equalto', 200)
+            | list | length) == 0
 
     - name: The Patroni cluster is unhealthy
       ansible.builtin.fail:
@@ -44,10 +49,10 @@
           Please ensure the cluster is up and node responds on REST API port ({{ patroni_restapi_port | default('8008') }}).
       when:
         - inventory_hostname == groups['postgres_cluster'][0]
-        - (hostvars
-            | dict2items
-            | selectattr('value.patroni_leader_result.status', 'defined')
-            | selectattr('value.patroni_leader_result.status', 'equalto', 200)
+        - (groups.get('postgres_cluster', [])
+            | map('extract', hostvars)
+            | selectattr('restart_patroni_leader_result.status', 'defined')
+            | selectattr('restart_patroni_leader_result.status', 'equalto', 200)
             | list | length) == 0
 
     - name: '[Prepare] Add host to group "primary" (in-memory inventory)'
@@ -57,8 +62,7 @@
         postgresql_exists: true
       when:
         - groups.get('primary', []) | length < 1
-        - hostvars[item]['patroni_leader_result'] is defined
-        - hostvars[item]['patroni_leader_result']['status'] == 200
+        - (hostvars[item]['restart_patroni_leader_result']['status'] | default(hostvars[item]['patroni_leader_result']['status'] | default(0))) == 200
       loop: "{{ groups['postgres_cluster'] }}"
       changed_when: false
       check_mode: false
@@ -70,8 +74,7 @@
         postgresql_exists: true
       when:
         - groups.get('secondary', []) | length < 1
-        - hostvars[item]['patroni_leader_result'] is defined
-        - hostvars[item]['patroni_leader_result']['status'] == 503
+        - (hostvars[item]['restart_patroni_leader_result']['status'] | default(hostvars[item]['patroni_leader_result']['status'] | default(0))) == 503
       loop: "{{ groups['postgres_cluster'] }}"
       changed_when: false
       check_mode: false

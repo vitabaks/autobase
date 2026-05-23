@@ -51,10 +51,10 @@
           Please ensure the cluster is up and node responds on REST API port ({{ patroni_restapi_port | default('8008') }}).
       when:
         - inventory_hostname == groups['postgres_cluster'][0]
-        - (hostvars
-            | dict2items
-            | selectattr('value.patroni_leader_result.status', 'defined')
-            | selectattr('value.patroni_leader_result.status', 'equalto', 200)
+        - (groups.get('postgres_cluster', [])
+            | map('extract', hostvars)
+            | selectattr('patroni_leader_result.status', 'defined')
+            | selectattr('patroni_leader_result.status', 'equalto', 200)
             | list | length) == 0
       tags: always
 
