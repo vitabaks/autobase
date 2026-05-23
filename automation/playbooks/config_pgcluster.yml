@@ -247,13 +247,31 @@
   tags: patroni_conf
 
 - name: vitabaks.autobase.config_pgcluster | Configure PostgreSQL Cluster and info
-  hosts: primary
+  hosts: postgres_cluster
   become: true
   become_method: sudo
   gather_facts: true
   any_errors_fatal: true
+  pre_tasks:
+    - name: "Get current Patroni Cluster Leader Node"
+      ansible.builtin.uri:
+        url: >-
+          {{ patroni_restapi_protocol | default('https') }}://{{ patroni_restapi_connect_addr
+            | default(patroni_bind_address | default(bind_address, true), true) }}:{{ patroni_restapi_port
+            | default('8008') }}/leader
+        status_code: 200
+        ca_path: "{{ patroni_restapi_cafile | default(omit, true) }}"
+      register: current_patroni_leader_result
+      changed_when: false
+      failed_when: false
+      check_mode: false
+      environment:
+        no_proxy: "{{ patroni_bind_address | default(bind_address, true) }}"
+      tags: always
   roles:
     - role: vitabaks.autobase.postgresql_extensions
+      when: current_patroni_leader_result.status | default(0) == 200
 
     # finish (info)
     - role: vitabaks.autobase.deploy_finish
+      when: current_patroni_leader_result.status | default(0) == 200
