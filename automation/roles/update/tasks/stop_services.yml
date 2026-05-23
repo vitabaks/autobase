@@ -26,7 +26,7 @@
       ansible.builtin.service:
         name: patroni
         state: stopped
-  when: inventory_hostname in groups['secondary']
+  when: inventory_hostname in groups.get('secondary', [])
 
 # Stop the old primary (now secondary, after switchover)
 - block:

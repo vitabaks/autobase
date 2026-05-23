@@ -147,11 +147,13 @@
       ansible.builtin.import_role:
         name: vitabaks.autobase.update
         tasks_from: switchover
+      when: groups.get('secondary', []) | length > 0
 
     - name: Stop read-only traffic
       ansible.builtin.import_role:
         name: vitabaks.autobase.update
         tasks_from: stop_traffic
+      when: groups.get('secondary', []) | length > 0
 
     - name: Stop Services
       ansible.builtin.import_role:
@@ -167,3 +169,4 @@
       ansible.builtin.import_role:
         name: vitabaks.autobase.update
         tasks_from: start_traffic
+      when: groups.get('secondary', []) | length > 0

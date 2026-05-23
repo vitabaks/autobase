@@ -39,4 +39,4 @@
   when:
     - (reboot_result.rebooted is defined and reboot_result.rebooted)
     - (reboot_host_post_delay is defined and reboot_host_post_delay | int > 0)
-    - (inventory_hostname in groups['secondary'] and groups['secondary'] | length > 1)
+    - (inventory_hostname in groups.get('secondary', []) and groups.get('secondary', []) | length > 1)
