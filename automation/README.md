@@ -95,6 +95,7 @@ Autobase adheres to a modular design separating atomic logic (roles) and orchest
 #### Maintenance
 
 - `config_pgcluster` – Reconfigure PostgreSQL cluster settings (users, databases, extensions, etc.) after the initial deployment.
+- `restart_pgcluster` – Restart PostgreSQL cluster services: replicas are restarted one by one, then a switchover is performed before restarting services on the former primary.
 - `update_pgcluster` – Perform rolling updates of PostgreSQL or system packages with minimal downtime.
 - `pg_upgrade` – Perform a major version in-place upgrade of PostgreSQL with minimal downtime.
   - `pg_upgrade_rollback` - Performs a rollback of a PostgreSQL upgrade (if possible).
