@@ -59,8 +59,8 @@
       changed_when: true
       when:
         - item.value != "null"
-        - item.option not in (patroni_dcs_config.json.postgresql.parameters | default({})) or
-          ((patroni_dcs_config.json.postgresql.parameters | default({}))[item.option] | string) != (item.value | string)
+        - item.option not in (patroni_dcs_config.json | default({})).get('postgresql', {}).get('parameters', {}) or
+          ((patroni_dcs_config.json | default({})).get('postgresql', {}).get('parameters', {})[item.option] | string) != (item.value | string)
 
     - name: Delete postgresql parameters from DCS
       ansible.builtin.uri:
@@ -76,7 +76,7 @@
       changed_when: true
       when:
         - item.value == "null"
-        - item.option in (patroni_dcs_config.json.postgresql.parameters | default({}))
+        - item.option in (patroni_dcs_config.json | default({})).get('postgresql', {}).get('parameters', {})
 
     - name: Update permanent slots in DCS
       ansible.builtin.uri:
