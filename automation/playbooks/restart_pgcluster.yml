@@ -42,6 +42,16 @@
             | selectattr('patroni_leader_result.status', 'equalto', 200)
             | list | length) == 0
 
+    - name: "[Prepare] Set Patroni leader result variable"
+      ansible.builtin.set_fact:
+        leader_result: >-
+          {{
+            restart_patroni_leader_result
+            if restart_patroni_leader_result.status is defined
+            else patroni_leader_result | default({})
+          }}
+      changed_when: false
+
     - name: The Patroni cluster is unhealthy
       ansible.builtin.fail:
         msg: >
@@ -51,8 +61,8 @@
         - inventory_hostname == groups['postgres_cluster'][0]
         - (groups.get('postgres_cluster', [])
             | map('extract', hostvars)
-            | selectattr('restart_patroni_leader_result.status', 'defined')
-            | selectattr('restart_patroni_leader_result.status', 'equalto', 200)
+            | selectattr('leader_result.status', 'defined')
+            | selectattr('leader_result.status', 'equalto', 200)
             | list | length) == 0
 
     - name: '[Prepare] Add host to group "primary" (in-memory inventory)'
@@ -62,7 +72,7 @@
         postgresql_exists: true
       when:
         - groups.get('primary', []) | length < 1
-        - (hostvars[item]['restart_patroni_leader_result']['status'] | default(hostvars[item]['patroni_leader_result']['status'] | default(0))) == 200
+        - hostvars[item]['leader_result']['status'] | default(0) == 200
       loop: "{{ groups['postgres_cluster'] }}"
       changed_when: false
       check_mode: false
@@ -74,7 +84,7 @@
         postgresql_exists: true
       when:
         - groups.get('secondary', []) | length < 1
-        - (hostvars[item]['restart_patroni_leader_result']['status'] | default(hostvars[item]['patroni_leader_result']['status'] | default(0))) == 503
+        - hostvars[item]['leader_result']['status'] | default(0) == 503
       loop: "{{ groups['postgres_cluster'] }}"
       changed_when: false
       check_mode: false
