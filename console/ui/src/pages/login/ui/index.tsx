@@ -61,10 +61,11 @@ const Login: FC = () => {
         </form>
         <Box position="absolute" bottom="24px" left="24px">
           <Typography variant="caption" size="small">
-            Powered by&nbsp;
+            Built by&nbsp;
             <Link href="https://gs-labs.ru/" underline="hover" target="_blank">
               GS Labs
             </Link>
+            &nbsp;and the Autobase Community
           </Typography>
         </Box>
       </Paper>
