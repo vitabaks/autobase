@@ -64,7 +64,7 @@ const Header: FC = () => {
                     color: theme.palette.mode === 'light' ? 'rgba(75, 85, 99, 0.82)' : 'text.secondary',
                     lineHeight: 1.15,
                   })}>
-                  Enterprise Edition
+                  Community Edition
                 </Typography>
               </Box>
             </Stack>
