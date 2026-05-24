@@ -34,7 +34,7 @@ const Login: FC = () => {
             height="max-content"
             padding="16px">
             <Logo style={{ width: '50px', height: '50px' }} data-logo="true" />
-            <Typography fontWeight="400" variant="h6">Autobase for PostgreSQL®</Typography>
+            <Typography fontWeight="400" variant="h6">Autobase Community Edition</Typography>
             <Controller
               control={control}
               name={LOGIN_FORM_FIELD_NAMES.TOKEN}
