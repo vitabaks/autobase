@@ -3,21 +3,22 @@ import { useTranslation } from 'react-i18next';
 import { toast } from 'react-toastify';
 
 /**
- * Hook polls RTK query request every N seconds.
+ * Hook polls RTK query request every N milliseconds.
  * @param request - RTK request to poll.
- * @param pollingInterval - Number in milliseconds that represents polling interval.
+ * @param pollingInterval - Polling interval in ms. Use 0 to disable polling.
  * @param options - Different config options.
  */
 export const useQueryPolling = (request: any, pollingInterval: number, options?: { stop?: boolean }) => {
   const result = request();
+  const stop = options?.stop === true;
 
   useEffect(() => {
+    if (stop || !pollingInterval || pollingInterval <= 0) return;
     const polling = setInterval(() => result.refetch(), pollingInterval);
-    if (options?.stop?.toString() === 'true') clearInterval(polling);
     return () => {
       clearInterval(polling);
     };
-  }, [options]);
+  }, [pollingInterval, stop]);
 
   return result;
 };
