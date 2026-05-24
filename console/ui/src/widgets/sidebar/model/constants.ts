@@ -7,7 +7,6 @@ import SqlEditorIcon from '@assets/SqlEditorIcon.svg?react';
 import GithubIcon from '@assets/githubIcon.svg?react';
 import DocumentationIcon from '@assets/docsIcon.svg?react';
 import SupportIcon from '@assets/supportIcon.svg?react';
-import SponsorIcon from '@assets/sponsorIcon.svg?react';
 import { DBDESK_URL } from '@shared/config/constants.ts';
 
 export const sidebarData = (t: TFunction) => {
@@ -57,11 +56,6 @@ export const sidebarLowData = (t: TFunction) => [
     icon: SupportIcon,
     label: t('support', { ns: 'shared' }),
     path: 'https://autobase.tech/docs/support',
-  },
-  {
-    icon: SponsorIcon,
-    label: t('sponsor', { ns: 'shared' }),
-    path: 'https://autobase.tech/docs/sponsor',
   },
 ];
 
