@@ -4,6 +4,7 @@ import { Button, InputAdornment, MenuItem, Stack, TextField, useTheme } from '@m
 import RefreshIcon from '@mui/icons-material/Refresh';
 import { OperationsTableButtonsProps } from '@features/operations-table-buttons/model/types.ts';
 import CalendarClockIcon from '@shared/assets/calendarClockICon.svg?react';
+import RefreshIntervalSelect from '@features/refresh-interval-select';
 import {
   getOperationsDateRangeVariants,
   getOperationsTimeNameValue,
@@ -44,9 +45,12 @@ const OperationsTableButtons: FC<OperationsTableButtonsProps> = ({ refetch, star
           </MenuItem>
         ))}
       </TextField>
-      <Button onClick={handleRefresh} startIcon={<RefreshIcon />} variant="text">
-        {t('refresh', { ns: 'shared' })}
-      </Button>
+      <Stack direction="row" alignItems="center" gap="8px">
+        <RefreshIntervalSelect context="operations" />
+        <Button onClick={handleRefresh} startIcon={<RefreshIcon />} variant="text">
+          {t('refresh', { ns: 'shared' })}
+        </Button>
+      </Stack>
     </Stack>
   );
 };

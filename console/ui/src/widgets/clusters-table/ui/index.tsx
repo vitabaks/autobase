@@ -5,7 +5,8 @@ import { ClustersTableValues } from '@widgets/clusters-table/model/types.ts';
 import { MRT_ColumnDef, MRT_RowData, MRT_TableOptions } from 'material-react-table';
 import { useAppSelector } from '@app/redux/store/hooks.ts';
 import { selectCurrentProject } from '@app/redux/slices/projectSlice/projectSelectors.ts';
-import { CLUSTERS_POLLING_INTERVAL, PAGINATION_LIMIT_OPTIONS } from '@shared/config/constants.ts';
+import { PAGINATION_LIMIT_OPTIONS } from '@shared/config/constants.ts';
+import { selectPollingInterval } from '@app/redux/slices/pollingIntervalSlice/pollingIntervalSlice.ts';
 import ClustersTableButtons from '@features/clusters-table-buttons';
 import { useGetClustersQuery } from '@shared/api/api/clusters.ts';
 import { useGetClustersTableData } from '@widgets/clusters-table/lib/hooks.tsx';
@@ -23,6 +24,7 @@ const ClustersTable: FC = () => {
   const { t, i18n } = useTranslation('clusters');
 
   const currentProject = useAppSelector(selectCurrentProject);
+  const pollingInterval = useAppSelector(selectPollingInterval('clusters'));
 
   const [sorting, setSorting] = useState([
     {
@@ -47,7 +49,7 @@ const ClustersTable: FC = () => {
         limit: pagination.pageSize,
         ...(sorting?.[0] ? { sortBy: manageSortingOrder(sorting[0]) } : {}),
       }),
-    CLUSTERS_POLLING_INTERVAL,
+    pollingInterval,
   );
 
   const columns = useMemo<MRT_ColumnDef<ClustersTableValues>[]>(

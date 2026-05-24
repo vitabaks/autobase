@@ -6,6 +6,7 @@ import RouterPaths from '@app/router/routerPathsConfig';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import AddIcon from '@mui/icons-material/Add';
 import { ClustersTableButtonsProps } from '@features/clusters-table-buttons/model/types.ts';
+import RefreshIntervalSelect from '@features/refresh-interval-select';
 import { FC } from 'react';
 
 const ClustersTableButtons: FC<ClustersTableButtonsProps> = ({ refetch }) => {
@@ -21,7 +22,8 @@ const ClustersTableButtons: FC<ClustersTableButtonsProps> = ({ refetch }) => {
   };
 
   return (
-    <Stack direction="row" justifyContent="flex-end" gap="8px">
+    <Stack direction="row" justifyContent="flex-end" alignItems="center" gap="8px">
+      <RefreshIntervalSelect context="clusters" />
       <Button onClick={handleRefresh} startIcon={<RefreshIcon />} variant="text">
         {t('refresh', { ns: 'shared' })}
       </Button>

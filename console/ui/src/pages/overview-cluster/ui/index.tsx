@@ -7,14 +7,16 @@ import ClusterOverviewTable from '@widgets/cluster-overview-table';
 import ConnectionInfo from '@entities/cluster/connection-info';
 import ClusterInfo from '@entities/cluster/cluster-info';
 import { useQueryPolling } from '@shared/lib/hooks.tsx';
-import { CLUSTER_OVERVIEW_POLLING_INTERVAL } from '@shared/config/constants.ts';
+import { useAppSelector } from '@app/redux/store/hooks.ts';
+import { selectPollingInterval } from '@app/redux/slices/pollingIntervalSlice/pollingIntervalSlice.ts';
 import Spinner from '@shared/ui/spinner';
 
 const OverviewCluster: FC = () => {
   const { t } = useTranslation('clusters');
   const { clusterId } = useParams();
+  const pollingInterval = useAppSelector(selectPollingInterval('clusterOverview'));
 
-  const cluster = useQueryPolling(() => useGetClustersByIdQuery({ id: clusterId }), CLUSTER_OVERVIEW_POLLING_INTERVAL);
+  const cluster = useQueryPolling(() => useGetClustersByIdQuery({ id: clusterId }), pollingInterval);
 
   const connectionInfo = cluster.data?.connection_info;
 

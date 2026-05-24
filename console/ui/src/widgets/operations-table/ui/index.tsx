@@ -13,7 +13,8 @@ import {
   formatOperationsDate,
   getOperationsDateRangeVariants,
 } from '@features/operations-table-buttons/lib/functions.ts';
-import { OPERATIONS_POLLING_INTERVAL, PAGINATION_LIMIT_OPTIONS } from '@shared/config/constants.ts';
+import { PAGINATION_LIMIT_OPTIONS } from '@shared/config/constants.ts';
+import { selectPollingInterval } from '@app/redux/slices/pollingIntervalSlice/pollingIntervalSlice.ts';
 import { useGetOperationsTableData } from '@widgets/operations-table/lib/hooks.tsx';
 import { manageSortingOrder } from '@shared/lib/functions.ts';
 import { useQueryPolling } from '@shared/lib/hooks.tsx';
@@ -24,6 +25,7 @@ const OperationsTable: FC = () => {
   const { t, i18n } = useTranslation(['operations', 'shared']);
 
   const currentProject = useAppSelector(selectCurrentProject);
+  const pollingInterval = useAppSelector(selectPollingInterval('operations'));
 
   const [sorting, setSorting] = useState([
     {
@@ -52,7 +54,7 @@ const OperationsTable: FC = () => {
         limit: pagination.pageSize,
         ...(sorting?.[0] ? { sortBy: manageSortingOrder(sorting[0]) } : {}),
       }),
-    OPERATIONS_POLLING_INTERVAL,
+    pollingInterval,
   );
 
   const columns = useMemo<MRT_ColumnDef<OperationsTableValues>[]>(() => operationTableColumns(t), [i18n.language]);
