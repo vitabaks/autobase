@@ -11,7 +11,8 @@
     "serve": "vite build && serve ./dist",
     "apiGen": "npx @rtk-query/codegen-openapi src/shared/api/apiConfig.ts",
     "vitest": "vitest run",
-    "vitest:watch": "vitest"
+    "vitest:watch": "vitest",
+    "e2e": "playwright test"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
@@ -53,6 +54,7 @@
     "@faker-js/faker": "^9.9.0",
     "@mui/system": "^7",
     "@oazapfts/runtime": "^1.2.0",
+    "@playwright/test": "^1.60.0",
     "@rtk-query/codegen-openapi": "^2.2.0",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^6.9.1",
