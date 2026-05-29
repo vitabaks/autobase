@@ -51,6 +51,18 @@ haproxy_maxconn:
 haproxy_timeout:
   client: "60m"
   server: "60m"
+# Per-server health-check / failover tuning (applied via 'default-server').
+# 'on_marked_down' controls what happens to active sessions when a backend is
+# marked down: the default "shutdown-sessions" terminates in-flight connections
+# (e.g. long-running queries) on failover. Set it to "" (empty) to keep active
+# sessions alive when a replica is marked down.
+haproxy_default_server:
+  inter: "3s"
+  fastinter: "1s"
+  fall: 3
+  rise_master: 4
+  rise_replica: 2
+  on_marked_down: "shutdown-sessions"
 # Optionally declare log format for haproxy.
 # Uncomment following lines (and remove extra space in front of variable definition) for JSON structured log format.
 # haproxy_log_format: "{
