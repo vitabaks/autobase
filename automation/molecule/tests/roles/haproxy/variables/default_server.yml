@@ -1,0 +1,125 @@
+---
+# 🚀 Render the real haproxy.cfg.j2 template and assert the default-server
+# directive reacts to haproxy_default_server.
+# 🎯 Guards issue #1516: on_marked_down="" must drop "on-marked-down
+# shutdown-sessions" so active sessions survive a replica markdown, while the
+# default must keep it.
+
+# 📂 Ensure tmp directory exists
+- name: Molecule.tests.roles.haproxy.variables.default_server | Ensure tmp directory exists
+  run_once: true
+  delegate_to: localhost
+  ansible.builtin.file:
+    path: "./tmp"
+    state: directory
+
+# 🔧 Register fake backends so the template's server loop has hosts to iterate
+- name: Molecule.tests.roles.haproxy.variables.default_server | Register fake backends
+  run_once: true
+  ansible.builtin.add_host:
+    name: "{{ default_server_host_item }}"
+    groups: postgres_cluster
+    ansible_hostname: "{{ default_server_host_item }}"
+    bind_address: "10.0.0.{{ default_server_host_item[-1] }}"
+  loop:
+    - pg_ds_test_1
+    - pg_ds_test_2
+  loop_control:
+    loop_var: default_server_host_item
+
+# 🔧 Baseline scalar vars required to render the template
+- name: Molecule.tests.roles.haproxy.variables.default_server | Set baseline render vars
+  run_once: true
+  delegate_to: localhost
+  ansible.builtin.set_fact:
+    haproxy_maxconn: { global: 100000, master: 10000, replica: 10000 }
+    haproxy_timeout: { client: "60m", server: "60m" }
+    haproxy_listen_port: { master: 5000, replicas: 5001, replicas_sync: 5002, replicas_async: 5003, stats: 7000 }
+    haproxy_bind_address: 10.0.0.10
+    cluster_vip: ""
+    patroni_restapi_protocol: http
+    patroni_restapi_port: 8008
+    pgbouncer_install: false
+    postgresql_port: 5432
+    patroni_maximum_lag_on_replica: "100MB"
+    default_server_template: "{{ playbook_dir }}/../../roles/haproxy/templates/haproxy.cfg.j2"
+
+# ===============================================
+# 💻 Case: default on_marked_down (shutdown-sessions)
+# ===============================================
+
+- name: Molecule.tests.roles.haproxy.variables.default_server | Set haproxy_default_server (default)
+  run_once: true
+  delegate_to: localhost
+  ansible.builtin.set_fact:
+    haproxy_default_server:
+      inter: "3s"
+      fastinter: "1s"
+      fall: 3
+      rise_master: 4
+      rise_replica: 2
+      on_marked_down: "shutdown-sessions"
+
+- name: Molecule.tests.roles.haproxy.variables.default_server | Render default config
+  run_once: true
+  delegate_to: localhost
+  ansible.builtin.template:
+    src: "{{ default_server_template }}"
+    dest: "./tmp/haproxy.default_server.default.cfg"
+
+- name: Molecule.tests.roles.haproxy.variables.default_server | Read default-server lines (default)
+  run_once: true
+  delegate_to: localhost
+  ansible.builtin.shell: "grep 'default-server' ./tmp/haproxy.default_server.default.cfg"
+  register: ds_default
+  changed_when: false
+
+- name: Molecule.tests.roles.haproxy.variables.default_server | Validate default keeps shutdown-sessions
+  run_once: true
+  ansible.builtin.assert:
+    that:
+      - ds_default.stdout_lines | length == 4
+      - ds_default.stdout_lines | select('search', 'on-marked-down shutdown-sessions') | list | length == 4
+      - ds_default.stdout_lines | select('search', 'rise 4') | list | length == 1
+      - ds_default.stdout_lines | select('search', 'rise 2') | list | length == 3
+    fail_msg: "Default render must emit 'on-marked-down shutdown-sessions' on every default-server line."
+    success_msg: "Default render keeps shutdown-sessions (master rise 4, replicas rise 2)."
+
+# ===============================================
+# 💻 Case: on_marked_down="" (sessions preserved)
+# ===============================================
+
+- name: Molecule.tests.roles.haproxy.variables.default_server | Set haproxy_default_server (on_marked_down="")
+  run_once: true
+  delegate_to: localhost
+  ansible.builtin.set_fact:
+    haproxy_default_server:
+      inter: "3s"
+      fastinter: "1s"
+      fall: 3
+      rise_master: 4
+      rise_replica: 2
+      on_marked_down: ""
+
+- name: Molecule.tests.roles.haproxy.variables.default_server | Render config with on_marked_down=""
+  run_once: true
+  delegate_to: localhost
+  ansible.builtin.template:
+    src: "{{ default_server_template }}"
+    dest: "./tmp/haproxy.default_server.keep.cfg"
+
+- name: Molecule.tests.roles.haproxy.variables.default_server | Read default-server lines (keep)
+  run_once: true
+  delegate_to: localhost
+  ansible.builtin.shell: "grep 'default-server' ./tmp/haproxy.default_server.keep.cfg"
+  register: ds_keep
+  changed_when: false
+
+- name: Molecule.tests.roles.haproxy.variables.default_server | Validate on_marked_down="" drops the directive
+  run_once: true
+  ansible.builtin.assert:
+    that:
+      - ds_keep.stdout_lines | length == 4
+      - ds_keep.stdout_lines | select('search', 'on-marked-down') | list | length == 0
+    fail_msg: "on_marked_down='' must remove 'on-marked-down' from every default-server line."
+    success_msg: "on_marked_down='' drops on-marked-down: active sessions survive a markdown (#1516)."
