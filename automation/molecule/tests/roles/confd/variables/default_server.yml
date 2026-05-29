@@ -1,0 +1,101 @@
+---
+# 🚀 Render the real confd haproxy.tmpl.j2 template and assert the default-server
+# directive reacts to haproxy_default_server.
+# 🎯 Guards issue #1516 for the confd-managed copy: on_marked_down="" must drop
+# "on-marked-down shutdown-sessions"; the default must keep it.
+
+# 📂 Ensure tmp directory exists
+- name: Molecule.tests.roles.confd.variables.default_server | Ensure tmp directory exists
+  run_once: true
+  delegate_to: localhost
+  ansible.builtin.file:
+    path: "./tmp"
+    state: directory
+
+# 🔧 Baseline scalar vars required to render the template
+# (confd renders server entries via Go templating inside {% raw %}, so no
+# postgres_cluster inventory is needed here.)
+- name: Molecule.tests.roles.confd.variables.default_server | Set baseline render vars
+  run_once: true
+  delegate_to: localhost
+  ansible.builtin.set_fact:
+    haproxy_maxconn: { global: 100000, master: 10000, replica: 10000 }
+    haproxy_timeout: { client: "60m", server: "60m" }
+    haproxy_listen_port: { master: 5000, replicas: 5001, replicas_sync: 5002, replicas_async: 5003, stats: 7000 }
+    haproxy_bind_address: 10.0.0.10
+    cluster_vip: ""
+    patroni_restapi_protocol: http
+    pgbouncer_install: false
+    pgbouncer_listen_port: 6432
+    patroni_maximum_lag_on_replica: "100MB"
+    confd_default_server_template: "{{ playbook_dir }}/../../roles/confd/templates/haproxy.tmpl.j2"
+
+- name: Molecule.tests.roles.confd.variables.default_server | Set haproxy_default_server (default)
+  run_once: true
+  delegate_to: localhost
+  ansible.builtin.set_fact:
+    haproxy_default_server:
+      inter: "3s"
+      fastinter: "1s"
+      fall: 3
+      rise_master: 4
+      rise_replica: 2
+      on_marked_down: "shutdown-sessions"
+
+- name: Molecule.tests.roles.confd.variables.default_server | Render default config
+  run_once: true
+  delegate_to: localhost
+  ansible.builtin.template:
+    src: "{{ confd_default_server_template }}"
+    dest: "./tmp/haproxy.tmpl.default_server.default.cfg"
+
+- name: Molecule.tests.roles.confd.variables.default_server | Read default-server lines (default)
+  run_once: true
+  delegate_to: localhost
+  ansible.builtin.shell: "grep 'default-server' ./tmp/haproxy.tmpl.default_server.default.cfg"
+  register: confd_ds_default
+  changed_when: false
+
+- name: Molecule.tests.roles.confd.variables.default_server | Validate default keeps shutdown-sessions
+  run_once: true
+  ansible.builtin.assert:
+    that:
+      - confd_ds_default.stdout_lines | length == 4
+      - confd_ds_default.stdout_lines | select('search', 'on-marked-down shutdown-sessions') | list | length == 4
+    fail_msg: "Default confd render must emit 'on-marked-down shutdown-sessions' on every default-server line."
+    success_msg: "Default confd render keeps shutdown-sessions."
+
+- name: Molecule.tests.roles.confd.variables.default_server | Set haproxy_default_server (on_marked_down="")
+  run_once: true
+  delegate_to: localhost
+  ansible.builtin.set_fact:
+    haproxy_default_server:
+      inter: "3s"
+      fastinter: "1s"
+      fall: 3
+      rise_master: 4
+      rise_replica: 2
+      on_marked_down: ""
+
+- name: Molecule.tests.roles.confd.variables.default_server | Render config with on_marked_down=""
+  run_once: true
+  delegate_to: localhost
+  ansible.builtin.template:
+    src: "{{ confd_default_server_template }}"
+    dest: "./tmp/haproxy.tmpl.default_server.keep.cfg"
+
+- name: Molecule.tests.roles.confd.variables.default_server | Read default-server lines (keep)
+  run_once: true
+  delegate_to: localhost
+  ansible.builtin.shell: "grep 'default-server' ./tmp/haproxy.tmpl.default_server.keep.cfg"
+  register: confd_ds_keep
+  changed_when: false
+
+- name: Molecule.tests.roles.confd.variables.default_server | Validate on_marked_down="" drops the directive
+  run_once: true
+  ansible.builtin.assert:
+    that:
+      - confd_ds_keep.stdout_lines | length == 4
+      - confd_ds_keep.stdout_lines | select('search', 'on-marked-down') | list | length == 0
+    fail_msg: "on_marked_down='' must remove 'on-marked-down' from every confd default-server line."
+    success_msg: "on_marked_down='' drops on-marked-down in confd template (#1516)."
