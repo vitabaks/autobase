@@ -49,6 +49,19 @@ Note:
 | `haproxy_timeout.client` | `"60m"` | Client connection timeout |
 | `haproxy_timeout.server` | `"60m"` | Server connection timeout |
 
+### Health Check / Failover Tuning
+
+These map to the `default-server` directive applied to every backend.
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `haproxy_default_server.inter` | `"3s"` | Interval between health checks |
+| `haproxy_default_server.fastinter` | `"1s"` | Check interval while a server is in transition (up↔down) |
+| `haproxy_default_server.fall` | `3` | Failed checks before a server is marked down |
+| `haproxy_default_server.rise_master` | `4` | Successful checks before the master backend is marked up |
+| `haproxy_default_server.rise_replica` | `2` | Successful checks before a replica backend is marked up |
+| `haproxy_default_server.on_marked_down` | `"shutdown-sessions"` | Action when a server is marked down. The default terminates in-flight sessions on failover. Set to `""` to **keep active sessions alive** (e.g. preserve long-running queries) when a replica is marked down. |
+
 ### Advanced Configuration
 
 | Variable | Default | Description |
