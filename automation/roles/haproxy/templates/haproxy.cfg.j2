@@ -1,3 +1,6 @@
+{% macro default_server(rise) %}
+default-server inter {{ haproxy_default_server.inter }} fastinter {{ haproxy_default_server.fastinter }} fall {{ haproxy_default_server.fall }} rise {{ rise }}{% if haproxy_default_server.on_marked_down | default('') | length > 0 %} on-marked-down {{ haproxy_default_server.on_marked_down }}{% endif %}{% if patroni_restapi_protocol == 'https' %} check-ssl verify none{% endif %}
+{%- endmacro %}
 global
     maxconn {{ haproxy_maxconn.global }}
     log /dev/log    local0
@@ -38,8 +41,7 @@ listen master
     maxconn {{ haproxy_maxconn.master }}
     option httpchk OPTIONS /primary
     http-check expect status 200
-    default-server inter 3s fastinter 1s fall 3 rise 4 on-marked-down shutdown-sessions{% if patroni_restapi_protocol == 'https' %} check-ssl verify none{% endif %}
-
+    {{ default_server(haproxy_default_server.rise_master) }}
 {% if pgbouncer_install|bool %}
   {% for host in groups['postgres_cluster'] %}
 server {{ hostvars[host]['ansible_hostname'] }} {{ hostvars[host]['patroni_bind_address'] | default(hostvars[host]['bind_address'], true) }}:{{ pgbouncer_listen_port }} check port {{ patroni_restapi_port }}
@@ -61,8 +63,7 @@ listen master_direct
     maxconn {{ haproxy_maxconn.master }}
     option httpchk OPTIONS /primary
     http-check expect status 200
-    default-server inter 3s fastinter 1s fall 3 rise 4 on-marked-down shutdown-sessions{% if patroni_restapi_protocol == 'https' %} check-ssl verify none{% endif %}
-
+    {{ default_server(haproxy_default_server.rise_master) }}
   {% for host in groups['postgres_cluster'] %}
 server {{ hostvars[host]['ansible_hostname'] }} {{ hostvars[host]['patroni_bind_address'] | default(hostvars[host]['bind_address'], true) }}:{{ postgresql_port }} check port {{ patroni_restapi_port }}
   {% endfor %}
@@ -82,8 +83,7 @@ listen replicas
     {% endif %}
     balance roundrobin
     http-check expect status 200
-    default-server inter 3s fastinter 1s fall 3 rise 2 on-marked-down shutdown-sessions{% if patroni_restapi_protocol == 'https' %} check-ssl verify none{% endif %}
-
+    {{ default_server(haproxy_default_server.rise_replica) }}
 {% if pgbouncer_install|bool %}
   {% for host in groups['postgres_cluster'] %}
 server {{ hostvars[host]['ansible_hostname'] }} {{ hostvars[host]['patroni_bind_address'] | default(hostvars[host]['bind_address'], true) }}:{{ pgbouncer_listen_port }} check port {{ patroni_restapi_port }}
@@ -110,8 +110,7 @@ listen replicas_direct
     {% endif %}
     balance roundrobin
     http-check expect status 200
-    default-server inter 3s fastinter 1s fall 3 rise 2 on-marked-down shutdown-sessions{% if patroni_restapi_protocol == 'https' %} check-ssl verify none{% endif %}
-
+    {{ default_server(haproxy_default_server.rise_replica) }}
   {% for host in groups['postgres_cluster'] %}
 server {{ hostvars[host]['ansible_hostname'] }} {{ hostvars[host]['patroni_bind_address'] | default(hostvars[host]['bind_address'], true) }}:{{ postgresql_port }} check port {{ patroni_restapi_port }}
   {% endfor %}
@@ -131,8 +130,7 @@ listen replicas_sync
     {% endif %}
     balance roundrobin
     http-check expect status 200
-    default-server inter 3s fastinter 1s fall 3 rise 2 on-marked-down shutdown-sessions{% if patroni_restapi_protocol == 'https' %} check-ssl verify none{% endif %}
-
+    {{ default_server(haproxy_default_server.rise_replica) }}
 {% if pgbouncer_install|bool %}
   {% for host in groups['postgres_cluster'] %}
 server {{ hostvars[host]['ansible_hostname'] }} {{ hostvars[host]['patroni_bind_address'] | default(hostvars[host]['bind_address'], true) }}:{{ pgbouncer_listen_port }} check port {{ patroni_restapi_port }}
@@ -159,8 +157,7 @@ listen replicas_sync_direct
     {% endif %}
     balance roundrobin
     http-check expect status 200
-    default-server inter 3s fastinter 1s fall 3 rise 2 on-marked-down shutdown-sessions{% if patroni_restapi_protocol == 'https' %} check-ssl verify none{% endif %}
-
+    {{ default_server(haproxy_default_server.rise_replica) }}
   {% for host in groups['postgres_cluster'] %}
 server {{ hostvars[host]['ansible_hostname'] }} {{ hostvars[host]['patroni_bind_address'] | default(hostvars[host]['bind_address'], true) }}:{{ postgresql_port }} check port {{ patroni_restapi_port }}
   {% endfor %}
@@ -180,8 +177,7 @@ listen replicas_async
     {% endif %}
     balance roundrobin
     http-check expect status 200
-    default-server inter 3s fastinter 1s fall 3 rise 2 on-marked-down shutdown-sessions{% if patroni_restapi_protocol == 'https' %} check-ssl verify none{% endif %}
-
+    {{ default_server(haproxy_default_server.rise_replica) }}
 {% if pgbouncer_install|bool %}
   {% for host in groups['postgres_cluster'] %}
 server {{ hostvars[host]['ansible_hostname'] }} {{ hostvars[host]['patroni_bind_address'] | default(hostvars[host]['bind_address'], true) }}:{{ pgbouncer_listen_port }} check port {{ patroni_restapi_port }}
@@ -208,8 +204,7 @@ listen replicas_async_direct
     {% endif %}
     balance roundrobin
     http-check expect status 200
-    default-server inter 3s fastinter 1s fall 3 rise 2 on-marked-down shutdown-sessions{% if patroni_restapi_protocol == 'https' %} check-ssl verify none{% endif %}
-
+    {{ default_server(haproxy_default_server.rise_replica) }}
   {% for host in groups['postgres_cluster'] %}
 server {{ hostvars[host]['ansible_hostname'] }} {{ hostvars[host]['patroni_bind_address'] | default(hostvars[host]['bind_address'], true) }}:{{ postgresql_port }} check port {{ patroni_restapi_port }}
   {% endfor %}
