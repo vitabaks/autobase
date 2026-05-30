@@ -1,10 +1,17 @@
 import React, { FC, useEffect } from 'react';
-import { AppBar, Box, MenuItem, Stack, TextField, Toolbar, Typography } from '@mui/material';
+import AppBar from '@mui/material/AppBar';
+import Box from '@mui/material/Box';
+import MenuItem from '@mui/material/MenuItem';
+import Stack from '@mui/material/Stack';
+import TextField from '@mui/material/TextField';
+import Toolbar from '@mui/material/Toolbar';
+import Typography from '@mui/material/Typography';
 import Logo from '@shared/assets/AutobaseLogo.svg?react';
 import LogoutButton from '@features/logout-button';
 import ThemeToggle from '@features/theme-toggle';
 import { useGetProjectsQuery } from '@shared/api/api/projects.ts';
 import { HEADER_HEIGHT } from '@shared/model/constants.ts';
+import { OPEN_SIDEBAR_WIDTH } from '@widgets/sidebar/model/constants.ts';
 import { setProject } from '@app/redux/slices/projectSlice/projectSlice.ts';
 import { selectCurrentProject } from '@app/redux/slices/projectSlice/projectSelectors.ts';
 import { useAppDispatch, useAppSelector } from '@app/redux/store/hooks.ts';
@@ -35,17 +42,29 @@ const Header: FC = () => {
       })}
       elevation={0}
     >
-      <Toolbar sx={{ minHeight: `${HEADER_HEIGHT} !important`, paddingLeft: '12px !important' }}>
+      <Toolbar sx={{ minHeight: `${HEADER_HEIGHT} !important`, paddingLeft: '0 !important' }}>
         <Stack direction="row" justifyContent="space-between" alignItems="center" width="100%">
-          <Stack direction="row" alignItems="center" gap="26px">
-            <Stack direction="row" alignItems="center" gap="16px" marginLeft="4px">
+          <Stack direction="row" alignItems="center">
+            <Stack
+              direction="row"
+              alignItems="center"
+              gap="16px"
+              width={OPEN_SIDEBAR_WIDTH}
+              boxSizing="border-box"
+              paddingLeft="16px">
               <Logo style={{ width: '35px', height: '35px' }} data-logo="true" />
-              <Box>
+              <Box sx={{ lineHeight: 1 }}>
                 <Typography fontWeight="400" sx={{ color: 'text.primary', lineHeight: 1.2 }}>
                   autobase
                 </Typography>
-                <Typography fontWeight="500" sx={{ color: 'text.secondary', lineHeight: 1.2 }}>
-                  for PostgreSQL®
+                <Typography
+                  fontSize="0.875rem"
+                  fontWeight="500"
+                  sx={(theme) => ({
+                    color: theme.palette.mode === 'light' ? 'rgba(75, 85, 99, 0.82)' : 'text.secondary',
+                    lineHeight: 1.15,
+                  })}>
+                  Community Edition
                 </Typography>
               </Box>
             </Stack>

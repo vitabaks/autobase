@@ -1,27 +1,7 @@
 ---
 services:
-  caddy:
-    image: lucaslorentz/caddy-docker-proxy:ci-alpine
-    container_name: caddy
-    ports:
-      - 80:80
-      - 443:443
-    environment:
-      - CADDY_INGRESS_NETWORKS=caddy
-    networks:
-      - caddy
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - caddy_data:/data
-    restart: unless-stopped
-    depends_on:
-      autobase-console-ui:
-        condition: service_healthy
-    labels:
-      caddy.email: ${EMAIL}
-
   autobase-console-api:
-    image: autobase/console_api:2.8.0
+    image: autobase/console_api_ee:2.8.0
     container_name: autobase-console-api
     healthcheck:
       test: ["CMD", "curl", "-fsS",
@@ -40,17 +20,18 @@ services:
       - /tmp/ansible:/tmp/ansible
     environment:
       - PG_CONSOLE_AUTHORIZATION_TOKEN=${AUTH_TOKEN}
-      - PG_CONSOLE_LOGGER_LEVEL=${PG_CONSOLE_LOGGER_LEVEL:-INFO}
+      - PG_CONSOLE_LOGGER_LEVEL=${PG_CONSOLE_LOGGER_LEVEL:-DEBUG}
       - PG_CONSOLE_DB_HOST=autobase-console-db
     networks:
       - autobase
-      - caddy
 
   autobase-console-ui:
-    image: autobase/console_ui:2.8.0
+    image: autobase/console_ui_ee:2.8.0
     container_name: autobase-console-ui
+    ports:
+      - 80:80
     healthcheck:
-      test: [ "CMD", "curl", "http://localhost:80/" ]
+      test: ["CMD", "curl", "http://localhost:80/"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -58,9 +39,6 @@ services:
     depends_on:
       autobase-console-api:
         condition: service_healthy
-    labels:
-      caddy: ${DOMAIN}
-      caddy.reverse_proxy: autobase-console-ui:80
     environment:
       - PG_CONSOLE_AUTHORIZATION_TOKEN=${AUTH_TOKEN}
       - PG_CONSOLE_API_HOST=autobase-console-api
@@ -68,7 +46,6 @@ services:
       - PG_CONSOLE_DBDESK_STUDIO_PORT=${PG_CONSOLE_DBDESK_STUDIO_PORT:-9876}
     networks:
       - autobase
-      - caddy
 
   autobase-console-db:
     image: autobase/console_db:2.8.0
@@ -109,13 +86,9 @@ services:
 volumes:
   console_postgres:
     name: console_postgres
-  caddy_data:
-    name: caddy_data
   dbdesk_studio_data:
     name: dbdesk_studio_data
 
 networks:
   autobase:
     name: autobase
-  caddy:
-    name: caddy

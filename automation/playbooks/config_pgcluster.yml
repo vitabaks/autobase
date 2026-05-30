@@ -1,5 +1,5 @@
 ---
-- name: vitabaks.autobase.config_pgcluster | Configure PostgreSQL HA Cluster (based on "Patroni")
+- name: vitabaks.autobase.config_pgcluster | Configure PostgreSQL Cluster
   hosts: postgres_cluster:etcd_cluster
   become: true
   become_method: sudo
@@ -12,7 +12,7 @@
       tags: always
 
     - name: Define bind_address
-      ansible.builtin.include_role:
+      ansible.builtin.import_role:
         name: vitabaks.autobase.bind_address
       tags: always
 
@@ -41,6 +41,7 @@
       environment:
         no_proxy: "{{ patroni_bind_address | default(bind_address, true) }}"
       when: inventory_hostname in groups['postgres_cluster']
+      tags: always
 
     # Stop, if no healthy Patroni leader node
     - name: The Patroni cluster is unhealthy
@@ -50,11 +51,12 @@
           Please ensure the cluster is up and node responds on REST API port ({{ patroni_restapi_port | default('8008') }}).
       when:
         - inventory_hostname == groups['postgres_cluster'][0]
-        - (hostvars
-            | dict2items
-            | selectattr('value.patroni_leader_result.status', 'defined')
-            | selectattr('value.patroni_leader_result.status', 'equalto', 200)
+        - (groups.get('postgres_cluster', [])
+            | map('extract', hostvars)
+            | selectattr('patroni_leader_result.status', 'defined')
+            | selectattr('patroni_leader_result.status', 'equalto', 200)
             | list | length) == 0
+      tags: always
 
   roles:
     - role: vitabaks.autobase.pre_checks
@@ -62,6 +64,7 @@
         minimal_ansible_version: 2.17.0
         timescale_minimal_pg_version: 12 # if enable_timescale is defined
       when: inventory_hostname in groups['postgres_cluster']
+      tags: always
 
   tasks:
     - name: '[Prepare] Add host to group "primary" (in-memory inventory)'
@@ -73,6 +76,7 @@
       loop: "{{ groups['postgres_cluster'] }}"
       changed_when: false
       check_mode: false
+      tags: always
 
     - name: '[Prepare] Add hosts to group "secondary" (in-memory inventory)'
       ansible.builtin.add_host:
@@ -83,6 +87,7 @@
       loop: "{{ groups['postgres_cluster'] }}"
       changed_when: false
       check_mode: false
+      tags: always
 
     - name: "Print Patroni Cluster info"
       ansible.builtin.debug:
@@ -90,6 +95,7 @@
           - "Cluster Name: {{ patroni_cluster_name | default('postgres-cluster') }}"
           - "Cluster Leader: {{ ansible_hostname }}"
       when: inventory_hostname in groups['primary'] | default([])
+      tags: always
 
     # if 'cloud_provider' is 'aws', 'gcp', or 'azure'
     # set_fact: 'pgbackrest_install' to configure Postgres backups if not disabled explicitly.
@@ -100,8 +106,7 @@
         - not (pgbackrest_install | default(false) | bool or wal_g_install | default(false) | bool)
         - cloud_provider | default('') | lower in ['aws', 'gcp', 'azure']
         - pgbackrest_auto_conf | default(true) | bool # to be able to disable auto backup settings
-  tags:
-    - always
+      tags: always
 
 - name: vitabaks.autobase.config_pgcluster | Configure PostgreSQL Cluster
   hosts: "primary:secondary"
@@ -197,12 +202,12 @@
 
   tasks:
     - name: Configure patroni
-      ansible.builtin.include_role:
+      ansible.builtin.import_role:
         name: vitabaks.autobase.patroni
         tasks_from: config
 
     - name: Configure pgbouncer
-      ansible.builtin.include_role:
+      ansible.builtin.import_role:
         name: vitabaks.autobase.pgbouncer
         tasks_from: config
       when: pgbouncer_install | default(true) | bool
@@ -229,111 +234,44 @@
       when: pgbackrest_install | default(false) | bool
   tasks:
     - name: Create pgbackrest stanza (if missing)
-      ansible.builtin.include_role:
+      ansible.builtin.import_role:
         name: vitabaks.autobase.pgbackrest
         tasks_from: stanza_create
       when: pgbackrest_install | default(false) | bool
 
-- name: vitabaks.autobase.config_pgcluster | Restart patroni on secondary after config settings if need
-  hosts: secondary
-  serial: 1 # restart replicas one by one
-  gather_facts: false
-  become: true
-  become_method: sudo
-  any_errors_fatal: true
-  tasks:
-    - name: Stop read-only traffic
-      ansible.builtin.include_role:
-        name: vitabaks.autobase.update
-        tasks_from: stop_traffic
-      when:
-        - pending_restart | default(false) | bool
-        - pg_pending_restart_settings | default('') | length > 0
-
-    - name: Stop Services
-      ansible.builtin.include_role:
-        name: vitabaks.autobase.update
-        tasks_from: stop_services
-      when:
-        - pending_restart | default(false) | bool
-        - pg_pending_restart_settings | default('') | length > 0
-
-    - name: Start Services
-      ansible.builtin.include_role:
-        name: vitabaks.autobase.update
-        tasks_from: start_services
-      when:
-        - pending_restart | default(false) | bool
-        - pg_pending_restart_settings | default('') | length > 0
-
-    - name: Start read-only traffic
-      ansible.builtin.include_role:
-        name: vitabaks.autobase.update
-        tasks_from: start_traffic
-      when:
-        - pending_restart | default(false) | bool
-        - pg_pending_restart_settings | default('') | length > 0
-  tags:
-    - patroni_conf
-
-- name: vitabaks.autobase.config_pgcluster | Restart patroni on master after config settings if need
-  hosts: primary
-  gather_facts: false
-  become: true
-  become_method: sudo
-  any_errors_fatal: true
-  environment: "{{ proxy_env | default({}) }}"
-  tasks:
-    - name: Switchover Patroni leader role
-      ansible.builtin.include_role:
-        name: vitabaks.autobase.update
-        tasks_from: switchover
-      when:
-        - pending_restart | default(false) | bool
-        - pg_pending_restart_settings | default('') | length > 0
-
-    - name: Stop read-only traffic
-      ansible.builtin.include_role:
-        name: vitabaks.autobase.update
-        tasks_from: stop_traffic
-      when:
-        - pending_restart | default(false) | bool
-        - pg_pending_restart_settings | default('') | length > 0
-
-    - name: Stop Services
-      ansible.builtin.include_role:
-        name: vitabaks.autobase.update
-        tasks_from: stop_services
-      when:
-        - pending_restart | default(false) | bool
-        - pg_pending_restart_settings | default('') | length > 0
-
-    - name: Start Services
-      ansible.builtin.include_role:
-        name: vitabaks.autobase.update
-        tasks_from: start_services
-      when:
-        - pending_restart | default(false) | bool
-        - pg_pending_restart_settings | default('') | length > 0
-
-    - name: Start read-only traffic
-      ansible.builtin.include_role:
-        name: vitabaks.autobase.update
-        tasks_from: start_traffic
-      when:
-        - pending_restart | default(false) | bool
-        - pg_pending_restart_settings | default('') | length > 0
-  tags:
-    - patroni_conf
+- name: Restart PostgreSQL Cluster if pending restart is required
+  ansible.builtin.import_playbook: restart_pgcluster.yml
+  when:
+    - pending_restart | default(false) | bool
+    - pg_pending_restart_settings | default('') | length > 0
+  tags: patroni_conf
 
 - name: vitabaks.autobase.config_pgcluster | Configure PostgreSQL Cluster and info
-  hosts: primary
+  hosts: postgres_cluster
   become: true
   become_method: sudo
   gather_facts: true
   any_errors_fatal: true
+  pre_tasks:
+    - name: "Get current Patroni Cluster Leader Node"
+      ansible.builtin.uri:
+        url: >-
+          {{ patroni_restapi_protocol | default('https') }}://{{ patroni_restapi_connect_addr
+            | default(patroni_bind_address | default(bind_address, true), true) }}:{{ patroni_restapi_port
+            | default('8008') }}/leader
+        status_code: 200
+        ca_path: "{{ patroni_restapi_cafile | default(omit, true) }}"
+      register: current_patroni_leader_result
+      changed_when: false
+      failed_when: false
+      check_mode: false
+      environment:
+        no_proxy: "{{ patroni_bind_address | default(bind_address, true) }}"
+      tags: always
   roles:
     - role: vitabaks.autobase.postgresql_extensions
+      when: current_patroni_leader_result.status | default(0) == 200
 
     # finish (info)
     - role: vitabaks.autobase.deploy_finish
+      when: current_patroni_leader_result.status | default(0) == 200

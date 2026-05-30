@@ -15,6 +15,8 @@ RuntimeDirectoryMode=0755
 ExecStart=/usr/sbin/pgbouncer -d {{ pgbouncer_conf_dir }}/pgbouncer{{ '-%d' % (idx + 1) if idx > 0 else '' }}.ini
 {% endif %}
 {% if ansible_os_family == "RedHat" %}
+PermissionsStartOnly=true
+ExecStartPre=/usr/bin/chown -R postgres: {{ pgbouncer_log_dir }}
 ExecStart=/usr/bin/pgbouncer -d {{ pgbouncer_conf_dir }}/pgbouncer{{ '-%d' % (idx + 1) if idx > 0 else '' }}.ini
 {% endif %}
 ExecReload=/bin/kill -SIGHUP $MAINPID

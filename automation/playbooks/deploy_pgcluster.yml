@@ -1,5 +1,5 @@
 ---
-- name: vitabaks.autobase.deploy_pgcluster | Deploy PostgreSQL HA Cluster (based on "Patroni")
+- name: vitabaks.autobase.deploy_pgcluster | Deploy PostgreSQL Cluster
   hosts: localhost
   gather_facts: true
   any_errors_fatal: true

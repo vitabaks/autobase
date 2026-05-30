@@ -122,3 +122,10 @@ Output example:
     - Note: This function generates names in the format `postgres-cluster-XX`, where `XX` is a sequential number starting from 01. It checks the existing cluster names to ensure the generated name is unique.
   - Usage example:
     - `SELECT get_cluster_name();`
+
+### Docker Secrets
+
+The database container supports the `_FILE` convention for `POSTGRES_PASSWORD`.
+If `POSTGRES_PASSWORD_FILE` is set, the startup script reads that file and uses
+its contents as `POSTGRES_PASSWORD`. Setting both `POSTGRES_PASSWORD` and
+`POSTGRES_PASSWORD_FILE` to non-empty values is an error.

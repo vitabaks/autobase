@@ -31,7 +31,20 @@
   ansible.builtin.import_tasks: patroni.yml
   tags: patroni, patroni_conf
 
+# Read Patroni dynamic config once and PATCH only parameters that differ from DCS.
+# This avoids sending one REST update per configured PostgreSQL parameter on every run.
 - block:
+    - name: Get current postgresql parameters from DCS
+      ansible.builtin.uri:
+        url: "{{ patroni_restapi_protocol }}://{{ patroni_restapi_connect_addr | default(patroni_bind_address | default(bind_address, true), true) }}:\
+          {{ patroni_restapi_port }}/config"
+        method: GET
+        user: "{{ patroni_restapi_username | default(omit) }}"
+        password: "{{ patroni_restapi_password | default(omit) }}"
+        ca_path: "{{ patroni_restapi_cafile | default(omit, true) }}"
+      register: patroni_dcs_config
+      changed_when: false
+
     - name: Update postgresql parameters in DCS
       ansible.builtin.uri:
         url: "{{ patroni_restapi_protocol }}://{{ patroni_restapi_connect_addr | default(patroni_bind_address | default(bind_address, true), true) }}:\
@@ -43,7 +56,11 @@
         body_format: json
         ca_path: "{{ patroni_restapi_cafile | default(omit, true) }}"
       loop: "{{ postgresql_parameters }}"
-      when: item.value != "null"
+      changed_when: true
+      when:
+        - item.value != "null"
+        - item.option not in (patroni_dcs_config.json | default({})).get('postgresql', {}).get('parameters', {}) or
+          ((patroni_dcs_config.json | default({})).get('postgresql', {}).get('parameters', {})[item.option] | string) != (item.value | string)
 
     - name: Delete postgresql parameters from DCS
       ansible.builtin.uri:
@@ -56,7 +73,10 @@
         body_format: json
         ca_path: "{{ patroni_restapi_cafile | default(omit, true) }}"
       loop: "{{ postgresql_parameters }}"
-      when: item.value == "null"
+      changed_when: true
+      when:
+        - item.value == "null"
+        - item.option in (patroni_dcs_config.json | default({})).get('postgresql', {}).get('parameters', {})
 
     - name: Update permanent slots in DCS
       ansible.builtin.uri:
@@ -81,7 +101,7 @@
         ca_path: "{{ patroni_restapi_cafile | default(omit, true) }}"
       when: patroni_slots is defined and patroni_slots | length > 0
 
-    - name: Delete permanent slots from DCS
+    - name: Delete permanent slots from DCS (if any)
       ansible.builtin.uri:
         url: "{{ patroni_restapi_protocol }}://{{ patroni_restapi_connect_addr | default(patroni_bind_address | default(bind_address, true), true) }}:\
           {{ patroni_restapi_port }}/config"

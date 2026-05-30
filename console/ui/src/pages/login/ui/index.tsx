@@ -34,7 +34,7 @@ const Login: FC = () => {
             height="max-content"
             padding="16px">
             <Logo style={{ width: '50px', height: '50px' }} data-logo="true" />
-            <Typography fontWeight="400" variant="h6">Autobase for PostgreSQL®</Typography>
+            <Typography fontWeight="400" variant="h6">Autobase Community Edition</Typography>
             <Controller
               control={control}
               name={LOGIN_FORM_FIELD_NAMES.TOKEN}
@@ -61,10 +61,11 @@ const Login: FC = () => {
         </form>
         <Box position="absolute" bottom="24px" left="24px">
           <Typography variant="caption" size="small">
-            Powered by&nbsp;
+            Built by&nbsp;
             <Link href="https://gs-labs.ru/" underline="hover" target="_blank">
               GS Labs
             </Link>
+            &nbsp;and the Autobase Community
           </Typography>
         </Box>
       </Paper>

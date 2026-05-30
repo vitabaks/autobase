@@ -21,7 +21,7 @@ services:
       caddy.email: ${EMAIL}
 
   autobase-console-api:
-    image: autobase/console_api:2.8.0
+    image: autobase/console_api_ee:2.8.0
     container_name: autobase-console-api
     healthcheck:
       test: ["CMD", "curl", "-fsS",
@@ -40,17 +40,17 @@ services:
       - /tmp/ansible:/tmp/ansible
     environment:
       - PG_CONSOLE_AUTHORIZATION_TOKEN=${AUTH_TOKEN}
-      - PG_CONSOLE_LOGGER_LEVEL=${PG_CONSOLE_LOGGER_LEVEL:-INFO}
-      - PG_CONSOLE_DB_HOST=autobase-console-db
+      - PG_CONSOLE_LOGGER_LEVEL=${PG_CONSOLE_LOGGER_LEVEL:-DEBUG}
+      - PG_CONSOLE_DB_HOST=${PG_CONSOLE_DB_HOST:-autobase-console-db}
     networks:
       - autobase
       - caddy
 
   autobase-console-ui:
-    image: autobase/console_ui:2.8.0
+    image: autobase/console_ui_ee:2.8.0
     container_name: autobase-console-ui
     healthcheck:
-      test: [ "CMD", "curl", "http://localhost:80/" ]
+      test: ["CMD", "curl", "http://localhost:80/"]
       interval: 10s
       timeout: 5s
       retries: 5

@@ -20,13 +20,13 @@
       environment:
         PGPASSWORD: "{{ patroni_superuser_password }}"
 
-    - name: "Stop Patroni service on the Cluster Replica ({{ ansible_hostname | default('') }})"
+    - name: "Stop Patroni service on the replica ({{ ansible_hostname | default('') }})"
       become: true
       become_user: root
       ansible.builtin.service:
         name: patroni
         state: stopped
-  when: inventory_hostname in groups['secondary']
+  when: inventory_hostname in groups.get('secondary', [])
 
 # Stop the old primary (now secondary, after switchover)
 - block:
@@ -38,7 +38,7 @@
       environment:
         PGPASSWORD: "{{ patroni_superuser_password }}"
 
-    - name: "Stop Patroni service on the old Cluster Leader ({{ ansible_hostname | default('') }})"
+    - name: "Stop Patroni service on the leader ({{ ansible_hostname | default('') }})"
       become: true
       become_user: root
       ansible.builtin.service:

@@ -81,6 +81,15 @@ There are several env variables that configure UI:
 
 The UI communicates with the API using the relative path /api/v1 through the Nginx reverse proxy host specified by PG_CONSOLE_API_HOST. If needed, you can override this by setting the PG_CONSOLE_API_URL variable.
 
+### Docker Secrets
+
+The UI container supports the `_FILE` convention for
+`PG_CONSOLE_AUTHORIZATION_TOKEN` and `VITE_AUTH_TOKEN`. If
+`PG_CONSOLE_AUTHORIZATION_TOKEN_FILE` or `VITE_AUTH_TOKEN_FILE` is set, the
+entrypoint reads the file and uses its contents as the corresponding variable.
+Setting both the base variable and its `_FILE` variant to non-empty values is an
+error.
+
 ## Architecture
 
 UI uses [Feature-Sliced Design](https://feature-sliced.design/) v2 approach to implement architecture.

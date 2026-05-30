@@ -1,0 +1,172 @@
+---
+- name: vitabaks.autobase.restart_pgcluster | Restart PostgreSQL Cluster
+  hosts: postgres_cluster
+  gather_facts: true
+  become: true
+  become_method: sudo
+  any_errors_fatal: true
+  tasks:
+    - name: Gather package facts
+      ansible.builtin.package_facts:
+        manager: auto
+      check_mode: false
+      when: ansible_facts.packages is not defined
+
+    - name: Define bind_address
+      ansible.builtin.import_role:
+        name: vitabaks.autobase.bind_address
+      when: bind_address is not defined
+
+    - name: Set default variables
+      ansible.builtin.import_role:
+        name: vitabaks.autobase.common
+
+    - name: "[Prepare] Get Patroni Cluster Leader Node"
+      ansible.builtin.uri:
+        url: >-
+          {{ patroni_restapi_protocol | default('https') }}://{{ patroni_restapi_connect_addr
+            | default(patroni_bind_address | default(bind_address, true), true) }}:{{ patroni_restapi_port
+            | default('8008') }}/leader
+        status_code: 200
+        ca_path: "{{ patroni_restapi_cafile | default(omit, true) }}"
+      register: restart_patroni_leader_result
+      changed_when: false
+      failed_when: false
+      check_mode: false
+      environment:
+        no_proxy: "{{ patroni_bind_address | default(bind_address, true) }}"
+      when:
+        - (groups.get('postgres_cluster', [])
+            | map('extract', hostvars)
+            | selectattr('patroni_leader_result.status', 'defined')
+            | selectattr('patroni_leader_result.status', 'equalto', 200)
+            | list | length) == 0
+
+    - name: "[Prepare] Set Patroni leader result variable"
+      ansible.builtin.set_fact:
+        leader_result: >-
+          {{
+            restart_patroni_leader_result
+            if restart_patroni_leader_result.status is defined
+            else patroni_leader_result | default({})
+          }}
+      changed_when: false
+
+    - name: The Patroni cluster is unhealthy
+      ansible.builtin.fail:
+        msg: >
+          No healthy leader node detected in cluster '{{ patroni_cluster_name | default('postgres-cluster') }}'.
+          Please ensure the cluster is up and node responds on REST API port ({{ patroni_restapi_port | default('8008') }}).
+      when:
+        - inventory_hostname == groups['postgres_cluster'][0]
+        - (groups.get('postgres_cluster', [])
+            | map('extract', hostvars)
+            | selectattr('leader_result.status', 'defined')
+            | selectattr('leader_result.status', 'equalto', 200)
+            | list | length) == 0
+
+    - name: '[Prepare] Add host to group "primary" (in-memory inventory)'
+      ansible.builtin.add_host:
+        name: "{{ item }}"
+        groups: primary
+        postgresql_exists: true
+      when:
+        - groups.get('primary', []) | length < 1
+        - hostvars[item]['leader_result']['status'] | default(0) == 200
+      loop: "{{ groups['postgres_cluster'] }}"
+      changed_when: false
+      check_mode: false
+
+    - name: '[Prepare] Add hosts to group "secondary" (in-memory inventory)'
+      ansible.builtin.add_host:
+        name: "{{ item }}"
+        groups: secondary
+        postgresql_exists: true
+      when:
+        - groups.get('secondary', []) | length < 1
+        - hostvars[item]['leader_result']['status'] | default(0) == 503
+      loop: "{{ groups['postgres_cluster'] }}"
+      changed_when: false
+      check_mode: false
+
+    - name: "Print Patroni Cluster info"
+      ansible.builtin.debug:
+        msg:
+          - "Cluster Name: {{ patroni_cluster_name | default('postgres-cluster') }}"
+          - "Cluster Leader: {{ ansible_hostname }}"
+      when:
+        - groups.get('primary', []) | length > 0
+        - inventory_hostname in groups['primary']
+
+    - name: Get current Patroni passwords
+      ansible.builtin.import_role:
+        name: vitabaks.autobase.pre_checks
+        tasks_from: passwords
+      vars:
+        source_group: "primary"
+        postgresql_cluster_maintenance: true
+      when: patroni_superuser_password | default('') | length < 1
+
+- name: vitabaks.autobase.restart_pgcluster | Restart patroni on secondary
+  hosts: secondary
+  serial: 1 # restart replicas one by one
+  gather_facts: false
+  become: true
+  become_method: sudo
+  any_errors_fatal: true
+  tasks:
+    - name: Stop read-only traffic
+      ansible.builtin.import_role:
+        name: vitabaks.autobase.update
+        tasks_from: stop_traffic
+
+    - name: Stop Services
+      ansible.builtin.import_role:
+        name: vitabaks.autobase.update
+        tasks_from: stop_services
+
+    - name: Start Services
+      ansible.builtin.import_role:
+        name: vitabaks.autobase.update
+        tasks_from: start_services
+
+    - name: Start read-only traffic
+      ansible.builtin.import_role:
+        name: vitabaks.autobase.update
+        tasks_from: start_traffic
+
+- name: vitabaks.autobase.restart_pgcluster | Restart patroni on master
+  hosts: primary
+  gather_facts: false
+  become: true
+  become_method: sudo
+  any_errors_fatal: true
+  environment: "{{ proxy_env | default({}) }}"
+  tasks:
+    - name: Switchover Patroni leader role
+      ansible.builtin.import_role:
+        name: vitabaks.autobase.update
+        tasks_from: switchover
+      when: groups.get('secondary', []) | length > 0
+
+    - name: Stop read-only traffic
+      ansible.builtin.import_role:
+        name: vitabaks.autobase.update
+        tasks_from: stop_traffic
+      when: groups.get('secondary', []) | length > 0
+
+    - name: Stop Services
+      ansible.builtin.import_role:
+        name: vitabaks.autobase.update
+        tasks_from: stop_services
+
+    - name: Start Services
+      ansible.builtin.import_role:
+        name: vitabaks.autobase.update
+        tasks_from: start_services
+
+    - name: Start read-only traffic
+      ansible.builtin.import_role:
+        name: vitabaks.autobase.update
+        tasks_from: start_traffic
+      when: groups.get('secondary', []) | length > 0

@@ -59,3 +59,14 @@
     - enable_citus | default(false) | bool
     - postgresql_version | int >= 11
   tags: add_repo, citus
+
+- name: Update apt cache
+  ansible.builtin.apt:
+    update_cache: true
+  register: apt_status
+  until: apt_status is success
+  delay: 5
+  retries: 3
+  environment: "{{ proxy_env | default({}) }}"
+  when: ansible_os_family == "Debian"
+  tags: add_repo, timescaledb, timescale, citus

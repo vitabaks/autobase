@@ -5,6 +5,28 @@ log() {
   echo "$(date +'%Y-%m-%d %H:%M:%S') - $1"
 }
 
+# file_env VAR — if ${VAR}_FILE is set, replace ${VAR} with the file's contents.
+# Mirrors the convention used by the official postgres image so this custom
+# console_db container can consume Docker Secrets mounted under /run/secrets.
+file_env() {
+  local var="$1"
+  local fileVar="${var}_FILE"
+  if [ -n "${!var:-}" ] && [ -n "${!fileVar:-}" ]; then
+    log "error: both $var and $fileVar are set; choose one"
+    exit 1
+  fi
+  if [ -n "${!fileVar:-}" ]; then
+    if [ ! -r "${!fileVar}" ]; then
+      log "error: secret file '${!fileVar}' for $var is not readable"
+      exit 1
+    fi
+    # $(cat ...) trims trailing newlines, matching the postgres image.
+    export "$var=$(cat "${!fileVar}")"
+  fi
+}
+
+file_env POSTGRES_PASSWORD
+
 # Ensure the directory exists and has the correct permissions
 mkdir -p ${PGDATA} ${PG_UNIX_SOCKET_DIR} /etc/postgresql/${POSTGRES_VERSION}/main
 chown -R postgres:postgres ${PGDATA} ${PG_UNIX_SOCKET_DIR} /etc/postgresql/${POSTGRES_VERSION}/main

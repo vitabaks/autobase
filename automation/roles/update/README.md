@@ -1,6 +1,6 @@
-## Update the PostgreSQL HA Cluster
+## Update the PostgreSQL Cluster
 
-This role is designed to update the PostgreSQL HA cluster to a new minor version (for example, 17.1->17.2, and etc).
+This role is designed to update the PostgreSQL Cluster to a new minor version (for example, 17.1->17.2, and etc).
 
 By default, only PostgreSQL packages defined in the `postgresql_packages` variable are updated. In addition, you can update Patroni or the entire system.
 
@@ -78,7 +78,7 @@ When using load balancing for read-only traffic (the "Type A" and "Type C" schem
   - Wait for active transactions to complete
 - Stop Services
   - Execute CHECKPOINT before stopping PostgreSQL
-  - Stop Patroni service on the Cluster Replica
+  - Stop Patroni service on the replica
 - Update PostgreSQL
   - if `target` variable is not defined or `target=postgres`
   - Install the latest version of PostgreSQL packages
@@ -116,7 +116,7 @@ When using load balancing for read-only traffic (the "Type A" and "Type C" schem
   - Wait for active transactions to complete
 - Stop Services
   - Execute CHECKPOINT before stopping PostgreSQL
-  - Stop Patroni service on the old Cluster Leader
+  - Stop Patroni service on the leader
 - Update PostgreSQL
   - if `target` variable is not defined or `target=postgres`
   - Install the latest version of PostgreSQL packages

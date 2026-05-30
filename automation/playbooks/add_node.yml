@@ -1,5 +1,5 @@
 ---
-- name: vitabaks.autobase.add_node | PostgreSQL HA Cluster Scaling (add a new node)
+- name: vitabaks.autobase.add_node | PostgreSQL Cluster Scaling (add a new node)
   hosts: localhost
   gather_facts: true
   any_errors_fatal: true

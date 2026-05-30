@@ -45,7 +45,7 @@ func main() {
 
 		return
 	}
-	log.Info().Interface("config", cfg).Msg("config was parsed")
+	log.Info().Interface("config", cfg.Redacted()).Msg("config was parsed")
 
 	l, err := zerolog.ParseLevel(cfg.Logger.Level)
 	if err != nil {

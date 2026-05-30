@@ -57,7 +57,7 @@ PG_CONSOLE_DB_MIGRATIONDIR            String              /etc/db/migrations    
 PG_CONSOLE_ENCRYPTIONKEY              String              super_secret                                     Encryption key for secret storage
 PG_CONSOLE_DOCKER_HOST                String              unix:///var/run/docker.sock                      Docker host
 PG_CONSOLE_DOCKER_LOGDIR              String              /tmp/ansible                                     Directory inside docker container for ansible json log
-PG_CONSOLE_DOCKER_IMAGE               String              autobase/automation:2.7.2                        Docker image for autobase automation
+PG_CONSOLE_DOCKER_IMAGE               String              autobase/automation:2.8.0                        Docker image for autobase automation
 PG_CONSOLE_LOGWATCHER_RUNEVERY        Duration            1m                                               LogWatcher run interval
 PG_CONSOLE_LOGWATCHER_ANALYZEPAST     Duration            48h                                              LogWatcher gets operations to analyze which created_at > now() - AnalyzePast
 PG_CONSOLE_CLUSTERWATCHER_RUNEVERY    Duration            1m                                               ClusterWatcher run interval
@@ -74,6 +74,12 @@ PG_CONSOLE_DBDESK_STUDIO_API_URL      String              http://dbdesk-studio:6
 PG_CONSOLE_DBDESK_STUDIO_SSLMODE      String              require                                          SSL mode for dbdesk-studio postgres connection profiles
 PG_CONSOLE_DBDESK_STUDIO_TIMEOUT      Duration            5s                                               HTTP timeout for dbdesk-studio health and registration requests
 ```
+
+### Docker Secrets
+
+The service supports the `_FILE` convention for all `PG_CONSOLE_*` environment variables.
+If `PG_CONSOLE_FOO_FILE` is set, the service reads that file and uses its contents as `PG_CONSOLE_FOO`.
+Setting both `PG_CONSOLE_FOO` and `PG_CONSOLE_FOO_FILE` to non-empty values is an error.
 
 ## Project structure
 ```
