@@ -75,6 +75,12 @@ PG_CONSOLE_DBDESK_STUDIO_SSLMODE      String              require               
 PG_CONSOLE_DBDESK_STUDIO_TIMEOUT      Duration            5s                                               HTTP timeout for dbdesk-studio health and registration requests
 ```
 
+### Docker Secrets
+
+The service supports the `_FILE` convention for all `PG_CONSOLE_*` environment variables.
+If `PG_CONSOLE_FOO_FILE` is set, the service reads that file and uses its contents as `PG_CONSOLE_FOO`.
+Setting both `PG_CONSOLE_FOO` and `PG_CONSOLE_FOO_FILE` to non-empty values is an error.
+
 ## Project structure
 ```
 |-api - Swagger specification
