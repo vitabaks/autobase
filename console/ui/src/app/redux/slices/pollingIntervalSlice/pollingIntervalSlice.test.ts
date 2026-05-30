@@ -66,3 +66,28 @@ describe('pollingIntervalSlice', () => {
     expect(localStorage.getItem('pollingInterval.operationLogs')).toBe('0');
   });
 });
+
+describe('normalizeInterval', () => {
+  it('returns the value unchanged when it matches a dropdown option', () => {
+    expect(mod.normalizeInterval(60_000, 10_000)).toBe(60_000);
+    expect(mod.normalizeInterval(0, 10_000)).toBe(0);
+  });
+
+  it('snaps an out-of-range env value to the nearest dropdown option', () => {
+    // 15000ms is closer to 10s (5s away) than 30s (15s away).
+    expect(mod.normalizeInterval(15_000, 10_000)).toBe(10_000);
+    // 90000ms is closer to 60000 than 300000.
+    expect(mod.normalizeInterval(90_000, 10_000)).toBe(60_000);
+    // Equidistant cases tie-break to the smaller (more conservative) option:
+    // 20000 is 10s from both 10000 and 30000.
+    expect(mod.normalizeInterval(20_000, 10_000)).toBe(10_000);
+    // 45000 is 15s from both 30000 and 60000.
+    expect(mod.normalizeInterval(45_000, 10_000)).toBe(30_000);
+  });
+
+  it('returns the fallback for invalid env values', () => {
+    expect(mod.normalizeInterval(Number.NaN, 60_000)).toBe(60_000);
+    expect(mod.normalizeInterval(-1, 60_000)).toBe(60_000);
+    expect(mod.normalizeInterval(Infinity, 60_000)).toBe(60_000);
+  });
+});

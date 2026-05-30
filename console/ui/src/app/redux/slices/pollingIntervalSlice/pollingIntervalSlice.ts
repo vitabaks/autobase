@@ -18,11 +18,24 @@ export const POLLING_INTERVAL_OPTIONS: readonly number[] = Object.freeze([
   0, 5_000, 10_000, 30_000, 60_000, 5 * 60_000, 15 * 60_000, 30 * 60_000, 60 * 60_000,
 ]);
 
+// Snap an env-supplied interval to the nearest dropdown option. The Select
+// can only display values that exist in POLLING_INTERVAL_OPTIONS; an
+// out-of-range env value (e.g. 15000ms) would otherwise leave the dropdown
+// rendering blank. If the env value is missing or invalid, return `fallback`.
+export const normalizeInterval = (ms: number, fallback: number): number => {
+  if (!Number.isFinite(ms) || ms < 0) return fallback;
+  if (POLLING_INTERVAL_OPTIONS.includes(ms)) return ms;
+  return POLLING_INTERVAL_OPTIONS.reduce(
+    (best, opt) => (Math.abs(opt - ms) < Math.abs(best - ms) ? opt : best),
+    POLLING_INTERVAL_OPTIONS[0],
+  );
+};
+
 const envDefaults: PollingIntervalState = {
-  clusters: Number(CLUSTERS_POLLING_INTERVAL) || 60_000,
-  clusterOverview: Number(CLUSTER_OVERVIEW_POLLING_INTERVAL) || 60_000,
-  operations: Number(OPERATIONS_POLLING_INTERVAL) || 60_000,
-  operationLogs: Number(OPERATION_LOGS_POLLING_INTERVAL) || 10_000,
+  clusters: normalizeInterval(Number(CLUSTERS_POLLING_INTERVAL), 60_000),
+  clusterOverview: normalizeInterval(Number(CLUSTER_OVERVIEW_POLLING_INTERVAL), 60_000),
+  operations: normalizeInterval(Number(OPERATIONS_POLLING_INTERVAL), 60_000),
+  operationLogs: normalizeInterval(Number(OPERATION_LOGS_POLLING_INTERVAL), 10_000),
 };
 
 const readStored = (key: PollingContext, fallback: number): number => {
