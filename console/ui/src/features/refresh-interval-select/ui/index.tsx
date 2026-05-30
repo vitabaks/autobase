@@ -1,6 +1,7 @@
-import { FC } from 'react';
+import { FC, MouseEvent, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { MenuItem, TextField } from '@mui/material';
+import { Button, Menu, MenuItem } from '@mui/material';
+import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import { useAppDispatch, useAppSelector } from '@app/redux/store/hooks.ts';
 import {
   PollingContext,
@@ -21,30 +22,48 @@ const labelKeyFor = (ms: number): string => {
   return `refreshInterval.${ms / 3_600_000}h`;
 };
 
+// Render as a Button + Menu (rather than a TextField/Select) so the trigger
+// uses the same flat text-button styling as the adjacent Refresh button. Side
+// by side they read as a single "refresh + interval" affordance — the Grafana
+// shape requested in PR #1563 review.
 const RefreshIntervalSelect: FC<RefreshIntervalSelectProps> = ({ context }) => {
   const { t } = useTranslation('shared');
   const dispatch = useAppDispatch();
   const value = useAppSelector(selectPollingInterval(context));
+  const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    dispatch(setPollingInterval({ context, intervalMs: Number(e.target.value) }));
+  const handleOpen = (e: MouseEvent<HTMLButtonElement>) => setAnchorEl(e.currentTarget);
+  const handleClose = () => setAnchorEl(null);
+  const handlePick = (ms: number) => () => {
+    dispatch(setPollingInterval({ context, intervalMs: ms }));
+    handleClose();
   };
 
   return (
-    <TextField
-      select
-      size="small"
-      variant="standard"
-      value={value}
-      onChange={handleChange}
-      aria-label={t('refreshInterval.label')}
-      sx={{ minWidth: 64 }}>
-      {POLLING_INTERVAL_OPTIONS.map((ms) => (
-        <MenuItem key={ms} value={ms}>
-          {t(labelKeyFor(ms))}
-        </MenuItem>
-      ))}
-    </TextField>
+    <>
+      <Button
+        variant="text"
+        size="small"
+        endIcon={<ArrowDropDownIcon fontSize="small" />}
+        onClick={handleOpen}
+        aria-label={t('refreshInterval.label')}
+        aria-haspopup="menu"
+        aria-expanded={Boolean(anchorEl)}
+        sx={{ minWidth: 56, paddingX: '8px' }}>
+        {t(labelKeyFor(value))}
+      </Button>
+      <Menu
+        anchorEl={anchorEl}
+        open={Boolean(anchorEl)}
+        onClose={handleClose}
+        slotProps={{ paper: { sx: { minWidth: 96 } } }}>
+        {POLLING_INTERVAL_OPTIONS.map((ms) => (
+          <MenuItem key={ms} selected={ms === value} onClick={handlePick(ms)} dense>
+            {t(labelKeyFor(ms))}
+          </MenuItem>
+        ))}
+      </Menu>
+    </>
   );
 };
 

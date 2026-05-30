@@ -15,10 +15,11 @@ import { expect, test } from '@playwright/test';
 
 const TOKEN = 'dev-token';
 
-// Locate the refresh-interval dropdown by its aria-label (set in
-// RefreshIntervalSelect via TextField's aria-label prop).
+// Locate the refresh-interval dropdown trigger (Button with aria-label set in
+// RefreshIntervalSelect). The trigger renders its current value as its text
+// content, so toContainText still works on it.
 const intervalCombobox = (page: import('@playwright/test').Page) =>
-  page.locator('[aria-label="Refresh interval"] [role="combobox"]');
+  page.getByRole('button', { name: 'Refresh interval' });
 
 const visit = async (page: import('@playwright/test').Page, path: string) => {
   // The init script runs on every page load (incl. reloads). We always re-set
@@ -42,7 +43,7 @@ test.describe('refresh interval dropdown', () => {
   }) => {
     await visit(page, '/clusters');
     await intervalCombobox(page).click();
-    const optionTexts = await page.getByRole('option').allTextContents();
+    const optionTexts = await page.getByRole('menuitem').allTextContents();
     expect(optionTexts.length).toBeGreaterThan(0);
     for (const txt of optionTexts) {
       expect(txt, `option "${txt}" should not be a raw i18n key`).not.toMatch(
@@ -54,15 +55,12 @@ test.describe('refresh interval dropdown', () => {
   test('Clusters page: dropdown is present and shows env default (1m)', async ({ page }) => {
     await visit(page, '/clusters');
     await expect(intervalCombobox(page)).toContainText('1m');
-    // Hidden native input mirrors the numeric value.
-    const hidden = page.locator('[aria-label="Refresh interval"] input.MuiSelect-nativeInput');
-    await expect(hidden).toHaveValue('60000');
   });
 
   test('Clusters page: changing the interval persists to localStorage', async ({ page }) => {
     await visit(page, '/clusters');
     await intervalCombobox(page).click();
-    await page.getByRole('option', { name: '30s', exact: true }).click();
+    await page.getByRole('menuitem', { name: '30s', exact: true }).click();
 
     const stored = await page.evaluate(() => window.localStorage.getItem('pollingInterval.clusters'));
     expect(stored).toBe('30000');
@@ -72,7 +70,7 @@ test.describe('refresh interval dropdown', () => {
   test('Clusters page: selection survives reload', async ({ page }) => {
     await visit(page, '/clusters');
     await intervalCombobox(page).click();
-    await page.getByRole('option', { name: '15m', exact: true }).click();
+    await page.getByRole('menuitem', { name: '15m', exact: true }).click();
 
     await page.reload();
     const stored = await page.evaluate(() => window.localStorage.getItem('pollingInterval.clusters'));
@@ -91,7 +89,7 @@ test.describe('refresh interval dropdown', () => {
     });
 
     await intervalCombobox(page).click();
-    await page.getByRole('option', { name: 'Off', exact: true }).click();
+    await page.getByRole('menuitem', { name: 'Off', exact: true }).click();
     expect(await page.evaluate(() => window.localStorage.getItem('pollingInterval.clusters'))).toBe('0');
 
     // Baseline after the dropdown change has settled.
@@ -119,7 +117,7 @@ test.describe('refresh interval dropdown', () => {
     });
 
     await intervalCombobox(page).click();
-    await page.getByRole('option', { name: '5s', exact: true }).click();
+    await page.getByRole('menuitem', { name: '5s', exact: true }).click();
     await page.waitForTimeout(500); // let initial settle
 
     const before = requests.length;
@@ -134,7 +132,7 @@ test.describe('refresh interval dropdown', () => {
     // Set Clusters interval to 5s first.
     await visit(page, '/clusters');
     await intervalCombobox(page).click();
-    await page.getByRole('option', { name: '5s', exact: true }).click();
+    await page.getByRole('menuitem', { name: '5s', exact: true }).click();
     expect(await page.evaluate(() => window.localStorage.getItem('pollingInterval.clusters'))).toBe('5000');
 
     // Operations should be independent (its localStorage key not yet written).
@@ -160,7 +158,7 @@ test.describe('refresh interval dropdown', () => {
     await expect(intervalCombobox(page)).toContainText('1m');
 
     await intervalCombobox(page).click();
-    await page.getByRole('option', { name: '30s', exact: true }).click();
+    await page.getByRole('menuitem', { name: '30s', exact: true }).click();
     expect(
       await page.evaluate(() => window.localStorage.getItem('pollingInterval.clusterOverview')),
     ).toBe('30000');
@@ -190,7 +188,7 @@ test.describe('refresh interval dropdown', () => {
     await expect(intervalCombobox(page)).toContainText('10s');
 
     await intervalCombobox(page).click();
-    await page.getByRole('option', { name: '5s', exact: true }).click();
+    await page.getByRole('menuitem', { name: '5s', exact: true }).click();
     expect(
       await page.evaluate(() => window.localStorage.getItem('pollingInterval.operationLogs')),
     ).toBe('5000');
