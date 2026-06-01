@@ -83,25 +83,13 @@ The UI communicates with the API using the relative path /api/v1 through the Ngi
 
 ### Refresh Interval Dropdown
 
-The Clusters, Cluster Overview, Operations, and Operation Log pages each have a refresh-interval dropdown in their toolbar (`Off / 5s / 10s / 30s / 1m / 5m / 15m / 30m / 1h`). Picking a value overrides the env default for that page only; the selection persists to `localStorage` (`pollingInterval.<context>`) and survives reload.
-
-The four `PG_CONSOLE_*_POLLING_INTERVAL` env vars above only define the **initial** value used when nothing is in `localStorage` for that page. If an env value is not one of the dropdown options (e.g. `15000`), it is snapped to the nearest valid option at boot so the Select always has a matching entry.
-
-**Important — this is browser fetch frequency, not backend freshness.** The dropdown controls how often the browser re-fetches data from the API; it does not make the backend re-read the source any faster:
-
-- **Cluster views** — backend freshness is bounded by `PG_CONSOLE_CLUSTERWATCHER_RUNEVERY` (default `1m`).
-- **Operation logs** — bounded by `PG_CONSOLE_LOGWATCHER_RUNEVERY` (default `1m`).
-
-If those service watchers run every `1m`, setting the UI refresh to `5s` will mostly re-read the same DB state. Use the UI dropdown to opt into a faster cadence only when the backend watcher is also tuned down, or to turn polling off entirely.
+The Clusters, Cluster Overview, Operations, and Operation Log pages have a refresh-interval dropdown (`Off / 5s / 10s / 30s / 1m / 5m / 15m / 30m / 1h`). The `PG_CONSOLE_*_POLLING_INTERVAL` env vars define the initial value only; user selections are stored per page in `localStorage` (`pollingInterval.<context>`).
+This controls browser fetch frequency, not backend freshness. Cluster views are bounded by `PG_CONSOLE_CLUSTERWATCHER_RUNEVERY` and operation logs by `PG_CONSOLE_LOGWATCHER_RUNEVERY` (both default to `1m`), so faster UI polling may just re-read the same DB state.
 
 ### Docker Secrets
 
-The UI container supports the `_FILE` convention for
-`PG_CONSOLE_AUTHORIZATION_TOKEN` and `VITE_AUTH_TOKEN`. If
-`PG_CONSOLE_AUTHORIZATION_TOKEN_FILE` or `VITE_AUTH_TOKEN_FILE` is set, the
-entrypoint reads the file and uses its contents as the corresponding variable.
-Setting both the base variable and its `_FILE` variant to non-empty values is an
-error.
+The UI container supports the `_FILE` convention for `PG_CONSOLE_AUTHORIZATION_TOKEN` and `VITE_AUTH_TOKEN`.
+If `PG_CONSOLE_AUTHORIZATION_TOKEN_FILE` or `VITE_AUTH_TOKEN_FILE` is set, the entrypoint reads the file and uses its contents as the corresponding variable. Setting both the base variable and its `_FILE` variant to non-empty values is an error.
 
 ## Architecture
 
