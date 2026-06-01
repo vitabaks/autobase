@@ -90,7 +90,7 @@ The four `PG_CONSOLE_*_POLLING_INTERVAL` env vars above only define the **initia
 **Important — this is browser fetch frequency, not backend freshness.** The dropdown controls how often the browser re-fetches data from the API; it does not make the backend re-read the source any faster:
 
 - **Cluster views** — backend freshness is bounded by `PG_CONSOLE_CLUSTERWATCHER_RUNEVERY` (default `1m`).
-- **Operation logs** — bounded by `PG_CONSOLE_LOGWATCHER_RUNEVERY` (default `10m`).
+- **Operation logs** — bounded by `PG_CONSOLE_LOGWATCHER_RUNEVERY` (default `1m`).
 
 If those service watchers run every `1m`, setting the UI refresh to `5s` will mostly re-read the same DB state. Use the UI dropdown to opt into a faster cadence only when the backend watcher is also tuned down, or to turn polling off entirely.
 
