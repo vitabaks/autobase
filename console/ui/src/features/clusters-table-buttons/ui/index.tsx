@@ -18,10 +18,10 @@ const ClustersTableButtons: FC<ClustersTableButtonsProps> = ({ refetch }) => {
 
   return (
     <Stack direction="row" justifyContent="flex-end" alignItems="center" gap="8px">
-      <RefreshGroup context="clusters" onRefresh={refetch} />
       <Button onClick={handleCreateCluster} startIcon={<AddIcon />} variant="text">
         {t('createCluster', { ns: 'clusters' })}
       </Button>
+      <RefreshGroup context="clusters" onRefresh={refetch} />
     </Stack>
   );
 };

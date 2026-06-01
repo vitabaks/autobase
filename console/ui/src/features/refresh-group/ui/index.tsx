@@ -12,8 +12,8 @@ interface RefreshGroupProps {
 
 // Grafana-style joined control: [ ↻ Refresh | 1m v ] — one button group
 // with a shared filled background, a thin vertical divider between the two
-// segments, and a single outer border. The left segment is a manual refresh
-// (icon + label); the right segment is the interval dropdown.
+// segments, and a single outer border. Keep the interval attached to Refresh,
+// while the whole group remains the rightmost toolbar action.
 const RefreshGroup: FC<RefreshGroupProps> = ({ context, onRefresh }) => {
   const { t } = useTranslation('shared');
   return (

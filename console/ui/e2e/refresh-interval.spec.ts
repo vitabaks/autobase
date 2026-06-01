@@ -101,7 +101,7 @@ test.describe('refresh interval dropdown', () => {
     expect(requests.length).toBe(baseline);
 
     // Manual refresh should still trigger a request.
-    await page.getByRole('button', { name: /refresh/i }).first().click();
+    await page.getByRole('button', { name: 'Refresh', exact: true }).click();
     await page.waitForTimeout(500);
     expect(requests.length).toBeGreaterThan(baseline);
   });
