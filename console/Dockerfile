@@ -3,7 +3,7 @@ ARG DBDESK_STUDIO_VERSION=0.1.5
 FROM docker.io/bhavikagarwal2001/dbdesk-studio:${DBDESK_STUDIO_VERSION} AS dbdesk-studio
 
 # Node.js runtime binary (for dbdesk-studio Express server)
-FROM node:22-bookworm-slim AS node-runtime
+FROM node:24-bookworm-slim AS node-runtime
 
 # build-env
 FROM golang:1.26-bookworm AS api-builder
@@ -13,7 +13,7 @@ COPY console/service/ .
 
 RUN make build_in_docker
 
-FROM node:22-bookworm AS ui-builder
+FROM node:24-bookworm AS ui-builder
 WORKDIR /usr/src/pg-console
 
 COPY console/ui/ .
