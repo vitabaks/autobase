@@ -7,7 +7,7 @@ import { DATE_RANGE_VALUES } from '@features/operations-table-buttons/model/cons
 
 export const formatOperationsDate = (date: Date) => startOfDay(date).toISOString();
 
-export const getOperationsTimeNameValue = (name: keyof DATE_RANGE_VALUES) => {
+export const getOperationsTimeNameValue = (name: string) => {
   let value = '';
 
   switch (name) {

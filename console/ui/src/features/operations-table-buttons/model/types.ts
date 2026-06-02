@@ -1,5 +1,10 @@
+export interface OperationsDateRange {
+  name: string;
+  value: string;
+}
+
 export interface OperationsTableButtonsProps {
   refetch: () => void;
-  startDate: Date;
-  setStartDate: (date: Date) => void;
+  startDate: OperationsDateRange;
+  setStartDate: (date: OperationsDateRange) => void;
 }
