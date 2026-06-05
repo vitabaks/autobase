@@ -12,7 +12,7 @@ Installs [pg_auto_reindexer](https://github.com/vitabaks/pg_auto_reindexer) and 
 | `postgresql_index_maintenance.bloat_threshold` | `30` | Index bloat threshold in percent (`--index-bloat`). |
 | `postgresql_index_maintenance.size_threshold` | `1024` | Index size threshold in MB (used as `--index-maxsize` for weekdays and `--index-minsize` for weekends jobs). |
 | `postgresql_index_maintenance.jobs` | `1` | Number of parallel workers (`--jobs`). |
-| `postgresql_index_maintenance.cron_jobs` | `[...]` | Cron job definitions used by the `cron` role. Default cron schedule and options follow the upstream project README examples. |
+| `postgresql_index_maintenance.cron_jobs` | `[...]` | Cron job definitions used by the `cron` role. Default jobs set `state` to `present` when `postgresql_index_maintenance.enabled` is true, otherwise `absent`. |
 
 Note: For PostgreSQL 11 and below the role installs the `pg_repack` package.
 
