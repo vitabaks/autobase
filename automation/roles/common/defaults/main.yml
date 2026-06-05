@@ -491,7 +491,8 @@ postgresql_index_maintenance:
   bloat_threshold: 30 # percentage of bloat for reindexing
   size_threshold: 1024 # index size in MB for reindexing
   jobs: 1 # number of parallel workers (no more than max_parallel_workers parameter)
-  cron_jobs:
+
+postgresql_index_maintenance_cron_jobs:
   - name: "pg_auto_reindexer: weekdays"
     user: "root"
     file: "/etc/cron.d/pg_auto_reindexer"
