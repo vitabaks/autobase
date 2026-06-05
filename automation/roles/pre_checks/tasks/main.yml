@@ -89,5 +89,5 @@
       Variables 'postgresql_index_maintenance.start' and 'postgresql_index_maintenance.stop'
       must be in HHMM format (e.g. 0000, 0130, 2359).
   when:
-    - postgresql_index_maintenance_enabled | default(false) | bool
+    - postgresql_index_maintenance_enabled | default(postgresql_index_maintenance.enabled | default(false)) | bool
     - inventory_hostname == groups['postgres_cluster'][0] # run once
