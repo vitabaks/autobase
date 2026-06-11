@@ -693,7 +693,7 @@
 # Check SSH access
 - name: Wait for host to be available via SSH
   ansible.builtin.wait_for:
-    host: "{{ item.hcloud_server.ipv4_address if server_public_ip | bool else item.hcloud_server.private_networks_info[0].ip }}"
+    host: "{{ item.hcloud_server.ipv4_address if (server_public_ip | bool and ssh_public_access | bool) else item.hcloud_server.private_networks_info[0].ip }}"
     port: 22
     delay: 5
     timeout: 300

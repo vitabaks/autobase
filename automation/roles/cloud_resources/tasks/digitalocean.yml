@@ -666,7 +666,7 @@
       {{
         (item.data.droplet.networks.v4
          | selectattr('type', 'equalto',
-           'public' if server_public_ip | bool else 'private')
+           'public' if (server_public_ip | bool and ssh_public_access | bool) else 'private')
          | first).ip_address
       }}
     port: 22

@@ -250,7 +250,7 @@
     # Determine which IP address (public or private)
     - name: "Set variable: ip_address_type"
       ansible.builtin.set_fact:
-        ip_address_type: "{{ 'public_ip_address' if server_public_ip | bool else 'private_ip_address' }}"
+        ip_address_type: "{{ 'public_ip_address' if (server_public_ip | bool and ssh_public_access | bool) else 'private_ip_address' }}"
 
     # Server and volume
     - block:
