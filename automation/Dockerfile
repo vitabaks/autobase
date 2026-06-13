@@ -15,8 +15,6 @@ RUN apt-get clean && rm -rf /var/lib/apt/lists/partial \
   && DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y \
      ca-certificates gnupg keychain debian-archive-keyring apt-transport-https \
      git python3 python3-dev python3-pip ssh-client sshpass gcc g++ cmake make libssl-dev curl lsb-release \
-  # fresh pip/setuptools (fewer builds from source)
-  && python3 -m pip install --break-system-packages --no-cache-dir --upgrade pip setuptools \
   # repo and key for Azure CLI
   && curl -sLS https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor | tee /etc/apt/trusted.gpg.d/microsoft.asc.gpg > /dev/null \
   && echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ $(lsb_release -cs) main" > /etc/apt/sources.list.d/azure-cli.list \
