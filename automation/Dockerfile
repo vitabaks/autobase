@@ -15,10 +15,6 @@ RUN apt-get clean && rm -rf /var/lib/apt/lists/partial \
   && DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y \
      ca-certificates gnupg keychain debian-archive-keyring apt-transport-https \
      git python3 python3-dev python3-pip ssh-client sshpass gcc g++ cmake make libssl-dev curl lsb-release \
-  # repo and key for Azure CLI
-  && curl -sLS https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor | tee /etc/apt/trusted.gpg.d/microsoft.asc.gpg > /dev/null \
-  && echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ $(lsb_release -cs) main" > /etc/apt/sources.list.d/azure-cli.list \
-  && apt-get update \
   # requirements
   && pip3 install --break-system-packages --no-cache-dir --retries 3 --timeout 60 \
     -r /autobase/automation/requirements.txt \
@@ -27,7 +23,7 @@ RUN apt-get clean && rm -rf /var/lib/apt/lists/partial \
   && pip3 install --break-system-packages --no-cache-dir --retries 3 --timeout 60 \
     -r /root/.ansible/collections/ansible_collections/azure/azcollection/requirements.txt \
   # azure-cli
-  && DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y azure-cli \
+  && pip3 install --break-system-packages azure-cli \
   # cleanup
   && apt-get autoremove -y --purge gnupg git python3-dev gcc g++ cmake make libssl-dev \
   && apt-get clean -y autoclean \
