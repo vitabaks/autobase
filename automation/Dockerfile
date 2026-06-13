@@ -1,4 +1,4 @@
-FROM debian:bookworm-slim
+FROM debian:13-slim
 LABEL maintainer="Autobase <info@autobase.tech>"
 
 USER root
@@ -41,7 +41,7 @@ RUN mkdir -p /root/.ansible/collections/ansible_collections/vitabaks \
   && ln -sfn /autobase/automation /root/.ansible/collections/ansible_collections/vitabaks/autobase
 
 # Set environment variables
-ENV ANSIBLE_COLLECTIONS_PATH=/root/.ansible/collections/ansible_collections:/usr/local/lib/python3.11/dist-packages/ansible_collections
+ENV ANSIBLE_COLLECTIONS_PATH=/root/.ansible/collections/ansible_collections:/usr/local/lib/python3.13/dist-packages/ansible_collections
 ENV ANSIBLE_CONFIG=/autobase/automation/ansible.cfg
 ENV USER=root
 
