@@ -12,49 +12,48 @@
 
 Autobase is an internal PostgreSQL platform — giving you full control as a powerful alternative to cloud-managed databases (DBaaS).
 
-![Cluster creation demo](images/autobase_create_cluster_demo.gif)
-
 This automated database platform enables you to create and manage production-ready, highly available PostgreSQL clusters. It simplifies the deployment process, reduces operational costs, and makes database management accessible—even for teams without specialized expertise.
+
+![Cluster creation demo](images/autobase_create_cluster_demo.gif)
 
 **Automate deployment, failover, backups, restore, upgrades, scaling, and more with ease.**
 
 Say goodbye to manual database management 👋
+
+## Documentation
+
+Autobase documentation can be found [here](https://autobase.tech/docs).
+
+## Architecture
+
+![pg_cluster_scheme](images/autobase-postgres.light.png#gh-light-mode-only)
+![pg_cluster_scheme](images/autobase-postgres.dark.png#gh-dark-mode-only)
+
+For a detailed description of the cluster components, visit the [Architecture](https://autobase.tech/docs/overview/architecture) page.
 
 ## Getting Started
 
 > [!TIP]
 > 📩 Contact us at info@autobase.tech, and our team will help you implement Autobase into your infrastructure.
 
-You have the option to deploy PostgreSQL clusters using the Console (UI), Command line (Ansible), or GitOps.
+You can deploy PostgreSQL clusters using the Console (UI), command line (Ansible), or GitOps.
 
 ### Console (UI)
 
-- [Community Edition](./console/README.md) - Free license for individual developers and hobby projects.
-- [Enterprise Edition](https://autobase.tech/docs#getting-started) - Commercial license for production environments. Includes extended cluster management features and support.
+- [Community Edition](./console/README.md) - Free license for individual developers and hobby projects; includes lightweight cluster deployment.
+- [Enterprise Edition](https://autobase.tech/docs#getting-started) - Commercial license for production environments; includes extended cluster management features and support.
 
 ### Ansible Collection
 
-- [Ansible Collection](./automation/README.md) - The automation layer for those who prefer to use Ansible playbooks instead of a database platform.
+- [Ansible Collection](./automation/README.md) - The automation layer for those who prefer Ansible playbooks instead of the full database platform.
 
 ### GitOps
 
 - [GitOps (CI/CD)](https://autobase.tech/docs/management/gitops) - Manage cluster configuration in Git and apply changes through CI/CD pipelines.
 
-
-## Architecture
-
-For a detailed description of the cluster components, visit the [Architecture](https://autobase.tech/docs/overview/architecture) page.
-
-![pg_cluster_scheme](images/autobase-postgres.light.png#gh-light-mode-only)
-![pg_cluster_scheme](images/autobase-postgres.dark.png#gh-dark-mode-only)
-
-## Documentation
-
-Autobase documentation can be found [here](https://autobase.tech/docs).
-
 ## Compatibility
 
-RedHat and Debian based distros.
+Red Hat and Debian-based distributions.
 
 ###### Supported Linux Distributions:
 
@@ -69,7 +68,7 @@ Architecture: x86_64 (amd64), aarch64 (arm64).
 
 ###### PostgreSQL versions:
 
-all supported PostgreSQL versions
+All supported PostgreSQL versions.
 
 :white_check_mark: tested, works fine: PostgreSQL 10, 11, 12, 13, 14, 15, 16, 17, 18
 

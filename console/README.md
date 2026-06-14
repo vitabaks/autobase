@@ -13,7 +13,7 @@ The Console stack consists of the following core components:
 
 - **Console UI**: A web interface for managing clusters, launching operations, and monitoring status.
 - **Console API**: A REST API that receives requests from the UI, interacts with the database, and triggers the automation module.
-- **Console DB**: PostgreSQL database - stores information about clusters, servers, settings, and operation results.
+- **Console DB**: A PostgreSQL database that stores information about clusters, servers, settings, and operation results.
 
 ### Architecture
 
@@ -75,7 +75,7 @@ Refer to the [Deployment](https://autobase.tech/docs/category/deployment) sectio
    cd autobase/console
    ```
 
-4. Setup environment:
+4. Set up the environment:
 
    ```sh
    cp .env.example .env
@@ -96,7 +96,8 @@ Refer to the [Deployment](https://autobase.tech/docs/category/deployment) sectio
    docker compose -f docker-compose.caddy.yml up -d
    ```
 
-	Or, without automatic handling of SSL certificates for your domain
+   Or, without automatic handling of SSL certificates for your domain:
+
    ```sh
    # without Caddy proxy
    docker compose up -d
