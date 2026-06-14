@@ -12,120 +12,45 @@
 
 Autobase is an internal PostgreSQL platform — giving you full control as a powerful alternative to cloud-managed databases (DBaaS).
 
+![Cluster creation demo](images/autobase_create_cluster_demo.gif)
+
 This automated database platform enables you to create and manage production-ready, highly available PostgreSQL clusters. It simplifies the deployment process, reduces operational costs, and makes database management accessible—even for teams without specialized expertise.
 
 **Automate deployment, failover, backups, restore, upgrades, scaling, and more with ease.**
 
 Say goodbye to manual database management 👋
 
-## Documentation
-
-Autobase documentation can be found [here](https://autobase.tech/docs).
-
-## Support
-
-Autobase support packages are described [here](https://autobase.tech/docs/support).
-
-## Quick start
-
-You have the option to deploy Postgres clusters using the Console (UI), command line, or GitOps.
-
-### Console (UI)
-
-The Autobase Console (UI) is the recommended method for most users. It is designed to be user-friendly, minimizing the risk of errors and making it easier than ever to set up your PostgreSQL clusters.
-
-To run the autobase console, execute the following command:
-
-```
-docker run -d --name autobase-console \
-  --publish 80:80 \
-  --env PG_CONSOLE_AUTHORIZATION_TOKEN=secret_token \
-  --env PG_CONSOLE_DOCKER_IMAGE=autobase/automation:latest \
-  --volume console_postgres:/var/lib/postgresql \
-  --volume /var/run/docker.sock:/var/run/docker.sock \
-  --volume /tmp/ansible:/tmp/ansible \
-  --restart=unless-stopped \
-  autobase/console:latest
-```
-
-> [!NOTE]
-> It is recommended to run the console in the same network as your database servers to enable monitoring of the cluster status.
-
-Alternatively, you can use [Docker Compose](console/README.md).
-
-**Open the Console UI**:
-
-Go to http://localhost:80 (or the address of your server) and use `secret_token` for authorization.
-
-![Cluster creation demo](images/autobase_create_cluster_demo.gif)
-
-Refer to the [Deployment](https://autobase.tech/docs/category/deployment) section to learn more about the different deployment methods.
-
-### Command line
-
-<details><summary>Click here to expand... if you prefer the command line.</summary><p>
-
-All dependencies and source code are bundled into the `autobase/automation` docker image. This means the deployment process comes down to simply launching a container with a few variable overrides. Alternatively, you can use [Ansible Collection](./automation/README.md).
-
-1. Prepare your inventory
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/autobase-tech/autobase/refs/heads/main/automation/inventory.example \
-  --output ./inventory
-```
-
-Specify IP addresses and appropriate connection settings for your environment, such as ansible_user, ansible_ssh_pass, or ansible_ssh_private_key_file.
-
-```bash
-nano ./inventory
-```
-
-2. Prepare your variables
-
-Refer to the default [variables](https://github.com/autobase-tech/autobase/blob/main/automation/roles/common/defaults/main.yml) for all configurable options. Override them as needed using group_vars, host_vars, or directly in the inventory file.
-
-```bash
-mkdir -p ./group_vars
-nano ./group_vars/all.yml
-```
-
-3. Run the deployment command
-
-```bash
-docker run --rm -it \
-  -e ANSIBLE_SSH_ARGS="-F none" \
-  -e ANSIBLE_INVENTORY=/project/inventory \
-  -v $PWD:/project \
-  -v $HOME/.ssh:/root/.ssh \
-  autobase/automation:latest \
-    ansible-playbook deploy_pgcluster.yml
-```
-
-Tip: Start with `deploy_pgcluster` for initial provisioning, then use `config_pgcluster` for further configuration changes.
-
-### How to start from scratch
-
-If you need to start from the very beginning, you can use the `remove_cluster` playbook.
-
-Available variables:
-
-- `remove_postgres`: stop the PostgreSQL service and remove data
-- `remove_etcd`: stop the ETCD service and remove data
-- `remove_consul`: stop the Consul service and remove data
-
-⚠️ Caution: Only use this in non-production or when you’re absolutely sure.
-
-</p></details>
+## Getting Started
 
 > [!TIP]
 > 📩 Contact us at info@autobase.tech, and our team will help you implement Autobase into your infrastructure.
 
-### Architecture
+You have the option to deploy PostgreSQL clusters using the Console (UI), Command line (Ansible), or GitOps.
+
+### Console (UI)
+
+- [Community Edition](./console/README.md) - Free license for individual developers and hobby projects.
+- [Enterprise Edition](https://autobase.tech/docs#getting-started) - Commercial license for production environments. Includes extended cluster management features and support.
+
+### Ansible Collection
+
+- [Ansible Collection](./automation/README.md) - The automation layer for those who prefer to use Ansible playbooks instead of a database platform.
+
+### GitOps
+
+- [GitOps (CI/CD)](https://autobase.tech/docs/management/gitops) - Manage cluster configuration in Git and apply changes through CI/CD pipelines.
+
+
+## Architecture
 
 For a detailed description of the cluster components, visit the [Architecture](https://autobase.tech/docs/overview/architecture) page.
 
 ![pg_cluster_scheme](images/autobase-postgres.light.png#gh-light-mode-only)
 ![pg_cluster_scheme](images/autobase-postgres.dark.png#gh-dark-mode-only)
+
+## Documentation
+
+Autobase documentation can be found [here](https://autobase.tech/docs).
 
 ## Compatibility
 
