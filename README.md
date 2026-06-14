@@ -45,7 +45,7 @@ You can deploy PostgreSQL clusters using the Console (UI), command line (Ansible
 
 ### Ansible Collection
 
-- [Ansible Collection](./automation/README.md) - The automation layer for those who prefer Ansible playbooks instead of the full database platform.
+- [Ansible Collection](./automation/README.md) - The automation layer for those who prefer Ansible playbooks instead of the database platform.
 
 ### GitOps
 
