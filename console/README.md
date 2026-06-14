@@ -38,10 +38,10 @@ The Console stack consists of the following core components:
 
 ## Quick Start
 
-### Single Container
-
 > [!NOTE]
 > It is recommended to run the console in the same network as your database servers to enable monitoring of the cluster status.
+
+### Single Container
 
 To run the Autobase Console, execute the following command:
 
@@ -61,53 +61,68 @@ Refer to the [Deployment](https://autobase.tech/docs/category/deployment) sectio
 
 ### Docker Compose
 
-1. Create DNS A record: point your domain to Autobase IP address.
-
-2. Clone the repository:
+1. Clone the repository:
 
    ```sh
    git clone https://github.com/autobase-tech/autobase.git
    ```
 
-3. Navigate to the `console` directory:
+2. Navigate to the `console` directory:
 
    ```sh
    cd autobase/console
    ```
 
-4. Set up the environment:
+3. Set up the environment:
 
    ```sh
    cp .env.example .env
    ```
 
-5. Configure your `.env`:
+4. Configure your `.env`:
 
    ```sh
-   DOMAIN=autobase.your-domain.com  # Set your domain (required for Caddy SSL)
-   EMAIL=admin@your-domain.com      # Set your email (required for Caddy SSL)
-   AUTH_TOKEN=your-secret-token     # Your authorization token
+   AUTH_TOKEN=your-secret-token
    ```
 
-6. Run Docker Compose:
+#### Basic setup
+
+Use this mode for a simple deployment without automatic SSL certificate management.
+
+```sh
+docker compose up -d
+```
+
+Open `http://autobase-server-ip` and use your `AUTH_TOKEN` value for authorization.
+
+#### Setup with SSL
+
+Use this mode when you have a domain name and want Caddy to manage SSL certificates automatically.
+
+1. Create a DNS A record pointing your domain to the Autobase server IP address.
+
+2. Add the domain and email to your `.env`:
 
    ```sh
-   # with Caddy proxy
+   DOMAIN=autobase.your-domain.com
+   EMAIL=admin@your-domain.com
+   AUTH_TOKEN=your-secret-token
+   ```
+
+3. Run Docker Compose with Caddy:
+
+   ```sh
    docker compose -f docker-compose.caddy.yml up -d
    ```
 
-   Or, without automatic handling of SSL certificates for your domain:
-
-   ```sh
-   # without Caddy proxy
-   docker compose up -d
-   ```
+Open `https://autobase.your-domain.com` and use your `AUTH_TOKEN` value for authorization.
 
 ## Notes
 
-- Caddy will automatically handle SSL certificates for your domain
-- Data is persisted in Docker volumes: `console_postgres` and `caddy_data`
-- The Caddy network is created automatically by Docker Compose
+- The basic setup exposes the Console UI on port 80 without automatic SSL certificate management
+- With the SSL setup, Caddy automatically handles SSL certificates for your domain
+- Data is persisted in Docker volumes: `console_postgres`, `dbdesk_studio_data`, and `caddy_data` (when using Caddy)
+- Docker networks are created automatically by Docker Compose
 - All services are configured to restart automatically unless stopped manually.
 - Additional [environment variables](https://github.com/autobase-tech/autobase/tree/main/console/service#configuration) can be configured based on your project needs.
 
