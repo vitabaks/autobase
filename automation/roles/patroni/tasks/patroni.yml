@@ -10,6 +10,7 @@
   vars:
     etcd_hosts: "{{ groups['etcd_cluster'] | default([]) }}"
   notify: "reload patroni"
+  no_log: "{{ patroni_conf_no_log | default(true) }}" # hide config contents from ansible logs
 
 - name: Flush handlers
   ansible.builtin.meta: flush_handlers
