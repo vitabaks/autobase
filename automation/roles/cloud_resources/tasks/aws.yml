@@ -658,6 +658,7 @@
           instance-type: "{{ server_type }}"
           instance-state-name: ["pending", "running", "shutting-down", "stopping", "stopped"]
           "tag:Name": "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}"
+          "tag:Cluster": "{{ patroni_cluster_name }}"
         state: absent
         wait: true
       loop: "{{ range(0, server_count | int) | list }}"
