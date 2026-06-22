@@ -19,4 +19,6 @@
   roles:
     - role: vitabaks.autobase.cloud_resources
       when: cloud_provider | default('') | length > 0
+      vars:
+        generate_inventory: false
       tags: always

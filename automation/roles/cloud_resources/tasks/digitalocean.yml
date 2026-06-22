@@ -710,6 +710,7 @@
   when:
     - droplet_result.results is defined
     - (droplet_result.results | selectattr('data','defined') | list | length) > 0
+    - generate_inventory | default(true) | bool
 
 # Delete the temporary SSH key from the cloud after creating the droplet
 - name: "DigitalOcean: Remove temporary SSH key '{{ ssh_key_name | default('') }}' from cloud"

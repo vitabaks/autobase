@@ -543,6 +543,7 @@
   when:
     - server_result.results is defined
     - (server_result.results | selectattr('ansible_facts.azure_vm', 'defined') | list | length) > 0
+    - generate_inventory | default(true) | bool
 
 # Delete (if state is absent)
 - block:

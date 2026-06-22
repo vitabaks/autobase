@@ -587,6 +587,7 @@
   when:
     - server_result.results is defined
     - (server_result.results | selectattr('networkInterfaces', 'defined') | list | length) > 0
+    - generate_inventory | default(true) | bool
 
 # Delete (if state is absent)
 - block:
