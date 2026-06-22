@@ -653,9 +653,13 @@
       amazon.aws.ec2_instance:
         access_key: "{{ lookup('ansible.builtin.env', 'AWS_ACCESS_KEY_ID') }}"
         secret_key: "{{ lookup('ansible.builtin.env', 'AWS_SECRET_ACCESS_KEY') }}"
-        name: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}"
         region: "{{ server_location }}"
+        filters:
+          instance-type: "{{ server_type }}"
+          instance-state-name: ["pending", "running", "shutting-down", "stopping", "stopped"]
+          "tag:Name": "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}"
         state: absent
+        wait: true
       loop: "{{ range(0, server_count | int) | list }}"
       loop_control:
         index_var: idx
