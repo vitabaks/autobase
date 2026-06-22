@@ -85,6 +85,10 @@ Autobase adheres to a modular design separating atomic logic (roles) and orchest
 
 ## List of Playbooks
 
+#### Infrastructure
+
+- `cloud_resources` – Provision and configure cloud resources on AWS, GCP, Azure, DigitalOcean, and Hetzner Cloud. Note: also called by `deploy_pgcluster` when `cloud_provider` is defined.
+
 #### Deployment
 
 - `deploy_pgcluster` – Deploy a new highly available PostgreSQL cluster. This playbook also includes:

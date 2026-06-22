@@ -1,0 +1,22 @@
+---
+- name: vitabaks.autobase.cloud_resources | Provision or configure cloud resources for a PostgreSQL Cluster
+  hosts: localhost
+  gather_facts: true
+  any_errors_fatal: true
+  pre_tasks:
+    # set_fact: 'pgbackrest_install' to configure Postgres backups if not disabled explicitly.
+    # Note: Applicable only for "aws", "gcp", "azure", because:
+    # "digitalocean" - requires the Spaces access keys ("digital_ocean_spaces_access_key" and "digital_ocean_spaces_secret_key" variables)
+    # "hetzner" - requires the S3 credentials ("hetzner_object_storage_access_key" and "hetzner_object_storage_secret_key" variables).
+    - name: "Set variable: 'pgbackrest_install' to configure Postgres backups"
+      ansible.builtin.set_fact:
+        pgbackrest_install: true
+      when:
+        - not (pgbackrest_install | default(false) | bool or wal_g_install | default(false) | bool)
+        - cloud_provider | default('') | lower in ['aws', 'gcp', 'azure']
+        - pgbackrest_auto_conf | default(true) | bool # to be able to disable auto backup settings
+      tags: always
+  roles:
+    - role: vitabaks.autobase.cloud_resources
+      when: cloud_provider | default('') | length > 0
+      tags: always
