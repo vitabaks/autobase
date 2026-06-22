@@ -397,6 +397,9 @@
             secret_key: "{{ lookup('ansible.builtin.env', 'AWS_SECRET_ACCESS_KEY') }}"
             region: "{{ server_location }}"
             name: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}"
+            tags:
+              Name: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}"
+              Cluster: "{{ patroni_cluster_name }}"
             filters:
               spot-instance-request-id: "{{ item.spot_request.spot_instance_request_id }}"
           loop: "{{ ec2_spot_request_result.results }}"
