@@ -1,7 +1,7 @@
 ---
 # Automatically configure "vm.nr_hugepages" for shared_buffers of 8GB or more,
 # if 'sysctl_set' is 'true', "vm.nr_hugepages" is undefined or insufficient in sysctl_conf,
-# and "huge_pages" is not 'off' in postgresql_parameters.
+# and "huge_pages" is not 'off' in postgresql_parameters_dcs.
 
 - block:
     - name: "HugePages | Get shared_buffers value from postgresql parameters"
@@ -11,7 +11,7 @@
         shared_buffers_unit: "{{ postgresql_parameters_shared_buffers | regex_search('[A-Za-z]+') | lower }}"
       vars:
         # Prefer 'shared_buffers' from local_postgresql_parameters (host-level override),
-        # fallback to cluster-wide postgresql_parameters (DCS), else use default 128MB.
+        # fallback to cluster-wide postgresql_parameters_dcs (DCS), else use default 128MB.
         postgresql_parameters_shared_buffers: >-
           {{
             (
@@ -21,7 +21,7 @@
             )
             | default(
                 (
-                  postgresql_parameters | default([])
+                  postgresql_parameters_dcs | default([])
                   | selectattr('option', 'equalto', 'shared_buffers')
                   | map(attribute='value') | first
                 ),
@@ -165,7 +165,7 @@
         - (not huge_pages_auto_conf | bool or (not sysctl_set | bool and huge_pages_mode == 'on'))
   vars:
     # Prefer 'huge_pages' from local_postgresql_parameters (host override),
-    # fallback to cluster-wide postgresql_parameters (DCS), else 'try'.
+    # fallback to cluster-wide postgresql_parameters_dcs (DCS), else 'try'.
     huge_pages_mode: >-
       {{
         (
@@ -175,7 +175,7 @@
         )
         | default(
             (
-              postgresql_parameters | default([])
+              postgresql_parameters_dcs | default([])
               | selectattr('option', 'equalto', 'huge_pages')
               | map(attribute='value') | first
             ),

@@ -437,6 +437,11 @@ postgresql_parameters:
   - { option: "tcp_keepalives_idle", value: "300" }
   - { option: "tcp_keepalives_interval", value: "30" }
   - { option: "idle_in_transaction_session_timeout", value: "10min" } # reduce this timeout if possible
+#  - { option: "", value: "" }
+
+# PostgreSQL parameter overrides (cluster-wide, stored in DCS).
+# Use this to add or override a small number of options without redefining the full 'postgresql_parameters' list.
+postgresql_parameters_overrides: []
 #  - { option: "transaction_timeout", value: "10min" } # reduce this timeout if possible
 #  - { option: "statement_timeout", value: "1min" } # reduce this timeout if possible
 #  - { option: "lock_timeout", value: "10s" } # reduce this timeout if possible
@@ -447,6 +452,13 @@ postgresql_parameters:
 local_postgresql_parameters:
  - { option: "shared_buffers", value: "{{ (ansible_memtotal_mb * 0.25) | int }}MB" } # by default, 25% of RAM
  - { option: "effective_cache_size", value: "{{ (ansible_memtotal_mb * 0.75) | int }}MB" } # by default, 75% of RAM
+
+# Final PostgreSQL parameters (cluster-wide, stored in DCS).
+postgresql_parameters_dcs: >-
+  {{
+    postgresql_parameters | default([])
+    | community.general.lists_mergeby(postgresql_parameters_overrides | default([]), 'option')
+  }}
 
 # Set this variable to 'true' if you want the cluster to be automatically restarted
 # after changing the 'postgresql_parameters' variable that requires a restart in the 'config_pgcluster.yml' playbook.
@@ -1013,7 +1025,7 @@ sysctl_conf:
 # Huge Pages
 # this setting will automatically configure "vm.nr_hugepages" for shared_buffers of 8GB or more
 # if 'sysctl_set' is 'true', "vm.nr_hugepages" is undefined or insufficient in sysctl_conf,
-# and "huge_pages" is not 'off' in postgresql_parameters.
+# and "huge_pages" is not 'off' in postgresql_parameters_dcs.
 huge_pages_auto_conf: true
 
 # Transparent Huge Pages

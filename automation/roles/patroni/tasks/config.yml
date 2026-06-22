@@ -55,7 +55,7 @@
         body: '{"postgresql":{"parameters":{"{{ item.option }}":"{{ item.value }}"}}}'
         body_format: json
         ca_path: "{{ patroni_restapi_cafile | default(omit, true) }}"
-      loop: "{{ postgresql_parameters }}"
+      loop: "{{ postgresql_parameters_dcs }}"
       changed_when: true
       when:
         - item.value != "null"
@@ -72,7 +72,7 @@
         body: '{"postgresql":{"parameters":{"{{ item.option }}":null}}}'
         body_format: json
         ca_path: "{{ patroni_restapi_cafile | default(omit, true) }}"
-      loop: "{{ postgresql_parameters }}"
+      loop: "{{ postgresql_parameters_dcs }}"
       changed_when: true
       when:
         - item.value == "null"
@@ -122,7 +122,7 @@
     path: /etc/patroni/patroni.yml
     regexp: "^.*{{ item.option }}: {{ item.value }}$"
     state: absent
-  loop: "{{ postgresql_parameters }}"
+  loop: "{{ postgresql_parameters_dcs }}"
   when: item.value == "null"
   tags: patroni, patroni_conf
 
