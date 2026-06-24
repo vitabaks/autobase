@@ -82,7 +82,7 @@
         path: /etc/apt/sources.list.d
         state: directory
         mode: "0755"
-      when: "ansible_os_family|lower == 'debian'"
+      when: ansible_os_family == "Debian"
 
     - name: Add hashicorp repository
       ansible.builtin.deb822_repository:
