@@ -12,6 +12,13 @@
       delay: 5
       retries: 3
 
+    - name: Ensure /etc/apt/sources.list.d directory exists
+      ansible.builtin.file:
+        path: /etc/apt/sources.list.d
+        state: directory
+        mode: "0755"
+      when: ansible_os_family == "Debian"
+
     - name: Add pgdg repository and signing key
       ansible.builtin.deb822_repository:
         name: "{{ pg_probackup_repo_name | default('pg_probackup') }}"
