@@ -1,16 +1,19 @@
 ---
 # Extension Auto-Setup: repository
 
+# The deb822_repository module does not create /etc/apt/sources.list.d/;
+# ensure it exists once before adding any extension repository.
+- name: Ensure /etc/apt/sources.list.d directory exists
+  ansible.builtin.file:
+    path: /etc/apt/sources.list.d
+    state: directory
+    mode: "0755"
+  when: ansible_os_family == "Debian"
+  tags: add_repo, timescaledb, timescale, citus
+
 # TimescaleDB (if 'enable_timescale' is 'true')
 - block:
     # Debian based
-    - name: Ensure /etc/apt/sources.list.d directory exists
-      ansible.builtin.file:
-        path: /etc/apt/sources.list.d
-        state: directory
-        mode: "0755"
-      when: ansible_os_family == "Debian"
-
     - name: Add TimescaleDB repository
       ansible.builtin.deb822_repository:
         name: "timescaledb"
@@ -39,13 +42,6 @@
 # Citus (if 'enable_citus' is 'true')
 - block:
     # Debian based
-    - name: Ensure /etc/apt/sources.list.d directory exists
-      ansible.builtin.file:
-        path: /etc/apt/sources.list.d
-        state: directory
-        mode: "0755"
-      when: ansible_os_family == "Debian" and ansible_architecture in ["x86_64", "amd64"]
-
     - name: Add Citus repository
       ansible.builtin.deb822_repository:
         name: "citusdata"
