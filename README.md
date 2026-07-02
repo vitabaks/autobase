@@ -10,9 +10,9 @@
 [![Molecule](https://github.com/autobase-tech/autobase/actions/workflows/molecule.yml/badge.svg)](https://github.com/autobase-tech/autobase/actions/workflows/molecule.yml)
 [![GitHub license](https://img.shields.io/github/license/autobase-tech/autobase)](https://github.com/autobase-tech/autobase/blob/main/LICENSE)
 
-Autobase is an internal PostgreSQL platform — giving you full control as a powerful alternative to cloud-managed databases (DBaaS).
+Autobase is an Internal Database Platform for PostgreSQL, bringing the managed database experience of DBaaS into your own infrastructure.
 
-This automated database platform enables you to create and manage production-ready, highly available PostgreSQL clusters. It simplifies the deployment process, reduces operational costs, and makes database management accessible—even for teams without specialized expertise.
+Create and manage production-ready, highly available PostgreSQL clusters. Autobase simplifies deployment, reduces operational costs, and makes database management accessible, even for teams without specialized expertise.
 
 ![Cluster creation demo](images/autobase_create_cluster_demo.gif)
 
@@ -33,9 +33,6 @@ For a detailed description of the cluster components, visit the [Architecture](h
 
 ## Getting Started
 
-> [!TIP]
-> 📩 Contact us at info@autobase.tech, and our team will help you implement Autobase into your infrastructure.
-
 You can deploy PostgreSQL clusters using the Console (UI), command line (Ansible), or GitOps.
 
 ### Console (UI)
@@ -50,6 +47,9 @@ You can deploy PostgreSQL clusters using the Console (UI), command line (Ansible
 ### GitOps
 
 - [GitOps (CI/CD)](https://autobase.tech/docs/management/gitops) - Manage cluster configuration in Git and apply changes through CI/CD pipelines.
+
+> [!TIP]
+> 📩 Contact us at info@autobase.tech, and our team will help you implement Autobase into your infrastructure.
 
 ## Compatibility
 

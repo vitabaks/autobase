@@ -12,6 +12,7 @@
     timeout: 60
     validate_certs: false
   environment: "{{ proxy_env | default({}) }}"
+  when: postgresql_index_maintenance_enabled | default(postgresql_index_maintenance.enabled | default(false)) | bool
   tags: pg_auto_reindexer, pg_auto_reindexer_install
 
 # For PostgreSQL 11 and below, pg_repack is used for index maintenance
@@ -34,11 +35,14 @@
   when:
     - installation_method == "packages"
     - postgresql_version | int <= 11
+    - postgresql_index_maintenance_enabled | default(postgresql_index_maintenance.enabled | default(false)) | bool
   tags: pg_auto_reindexer, pg_auto_reindexer_install
 
 - name: Configure pg_auto_reindexer cron jobs
   ansible.builtin.include_role:
     name: vitabaks.autobase.cron
+    apply:
+      tags: pg_auto_reindexer, pg_auto_reindexer_cron
   vars:
     cron_jobs: "{{ postgresql_index_maintenance.cron_jobs | default(postgresql_index_maintenance_cron_jobs) }}"
   tags: pg_auto_reindexer, pg_auto_reindexer_cron

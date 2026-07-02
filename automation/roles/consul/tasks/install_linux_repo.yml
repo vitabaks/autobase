@@ -77,6 +77,13 @@
         - ansible_os_family == "Debian"
         - "'python3-debian' not in ansible_facts.packages"
 
+    - name: Ensure /etc/apt/sources.list.d directory exists
+      ansible.builtin.file:
+        path: /etc/apt/sources.list.d
+        state: directory
+        mode: "0755"
+      when: ansible_os_family == "Debian"
+
     - name: Add hashicorp repository
       ansible.builtin.deb822_repository:
         name: "{{ consul_repo_url.split('//')[1] | replace('.', '-') }}"

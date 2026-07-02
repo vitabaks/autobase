@@ -17,6 +17,13 @@
       retries: 3
       when: "'python3-debian' not in ansible_facts.packages"
 
+    - name: Ensure /etc/apt/sources.list.d directory exists
+      ansible.builtin.file:
+        path: /etc/apt/sources.list.d
+        state: directory
+        mode: "0755"
+      when: apt_repository | length > 0
+
     - name: Add repository
       ansible.builtin.deb822_repository:
         name: "{{ item.name | default(item.repo.split('//')[1].split('/')[0] | replace('.', '-')) }}"

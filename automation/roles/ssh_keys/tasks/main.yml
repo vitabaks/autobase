@@ -35,6 +35,21 @@
         state: present
         system: true
 
+    - block:
+        - name: Check password lock state for "{{ ssh_key_user }}" user
+          ansible.builtin.command: "getent shadow {{ ssh_key_user }}"
+          register: ssh_key_user_shadow
+          changed_when: false
+          no_log: true
+
+        - name: Unlock the locked password for "{{ ssh_key_user }}" user (required for SSH key auth)
+          ansible.builtin.user:
+            name: "{{ ssh_key_user }}"
+            password: '*'
+            password_lock: false
+          when: ssh_key_user_shadow.stdout is match('^postgres:!+')
+      when: ssh_key_user | default('') == 'postgres'
+
     - name: Create a 2048-bit SSH key for user "{{ ssh_key_user | default('') }}" in ~/.ssh/id_rsa (if not already exist)
       ansible.builtin.user:
         name: "{{ ssh_key_user }}"
