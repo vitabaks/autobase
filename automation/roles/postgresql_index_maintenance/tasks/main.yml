@@ -39,6 +39,8 @@
 - name: Configure pg_auto_reindexer cron jobs
   ansible.builtin.include_role:
     name: vitabaks.autobase.cron
+    apply:
+      tags: pg_auto_reindexer, pg_auto_reindexer_cron
   vars:
     cron_jobs: "{{ postgresql_index_maintenance.cron_jobs | default(postgresql_index_maintenance_cron_jobs) }}"
   tags: pg_auto_reindexer, pg_auto_reindexer_cron
