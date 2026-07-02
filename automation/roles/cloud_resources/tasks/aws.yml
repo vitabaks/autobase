@@ -430,6 +430,38 @@
               | list
             }}
 
+    # Required to allow data volume parameters to be changed after deployment.
+    - name: "AWS: Ensure EBS data volume parameters"
+      amazon.aws.ec2_vol:
+        access_key: "{{ lookup('ansible.builtin.env', 'AWS_ACCESS_KEY_ID') }}"
+        secret_key: "{{ lookup('ansible.builtin.env', 'AWS_SECRET_ACCESS_KEY') }}"
+        region: "{{ server_location }}"
+        id: "{{ data_volume.ebs.volume_id | default('') }}"
+        instance: "{{ item.instances[0].instance_id }}"
+        device_name: /dev/sdb
+        volume_type: "{{ volume_type | default('gp3', true) }}"
+        volume_size: "{{ volume_size | int }}"
+        iops: "{{ volume_iops | default(3000) | int if volume_type | default('gp3', true) in ['gp3', 'io1', 'io2'] else omit }}"
+        throughput: "{{ (volume_throughput | default(125) | int) if (volume_type | default('gp3', true)) == 'gp3' else omit }}"
+        modify_volume: true
+        purge_tags: false
+      loop: "{{ server_result.results | default([]) }}"
+      loop_control:
+        label: "{{ item.instances[0].tags.Name | default(item.instances[0].instance_id, true) }}"
+      vars:
+        data_volume: >-
+          {{
+            item.instances[0].block_device_mappings | default([])
+            | selectattr('device_name', 'equalto', '/dev/sdb')
+            | first
+            | default({})
+          }}
+      register: ec2_volume_resize_result
+      when:
+        - server_result.results is defined
+        - item.instances is defined
+        - data_volume.ebs.volume_id | default('') | length > 0
+
     # Classic Load Balancer (CLB) - previous generation
     - name: "AWS: Create Classic Load Balancer (CLB)"
       amazon.aws.elb_classic_lb:
