@@ -207,10 +207,8 @@
           }
         body_format: json
         ca_path: "{{ patroni_restapi_cafile | default(omit, true) }}"
-      when:
-        - patroni_slots is defined
-        - patroni_slots | length > 0
-        - >-
+      vars:
+        patroni_desired_slots: >-
           {% set desired_slots = {} %}
           {% for slot in patroni_slots %}
           {% set slot_config = {} %}
@@ -219,7 +217,11 @@
           {% endfor %}
           {% set _ = desired_slots.update({slot.slot: slot_config}) %}
           {% endfor %}
-          {{ (patroni_dcs_config.json | default({})).get('slots', {}) != desired_slots }}
+          {{ desired_slots }}
+      when:
+        - patroni_slots is defined
+        - patroni_slots | length > 0
+        - (patroni_dcs_config.json | default({})).get('slots', {}) != (patroni_desired_slots | from_yaml)
 
     - name: Delete permanent slots from DCS (if any)
       ansible.builtin.uri:
