@@ -32,9 +32,9 @@
   tags: patroni, patroni_conf
 
 # Read Patroni dynamic config once and PATCH only parameters that differ from DCS.
-# This avoids sending one REST update per configured PostgreSQL parameter on every run.
+# This avoids sending unnecessary REST updates for configured dynamic parameters.
 - block:
-    - name: Get current postgresql parameters from DCS
+    - name: Get current Patroni parameters from DCS
       ansible.builtin.uri:
         url: "{{ patroni_restapi_protocol }}://{{ patroni_restapi_connect_addr | default(patroni_bind_address | default(bind_address, true), true) }}:\
           {{ patroni_restapi_port }}/config"
@@ -44,6 +44,60 @@
         ca_path: "{{ patroni_restapi_cafile | default(omit, true) }}"
       register: patroni_dcs_config
       changed_when: false
+
+    - name: Update Patroni parameters in DCS
+      ansible.builtin.uri:
+        url: "{{ patroni_restapi_protocol }}://{{ patroni_restapi_connect_addr | default(patroni_bind_address | default(bind_address, true), true) }}:\
+          {{ patroni_restapi_port }}/config"
+        method: PATCH
+        user: "{{ patroni_restapi_username | default(omit) }}"
+        password: "{{ patroni_restapi_password | default(omit) }}"
+        body: '{"{{ item.option }}":{{ item.value | trim }}}'
+        body_format: json
+        ca_path: "{{ patroni_restapi_cafile | default(omit, true) }}"
+      loop:
+        - option: ttl
+          value: "{{ (patroni_ttl | d(30, true) | int) | to_json }}"
+        - option: loop_wait
+          value: "{{ (patroni_loop_wait | d(10, true) | int) | to_json }}"
+        - option: retry_timeout
+          value: "{{ (patroni_retry_timeout | d(10, true) | int) | to_json }}"
+        - option: maximum_lag_on_failover
+          value: "{{ (patroni_maximum_lag_on_failover | d(1048576) | int) | to_json }}"
+        - option: master_start_timeout
+          value: "{{ (patroni_master_start_timeout | d(300, true) | int) | to_json }}"
+        - option: synchronous_mode
+          value: "{{ synchronous_mode | d(false, true) | to_json }}"
+        - option: synchronous_mode_strict
+          value: "{{ (synchronous_mode_strict | d(false, true) | bool) | to_json }}"
+        - option: synchronous_node_count
+          value: "{{ (synchronous_node_count | d(1, true) | int) | to_json }}"
+        - option: failsafe_mode
+          value: "{{ (patroni_failsafe_mode | d(true, true) | bool) | to_json }}"
+      changed_when: true
+      when:
+        - item.option not in (patroni_dcs_config.json | default({})) or
+          ((patroni_dcs_config.json | default({}))[item.option] | to_json) != (item.value | trim)
+
+    - name: Update Patroni postgresql options in DCS
+      ansible.builtin.uri:
+        url: "{{ patroni_restapi_protocol }}://{{ patroni_restapi_connect_addr | default(patroni_bind_address | default(bind_address, true), true) }}:\
+          {{ patroni_restapi_port }}/config"
+        method: PATCH
+        user: "{{ patroni_restapi_username | default(omit) }}"
+        password: "{{ patroni_restapi_password | default(omit) }}"
+        body: '{"postgresql":{"{{ item.option }}":{{ item.value }}}}'
+        body_format: json
+        ca_path: "{{ patroni_restapi_cafile | default(omit, true) }}"
+      loop:
+        - option: use_pg_rewind
+          value: "{{ (patroni_postgresql_use_pg_rewind | d(false, true) | bool) | to_json }}"
+        - option: use_slots
+          value: "true"
+      changed_when: true
+      when:
+        - item.option not in (patroni_dcs_config.json | default({})).get('postgresql', {}) or
+          ((patroni_dcs_config.json | default({})).get('postgresql', {})[item.option] | to_json) != item.value
 
     - name: Update postgresql parameters in DCS
       ansible.builtin.uri:
@@ -78,6 +132,60 @@
         - item.value == "null"
         - item.option in (patroni_dcs_config.json | default({})).get('postgresql', {}).get('parameters', {})
 
+    - name: Update standby cluster in DCS
+      ansible.builtin.uri:
+        url: "{{ patroni_restapi_protocol }}://{{ patroni_restapi_connect_addr | default(patroni_bind_address | default(bind_address, true), true) }}:\
+          {{ patroni_restapi_port }}/config"
+        method: PATCH
+        user: "{{ patroni_restapi_username | default(omit) }}"
+        password: "{{ patroni_restapi_password | default(omit) }}"
+        body: >-
+          {
+            "standby_cluster": {
+              "host": {{ patroni_standby_cluster.host | to_json }},
+              "port": {{ patroni_standby_cluster.port | to_json }},
+              "primary_slot_name": {{ patroni_standby_cluster.primary_slot_name | default(none, true) | to_json }},
+              "restore_command": {{ patroni_standby_cluster.restore_command | default(none, true) | to_json }},
+              "recovery_min_apply_delay": {{ patroni_standby_cluster.recovery_min_apply_delay | default(none, true) | to_json }}
+            }
+          }
+        body_format: json
+        ca_path: "{{ patroni_restapi_cafile | default(omit, true) }}"
+      changed_when: true
+      vars:
+        patroni_standby_cluster_current:
+          host: "{{ (patroni_dcs_config.json | default({})).get('standby_cluster', {}).get('host', '') }}"
+          port: "{{ (patroni_dcs_config.json | default({})).get('standby_cluster', {}).get('port', '') | string }}"
+          primary_slot_name: "{{ (patroni_dcs_config.json | default({})).get('standby_cluster', {}).get('primary_slot_name') | default(none, true) }}"
+          restore_command: "{{ (patroni_dcs_config.json | default({})).get('standby_cluster', {}).get('restore_command') | default(none, true) }}"
+          recovery_min_apply_delay: >-
+            {{ (patroni_dcs_config.json | default({})).get('standby_cluster', {}).get('recovery_min_apply_delay') | default(none, true) }}
+        patroni_standby_cluster_desired:
+          host: "{{ patroni_standby_cluster.host }}"
+          port: "{{ patroni_standby_cluster.port | string }}"
+          primary_slot_name: "{{ patroni_standby_cluster.primary_slot_name | default(none, true) }}"
+          restore_command: "{{ patroni_standby_cluster.restore_command | default(none, true) }}"
+          recovery_min_apply_delay: "{{ patroni_standby_cluster.recovery_min_apply_delay | default(none, true) }}"
+      when:
+        - patroni_standby_cluster.host is defined
+        - patroni_standby_cluster.host | length > 0
+        - patroni_standby_cluster_current != patroni_standby_cluster_desired
+
+    - name: Delete standby cluster from DCS (if any)
+      ansible.builtin.uri:
+        url: "{{ patroni_restapi_protocol }}://{{ patroni_restapi_connect_addr | default(patroni_bind_address | default(bind_address, true), true) }}:\
+          {{ patroni_restapi_port }}/config"
+        method: PATCH
+        user: "{{ patroni_restapi_username | default(omit) }}"
+        password: "{{ patroni_restapi_password | default(omit) }}"
+        body: '{"standby_cluster":null}'
+        body_format: json
+        ca_path: "{{ patroni_restapi_cafile | default(omit, true) }}"
+      changed_when: true
+      when:
+        - patroni_standby_cluster.host is not defined or patroni_standby_cluster.host | length < 1
+        - "'standby_cluster' in (patroni_dcs_config.json | default({}))"
+
     - name: Update permanent slots in DCS
       ansible.builtin.uri:
         url: "{{ patroni_restapi_protocol }}://{{ patroni_restapi_connect_addr | default(patroni_bind_address | default(bind_address, true), true) }}:\
@@ -99,7 +207,19 @@
           }
         body_format: json
         ca_path: "{{ patroni_restapi_cafile | default(omit, true) }}"
-      when: patroni_slots is defined and patroni_slots | length > 0
+      when:
+        - patroni_slots is defined
+        - patroni_slots | length > 0
+        - >-
+          {% set desired_slots = {} %}
+          {% for slot in patroni_slots %}
+          {% set slot_config = {} %}
+          {% for key, value in slot.items() if key != 'slot' %}
+          {% set _ = slot_config.update({key: value}) %}
+          {% endfor %}
+          {% set _ = desired_slots.update({slot.slot: slot_config}) %}
+          {% endfor %}
+          {{ (patroni_dcs_config.json | default({})).get('slots', {}) != desired_slots }}
 
     - name: Delete permanent slots from DCS (if any)
       ansible.builtin.uri:
@@ -111,7 +231,9 @@
         body: '{"slots":null}'
         body_format: json
         ca_path: "{{ patroni_restapi_cafile | default(omit, true) }}"
-      when: patroni_slots is not defined or patroni_slots | length < 1
+      when:
+        - patroni_slots is not defined or patroni_slots | length < 1
+        - "'slots' in (patroni_dcs_config.json | default({}))"
   environment:
     no_proxy: "{{ patroni_bind_address | default(bind_address, true) }}"
   when: inventory_hostname in groups['primary']
