@@ -166,16 +166,14 @@
 # zfs
 #
 
-- name: "Get ZFS vdev name for {{ resizefs_mount.stdout.split()[0] | default('') }}"
+- name: "Get ZFS vdev path for {{ resizefs_mount.stdout.split()[0] | default('') }}"
   ansible.builtin.shell: |
     set -o pipefail
     pool={{ resizefs_mount.stdout.split()[0].split('/')[0] | quote }}
 
-    zpool status "$pool" \
-      | awk -v pool="$pool" '
-          /^[[:space:]]+[A-Za-z0-9_\/.-]+[[:space:]]+ONLINE/ &&
-          $1 != pool &&
-          $1 !~ /^(mirror|raidz|logs|cache|spares|special|dedup)/ {
+    zpool status -P "$pool" \
+      | awk '
+          /^[[:space:]]+\/dev\/[A-Za-z0-9_\/.-]+[[:space:]]+ONLINE/ {
             print $1
           }
         '
