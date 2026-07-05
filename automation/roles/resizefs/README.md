@@ -13,5 +13,4 @@ It resolves the filesystem device and type with `findmnt` and `lsblk`, grows the
 
 ## Notes
 
-- ZFS pools created by the `mount` role use `autoexpand=on`; this role skips ZFS.
 - LVM is not supported yet; this role skips LVM.
