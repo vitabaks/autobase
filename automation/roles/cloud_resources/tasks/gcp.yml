@@ -337,6 +337,22 @@
       delay: 10
       retries: 3
 
+    # Required to allow data disk size to be changed after deployment.
+    - name: "GCP: Ensure data disk size"
+      google.cloud.gcp_compute_disk:
+        auth_kind: "serviceaccount"
+        service_account_contents: "{{ gcp_service_account_contents }}"
+        project: "{{ gcp_project | default(project_info.resources[0].projectNumber) }}"
+        zone: "{{ server_location + '-b' if not server_location is match('.*-[a-z]$') else server_location }}"
+        name: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}-storage"
+        size_gb: "{{ volume_size | int }}"
+        type: "{{ volume_type | default('pd-ssd', true) }}"
+        state: present
+      loop: "{{ range(0, server_count | int) | list }}"
+      loop_control:
+        index_var: idx
+        label: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}-storage"
+
     # Load Balancer
     # This block creates Global External classic proxy Network Load Balancer.
     # Global objects are required because the gcp_compute_target_tcp_proxy module can only be global, as it requires the use of a global forwarding rule.
