@@ -318,6 +318,22 @@
         label: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}"
       register: server_result
 
+    # Required to allow data disk size to be changed after deployment without deallocating the VM.
+    - name: "Azure: Ensure data disk size"
+      azure.azcollection.azure_rm_manageddisk:
+        resource_group: "{{ azure_resource_group | default('postgres-cluster-resource-group' ~ '-' ~ server_location) }}"
+        name: "{{ item.ansible_facts.azure_vm.storage_profile.data_disks[0].name }}"
+        location: "{{ server_location }}"
+        disk_size_gb: "{{ volume_size | int }}"
+        state: present
+      loop: "{{ server_result.results | selectattr('ansible_facts.azure_vm', 'defined') | list }}"
+      loop_control:
+        label: "{{ item.ansible_facts.azure_vm.storage_profile.data_disks[0].name | default('data-disk') }}"
+      when:
+        - item.ansible_facts.azure_vm.storage_profile.data_disks is defined
+        - item.ansible_facts.azure_vm.storage_profile.data_disks | length > 0
+        - item.ansible_facts.azure_vm.storage_profile.data_disks[0].managed_disk is defined
+
     # Load Balancer
     - name: "Azure: Create public IP address for Load Balancer"
       azure.azcollection.azure_rm_publicipaddress:
