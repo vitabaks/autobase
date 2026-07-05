@@ -5,12 +5,13 @@
 # Supported:
 # - ext4/xfs on whole disk: resize filesystem only
 # - ext4/xfs on partition: resize partition + resize filesystem
-# - zfs on single whole disk vdev: zpool online -e
-# - zfs on single partition vdev: resize partition up to the ZFS reserved slice + zpool online -e
+# - zfs on single whole disk vdev / ZFS-managed disk layout: zpool online -e
 #
 # Not supported yet:
 # - LVM
+# - dm-crypt
 # - ZFS mirror/raidz/multi-vdev pools
+# - ZFS pools created directly on user-managed partitions
 
 - name: "Get filesystem source and type for {{ resizefs_target_path }}"
   ansible.builtin.command:
@@ -165,11 +166,19 @@
 # zfs
 #
 
-- name: "Get ZFS vdev path for {{ resizefs_mount.stdout.split()[0] | default('') }}"
+- name: "Get ZFS vdev name for {{ resizefs_mount.stdout.split()[0] | default('') }}"
   ansible.builtin.shell: |
     set -o pipefail
-    zpool status -P {{ resizefs_mount.stdout.split()[0].split('/')[0] | quote }} \
-      | awk '/^[[:space:]]+\/dev\// { print $1 }'
+    pool={{ resizefs_mount.stdout.split()[0].split('/')[0] | quote }}
+
+    zpool status "$pool" \
+      | awk -v pool="$pool" '
+          /^[[:space:]]+[A-Za-z0-9_\/.-]+[[:space:]]+ONLINE/ &&
+          $1 != pool &&
+          $1 !~ /^(mirror|raidz|logs|cache|spares|special|dedup)/ {
+            print $1
+          }
+        '
   args:
     executable: /bin/bash
   register: resizefs_zfs_vdev
@@ -179,121 +188,6 @@
     - resizefs_mount.stdout is defined
     - resizefs_mount.stdout.split() | length >= 2
     - resizefs_mount.stdout.split()[1] == 'zfs'
-  tags: resizefs
-
-- name: "Get ZFS vdev device type for {{ resizefs_zfs_vdev.stdout_lines[0] | default('') }}"
-  ansible.builtin.command:
-    argv:
-      - lsblk
-      - --nodeps
-      - --noheadings
-      - --output
-      - TYPE
-      - "{{ resizefs_zfs_vdev.stdout_lines[0] }}"
-  register: resizefs_zfs_device_type
-  changed_when: false
-  when:
-    - resizefs_enabled | bool
-    - resizefs_zfs_vdev.stdout_lines is defined
-    - resizefs_zfs_vdev.stdout_lines | length == 1
-    - resizefs_zfs_vdev.stdout_lines[0] is match('^/dev/')
-  tags: resizefs
-
-- name: "Get ZFS vdev kernel name for {{ resizefs_zfs_vdev.stdout_lines[0] | default('') }}"
-  ansible.builtin.command:
-    argv:
-      - lsblk
-      - --nodeps
-      - --noheadings
-      - --output
-      - NAME
-      - "{{ resizefs_zfs_vdev.stdout_lines[0] }}"
-  register: resizefs_zfs_device_name
-  changed_when: false
-  when:
-    - resizefs_enabled | bool
-    - resizefs_zfs_device_type.stdout is defined
-    - resizefs_zfs_device_type.stdout | trim in ['part', 'disk']
-  tags: resizefs
-
-- name: "Get ZFS vdev parent disk for {{ resizefs_zfs_vdev.stdout_lines[0] | default('') }}"
-  ansible.builtin.command:
-    argv:
-      - lsblk
-      - --nodeps
-      - --noheadings
-      - --output
-      - PKNAME
-      - "{{ resizefs_zfs_vdev.stdout_lines[0] }}"
-  register: resizefs_zfs_parent_disk
-  changed_when: false
-  when:
-    - resizefs_enabled | bool
-    - resizefs_zfs_device_type.stdout is defined
-    - resizefs_zfs_device_type.stdout | trim == 'part'
-  tags: resizefs
-
-- name: "Get ZFS vdev partition number for {{ resizefs_zfs_vdev.stdout_lines[0] | default('') }}"
-  ansible.builtin.command:
-    argv:
-      - cat
-      - "/sys/class/block/{{ resizefs_zfs_device_name.stdout | trim }}/partition"
-  register: resizefs_zfs_partition_number
-  changed_when: false
-  when:
-    - resizefs_enabled | bool
-    - resizefs_zfs_device_type.stdout is defined
-    - resizefs_zfs_device_type.stdout | trim == 'part'
-    - resizefs_zfs_device_name.stdout is defined
-    - resizefs_zfs_device_name.stdout | trim | length > 0
-  tags: resizefs
-
-- name: "Grow ZFS vdev partition for /dev/{{ resizefs_zfs_parent_disk.stdout | default('') | trim }}"
-  community.general.parted:
-    device: "/dev/{{ resizefs_zfs_parent_disk.stdout | trim }}"
-    number: "{{ resizefs_zfs_partition_number.stdout | trim | int }}"
-    part_end: "-9MiB" # Leave space for the ZFS reserved partition
-    resize: true
-    state: present
-  register: resizefs_zfs_partition_grow
-  when:
-    - resizefs_enabled | bool
-    - resizefs_zfs_device_type.stdout is defined
-    - resizefs_zfs_device_type.stdout | trim == 'part'
-    - resizefs_zfs_parent_disk.stdout is defined
-    - resizefs_zfs_parent_disk.stdout | trim | length > 0
-    - resizefs_zfs_partition_number.stdout is defined
-    - resizefs_zfs_partition_number.stdout | trim | length > 0
-  tags: resizefs
-
-- name: "Refresh ZFS vdev partition table for /dev/{{ resizefs_zfs_parent_disk.stdout | default('') | trim }}"
-  ansible.builtin.command:
-    argv:
-      - partprobe
-      - "/dev/{{ resizefs_zfs_parent_disk.stdout | trim }}"
-  changed_when: false
-  when:
-    - resizefs_enabled | bool
-    - resizefs_zfs_device_type.stdout is defined
-    - resizefs_zfs_device_type.stdout | trim == 'part'
-    - resizefs_zfs_partition_grow is defined
-    - resizefs_zfs_partition_grow.changed | default(false)
-    - resizefs_zfs_parent_disk.stdout is defined
-    - resizefs_zfs_parent_disk.stdout | trim | length > 0
-  tags: resizefs
-
-- name: "Wait for udev to settle after ZFS partition resize"
-  ansible.builtin.command:
-    argv:
-      - udevadm
-      - settle
-  changed_when: false
-  when:
-    - resizefs_enabled | bool
-    - resizefs_zfs_device_type.stdout is defined
-    - resizefs_zfs_device_type.stdout | trim == 'part'
-    - resizefs_zfs_partition_grow is defined
-    - resizefs_zfs_partition_grow.changed | default(false)
   tags: resizefs
 
 - name: "Expand ZFS pool {{ resizefs_mount.stdout.split()[0].split('/')[0] | default('') }}"
@@ -312,6 +206,4 @@
     - resizefs_mount.stdout.split()[1] == 'zfs'
     - resizefs_zfs_vdev.stdout_lines is defined
     - resizefs_zfs_vdev.stdout_lines | length == 1
-    - resizefs_zfs_device_type.stdout is defined
-    - resizefs_zfs_device_type.stdout | trim in ['part', 'disk']
   tags: resizefs
