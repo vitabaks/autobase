@@ -159,6 +159,9 @@
       when: firewall_enabled_at_boot | default(false) | bool
       tags: firewall
 
+    - role: vitabaks.autobase.resizefs
+      when: resizefs_enabled | default(false) | bool
+
     - role: vitabaks.autobase.hostname
     - role: vitabaks.autobase.resolv_conf
     - role: vitabaks.autobase.etc_hosts

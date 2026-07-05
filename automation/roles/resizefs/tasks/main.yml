@@ -1,0 +1,135 @@
+---
+# This role is used to automatically grow the block device and filesystem
+# when the underlying disk has available space.
+# Note: LVM is not supported yet (TODO).
+
+# /dev/nvme1n1      TYPE=disk -> resize filesystem only
+# /dev/nvme1n1p1    TYPE=part -> resize partition + resize filesystem
+# /dev/mapper/...   TYPE zfs/lvm/dm/crypt -> skip
+
+- name: "Get filesystem source and type for {{ resizefs_target_path }}"
+  ansible.builtin.command:
+    argv:
+      - findmnt
+      - -n
+      - -T
+      - "{{ resizefs_target_path }}"
+      - -o
+      - SOURCE,FSTYPE
+  register: resizefs_mount
+  changed_when: false
+  when: resizefs_enabled | bool
+  tags: resizefs
+
+- name: "Get block device type for {{ resizefs_mount.stdout.split()[0] | default('') }}"
+  ansible.builtin.command:
+    argv:
+      - lsblk
+      - --noheadings
+      - --output
+      - TYPE
+      - "{{ resizefs_mount.stdout.split()[0] }}"
+  register: resizefs_device_type
+  changed_when: false
+  failed_when: false
+  when:
+    - resizefs_enabled | bool
+    - resizefs_mount.stdout is defined
+    - resizefs_mount.stdout.split() | length >= 2
+    - resizefs_mount.stdout.split()[0] is match('^/dev/')
+    - resizefs_mount.stdout.split()[1] in ['ext4', 'xfs']
+  tags: resizefs
+
+- name: "Get parent disk for {{ resizefs_mount.stdout.split()[0] | default('') }}"
+  ansible.builtin.command:
+    argv:
+      - lsblk
+      - --noheadings
+      - --output
+      - PKNAME
+      - "{{ resizefs_mount.stdout.split()[0] }}"
+  register: resizefs_parent_disk
+  changed_when: false
+  failed_when: false
+  when:
+    - resizefs_enabled | bool
+    - resizefs_device_type.stdout is defined
+    - resizefs_device_type.stdout | trim == 'part'
+  tags: resizefs
+
+- name: "Get partition number for {{ resizefs_mount.stdout.split()[0] | default('') }}"
+  ansible.builtin.command:
+    argv:
+      - cat
+      - "/sys/class/block/{{ resizefs_mount.stdout.split()[0] | basename }}/partition"
+  register: resizefs_partition_number
+  changed_when: false
+  failed_when: false
+  when:
+    - resizefs_enabled | bool
+    - resizefs_device_type.stdout is defined
+    - resizefs_device_type.stdout | trim == 'part'
+  tags: resizefs
+
+- name: "Grow partition for /dev/{{ resizefs_parent_disk.stdout | default('') | trim }}"
+  community.general.parted:
+    device: "/dev/{{ resizefs_parent_disk.stdout | trim }}"
+    number: "{{ resizefs_partition_number.stdout | trim | int }}"
+    part_end: "100%"
+    resize: true
+    state: present
+  register: resizefs_partition_grow
+  when:
+    - resizefs_enabled | bool
+    - resizefs_device_type.stdout is defined
+    - resizefs_device_type.stdout | trim == 'part'
+    - resizefs_parent_disk.stdout is defined
+    - resizefs_parent_disk.stdout | trim | length > 0
+    - resizefs_partition_number.stdout is defined
+    - resizefs_partition_number.stdout | trim | length > 0
+  tags: resizefs
+
+- name: "Refresh partition table for /dev/{{ resizefs_parent_disk.stdout | default('') | trim }}"
+  ansible.builtin.command:
+    argv:
+      - partprobe
+      - "/dev/{{ resizefs_parent_disk.stdout | trim }}"
+  changed_when: false
+  when:
+    - resizefs_enabled | bool
+    - resizefs_device_type.stdout is defined
+    - resizefs_device_type.stdout | trim == 'part'
+    - resizefs_partition_grow is defined
+    - resizefs_partition_grow.changed | default(false)
+    - resizefs_parent_disk.stdout is defined
+    - resizefs_parent_disk.stdout | trim | length > 0
+  tags: resizefs
+
+- name: "Wait for udev to settle"
+  ansible.builtin.command:
+    argv:
+      - udevadm
+      - settle
+  changed_when: false
+  when:
+    - resizefs_enabled | bool
+    - resizefs_device_type.stdout is defined
+    - resizefs_device_type.stdout | trim == 'part'
+    - resizefs_partition_grow is defined
+    - resizefs_partition_grow.changed | default(false)
+  tags: resizefs
+
+- name: "Grow filesystem for {{ resizefs_mount.stdout.split()[0] | default('') }}"
+  community.general.filesystem:
+    dev: "{{ resizefs_mount.stdout.split()[0] }}"
+    fstype: "{{ resizefs_mount.stdout.split()[1] }}"
+    resizefs: true
+  when:
+    - resizefs_enabled | bool
+    - resizefs_mount.stdout is defined
+    - resizefs_mount.stdout.split() | length >= 2
+    - resizefs_mount.stdout.split()[0] is match('^/dev/')
+    - resizefs_mount.stdout.split()[1] in ['ext4', 'xfs']
+    - resizefs_device_type.stdout is defined
+    - resizefs_device_type.stdout | trim in ['part', 'disk']
+  tags: resizefs

@@ -1165,6 +1165,11 @@ mount:
 #    opts: defaults,noatime
 #    state: mounted
 
+# Automatically grow the block device and filesystem
+# when the underlying disk has available space.
+resizefs_enabled: false
+resizefs_target_path: "{{ postgresql_data_dir }}"
+
 ############################################################
 # Repository and packages
 ############################################################

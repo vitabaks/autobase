@@ -111,6 +111,7 @@
 - netdata
 - ssh_public_keys
 - mount, zpool
+- resizefs
 - perf, flamegraph
 - tls
   - tls_cert_generate

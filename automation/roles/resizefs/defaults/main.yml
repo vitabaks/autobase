@@ -1,0 +1,3 @@
+---
+# resizefs_enabled: true
+# resizefs_target_path: "{{ postgresql_data_dir }}"

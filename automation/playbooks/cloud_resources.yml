@@ -22,3 +22,7 @@
       vars:
         generate_inventory: false
       tags: always
+
+    - role: vitabaks.autobase.resizefs
+      when: resizefs_enabled | default(false) | bool
+      tags: always

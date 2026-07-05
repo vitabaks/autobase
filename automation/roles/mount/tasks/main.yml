@@ -179,6 +179,7 @@
         - name: "Create zpool (use {{ (mount | first | default({})).src | default('/dev/' ~ (lsblk_disk_device | default('')), true) }})"
           ansible.builtin.command: >-
             zpool create -f
+            -o autoexpand=on
             -O compression=on
             -O atime=off
             -O recordsize=128k

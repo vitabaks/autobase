@@ -23,6 +23,7 @@ Notes:
 - If multiple candidate disks are detected, the role fails and asks you to set `mount[].src` explicitly.
 - If `mount[].src` is given as `UUID=...`, the role assumes the filesystem already exists and only mounts it.
 - ZFS packages are installed per OS family (Ubuntu/Debian/RedHat) and the zfs module is loaded automatically.
+- New ZFS pools are created with `autoexpand=on`, allowing the pool to use additional device capacity after the underlying disk is expanded.
 
 ## Example:
 
