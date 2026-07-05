@@ -166,14 +166,16 @@
 # zfs
 #
 
-- name: "Get ZFS vdev path for {{ resizefs_mount.stdout.split()[0] | default('') }}"
+- name: "Get ZFS vdev name for {{ resizefs_mount.stdout.split()[0] | default('') }}"
   ansible.builtin.shell: |
     set -o pipefail
     pool={{ resizefs_mount.stdout.split()[0].split('/')[0] | quote }}
 
-    zpool status -P "$pool" \
-      | awk '
-          /^[[:space:]]+\/dev\/[A-Za-z0-9_\/.-]+[[:space:]]+ONLINE/ {
+    zpool status "$pool" \
+      | awk -v pool="$pool" '
+          /^[[:space:]]+[A-Za-z0-9_\/.-]+[[:space:]]+ONLINE/ &&
+          $1 != pool &&
+          $1 !~ /^(mirror|raidz|logs|cache|spares|special|dedup)/ {
             print $1
           }
         '
@@ -196,7 +198,6 @@
       - -e
       - "{{ resizefs_mount.stdout.split()[0].split('/')[0] }}"
       - "{{ resizefs_zfs_vdev.stdout_lines[0] }}"
-  changed_when: false
   when:
     - resizefs_enabled | bool
     - resizefs_mount.stdout is defined
@@ -204,4 +205,5 @@
     - resizefs_mount.stdout.split()[1] == 'zfs'
     - resizefs_zfs_vdev.stdout_lines is defined
     - resizefs_zfs_vdev.stdout_lines | length == 1
+    - resizefs_zfs_vdev.stdout_lines[0] is not match('^/')
   tags: resizefs
