@@ -1,7 +1,7 @@
 ---
 services:
   caddy:
-    image: lucaslorentz/caddy-docker-proxy:2.12
+    image: lucaslorentz/caddy-docker-proxy:2.13
     container_name: caddy
     ports:
       - 80:80
