@@ -26,10 +26,47 @@
         postgresql_cluster_maintenance: true
       tags: always
 
-    - name: "[Prepare] Get Patroni Cluster Leader Node"
+    # Detect the protocol the RUNNING Patroni REST API actually responds on.
+    # When enabling TLS on an already-deployed (previously non-TLS) cluster,
+    # 'patroni_restapi_protocol' resolves to 'https' (it is derived from 'tls_cert_generate'),
+    # but the running REST API is still serving 'http' until Patroni is reconfigured and
+    # restarted later in this run. Probing with the desired protocol would then fail and the
+    # health gate below would abort the play before it can switch Patroni over.
+    # This task probes with the configured protocol; the next task derives the effective
+    # protocol, falling back to the opposite one if this probe did not reach the API, so the
+    # subsequent leader check reflects the currently running API.
+    # A reachable node returns 200 (leader) or 503 (replica).
+    - name: "[Prepare] Probe Patroni REST API with configured protocol"
       ansible.builtin.uri:
         url: >-
           {{ patroni_restapi_protocol | default('https') }}://{{ patroni_restapi_connect_addr
+            | default(patroni_bind_address | default(bind_address, true), true) }}:{{ patroni_restapi_port
+            | default('8008') }}/leader
+        status_code: [200, 503]
+        validate_certs: false
+        ca_path: "{{ patroni_restapi_cafile | default(omit, true) }}"
+      register: patroni_restapi_probe
+      changed_when: false
+      failed_when: false
+      check_mode: false
+      environment:
+        no_proxy: "{{ patroni_bind_address | default(bind_address, true) }}"
+      when: inventory_hostname in groups['postgres_cluster']
+      tags: always
+
+    - name: "[Prepare] Set effective Patroni REST API protocol"
+      ansible.builtin.set_fact:
+        patroni_restapi_effective_protocol: >-
+          {{ (patroni_restapi_protocol | default('https'))
+             if (patroni_restapi_probe.status | default(-1)) in [200, 503]
+             else ('http' if (patroni_restapi_protocol | default('https')) == 'https' else 'https') }}
+      when: inventory_hostname in groups['postgres_cluster']
+      tags: always
+
+    - name: "[Prepare] Get Patroni Cluster Leader Node"
+      ansible.builtin.uri:
+        url: >-
+          {{ patroni_restapi_effective_protocol | default(patroni_restapi_protocol | default('https')) }}://{{ patroni_restapi_connect_addr
             | default(patroni_bind_address | default(bind_address, true), true) }}:{{ patroni_restapi_port
             | default('8008') }}/leader
         status_code: 200
