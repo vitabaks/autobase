@@ -88,7 +88,8 @@
   ansible.builtin.fail:
     msg: >-
       Unable to determine the GCP project.
-      Try to explicitly set the project ID in the gcp_project variable.
+      Make sure that a valid GCP service account JSON key is provided
+      or explicitly set the project ID in the gcp_project variable.
   when: gcp_project | default('') | length < 1
 
 # Create (if state is present)
