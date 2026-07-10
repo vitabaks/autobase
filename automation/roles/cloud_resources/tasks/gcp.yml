@@ -82,6 +82,7 @@
   ansible.builtin.set_fact:
     gcp_project: "{{ (gcp_service_account_contents | from_json).get('project_id', '') }}"
   no_log: true
+  changed_when: false
   when: gcp_project | default('') | length < 1
 
 - name: "Fail if GCP project was not found"
