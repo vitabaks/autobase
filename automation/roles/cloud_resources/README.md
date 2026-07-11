@@ -90,7 +90,7 @@ Provision the PostgreSQL cluster infrastructure in public clouds (AWS, GCP, Azur
 | Variable | Provider | Default/Notes |
 |----------|----------|---------------|
 | aws_ec2_spot_instance | AWS | Fallback for server_spot |
-| gcp_project | GCP | Fallbacks to projectNumber from credentials |
+| gcp_project | GCP | Fallbacks to project_id from service account credentials |
 | gcp_compute_instance_preemptible | GCP | Fallback for server_spot |
 | gcp_compute_health_check_interval_sec, gcp_compute_health_check_check_timeout_sec, gcp_compute_health_check_unhealthy_threshold, gcp_compute_health_check_healthy_threshold | GCP | Interval/timeout/threshold tuning |
 | gcp_compute_backend_service_timeout_sec, gcp_compute_backend_service_log_enable | GCP | LB Backend timeouts/logging |
