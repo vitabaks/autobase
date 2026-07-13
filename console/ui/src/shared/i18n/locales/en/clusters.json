@@ -4,6 +4,7 @@
   "createCluster": "Create cluster",
   "createPostgresCluster": "Create Postgres Cluster",
   "clusterName": "Cluster name",
+  "showFailureLog": "Show failure log",
   "creationTime": "Creation time",
   "servers": "Servers",
   "server": "Server",
