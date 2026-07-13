@@ -17,6 +17,7 @@ import { DatabaseServersBlockSchema } from '@entities/cluster/database-servers-b
 import { SSH_KEY_BLOCK_FIELD_NAMES } from '@entities/cluster/ssh-key-block/model/const.ts';
 import { LoadBalancerBlockSchema } from '@entities/cluster/load-balancers-block/model/validation.ts';
 import { DcsBlockSchema } from '@entities/cluster/expert-mode/dcs-block/model/validation.ts';
+import { isValidSshPublicKeyList } from '@shared/lib/sshPublicKeyValidation.ts';
 
 const CloudFormSchema = (t: TFunction) =>
   yup.object({
@@ -73,7 +74,14 @@ const CloudFormSchema = (t: TFunction) =>
       .mixed()
       .when(CLUSTER_FORM_FIELD_NAMES.PROVIDER, ([provider], schema) =>
         provider?.code !== PROVIDERS.LOCAL
-          ? yup.string().required(t('requiredField', { ns: 'validation' }))
+          ? yup
+              .string()
+              .required(t('requiredField', { ns: 'validation' }))
+              .test(
+                'is valid SSH public key',
+                t('invalidSshPublicKey', { ns: 'validation' }),
+                (value) => !value || isValidSshPublicKeyList(value),
+              )
           : schema.notRequired(),
       ),
   });
