@@ -25,7 +25,10 @@
         executable: /bin/bash
       register: lsblk_disk
       changed_when: false
-      when: (cloud_provider | default('') | length > 0) and (mount | first | default({})).src | default('') | length < 1
+      when:
+        - volume_type | default('') | lower != 'local'
+        - volume_size | default(100) | int != 0
+        - (cloud_provider | default('') | length > 0) and (mount | first | default({})).src | default('') | length < 1
 
     # Stop if empty volume is not detected
     - name: Empty volume is not detected

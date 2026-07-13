@@ -18,6 +18,7 @@ const ClusterSliderBox: FC<SliderBoxProps> = ({
   error,
   limitMin = true,
   limitMax,
+  allowZero = false,
   topRightElements,
 }) => {
   const theme = useTheme();
@@ -26,7 +27,9 @@ const ClusterSliderBox: FC<SliderBoxProps> = ({
     const { value } = e.target;
     if (/^\d*$/.test(value)) {
       const num = Number(value);
-      changeAmount(num < (min ?? 0) && limitMin ? min : num > (max ?? Infinity) && limitMax ? max : num);
+      changeAmount(
+        num === 0 && allowZero ? 0 : num < (min ?? 0) && limitMin ? min : num > (max ?? Infinity) && limitMax ? max : num,
+      );
     }
   };
 
@@ -68,8 +71,9 @@ const ClusterSliderBox: FC<SliderBoxProps> = ({
         padding="32px">
         {topRightElements ?? null}
         <Slider
-          value={amount}
+          value={amount === 0 && allowZero ? min : amount}
           onChange={changeAmount}
+          disabled={amount === 0 && allowZero}
           step={step}
           valueLabelDisplay="auto"
           min={min}

@@ -534,6 +534,7 @@
         index_var: idx
         label: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}-storage"
       register: block_storage_result
+      when: not use_local_disk | bool
 
     - name: "DigitalOcean: Attach Block Storage to Droplet"
       community.digitalocean.digital_ocean_block_storage:
@@ -547,7 +548,9 @@
       loop_control:
         index_var: idx
         label: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}-storage"
-      when: droplet_result.results is defined
+      when:
+        - not use_local_disk | bool
+        - droplet_result.results is defined
 
     # Load Balancer
     - name: "Set variable: digital_ocean_load_balancer_port"

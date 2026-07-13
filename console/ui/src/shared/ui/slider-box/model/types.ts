@@ -15,6 +15,7 @@ export interface SliderBoxProps {
   error?: object;
   limitMin?: boolean;
   limitMax?: boolean;
+  allowZero?: boolean;
   topRightElements?: ReactElement | null;
 }
 

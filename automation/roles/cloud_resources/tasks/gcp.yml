@@ -305,21 +305,7 @@
         zone: "{{ server_location + '-b' if not server_location is match('.*-[a-z]$') else server_location }}" # add "-b" if the zone is not defined
         name: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}"
         machine_type: "{{ server_type }}"
-        disks:
-          - device_name: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}-system"
-            auto_delete: true
-            boot: true
-            initialize_params:
-              disk_name: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}-system"
-              source_image: "{{ server_image }}"
-              disk_size_gb: "{{ system_volume_size | default('80') }}" # system disk size
-              disk_type: "{{ system_volume_type | default('pd-ssd', true) }}"
-          - device_name: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}-storage"
-            auto_delete: true
-            initialize_params:
-              disk_name: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}-storage"
-              disk_size_gb: "{{ volume_size | int }}"
-              disk_type: "{{ volume_type | default('pd-ssd', true) }}"
+        disks: "{{ [system_disk] + ([] if use_local_disk | bool else [data_disk]) }}"
         network_interfaces:
           - network:
               selfLink: "global/networks/{{ gcp_network_name }}"
@@ -344,6 +330,23 @@
       until: server_result is success
       delay: 10
       retries: 3
+      vars:
+        system_disk:
+          device_name: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}-system"
+          auto_delete: true
+          boot: true
+          initialize_params:
+            disk_name: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}-system"
+            source_image: "{{ server_image }}"
+            disk_size_gb: "{{ system_volume_size | default('80') }}"
+            disk_type: "{{ system_volume_type | default('pd-ssd', true) }}"
+        data_disk:
+          device_name: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}-storage"
+          auto_delete: true
+          initialize_params:
+            disk_name: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}-storage"
+            disk_size_gb: "{{ volume_size | int }}"
+            disk_type: "{{ volume_type | default('pd-ssd', true) }}"
 
     # Required to allow data disk size to be changed after deployment.
     - name: "GCP: Ensure data disk size"
@@ -360,6 +363,7 @@
       loop_control:
         index_var: idx
         label: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}-storage"
+      when: not use_local_disk | bool
 
     # Load Balancer
     # This block creates Global External classic proxy Network Load Balancer.

@@ -284,21 +284,7 @@
                 groups: "{{ ([] if not cloud_firewall | bool else [ec2_security_group_result.group_id]) }}"
                 assign_public_ip: "{{ server_public_ip | bool }}"
                 delete_on_termination: true
-            volumes:
-              - device_name: /dev/sda1
-                ebs:
-                  volume_type: "{{ system_volume_type | default('gp3', true) }}"
-                  volume_size: "{{ system_volume_size | default(80) | int }}"
-                  iops: "{{ system_volume_iops | default(3000) | int if system_volume_type | default('gp3', true) in ['gp3', 'io1', 'io2'] else omit }}"
-                  throughput: "{{ (system_volume_throughput | default(125) | int) if (system_volume_type | default('gp3', true)) == 'gp3' else omit }}"
-                  delete_on_termination: true
-              - device_name: /dev/sdb
-                ebs:
-                  volume_type: "{{ volume_type | default('gp3', true) }}"
-                  volume_size: "{{ volume_size | int }}"
-                  iops: "{{ volume_iops | default(3000) | int if volume_type | default('gp3', true) in ['gp3', 'io1', 'io2'] else omit }}"
-                  throughput: "{{ (volume_throughput | default(125) | int) if (volume_type | default('gp3', true)) == 'gp3' else omit }}"
-                  delete_on_termination: true
+            volumes: "{{ [system_volume] + ([] if use_local_disk | bool else [data_volume]) }}"
             tags:
               Name: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}"
               Cluster: "{{ patroni_cluster_name }}"
@@ -310,6 +296,23 @@
           retries: 3
           delay: 10
           when: ec2_instance_info.results[idx].instances | length == 0 # only if instance does not exist
+          vars:
+            system_volume:
+              device_name: /dev/sda1
+              ebs:
+                volume_type: "{{ system_volume_type | default('gp3', true) }}"
+                volume_size: "{{ system_volume_size | default(80) | int }}"
+                iops: "{{ system_volume_iops | default(3000) | int if system_volume_type | default('gp3', true) in ['gp3', 'io1', 'io2'] else omit }}"
+                throughput: "{{ (system_volume_throughput | default(125) | int) if (system_volume_type | default('gp3', true)) == 'gp3' else omit }}"
+                delete_on_termination: true
+            data_volume:
+              device_name: /dev/sdb
+              ebs:
+                volume_type: "{{ volume_type | default('gp3', true) }}"
+                volume_size: "{{ volume_size | int }}"
+                iops: "{{ volume_iops | default(3000) | int if volume_type | default('gp3', true) in ['gp3', 'io1', 'io2'] else omit }}"
+                throughput: "{{ (volume_throughput | default(125) | int) if (volume_type | default('gp3', true)) == 'gp3' else omit }}"
+                delete_on_termination: true
       when: not server_spot | default(aws_ec2_spot_instance | default(false)) | bool
 
     # Spot instance (if 'server_spot' is 'true')
@@ -347,21 +350,7 @@
                   associate_public_ip_address: "{{ server_public_ip | bool }}"
                   delete_on_termination: true
                   device_index: 0
-              block_device_mappings:
-                - device_name: /dev/sda1
-                  ebs:
-                    volume_type: "{{ volume_type | default('gp3', true) }}"
-                    volume_size: 100 # TODO: use 'system_volume_size' variable (https://github.com/ansible-collections/amazon.aws/issues/1949)
-                    iops: "{{ system_volume_iops | default(3000) | int if system_volume_type | default('gp3', true) in ['gp3', 'io1', 'io2'] else omit }}"
-                    throughput: "{{ (system_volume_throughput | default(125) | int) if (system_volume_type | default('gp3', true)) == 'gp3' else omit }}"
-                    delete_on_termination: true
-                - device_name: /dev/sdb
-                  ebs:
-                    volume_type: "{{ volume_type | default('gp3', true) }}"
-                    volume_size: 10 # will be redefined via the ec2_vol module
-                    iops: "{{ volume_iops | default(3000) | int if volume_type | default('gp3', true) in ['gp3', 'io1', 'io2'] else omit }}"
-                    throughput: "{{ (volume_throughput | default(125) | int) if (volume_type | default('gp3', true)) == 'gp3' else omit }}"
-                    delete_on_termination: true
+              block_device_mappings: "{{ [system_volume] + ([] if use_local_disk | bool else [data_volume]) }}"
             tags:
               Name: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}"
               Cluster: "{{ patroni_cluster_name }}"
@@ -371,6 +360,23 @@
             label: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}"
           register: ec2_spot_request_result
           when: item.instances[0] | default('') | length < 1
+          vars:
+            system_volume:
+              device_name: /dev/sda1
+              ebs:
+                volume_type: "{{ system_volume_type | default('gp3', true) }}"
+                volume_size: 100 # TODO: use 'system_volume_size' variable (https://github.com/ansible-collections/amazon.aws/issues/1949)
+                iops: "{{ system_volume_iops | default(3000) | int if system_volume_type | default('gp3', true) in ['gp3', 'io1', 'io2'] else omit }}"
+                throughput: "{{ (system_volume_throughput | default(125) | int) if (system_volume_type | default('gp3', true)) == 'gp3' else omit }}"
+                delete_on_termination: true
+            data_volume:
+              device_name: /dev/sdb
+              ebs:
+                volume_type: "{{ volume_type | default('gp3', true) }}"
+                volume_size: 10 # will be redefined via the ec2_vol module
+                iops: "{{ volume_iops | default(3000) | int if volume_type | default('gp3', true) in ['gp3', 'io1', 'io2'] else omit }}"
+                throughput: "{{ (volume_throughput | default(125) | int) if (volume_type | default('gp3', true)) == 'gp3' else omit }}"
+                delete_on_termination: true
 
         - name: "AWS: Wait for EC2 Spot instance to be created"
           amazon.aws.ec2_instance:
@@ -458,6 +464,7 @@
           }}
       register: ec2_volume_resize_result
       when:
+        - not use_local_disk | bool
         - server_result.results is defined
         - item.instances is defined
         - data_volume.ebs.volume_id | default('') | length > 0

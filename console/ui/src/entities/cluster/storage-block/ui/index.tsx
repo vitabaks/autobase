@@ -9,6 +9,7 @@ import { fileSystemTypeOptions, STORAGE_BLOCK_FIELDS } from '@entities/cluster/s
 import { IS_EXPERT_MODE } from '@shared/model/constants.ts';
 
 const StorageBlock: FC = () => {
+  const LOCAL_VOLUME_TYPE = 'local';
   const { t } = useTranslation(['clusters', 'shared']);
   const theme = useTheme();
   const [storage, setStorage] = useState({}); // full info about selected storage
@@ -22,16 +23,17 @@ const StorageBlock: FC = () => {
 
   const watchProvider = useWatch({ name: CLUSTER_FORM_FIELD_NAMES.PROVIDER });
   const watchVolume = useWatch({ name: STORAGE_BLOCK_FIELDS.VOLUME_TYPE });
+  const watchStorageAmount = useWatch({ name: STORAGE_BLOCK_FIELDS.STORAGE_AMOUNT });
 
   useEffect(() => {
     const volumes = watchProvider?.volumes;
     setStorage(volumes?.find((volume) => volume?.is_default) ?? {});
 
     setVolumeTypes(
-      volumes?.map((volume) => ({
-        label: volume?.volume_type,
-        value: volume?.volume_type,
-      })) ?? [],
+      [
+        ...(volumes?.map((volume) => ({ label: volume?.volume_type, value: volume?.volume_type })) ?? []),
+        { label: t('localDisk'), value: LOCAL_VOLUME_TYPE },
+      ],
     );
 
     setValue(
@@ -39,15 +41,27 @@ const StorageBlock: FC = () => {
       STORAGE_BLOCK_FIELDS.VOLUME_TYPE,
       volumes?.find((volume) => volume?.is_default)?.volume_type ?? volumes?.[0]?.volume_type,
     );
-  }, [watchProvider]);
+  }, [setValue, t, watchProvider?.volumes]);
 
   useEffect(() => {
+    if (watchVolume === LOCAL_VOLUME_TYPE) {
+      setStorage({});
+      setValue(STORAGE_BLOCK_FIELDS.STORAGE_AMOUNT, 0);
+      return;
+    }
+
     // set selected storage size sa minimum available for selected volume
     const volumes = watchProvider?.volumes;
     const storage = volumes?.find((volume) => volume?.volume_type === watchVolume);
     setStorage(storage);
     setValue(STORAGE_BLOCK_FIELDS.STORAGE_AMOUNT, storage?.min_size ?? 1);
-  }, [watchVolume]);
+  }, [setValue, watchProvider?.volumes, watchVolume]);
+
+  useEffect(() => {
+    if (watchStorageAmount === 0 && watchVolume !== LOCAL_VOLUME_TYPE) {
+      setValue(STORAGE_BLOCK_FIELDS.VOLUME_TYPE, LOCAL_VOLUME_TYPE);
+    }
+  }, [setValue, watchStorageAmount, watchVolume]);
 
   return (
     <Box>
@@ -68,6 +82,7 @@ const StorageBlock: FC = () => {
             changeAmount={onChange}
             unit="GB"
             limitMax
+            allowZero
             icon={<StorageIcon width="24px" height="24px" style={{ fill: theme.palette.text.primary }} />}
             error={errors[STORAGE_BLOCK_FIELDS.STORAGE_AMOUNT]}
             topRightElements={
@@ -97,8 +112,10 @@ const StorageBlock: FC = () => {
                               <MenuItem key={value} value={value}>
                                 <Tooltip
                                   title={
-                                    watchProvider?.volumes?.find((volume) => volume?.volume_type === value)
-                                      ?.volume_description ?? ''
+                                    value === LOCAL_VOLUME_TYPE
+                                      ? t('localDiskDescription')
+                                      : watchProvider?.volumes?.find((volume) => volume?.volume_type === value)
+                                          ?.volume_description ?? ''
                                   }>
                                   {label}
                                 </Tooltip>
