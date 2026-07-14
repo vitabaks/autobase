@@ -23,11 +23,12 @@ const StorageBlock: FC = () => {
 
   const watchProvider = useWatch({ name: CLUSTER_FORM_FIELD_NAMES.PROVIDER });
   const watchVolume = useWatch({ name: STORAGE_BLOCK_FIELDS.VOLUME_TYPE });
-  const watchStorageAmount = useWatch({ name: STORAGE_BLOCK_FIELDS.STORAGE_AMOUNT });
 
   useEffect(() => {
     const volumes = watchProvider?.volumes;
-    setStorage(volumes?.find((volume) => volume?.is_default) ?? {});
+    const defaultVolume = volumes?.find((volume) => volume?.is_default) ?? volumes?.[0];
+    setStorage(defaultVolume ?? {});
+    setValue(STORAGE_BLOCK_FIELDS.STORAGE_AMOUNT, defaultVolume?.min_size ?? 1);
 
     setVolumeTypes(
       [
@@ -39,29 +40,22 @@ const StorageBlock: FC = () => {
     setValue(
       // imperatively set a volume type when user changes provider
       STORAGE_BLOCK_FIELDS.VOLUME_TYPE,
-      volumes?.find((volume) => volume?.is_default)?.volume_type ?? volumes?.[0]?.volume_type,
+      defaultVolume?.volume_type,
     );
   }, [setValue, t, watchProvider?.volumes]);
 
   useEffect(() => {
     if (watchVolume === LOCAL_VOLUME_TYPE) {
-      setStorage({});
       setValue(STORAGE_BLOCK_FIELDS.STORAGE_AMOUNT, 0);
       return;
     }
 
-    // set selected storage size sa minimum available for selected volume
+    // Update the slider bounds for the selected volume. The size itself is set
+    // by the volume-type control, so manually typed values are not overwritten.
     const volumes = watchProvider?.volumes;
     const storage = volumes?.find((volume) => volume?.volume_type === watchVolume);
     setStorage(storage);
-    setValue(STORAGE_BLOCK_FIELDS.STORAGE_AMOUNT, storage?.min_size ?? 1);
   }, [setValue, watchProvider?.volumes, watchVolume]);
-
-  useEffect(() => {
-    if (watchStorageAmount === 0 && watchVolume !== LOCAL_VOLUME_TYPE) {
-      setValue(STORAGE_BLOCK_FIELDS.VOLUME_TYPE, LOCAL_VOLUME_TYPE);
-    }
-  }, [setValue, watchStorageAmount, watchVolume]);
 
   return (
     <Box>
@@ -71,15 +65,26 @@ const StorageBlock: FC = () => {
       <Controller
         control={control}
         name={STORAGE_BLOCK_FIELDS.STORAGE_AMOUNT}
-        render={({ field: { onChange, value } }) => (
+        render={({ field: { onChange, value } }) => {
+          const handleStorageChange = (amount: number) => {
+            onChange(amount);
+
+            if (amount === 0) {
+              setValue(STORAGE_BLOCK_FIELDS.VOLUME_TYPE, LOCAL_VOLUME_TYPE);
+            } else if (watchVolume === LOCAL_VOLUME_TYPE && amount >= (storage?.min_size ?? 1)) {
+              const defaultVolume = watchProvider?.volumes?.find((volume) => volume?.is_default) ?? watchProvider?.volumes?.[0];
+              setValue(STORAGE_BLOCK_FIELDS.VOLUME_TYPE, defaultVolume?.volume_type);
+            }
+          };
+
+          return (
           <ClusterSliderBox
             min={storage?.min_size ?? 1}
             max={storage?.max_size ?? 100}
             marksAdditionalLabel="GB"
             marksAmount={10}
-            step={100}
             amount={value}
-            changeAmount={onChange}
+            changeAmount={handleStorageChange}
             unit="GB"
             limitMax
             allowZero
@@ -107,7 +112,19 @@ const StorageBlock: FC = () => {
                       render={({ field }) => (
                         <FormControl fullWidth size="small">
                           <InputLabel>{label}</InputLabel>
-                          <Select {...field} size="small" label={label}>
+                          <Select
+                            {...field}
+                            size="small"
+                            label={label}
+                            onChange={(event) => {
+                              field.onChange(event);
+                              if (fieldName === STORAGE_BLOCK_FIELDS.VOLUME_TYPE) {
+                                const selectedVolume = watchProvider?.volumes?.find(
+                                  (volume) => volume?.volume_type === event.target.value,
+                                );
+                                setValue(STORAGE_BLOCK_FIELDS.STORAGE_AMOUNT, selectedVolume?.min_size ?? 0);
+                              }
+                            }}>
                             {options.map(({ value, label }) => (
                               <MenuItem key={value} value={value}>
                                 <Tooltip
@@ -130,7 +147,8 @@ const StorageBlock: FC = () => {
               ) : null
             }
           />
-        )}
+          );
+        }}
       />
     </Box>
   );

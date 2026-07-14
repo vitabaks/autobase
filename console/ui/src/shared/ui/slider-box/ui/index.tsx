@@ -1,5 +1,5 @@
-import { ChangeEvent, FC } from 'react';
-import { Box, Slider, TextField, Typography, useTheme } from '@mui/material';
+import { ChangeEvent, FC, useEffect, useState } from 'react';
+import { Box, Slider, SliderProps, TextField, Typography, useTheme } from '@mui/material';
 import { SliderBoxProps } from '@shared/ui/slider-box/model/types.ts';
 
 import { generateSliderMarks } from '@shared/ui/slider-box/lib/functions.ts';
@@ -22,16 +22,39 @@ const ClusterSliderBox: FC<SliderBoxProps> = ({
   topRightElements,
 }) => {
   const theme = useTheme();
+  const [inputValue, setInputValue] = useState(String(amount));
+
+  useEffect(() => {
+    setInputValue(String(amount));
+  }, [amount]);
 
   const onChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { value } = e.target;
     if (/^\d*$/.test(value)) {
-      const num = Number(value);
-      changeAmount(
-        num === 0 && allowZero ? 0 : num < (min ?? 0) && limitMin ? min : num > (max ?? Infinity) && limitMax ? max : num,
-      );
+      setInputValue(value);
+      if (value) changeAmount(Number(value));
     }
   };
+
+  const onBlur = () => {
+    const num = Number(inputValue);
+    const nextAmount =
+      num === 0 && allowZero
+        ? 0
+        : !inputValue || (num < (min ?? 0) && limitMin)
+          ? min
+          : num > (max ?? Infinity) && limitMax
+            ? max
+            : num;
+    setInputValue(String(nextAmount));
+    changeAmount(nextAmount);
+  };
+
+  const handleSliderChange: NonNullable<SliderProps['onChange']> = (_event, value) => {
+    changeAmount(Number(value));
+  };
+
+  const sliderMarks = marks ?? generateSliderMarks(min ?? 1, max ?? 100, marksAmount ?? 0, marksAdditionalLabel);
 
   return (
     <Box
@@ -53,10 +76,11 @@ const ClusterSliderBox: FC<SliderBoxProps> = ({
         {icon}
         <TextField
           required
-          value={amount}
+          value={inputValue}
           onChange={onChange}
+          onBlur={onBlur}
           error={!!error}
-          helperText={(error as any)?.message ?? ''}
+          helperText={error?.message ?? ''}
           size="small"
           sx={{ width: '75px' }}
         />
@@ -71,14 +95,13 @@ const ClusterSliderBox: FC<SliderBoxProps> = ({
         padding="32px">
         {topRightElements ?? null}
         <Slider
-          value={amount === 0 && allowZero ? min : amount}
-          onChange={changeAmount}
-          disabled={amount === 0 && allowZero}
-          step={step}
+          value={amount}
+          onChange={handleSliderChange}
+          step={allowZero ? null : step}
           valueLabelDisplay="auto"
-          min={min}
+          min={allowZero ? 0 : min}
           max={max}
-          marks={marks ?? generateSliderMarks(min ?? 1, max ?? 100, marksAmount ?? 0, marksAdditionalLabel)}
+          marks={allowZero ? [{ value: 0, label: `0 ${marksAdditionalLabel}` }, ...sliderMarks] : sliderMarks}
         />
       </Box>
     </Box>
