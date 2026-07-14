@@ -23,9 +23,11 @@ const ClusterSliderBox: FC<SliderBoxProps> = ({
 }) => {
   const theme = useTheme();
   const [inputValue, setInputValue] = useState(String(amount));
+  const [sliderValue, setSliderValue] = useState(amount);
 
   useEffect(() => {
     setInputValue(String(amount));
+    setSliderValue(amount);
   }, [amount]);
 
   const onChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -51,7 +53,15 @@ const ClusterSliderBox: FC<SliderBoxProps> = ({
   };
 
   const handleSliderChange: NonNullable<SliderProps['onChange']> = (_event, value) => {
+    if (allowZero) {
+      setSliderValue(Number(value));
+      return;
+    }
     changeAmount(Number(value));
+  };
+
+  const handleSliderChangeCommitted: NonNullable<SliderProps['onChangeCommitted']> = (_event, value) => {
+    if (allowZero) changeAmount(Number(value) < min ? 0 : Number(value));
   };
 
   const sliderMarks = marks ?? generateSliderMarks(min ?? 1, max ?? 100, marksAmount ?? 0, marksAdditionalLabel);
@@ -95,13 +105,14 @@ const ClusterSliderBox: FC<SliderBoxProps> = ({
         padding="32px">
         {topRightElements ?? null}
         <Slider
-          value={amount}
+          value={allowZero ? sliderValue : amount}
           onChange={handleSliderChange}
-          step={allowZero ? null : step}
+          onChangeCommitted={handleSliderChangeCommitted}
+          step={allowZero ? 1 : step}
           valueLabelDisplay="auto"
           min={allowZero ? 0 : min}
           max={max}
-          marks={allowZero ? [{ value: 0, label: `0 ${marksAdditionalLabel}` }, ...sliderMarks] : sliderMarks}
+          marks={sliderMarks}
         />
       </Box>
     </Box>
