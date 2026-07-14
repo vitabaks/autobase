@@ -1,4 +1,4 @@
-import { FC, useEffect, useRef } from 'react';
+import { FC, useEffect } from 'react';
 import { Box, TextField, Typography } from '@mui/material';
 import { Controller, useFormContext, useWatch } from 'react-hook-form';
 import { DATA_DIRECTORY_FIELD_NAMES } from '@entities/cluster/expert-mode/data-directory-block/model/const.ts';
@@ -15,18 +15,10 @@ const DataDirectoryBlock: FC = () => {
   } = useFormContext();
 
   const watchPostgresVersion = useWatch({ name: CLUSTER_FORM_FIELD_NAMES.POSTGRES_VERSION });
-  const watchDataDirectory = useWatch({ name: DATA_DIRECTORY_FIELD_NAMES.DATA_DIRECTORY });
-  const previousPostgresVersion = useRef(watchPostgresVersion);
 
   useEffect(() => {
-    const dataDirectory = `/pgdata/${watchPostgresVersion ?? 18}/main`;
-    const previousDefaultDirectory = `/pgdata/${previousPostgresVersion.current ?? 18}/main`;
-
-    if (!watchDataDirectory || (watchDataDirectory === previousDefaultDirectory && watchDataDirectory !== dataDirectory)) {
-      setValue(DATA_DIRECTORY_FIELD_NAMES.DATA_DIRECTORY, dataDirectory);
-    }
-    previousPostgresVersion.current = watchPostgresVersion;
-  }, [setValue, watchDataDirectory, watchPostgresVersion]);
+    setValue(DATA_DIRECTORY_FIELD_NAMES.DATA_DIRECTORY, `/pgdata/${watchPostgresVersion ?? 18}/main`);
+  }, [setValue, watchPostgresVersion]);
 
   return (
     <Box>
