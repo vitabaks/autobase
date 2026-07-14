@@ -100,6 +100,9 @@ export const getCloudProviderExtraVars = (values: ClusterFormValues) => ({
     : values[STORAGE_BLOCK_FIELDS.STORAGE_AMOUNT] === 0
       ? { volume_type: 'local' }
       : {}),
+  ...(values[STORAGE_BLOCK_FIELDS.STORAGE_AMOUNT] === 0 && values[DATA_DIRECTORY_FIELD_NAMES.DATA_DIRECTORY]
+    ? { postgresql_data_dir: values[DATA_DIRECTORY_FIELD_NAMES.DATA_DIRECTORY] }
+    : {}),
 });
 
 /**
