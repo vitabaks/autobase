@@ -23,6 +23,7 @@ const StorageBlock: FC = () => {
 
   const watchProvider = useWatch({ name: CLUSTER_FORM_FIELD_NAMES.PROVIDER });
   const watchVolume = useWatch({ name: STORAGE_BLOCK_FIELDS.VOLUME_TYPE });
+  const isSystemDisk = watchVolume === LOCAL_VOLUME_TYPE;
 
   useEffect(() => {
     const volumes = watchProvider?.volumes;
@@ -104,7 +105,9 @@ const StorageBlock: FC = () => {
                       label: t('volumeType'),
                       options: volumeTypes,
                     },
-                  ].map(({ fieldName, label, options }) => (
+                  ]
+                    .filter(({ fieldName }) => !isSystemDisk || fieldName !== STORAGE_BLOCK_FIELDS.FILE_SYSTEM_TYPE)
+                    .map(({ fieldName, label, options }) => (
                     <Controller
                       key={fieldName}
                       control={control}
@@ -142,7 +145,7 @@ const StorageBlock: FC = () => {
                         </FormControl>
                       )}
                     />
-                  ))}
+                    ))}
                 </Stack>
               ) : null
             }

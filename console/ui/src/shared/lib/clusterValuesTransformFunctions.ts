@@ -82,7 +82,9 @@ export const getCloudProviderExtraVars = (values: ClusterFormValues) => ({
   ...values[CLUSTER_FORM_FIELD_NAMES.REGION_CONFIG].cloud_image.image,
   ...(IS_EXPERT_MODE
     ? {
-        postgresql_data_dir_mount_fstype: values[STORAGE_BLOCK_FIELDS.FILE_SYSTEM_TYPE],
+        ...(values[STORAGE_BLOCK_FIELDS.STORAGE_AMOUNT] === 0
+          ? {}
+          : { postgresql_data_dir_mount_fstype: values[STORAGE_BLOCK_FIELDS.FILE_SYSTEM_TYPE] }),
         volume_type:
           values[STORAGE_BLOCK_FIELDS.STORAGE_AMOUNT] === 0 ? 'local' : values[STORAGE_BLOCK_FIELDS.VOLUME_TYPE],
         database_public_access: !!values?.[ADDITIONAL_SETTINGS_BLOCK_FIELD_NAMES.IS_DB_PUBLIC_ACCESS],
