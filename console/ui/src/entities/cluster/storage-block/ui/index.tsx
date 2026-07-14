@@ -105,15 +105,20 @@ const StorageBlock: FC = () => {
                       label: t('volumeType'),
                       options: volumeTypes,
                     },
-                  ]
-                    .filter(({ fieldName }) => !isSystemDisk || fieldName !== STORAGE_BLOCK_FIELDS.FILE_SYSTEM_TYPE)
-                    .map(({ fieldName, label, options }) => (
+                  ].map(({ fieldName, label, options }) => (
                     <Controller
                       key={fieldName}
                       control={control}
                       name={fieldName}
                       render={({ field }) => (
-                        <FormControl fullWidth size="small">
+                        <FormControl
+                          fullWidth
+                          size="small"
+                          sx={
+                            isSystemDisk && fieldName === STORAGE_BLOCK_FIELDS.FILE_SYSTEM_TYPE
+                              ? { visibility: 'hidden' }
+                              : undefined
+                          }>
                           <InputLabel>{label}</InputLabel>
                           <Select
                             {...field}
@@ -145,7 +150,7 @@ const StorageBlock: FC = () => {
                         </FormControl>
                       )}
                     />
-                    ))}
+                  ))}
                 </Stack>
               ) : null
             }
