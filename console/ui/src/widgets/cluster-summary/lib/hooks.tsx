@@ -136,12 +136,14 @@ const useGetCloudProviderConfig = () => {
                     {`${data[CLUSTER_FORM_FIELD_NAMES.INSTANCE_CONFIG]?.currency}${data[
                       CLUSTER_FORM_FIELD_NAMES.INSTANCE_CONFIG
                     ]?.price_monthly.toFixed(2)}/${t('perServer', { ns: 'clusters' })}`}
-                    , ~
-                    {isLocalDisk
-                      ? t('localDisk')
-                      : `${defaultVolume?.currency}${(
+                    {!isLocalDisk && (
+                      <>
+                        , ~
+                        {`${defaultVolume?.currency}${(
                           defaultVolume?.price_monthly * data[STORAGE_BLOCK_FIELDS.STORAGE_AMOUNT]
                         )?.toFixed(2)}/${t('perDisk', { ns: 'clusters' })}`}
+                      </>
+                    )}
                   </Typography>
                 </Stack>
               </>
