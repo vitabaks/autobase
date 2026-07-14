@@ -28,7 +28,6 @@ import { SECRET_MODAL_CONTENT_FORM_FIELD_NAMES } from '@entities/secret-form-blo
 import { ClusterFormProps } from '@widgets/cluster-form/model/types.ts';
 import { DATABASE_SERVERS_FIELD_NAMES } from '@/entities/cluster/database-servers-block/model/const';
 import { mapFormValuesToRequestFields } from '@shared/lib/clusterValuesTransformFunctions.ts';
-import { STORAGE_BLOCK_FIELDS } from '@entities/cluster/storage-block/model/const.ts';
 
 const DatabaseBlock = lazy(() => import('@entities/cluster/expert-mode/databases-block/ui'));
 const ConnectionPoolsBlock = lazy(() => import('@entities/cluster/expert-mode/connection-pools-block/ui'));
@@ -56,8 +55,6 @@ const ClusterForm: React.FC<ClusterFormProps> = ({
   const methods = useFormContext();
 
   const watchProvider = useWatch({ name: CLUSTER_FORM_FIELD_NAMES.PROVIDER });
-  const watchStorageAmount = useWatch({ name: STORAGE_BLOCK_FIELDS.STORAGE_AMOUNT });
-  const isCloudLocalDisk = watchProvider?.code !== PROVIDERS.LOCAL && watchStorageAmount === 0;
 
   const secrets = useGetSecretsQuery({ type: watchProvider?.code, projectId: currentProject });
 
@@ -144,9 +141,7 @@ const ClusterForm: React.FC<ClusterFormProps> = ({
           <ClusterNameBox />
           <ClusterDescriptionBlock />
           <PostgresVersionBox postgresVersions={postgresVersionsData} />
-          {(isCloudLocalDisk || (IS_EXPERT_MODE && watchProvider?.code === PROVIDERS.LOCAL)) ? (
-            <DataDirectoryBlock />
-          ) : null}
+          {IS_EXPERT_MODE && watchProvider?.code === PROVIDERS.LOCAL ? <DataDirectoryBlock /> : null}
           {IS_EXPERT_MODE ? (
             <>
               <DatabaseBlock />
