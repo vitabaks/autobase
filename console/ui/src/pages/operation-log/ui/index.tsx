@@ -1,23 +1,18 @@
 import { FC, useEffect, useState } from 'react';
-import { Box, Stack } from '@mui/material';
+import { Box } from '@mui/material';
 import { useGetOperationsByIdLogQuery } from '@shared/api/api/operations.ts';
 import { useParams } from 'react-router-dom';
 import { LazyLog } from 'react-lazylog';
 import { useQueryPolling } from '@shared/lib/hooks.tsx';
-import { useAppSelector } from '@app/redux/store/hooks.ts';
-import { selectPollingInterval } from '@app/redux/slices/pollingIntervalSlice/pollingIntervalSlice.ts';
-import RefreshIntervalSelect from '@features/refresh-interval-select';
+import { OPERATIONS_POLLING_INTERVAL } from '@shared/config/constants.ts';
+
+const OPERATION_LOG_POLLING_INTERVAL = Number(OPERATIONS_POLLING_INTERVAL) || 5_000;
 
 const OperationLog: FC = () => {
   const { operationId } = useParams();
   const [isStopRequest, setIsStopRequest] = useState(false);
-  const pollingInterval = useAppSelector(selectPollingInterval('operationLogs'));
-
-  const log = useQueryPolling(
-    () => useGetOperationsByIdLogQuery({ id: operationId }),
-    pollingInterval,
-    { stop: isStopRequest },
-  );
+  const logRequest = useGetOperationsByIdLogQuery({ id: operationId });
+  const log = useQueryPolling(logRequest, OPERATION_LOG_POLLING_INTERVAL, { stop: isStopRequest });
 
   useEffect(() => {
     setIsStopRequest(!!log.data?.isComplete);
@@ -25,9 +20,6 @@ const OperationLog: FC = () => {
 
   return (
     <Box width="100%" height="85vh">
-      <Stack direction="row" justifyContent="flex-end" alignItems="center" gap="8px" pb={1}>
-        <RefreshIntervalSelect context="operationLogs" />
-      </Stack>
       <LazyLog
         follow
         scrollToAlignment="end"
