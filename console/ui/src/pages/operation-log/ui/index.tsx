@@ -4,9 +4,8 @@ import { useGetOperationsByIdLogQuery } from '@shared/api/api/operations.ts';
 import { useParams } from 'react-router-dom';
 import { LazyLog } from 'react-lazylog';
 import { useQueryPolling } from '@shared/lib/hooks.tsx';
-import { OPERATIONS_POLLING_INTERVAL } from '@shared/config/constants.ts';
 
-const OPERATION_LOG_POLLING_INTERVAL = Number(OPERATIONS_POLLING_INTERVAL) || 5_000;
+const OPERATION_LOG_POLLING_INTERVAL = 5_000;
 
 const OperationLog: FC = () => {
   const { operationId } = useParams();
