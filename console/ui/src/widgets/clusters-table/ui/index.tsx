@@ -21,7 +21,7 @@ import DefaultTable from '@shared/ui/default-table';
 import RowActionsMenu from '@features/row-actions-menu/ui';
 
 const ClustersTable: FC = () => {
-  const { t, i18n } = useTranslation('clusters');
+  const { t } = useTranslation('clusters');
 
   const currentProject = useAppSelector(selectCurrentProject);
   const pollingInterval = useAppSelector(selectPollingInterval('clusters'));
@@ -41,16 +41,13 @@ const ClustersTable: FC = () => {
   const environments = useGetEnvironmentsQuery({ offset: 0, limit: 999_999_999 });
   const postgresVersions = useGetPostgresVersionsQuery();
 
-  const clustersList = useQueryPolling(
-    () =>
-      useGetClustersQuery({
-        projectId: Number(currentProject), // TODO: projectId, projectCode
-        offset: pagination.pageIndex * pagination.pageSize,
-        limit: pagination.pageSize,
-        ...(sorting?.[0] ? { sortBy: manageSortingOrder(sorting[0]) } : {}),
-      }),
-    pollingInterval,
-  );
+  const clustersListRequest = useGetClustersQuery({
+    projectId: Number(currentProject), // TODO: projectId, projectCode
+    offset: pagination.pageIndex * pagination.pageSize,
+    limit: pagination.pageSize,
+    ...(sorting?.[0] ? { sortBy: manageSortingOrder(sorting[0]) } : {}),
+  });
+  const clustersList = useQueryPolling(clustersListRequest, pollingInterval);
 
   const columns = useMemo<MRT_ColumnDef<ClustersTableValues>[]>(
     () =>
@@ -59,7 +56,7 @@ const ClustersTable: FC = () => {
         environmentOptions: environments.data?.data?.map((environment) => environment.name) ?? [],
         postgresVersionOptions: postgresVersions.data?.data?.map((version) => version.major_version) ?? [],
       }),
-    [i18n.language, environments.data?.data, postgresVersions.data?.data],
+    [environments.data?.data, postgresVersions.data?.data, t],
   );
 
   const data = useGetClustersTableData(clustersList.data?.data);
