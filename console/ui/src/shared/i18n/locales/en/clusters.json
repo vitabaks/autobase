@@ -18,7 +18,7 @@
   "selectInstanceType": "Select instance type",
   "numberOfInstances": "Number of instances",
   "dataDiskStorage": "Data disk storage",
-  "localDisk": "Local disk",
+  "localDisk": "System disk",
   "localDiskDescription": "Store PostgreSQL data on the server's system disk; no external data disk is created.",
   "sshPublicKey": "SSH public key",
   "sshKey": "SSH key",
