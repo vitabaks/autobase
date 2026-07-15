@@ -67,7 +67,7 @@ const ExtensionsBlock: FC = () => {
     <Spinner />
   ) : (
     <ErrorBoundary fallback={<ErrorBox />}>
-      <Box width="60vw">
+      <Box width="100%">
         <Stack direction="column" gap={2} width="100%">
           <Typography fontWeight="bold" marginBottom="8px">
             {t('extensions')}

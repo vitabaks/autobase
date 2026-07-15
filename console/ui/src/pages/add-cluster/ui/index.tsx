@@ -74,7 +74,7 @@ const AddCluster: FC = () => {
 
   const clustersForm = (
     <Stack direction="row">
-      <Box width="75vw">
+      <Box width="100%" maxWidth="1000px">
         <ClusterForm
           deploymentsData={deployments.data?.data ?? []}
           environmentsData={environments.data?.data ?? []}

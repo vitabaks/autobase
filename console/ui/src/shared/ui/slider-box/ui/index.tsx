@@ -72,7 +72,7 @@ const ClusterSliderBox: FC<SliderBoxProps> = ({
       border={`1px solid ${theme.palette.divider}`}
       height="100px"
       borderRadius="8px"
-      overflow="hidden">
+      overflow="visible">
       <Box
         display="flex"
         alignItems="center"
@@ -102,7 +102,7 @@ const ClusterSliderBox: FC<SliderBoxProps> = ({
         flexDirection="column"
         justifyContent="center"
         width="100%"
-        padding="32px">
+        padding={topRightElements ? '32px' : '32px 32px 24px'}>
         {topRightElements ?? null}
         <Slider
           value={allowZero ? sliderValue : amount}
@@ -113,6 +113,9 @@ const ClusterSliderBox: FC<SliderBoxProps> = ({
           min={allowZero ? 0 : min}
           max={max}
           marks={sliderMarks}
+          sx={{
+            '& .MuiSlider-markLabel': { marginTop: '-8px' },
+          }}
         />
       </Box>
     </Box>
