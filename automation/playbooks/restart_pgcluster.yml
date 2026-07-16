@@ -145,7 +145,7 @@
   tasks:
     - name: Switchover Patroni leader role
       ansible.builtin.import_role:
-        name: vitabaks.autobase.update
+        name: vitabaks.autobase.patroni
         tasks_from: switchover
       when: groups.get('secondary', []) | length > 0
 
