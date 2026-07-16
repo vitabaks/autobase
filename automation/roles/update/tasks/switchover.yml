@@ -44,6 +44,15 @@
     - synchronous_mode | default(false) | bool
     - patroni_leader_result.status | default(0) == 200
 
+- name: Execute CHECKPOINT before switchover
+  become: true
+  become_user: postgres
+  ansible.builtin.command: >
+    {{ postgresql_bin_dir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc "CHECKPOINT"
+  environment:
+    PGPASSWORD: "{{ patroni_superuser_password }}"
+  when: patroni_leader_result.status | default(0) == 200
+
 # If the node is the current leader, perform switchover
 - name: Perform switchover of the Patroni leader role to another node
   become: true
