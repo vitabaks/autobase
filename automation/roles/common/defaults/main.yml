@@ -595,6 +595,7 @@ patroni_maximum_lag_on_replica: "100MB" # the maximum of lag that replica can be
 patroni_failsafe_mode: true # enable Patroni DCS failsafe mode
 patroni_switchover_candidate_name: "" # optional Patroni node name to promote during switchover.
 patroni_failover_candidate_name: "" # optional Patroni node name to promote during failover.
+patroni_failover_force: false # allow failover when a healthy Patroni leader is detected.
 
 patroni_use_unix_socket: true # specifies that Patroni should prefer to use unix sockets to connect to the cluster.
 patroni_use_unix_socket_repl: true # specifies that Patroni should prefer to use unix sockets for replication user cluster connection.
