@@ -1,7 +1,7 @@
 ---
 - name: vitabaks.autobase.failover_pgcluster | Failover PostgreSQL Cluster
   hosts: postgres_cluster
-  gather_facts: false
+  gather_facts: true
   become: true
   become_method: sudo
   any_errors_fatal: true
