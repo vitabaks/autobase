@@ -113,7 +113,6 @@
   become: true
   become_method: sudo
   any_errors_fatal: true
-  environment: "{{ proxy_env | default({}) }}"
   tasks:
     - name: Switchover Patroni leader role
       ansible.builtin.import_role:
