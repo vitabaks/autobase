@@ -93,7 +93,6 @@
         fail_msg: >-
           Failover candidate '{{ failover_executor }}' is not a healthy Patroni replica in cluster
           '{{ patroni_cluster_name | default('postgres-cluster') }}'.
-      run_once: true
 
     - name: Failover Patroni leader role
       ansible.builtin.import_role:
