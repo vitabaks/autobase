@@ -114,6 +114,19 @@
   become_method: sudo
   any_errors_fatal: true
   tasks:
+    - name: Validate Patroni switchover candidate
+      ansible.builtin.assert:
+        that: >-
+          patroni_switchover_candidate_name in
+          (groups.get('secondary', [])
+          | map('extract', hostvars)
+          | map(attribute='ansible_hostname')
+          | list)
+        fail_msg: >-
+          Switchover candidate '{{ patroni_switchover_candidate_name }}' is not a Patroni replica in cluster
+          '{{ patroni_cluster_name | default('postgres-cluster') }}'.
+      when: patroni_switchover_candidate_name | default('') | length > 0
+
     - name: Switchover Patroni leader role
       ansible.builtin.import_role:
         name: vitabaks.autobase.patroni

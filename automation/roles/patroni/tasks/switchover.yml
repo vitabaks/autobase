@@ -57,7 +57,10 @@
 - name: Perform switchover of the Patroni leader role to another node
   become: true
   become_user: postgres
-  ansible.builtin.command: "patronictl -c /etc/patroni/patroni.yml switchover {{ patroni_cluster_name }} --force"
+  ansible.builtin.command: >-
+    patronictl -c /etc/patroni/patroni.yml switchover {{ patroni_cluster_name }}
+    {{ '--candidate ' ~ patroni_switchover_candidate_name
+      if patroni_switchover_candidate_name | default('') | length > 0 else '' }} --force
   register: patronictl_switchover_result
   ignore_errors: true # show the error and continue the playbook execution
   environment:
@@ -82,7 +85,10 @@
     - name: Perform switchover of the Patroni leader role to another node (RETRY)
       become: true
       become_user: postgres
-      ansible.builtin.command: "patronictl -c /etc/patroni/patroni.yml switchover {{ patroni_cluster_name }} --force"
+      ansible.builtin.command: >-
+        patronictl -c /etc/patroni/patroni.yml switchover {{ patroni_cluster_name }}
+        {{ '--candidate ' ~ patroni_switchover_candidate_name
+          if patroni_switchover_candidate_name | default('') | length > 0 else '' }} --force
       register: patronictl_switchover_retry_result
       environment:
         PATH: "{{ ansible_env.PATH }}:/usr/bin:/usr/local/bin"

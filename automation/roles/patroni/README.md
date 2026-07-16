@@ -15,6 +15,8 @@ This role installs and configures [Patroni](https://github.com/patroni/patroni),
 | `patroni_replication_password`     | `""`                 | PostgreSQL replication user password (auto-generated if empty)                                                    |
 | `patroni_superuser_auth_options`   | `[]`                 | Extra libpq auth options for superuser (e.g., sslmode, sslrootcert). Defaults depend on tls_cert_generate.        |
 | `patroni_replication_auth_options` | `[]`                 | Extra libpq auth options for replication user (e.g., sslmode, sslrootcert). Defaults depend on tls_cert_generate. |
+| `patroni_switchover_candidate_name` | `""`                | Optional Patroni node name to promote during a switchover.                                                        |
+| `patroni_failover_candidate_name`  | `""`                 | Optional Patroni node name to promote during a failover.                                                          |
 
 ### Installation Configuration
 
