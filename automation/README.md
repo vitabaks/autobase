@@ -99,10 +99,11 @@ Autobase adheres to a modular design separating atomic logic (roles) and orchest
 #### Maintenance
 
 - `config_pgcluster` – Reconfigure PostgreSQL cluster settings (users, databases, extensions, etc.) after the initial deployment.
-- `update_pgcluster` – Perform rolling updates of PostgreSQL or system packages with minimal downtime.
 - `restart_pgcluster` – Restart PostgreSQL cluster services.
 - `switchover_pgcluster` – Switch the Patroni leader role to a replica.
 - `failover_pgcluster` – Promote the Patroni replica when there is no healthy Patroni leader.
+- `reinit_pgcluster` – Rebuild a Patroni replica. Set the required `patroni_reinit_member_name` to the Patroni node name.
+- `update_pgcluster` – Perform rolling updates of PostgreSQL or system packages with minimal downtime.
 - `pg_upgrade` – Perform a major version in-place upgrade of PostgreSQL with minimal downtime.
   - `pg_upgrade_rollback` - Performs a rollback of a PostgreSQL upgrade (if possible).
 - `pg_logical_upgrade` - Upgrades the target cluster and converting a physical replica into a logical replica.
