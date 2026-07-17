@@ -127,3 +127,9 @@
       ansible.builtin.import_role:
         name: vitabaks.autobase.patroni
         tasks_from: reinit
+
+    - name: Inform about Patroni reinitialization progress
+      ansible.builtin.debug:
+        msg:
+          - "Reinitialization request for Patroni replica '{{ patroni_reinit_member_name }}' was accepted."
+          - "Please wait until the replica is healthy before continuing."
