@@ -100,11 +100,10 @@
 
 - name: vitabaks.autobase.reinit_pgcluster | Reinitialize Patroni replica
   hosts: primary
-  gather_facts: false
+  gather_facts: true
   become: true
   become_method: sudo
   any_errors_fatal: true
-  environment: "{{ proxy_env | default({}) }}"
   tasks:
     - name: Validate Patroni reinit member
       ansible.builtin.assert:
