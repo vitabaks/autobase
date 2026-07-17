@@ -6,6 +6,12 @@
   become_method: sudo
   any_errors_fatal: true
   tasks:
+    - name: Require Patroni reinit member name
+      ansible.builtin.assert:
+        that: patroni_reinit_member_name | default('') | length > 0
+        fail_msg: >-
+          Set patroni_reinit_member_name to the Patroni replica node name to reinitialize.
+
     - name: Gather package facts
       ansible.builtin.package_facts:
         manager: auto
@@ -108,7 +114,6 @@
     - name: Validate Patroni reinit member
       ansible.builtin.assert:
         that:
-          - patroni_reinit_member_name | default('') | length > 0
           - patroni_reinit_member_name in
             (groups.get('secondary', [])
             | map('extract', hostvars)
