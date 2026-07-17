@@ -20,6 +20,7 @@ This role installs and configures [Patroni](https://github.com/patroni/patroni),
 | `patroni_failover_force`           | `false`              | Allow failover when a healthy Patroni leader is detected.                                                         |
 | `patroni_reinit_member_name`        | `""`                 | Patroni replica node name to rebuild with `reinit_pgcluster`.                                                   |
 | `patroni_reinit_wait`               | `false`              | Wait for the reinitialized replica to become healthy, up to `cluster_restore_timeout`.                          |
+| `patroni_restart_node_name`          | `""`                 | Patroni node name to restart with `restart_pgnode`.                                    |
 
 ### Installation Configuration
 
