@@ -114,7 +114,7 @@
     - name: Validate Patroni reinit member
       ansible.builtin.assert:
         that:
-          - patroni_reinit_member_name in
+          - patroni_reinit_member_name | default('') in
             (groups.get('secondary', [])
             | map('extract', hostvars)
             | map(attribute='ansible_hostname')
@@ -128,8 +128,14 @@
         name: vitabaks.autobase.patroni
         tasks_from: reinit
 
-    - name: Inform about Patroni reinitialization progress
+    - name: Inform about asynchronous Patroni reinitialization
       ansible.builtin.debug:
         msg:
           - "Reinitialization request for Patroni replica '{{ patroni_reinit_member_name }}' was accepted."
           - "Please wait until the replica is healthy before continuing."
+      when: not (patroni_reinit_wait | default(false) | bool)
+
+    - name: Confirm Patroni replica reinitialization is complete
+      ansible.builtin.debug:
+        msg: "Patroni replica '{{ patroni_reinit_member_name }}' was reinitialized and is healthy."
+      when: patroni_reinit_wait | default(false) | bool

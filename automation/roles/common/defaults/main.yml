@@ -597,6 +597,7 @@ patroni_switchover_candidate_name: "" # optional Patroni node name to promote du
 patroni_failover_candidate_name: "" # optional Patroni node name to promote during failover.
 patroni_failover_force: false # allow failover when a healthy Patroni leader is detected.
 patroni_reinit_member_name: "" # Patroni replica node name to reinitialize.
+patroni_reinit_wait: false # wait for the reinitialized replica to become healthy.
 
 patroni_use_unix_socket: true # specifies that Patroni should prefer to use unix sockets to connect to the cluster.
 patroni_use_unix_socket_repl: true # specifies that Patroni should prefer to use unix sockets for replication user cluster connection.
