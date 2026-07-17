@@ -153,3 +153,4 @@ When using load balancing for read-only traffic (the "Type A" and "Type C" schem
 
 This role depends on:
 - `vitabaks.autobase.common` - Provides common variables and configurations
+- `vitabaks.autobase.patroni` - Uses the `switchover` task
