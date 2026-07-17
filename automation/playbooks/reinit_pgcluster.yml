@@ -11,6 +11,7 @@
         that: patroni_reinit_member_name | default('') | length > 0
         fail_msg: >-
           Set patroni_reinit_member_name to the Patroni replica node name to reinitialize.
+      when: inventory_hostname == groups['postgres_cluster'][0]
 
     - name: Gather package facts
       ansible.builtin.package_facts:
