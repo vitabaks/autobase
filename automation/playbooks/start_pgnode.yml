@@ -1,0 +1,42 @@
+---
+- name: vitabaks.autobase.start_pgnode | Start PostgreSQL Cluster node
+  hosts: postgres_cluster
+  gather_facts: true
+  become: true
+  become_method: sudo
+  any_errors_fatal: true
+  tasks:
+    - name: Define bind_address
+      ansible.builtin.import_role:
+        name: vitabaks.autobase.bind_address
+      when: bind_address is not defined
+
+    - name: Set default variables
+      ansible.builtin.import_role:
+        name: vitabaks.autobase.common
+
+    - name: Require Patroni start node name
+      ansible.builtin.assert:
+        that: patroni_start_node_name | default('') | length > 0
+        fail_msg: >-
+          Set patroni_start_node_name to the Patroni node name to start.
+      when: inventory_hostname == groups['postgres_cluster'][0]
+
+    - name: Validate Patroni start node exists
+      ansible.builtin.assert:
+        that: >-
+          patroni_start_node_name | default('') in
+          (groups.get('postgres_cluster', [])
+          | map('extract', hostvars)
+          | map(attribute='ansible_hostname')
+          | list)
+        fail_msg: >-
+          Patroni start node '{{ patroni_start_node_name | default('') }}' was not found in cluster
+          '{{ patroni_cluster_name | default('postgres-cluster') }}'.
+      when: inventory_hostname == groups['postgres_cluster'][0]
+
+    - name: Start services on the selected node
+      ansible.builtin.import_role:
+        name: vitabaks.autobase.update
+        tasks_from: start_services
+      when: ansible_hostname == patroni_start_node_name | default('')

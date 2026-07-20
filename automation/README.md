@@ -99,7 +99,11 @@ Autobase adheres to a modular design separating atomic logic (roles) and orchest
 #### Maintenance
 
 - `config_pgcluster` – Reconfigure PostgreSQL cluster settings (users, databases, extensions, etc.) after the initial deployment.
+- `stop_pgcluster` – Gracefully stop the entire Patroni cluster.
+- `start_pgcluster` – Start the entire Patroni cluster.
 - `restart_pgcluster` – Restart PostgreSQL in the entire cluster.
+- `stop_pgnode` – Stop PostgreSQL on a specific Patroni node. Set the required `patroni_stop_node_name` to the Patroni node name.
+- `start_pgnode` – Start PostgreSQL on a specific Patroni node. Set the required `patroni_start_node_name` to the Patroni node name.
 - `restart_pgnode` – Restart PostgreSQL on a specific Patroni node. Set the required `patroni_restart_node_name` to the Patroni node name.
 - `switchover_pgcluster` – Switch the Patroni leader role to a replica.
 - `failover_pgcluster` – Promote the Patroni replica when there is no healthy Patroni leader.

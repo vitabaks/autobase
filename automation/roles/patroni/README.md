@@ -21,6 +21,8 @@ This role installs and configures [Patroni](https://github.com/patroni/patroni),
 | `patroni_reinit_member_name`        | `""`                 | Patroni replica node name to rebuild with `reinit_pgcluster`.                                                   |
 | `patroni_reinit_wait`               | `false`              | Wait for the reinitialized replica to become healthy, up to `cluster_restore_timeout`.                          |
 | `patroni_restart_node_name`          | `""`                 | Patroni node name to restart with `restart_pgnode`.                                    |
+| `patroni_stop_node_name`             | `""`                 | Patroni node name to stop with `stop_pgnode`.                                                                   |
+| `patroni_start_node_name`            | `""`                 | Patroni node name to start with `start_pgnode`.                                                                 |
 
 ### Installation Configuration
 
