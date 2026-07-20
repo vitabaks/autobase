@@ -5,9 +5,6 @@
   become_user: postgres
   ansible.builtin.command: "{{ postgresql_bin_dir }}/pg_isready -p {{ postgresql_port }}"
   register: pg_isready_result
-  until: pg_isready_result.rc == 0
-  retries: 3
-  delay: 2
   changed_when: false
   failed_when: false
 
