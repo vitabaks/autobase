@@ -43,7 +43,7 @@
           A healthy Patroni leader is present in cluster '{{ patroni_cluster_name | default('postgres-cluster') }}'.
           Use switchover_pgcluster.yml for a planned role change.
       when:
-        - not patroni_failover_force | bool
+        - not patroni_failover_force | default(false) | bool
         - inventory_hostname == groups['postgres_cluster'][0]
         - (groups.get('postgres_cluster', [])
             | map('extract', hostvars)

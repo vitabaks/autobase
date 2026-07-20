@@ -4,7 +4,7 @@
   become_user: postgres
   ansible.builtin.command: >-
     patronictl -c /etc/patroni/patroni.yml reinit {{ patroni_cluster_name }}
-    {{ patroni_reinit_member_name }} --force
+    {{ patroni_reinit_member_name | default('') }} --force
   environment:
     PATH: "{{ ansible_env.PATH | default('') }}:/usr/bin:/usr/local/bin"
 

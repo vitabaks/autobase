@@ -123,7 +123,7 @@
           | map(attribute='ansible_hostname')
           | list)
         fail_msg: >-
-          Switchover candidate '{{ patroni_switchover_candidate_name }}' is not a Patroni replica in cluster
+          Switchover candidate '{{ patroni_switchover_candidate_name | default('') }}' is not a Patroni replica in cluster
           '{{ patroni_cluster_name | default('postgres-cluster') }}'.
       when: patroni_switchover_candidate_name | default('') | length > 0
 
