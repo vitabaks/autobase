@@ -20,10 +20,11 @@ RUN apt-get clean && rm -rf /var/lib/apt/lists/partial \
     -r /autobase/automation/requirements.txt \
   && ansible-galaxy install --force -r /autobase/automation/requirements.yml \
   && ansible-galaxy collection list \
+  # azure-cli and azure collection requirements
+  && pip3 install --break-system-packages --no-cache-dir --retries 3 --timeout 60 \
+    azure-cli \
   && pip3 install --break-system-packages --no-cache-dir --retries 3 --timeout 60 \
     -r /root/.ansible/collections/ansible_collections/azure/azcollection/requirements.txt \
-  # azure-cli
-  && pip3 install --break-system-packages --no-cache-dir --retries 3 --timeout 60 azure-cli \
   # cleanup
   && apt-get autoremove -y --purge gnupg git python3-dev gcc g++ cmake make libssl-dev \
   && apt-get clean -y autoclean \
