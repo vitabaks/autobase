@@ -6,7 +6,7 @@ Disables Linux Transparent Huge Pages (THP) for better PostgreSQL performance. T
 
 | Variable    | Default | Description |
 |-------------|---------|-------------|
-| disable_thp | true    | When true, installs/enables a systemd service to disable THP and THP defrag. When false, the role does nothing. |
+| disable_thp | true    | When true, installs/enables a systemd service to disable THP and THP defrag. When false, stops and disables the service if it exists. |
 
 ## Notes
 - Idempotent; updates the unit at /etc/systemd/system/disable-transparent-huge-pages.service
