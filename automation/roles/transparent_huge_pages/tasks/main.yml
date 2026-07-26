@@ -25,3 +25,21 @@
 
 - name: Make sure handlers are flushed immediately
   ansible.builtin.meta: flush_handlers
+
+# Disable service (if `disable_thp` is `false`)
+- block:
+    - name: Check if the disable-transparent-huge-pages service exists
+      ansible.builtin.stat:
+        path: /etc/systemd/system/disable-transparent-huge-pages.service
+      register: disable_thp_service
+
+    - name: Stop and disable the disable-transparent-huge-pages service
+      ansible.builtin.systemd:
+        name: disable-transparent-huge-pages.service
+        state: stopped
+        enabled: false
+      when: disable_thp_service.stat.exists
+  when:
+    - disable_thp is defined and not disable_thp | bool
+    - ansible_virtualization_type not in ['container', 'docker', 'lxc', 'podman']
+  tags: disable_thp, transparent_huge_pages
