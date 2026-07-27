@@ -6,11 +6,11 @@
       register: system_user
       changed_when: false
 
-    - name: "Add public keys to ~{{ system_user.stdout | default('') }}/.ssh/authorized_keys"
+    - name: "Manage public keys in ~{{ system_user.stdout | default('') }}/.ssh/authorized_keys"
       ansible.posix.authorized_key:
         user: "{{ system_user.stdout }}"
-        key: "{{ item | replace(\"'\", '') | replace('\"', '') | trim }}"
-        state: present
+        key: "{{ authorized_key_entry | replace(\"'\", '') | replace('\"', '') | trim }}"
+        state: "{{ authorized_key_state }}"
       loop: >-
         {{
           (ssh_public_keys
@@ -20,6 +20,11 @@
           | list)
           if ssh_public_keys is string else ssh_public_keys
         }}
+      loop_control:
+        label: "{{ authorized_key_entry | replace(\"'\", '') | replace('\"', '') | trim }} ({{ authorized_key_state }})"
+      vars:
+        authorized_key_entry: "{{ item.entry if item is mapping else item }}"
+        authorized_key_state: "{{ item.state | default('present') if item is mapping else 'present' }}"
   when:
     - ssh_public_keys is defined
     - ssh_public_keys | length > 0
