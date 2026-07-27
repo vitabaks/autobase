@@ -937,7 +937,7 @@ netdata_conf:
 nameservers: []
 #  - "1.1.1.1" # Cloudflare DNS (primary)
 #  - "8.8.8.8" # Google DNS (secondary)
-#  - { nameserver: "9.9.9.9", state: "absent" } # remove a DNS server entry
+#  - { entry: "9.9.9.9", state: "absent" } # remove a DNS server entry
 
 # /etc/hosts (optional)
 etc_hosts: []

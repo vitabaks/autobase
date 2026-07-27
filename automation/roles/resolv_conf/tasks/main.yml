@@ -26,7 +26,7 @@
       loop_control:
         label: "{{ resolv_conf_nameserver }} ({{ resolv_conf_entry_state }})"
       vars:
-        resolv_conf_nameserver: "{{ item.nameserver if item is mapping else item }}"
+        resolv_conf_nameserver: "{{ item.entry if item is mapping else item }}"
         resolv_conf_entry_state: "{{ item.state | default('present') if item is mapping else 'present' }}"
   when:
     - nameservers is defined
