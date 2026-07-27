@@ -14,14 +14,20 @@
         mode: u=rw,g=r,o=r
       when: not resolv_conf.stat.exists
 
-    - name: Add DNS server(s) into /etc/resolv.conf
+    - name: Manage DNS server entries in /etc/resolv.conf
       ansible.builtin.lineinfile:
         path: /etc/resolv.conf
-        regexp: "^nameserver {{ item }}"
+        regexp: '^nameserver[ \t]+{{ resolv_conf_nameserver | regex_escape }}[ \t]*(?:#.*)?$'
         insertbefore: "^options"
-        line: "nameserver {{ item }}"
+        line: "nameserver {{ resolv_conf_nameserver }}"
+        state: "{{ resolv_conf_entry_state }}"
         unsafe_writes: true # to prevent failures in CI
       loop: "{{ nameservers }}"
+      loop_control:
+        label: "{{ resolv_conf_nameserver }} ({{ resolv_conf_entry_state }})"
+      vars:
+        resolv_conf_nameserver: "{{ item.nameserver if item is mapping else item }}"
+        resolv_conf_entry_state: "{{ item.state | default('present') if item is mapping else 'present' }}"
   when:
     - nameservers is defined
     - nameservers | length > 0
