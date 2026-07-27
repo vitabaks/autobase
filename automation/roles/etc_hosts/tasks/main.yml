@@ -1,11 +1,17 @@
 ---
-- name: Add entries into /etc/hosts file
+- name: Manage entries in /etc/hosts file
   ansible.builtin.lineinfile:
     path: /etc/hosts
-    regexp: "^{{ item }}"
-    line: "{{ item }}"
+    regexp: '^{{ etc_hosts_entry | regex_escape }}[ \t]*(?:#.*)?$'
+    line: "{{ etc_hosts_entry }}"
+    state: "{{ etc_hosts_entry_state }}"
     unsafe_writes: true # to prevent failures in CI
   loop: "{{ etc_hosts }}"
+  loop_control:
+    label: "{{ etc_hosts_entry }} ({{ etc_hosts_entry_state }})"
+  vars:
+    etc_hosts_entry: "{{ item.entry if item is mapping else item }}"
+    etc_hosts_entry_state: "{{ item.state | default('present') if item is mapping else 'present' }}"
   when:
     - etc_hosts is defined
     - etc_hosts | length > 0

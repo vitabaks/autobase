@@ -937,10 +937,12 @@ netdata_conf:
 nameservers: []
 #  - "1.1.1.1" # Cloudflare DNS (primary)
 #  - "8.8.8.8" # Google DNS (secondary)
+#  - { entry: "9.9.9.9", state: "absent" } # remove a DNS server entry
 
 # /etc/hosts (optional)
 etc_hosts: []
 #  - "10.128.64.143 pgbackrest.minio.local minio.local s3.eu-west-3.amazonaws.com"  # example (MinIO)
+#  - { entry: "10.0.0.11 db1 db1.local", state: "absent" } # remove a host entry
 #  - ""
 
 # NTP (Network Time Protocol) service
