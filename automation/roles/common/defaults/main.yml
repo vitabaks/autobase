@@ -1066,6 +1066,8 @@ ssh_known_hosts: "{{ groups['postgres_cluster'] }}"
 
 # List of public SSH keys to be added to the database server's ~/.ssh/authorized_keys file.
 ssh_public_keys: []
+#  - "ssh-ed25519 AAAAC3... user1@example"
+#  - { entry: "ssh-rsa AAAAB3... user2@example", state: "absent" } # remove a public key
 
 # sudo
 sudo_users:
