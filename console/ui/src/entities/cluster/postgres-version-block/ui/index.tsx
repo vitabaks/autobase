@@ -26,7 +26,7 @@ const PostgresVersionBox: FC<PostgresVersionBlockProps> = ({ postgresVersions })
           <Select
             size="small"
             fullWidth
-            value={value}
+            value={value ?? ''}
             onChange={onChange}
             renderValue={(selectedVersion) => String(selectedVersion)}
             error={!!errors[CLUSTER_FORM_FIELD_NAMES.POSTGRES_VERSION]}
