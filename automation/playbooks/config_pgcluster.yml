@@ -70,6 +70,9 @@
             | default(patroni_bind_address | default(bind_address, true), true) }}:{{ patroni_restapi_port
             | default('8008') }}/leader
         status_code: 200
+        # The CA path is omitted when the desired protocol is HTTP. Disable certificate
+        # validation only while using fallback HTTPS during an HTTPS-to-HTTP transition.
+        validate_certs: "{{ patroni_restapi_effective_protocol == (patroni_restapi_protocol | default('https')) }}"
         ca_path: "{{ patroni_restapi_cafile | default(omit, true) }}"
       register: patroni_leader_result
       changed_when: false
