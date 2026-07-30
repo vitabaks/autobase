@@ -20,8 +20,8 @@
       ansible.builtin.file:
         path: "{{ tls_directory }}"
         state: directory
-        owner: "root"
-        group: "root"
+        owner: "{{ generate_tls_owner | default(tls_owner | default('postgres')) }}"
+        group: "{{ generate_tls_owner | default(tls_owner | default('postgres')) }}"
         mode: "0755"
 
     - block:
