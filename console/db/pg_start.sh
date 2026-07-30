@@ -26,6 +26,7 @@ file_env() {
 }
 
 file_env POSTGRES_PASSWORD
+export POSTGRES_PASSWORD="${POSTGRES_PASSWORD:-postgres-pass}"
 
 # Ensure the directory exists and has the correct permissions
 mkdir -p ${PGDATA} ${PG_UNIX_SOCKET_DIR} /etc/postgresql/${POSTGRES_VERSION}/main
