@@ -26,13 +26,38 @@
         postgresql_cluster_maintenance: true
       tags: always
 
-    - name: "[Prepare] Get Patroni Cluster Leader Node"
+    # When enabling TLS on an existing non-TLS cluster, the desired protocol is HTTPS,
+    # while the running Patroni API still uses HTTP until its configuration is reloaded.
+    # Probe the desired protocol first; the leader check falls back to the current one.
+    # The same fallback also supports disabling TLS.
+    - name: "[Prepare] Probe Patroni REST API with configured protocol"
       ansible.builtin.uri:
         url: >-
           {{ patroni_restapi_protocol | default('https') }}://{{ patroni_restapi_connect_addr
             | default(patroni_bind_address | default(bind_address, true), true) }}:{{ patroni_restapi_port
             | default('8008') }}/leader
+        status_code: [200, 503]
+        validate_certs: false
+        ca_path: "{{ patroni_restapi_cafile | default(omit, true) }}"
+      register: patroni_restapi_probe
+      changed_when: false
+      failed_when: false
+      check_mode: false
+      environment:
+        no_proxy: "{{ patroni_bind_address | default(bind_address, true) }}"
+      when: inventory_hostname in groups['postgres_cluster']
+      tags: always
+
+    - name: "[Prepare] Get Patroni Cluster Leader Node"
+      ansible.builtin.uri:
+        url: >-
+          {{ patroni_restapi_effective_protocol }}://{{ patroni_restapi_connect_addr
+            | default(patroni_bind_address | default(bind_address, true), true) }}:{{ patroni_restapi_port
+            | default('8008') }}/leader
         status_code: 200
+        # The CA path is omitted when the desired protocol is HTTP. Disable certificate
+        # validation only while using fallback HTTPS during an HTTPS-to-HTTP transition.
+        validate_certs: "{{ patroni_restapi_effective_protocol == (patroni_restapi_protocol | default('https')) }}"
         ca_path: "{{ patroni_restapi_cafile | default(omit, true) }}"
       register: patroni_leader_result
       changed_when: false
@@ -40,6 +65,11 @@
       check_mode: false
       environment:
         no_proxy: "{{ patroni_bind_address | default(bind_address, true) }}"
+      vars:
+        patroni_restapi_effective_protocol: >-
+          {{ (patroni_restapi_protocol | default('https'))
+             if (patroni_restapi_probe.status | default(-1)) in [200, 503]
+             else ('http' if (patroni_restapi_protocol | default('https')) == 'https' else 'https') }}
       when: inventory_hostname in groups['postgres_cluster']
       tags: always
 
@@ -116,7 +146,7 @@
   any_errors_fatal: true
   environment: "{{ proxy_env | default({}) }}"
   pre_tasks:
-    - block: # Regenerate certificate (optional)
+    - block: # Ensure Postgres TLS certificates exist on all nodes
         - name: Generate Postgres TLS certificate
           ansible.builtin.include_role:
             name: vitabaks.autobase.tls_certificate
@@ -127,9 +157,7 @@
           ansible.builtin.include_role:
             name: vitabaks.autobase.tls_certificate
             tasks_from: copy
-      when:
-        - tls_cert_generate | default(true) | bool
-        - tls_cert_regenerate | default(false) | bool
+      when: tls_cert_generate | default(true) | bool
 
     - name: Build a firewall_ports_dynamic_var
       ansible.builtin.set_fact:
