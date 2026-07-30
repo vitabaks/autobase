@@ -18,7 +18,7 @@ const ClusterFormEnvironmentBlock: FC<EnvironmentBlockProps> = ({ environments }
         control={control}
         name={CLUSTER_FORM_FIELD_NAMES.ENVIRONMENT_ID}
         render={({ field }) => (
-          <Select {...field} size="small" fullWidth>
+          <Select {...field} value={field.value ?? ''} size="small" fullWidth>
             {environments?.map((environment) => (
               <MenuItem key={environment?.id} value={environment?.id}>
                 {environment?.name}

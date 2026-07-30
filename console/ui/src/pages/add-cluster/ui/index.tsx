@@ -1,4 +1,4 @@
-import { FC, useEffect, useState } from 'react';
+import { FC, SyntheticEvent, useEffect, useState } from 'react';
 import ClusterForm from '@widgets/cluster-form';
 import ClusterSummary from '@widgets/cluster-summary';
 import { Box, Divider, Stack, Tab } from '@mui/material';
@@ -8,8 +8,8 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { ClusterFormSchema } from '@widgets/cluster-form/model/validation.ts';
 import {
   CLUSTER_CREATION_TYPES,
-  CLUSTER_FORM_DEFAULT_VALUES,
   CLUSTER_FORM_FIELD_NAMES,
+  getClusterFormDefaultValues,
 } from '@widgets/cluster-form/model/constants.ts';
 import { useTranslation } from 'react-i18next';
 import { useGetExternalDeploymentsQuery } from '@shared/api/api/deployments.ts';
@@ -24,12 +24,12 @@ import { TabContext, TabList, TabPanel } from '@mui/lab';
 
 const AddCluster: FC = () => {
   const { t } = useTranslation(['clusters', 'validation', 'toasts']);
-  const [isResetting, setIsResetting] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   const methods = useForm<ClusterFormValues>({
     mode: 'all',
     resolver: yupResolver(ClusterFormSchema(t)),
-    defaultValues: CLUSTER_FORM_DEFAULT_VALUES,
+    defaultValues: getClusterFormDefaultValues(),
   });
 
   const deployments = useGetExternalDeploymentsQuery({ offset: 0, limit: 999_999_999 });
@@ -40,37 +40,43 @@ const AddCluster: FC = () => {
   const watchClusterCreationType = useWatch({ name: CLUSTER_FORM_FIELD_NAMES.CREATION_TYPE, control: methods.control });
 
   useEffect(() => {
-    if (deployments.data?.data && postgresVersions.data?.data && environments.data?.data && clusterName.data) {
-      setIsResetting(true);
-      // eslint-disable-next-line @typescript-eslint/require-await
-      const resetForm = async () => {
-        // sync function will result in form values setting error
-        const providers = deployments.data?.data;
-        methods.reset((values) => ({
-          ...values,
-          [CLUSTER_FORM_FIELD_NAMES.PROVIDER]: providers?.[0],
-          [CLUSTER_FORM_FIELD_NAMES.REGION]: providers?.[0]?.cloud_regions?.[0]?.code,
-          [CLUSTER_FORM_FIELD_NAMES.REGION_CONFIG]: providers?.[0]?.cloud_regions?.[0]?.datacenters?.[0],
-          [CLUSTER_FORM_FIELD_NAMES.INSTANCE_CONFIG]: providers?.[0]?.instance_types?.small?.[0],
-          [CLUSTER_FORM_FIELD_NAMES.POSTGRES_VERSION]: postgresVersions.data?.data?.at(-1)?.major_version,
-          [CLUSTER_FORM_FIELD_NAMES.ENVIRONMENT_ID]: environments.data?.data?.[0]?.id,
-          [CLUSTER_FORM_FIELD_NAMES.CLUSTER_NAME]: clusterName.data?.name ?? 'postgres-cluster',
-          ...(IS_EXPERT_MODE
-            ? {
-                [STORAGE_BLOCK_FIELDS.VOLUME_TYPE]:
-                  providers?.[0]?.volumes?.find((volume) => volume?.is_default)?.volume_type ??
-                  providers?.[0]?.volumes?.[0]?.volume_type,
-              }
-            : {}),
-        }));
-      };
-      void resetForm().then(() => setIsResetting(false));
+    if (
+      !isInitialized &&
+      deployments.data?.data &&
+      postgresVersions.data?.data &&
+      environments.data?.data &&
+      clusterName.data
+    ) {
+      const providers = deployments.data.data;
+      methods.reset({
+        ...getClusterFormDefaultValues(),
+        [CLUSTER_FORM_FIELD_NAMES.PROVIDER]: providers[0],
+        [CLUSTER_FORM_FIELD_NAMES.REGION]: providers[0]?.cloud_regions?.[0]?.code,
+        [CLUSTER_FORM_FIELD_NAMES.REGION_CONFIG]: providers[0]?.cloud_regions?.[0]?.datacenters?.[0],
+        [CLUSTER_FORM_FIELD_NAMES.INSTANCE_CONFIG]: providers[0]?.instance_types?.small?.[0],
+        [CLUSTER_FORM_FIELD_NAMES.POSTGRES_VERSION]: postgresVersions.data.data.at(-1)?.major_version,
+        [CLUSTER_FORM_FIELD_NAMES.ENVIRONMENT_ID]: environments.data.data[0]?.id,
+        [CLUSTER_FORM_FIELD_NAMES.CLUSTER_NAME]: clusterName.data.name ?? 'postgres-cluster',
+        ...(IS_EXPERT_MODE
+          ? {
+              [STORAGE_BLOCK_FIELDS.VOLUME_TYPE]:
+                providers[0]?.volumes?.find((volume) => volume?.is_default)?.volume_type ??
+                providers[0]?.volumes?.[0]?.volume_type,
+            }
+          : {}),
+      });
+      setIsInitialized(true);
     }
-  }, [deployments.data?.data, postgresVersions.data?.data, environments.data?.data, clusterName.data]);
+  }, [
+    isInitialized,
+    deployments.data?.data,
+    postgresVersions.data?.data,
+    environments.data?.data,
+    clusterName.data,
+    methods,
+  ]);
 
-  const handleTabChange = (onChange: (...event: any[]) => void) => (_, value: string) => {
-    onChange(value);
-  };
+  const handleTabChange = (onChange: (value: string) => void) => (_: SyntheticEvent, value: string) => onChange(value);
 
   const clustersForm = (
     <Stack direction="row">
@@ -87,7 +93,7 @@ const AddCluster: FC = () => {
 
   return (
     <FormProvider {...methods}>
-      {isResetting || deployments.isFetching || postgresVersions.isFetching || environments.isFetching ? (
+      {!isInitialized ? (
         <Spinner />
       ) : IS_EXPERT_MODE && IS_YAML_ENABLED ? (
         <TabContext value={watchClusterCreationType}>

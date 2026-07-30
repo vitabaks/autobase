@@ -72,7 +72,7 @@ export const CLUSTER_FORM_FIELD_NAMES = Object.freeze({
   ...KERNEL_PARAMETERS_FIELD_NAMES,
 });
 
-export const CLOUD_CLUSTER_DEFAULT_VALUES = Object.freeze({
+export const getCloudClusterDefaultValues = () => ({
   [INSTANCES_AMOUNT_BLOCK_VALUES.INSTANCES_AMOUNT]: 3,
   [INSTANCES_BLOCK_FIELD_NAMES.INSTANCE_TYPE]: 'small',
   [STORAGE_BLOCK_FIELDS.STORAGE_AMOUNT]: 100,
@@ -87,7 +87,9 @@ export const CLOUD_CLUSTER_DEFAULT_VALUES = Object.freeze({
     : {}),
 });
 
-export const LOCAL_CLUSTER_DEFAULT_VALUES = Object.freeze({
+export const CLOUD_CLUSTER_DEFAULT_VALUES = Object.freeze(getCloudClusterDefaultValues());
+
+export const getLocalClusterDefaultValues = () => ({
   [CLUSTER_FORM_FIELD_NAMES.AUTHENTICATION_METHOD]: AUTHENTICATION_METHODS.SSH,
   ...(IS_EXPERT_MODE
     ? {
@@ -104,9 +106,11 @@ export const LOCAL_CLUSTER_DEFAULT_VALUES = Object.freeze({
     : {}),
 });
 
-export const CLUSTER_FORM_DEFAULT_VALUES = Object.freeze({
-  ...CLOUD_CLUSTER_DEFAULT_VALUES,
-  ...LOCAL_CLUSTER_DEFAULT_VALUES,
+export const LOCAL_CLUSTER_DEFAULT_VALUES = Object.freeze(getLocalClusterDefaultValues());
+
+export const getClusterFormDefaultValues = () => ({
+  ...getCloudClusterDefaultValues(),
+  ...getLocalClusterDefaultValues(),
   [CLUSTER_FORM_FIELD_NAMES.DESCRIPTION]: '',
   [CLUSTER_FORM_FIELD_NAMES.CREATION_TYPE]: CLUSTER_CREATION_TYPES.FORM,
   [CLUSTER_FORM_FIELD_NAMES.IS_USE_DEFINED_SECRET]: false,
@@ -154,3 +158,5 @@ export const CLUSTER_FORM_DEFAULT_VALUES = Object.freeze({
       }
     : {}),
 });
+
+export const CLUSTER_FORM_DEFAULT_VALUES = Object.freeze(getClusterFormDefaultValues());
