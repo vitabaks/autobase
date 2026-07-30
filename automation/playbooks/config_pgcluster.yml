@@ -26,16 +26,10 @@
         postgresql_cluster_maintenance: true
       tags: always
 
-    # Detect the protocol the RUNNING Patroni REST API actually responds on.
-    # When enabling TLS on an already-deployed (previously non-TLS) cluster,
-    # 'patroni_restapi_protocol' resolves to 'https' (it is derived from 'tls_cert_generate'),
-    # but the running REST API is still serving 'http' until Patroni is reconfigured and
-    # restarted later in this run. Probing with the desired protocol would then fail and the
-    # health gate below would abort the play before it can switch Patroni over.
-    # This task probes with the configured protocol; the next task derives the effective
-    # protocol, falling back to the opposite one if this probe did not reach the API, so the
-    # subsequent leader check reflects the currently running API.
-    # A reachable node returns 200 (leader) or 503 (replica).
+    # When enabling TLS on an existing non-TLS cluster, the desired protocol is HTTPS,
+    # while the running Patroni API still uses HTTP until its configuration is reloaded.
+    # Probe the desired protocol first; the leader check falls back to the current one.
+    # The same fallback also supports disabling TLS.
     - name: "[Prepare] Probe Patroni REST API with configured protocol"
       ansible.builtin.uri:
         url: >-
