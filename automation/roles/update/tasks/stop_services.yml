@@ -1,14 +1,12 @@
 ---
-# pre-check
-- name: Check PostgreSQL is started and accepting connections
+# Check whether a checkpoint can be issued before stopping Patroni.
+- name: Check whether PostgreSQL is accepting connections
   become: true
   become_user: postgres
   ansible.builtin.command: "{{ postgresql_bin_dir }}/pg_isready -p {{ postgresql_port }}"
   register: pg_isready_result
-  until: pg_isready_result.rc == 0
-  retries: 30
-  delay: 2
   changed_when: false
+  failed_when: false
 
 # Stop the secondary
 - block:
@@ -19,6 +17,7 @@
         {{ postgresql_bin_dir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc "CHECKPOINT"
       environment:
         PGPASSWORD: "{{ patroni_superuser_password }}"
+      when: pg_isready_result.rc == 0
 
     - name: "Stop Patroni service on the replica ({{ ansible_hostname | default('') }})"
       become: true
@@ -37,6 +36,7 @@
         {{ postgresql_bin_dir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc "CHECKPOINT"
       environment:
         PGPASSWORD: "{{ patroni_superuser_password }}"
+      when: pg_isready_result.rc == 0
 
     - name: "Stop Patroni service on the leader ({{ ansible_hostname | default('') }})"
       become: true

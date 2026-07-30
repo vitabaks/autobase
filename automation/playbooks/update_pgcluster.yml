@@ -162,7 +162,7 @@
   tasks:
     - name: "Switchover Patroni leader role"
       ansible.builtin.include_role:
-        name: vitabaks.autobase.update
+        name: vitabaks.autobase.patroni
         tasks_from: switchover
 
     - name: Stop read-only traffic

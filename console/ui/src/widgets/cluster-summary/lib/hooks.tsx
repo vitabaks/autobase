@@ -31,6 +31,7 @@ const useGetCloudProviderConfig = () => {
 
   return (data: CloudProviderClustersSummary) => {
     const defaultVolume = data[CLUSTER_FORM_FIELD_NAMES.PROVIDER]?.volumes?.find((volume) => volume?.is_default) ?? {};
+    const isLocalDisk = data[STORAGE_BLOCK_FIELDS.STORAGE_AMOUNT] === 0;
 
     return [
       {
@@ -109,7 +110,7 @@ const useGetCloudProviderConfig = () => {
         children: (
           <Stack direction={'row'} spacing={0.5} alignItems="center" minHeight="20px">
             <StorageIcon height="24px" width="24px" style={{ fill: theme.palette.text.primary }} />
-            <Typography>{data[STORAGE_BLOCK_FIELDS.STORAGE_AMOUNT]} GB</Typography>
+            <Typography>{isLocalDisk ? t('localDisk') : `${data[STORAGE_BLOCK_FIELDS.STORAGE_AMOUNT]} GB`}</Typography>
           </Stack>
         ),
       },
@@ -124,7 +125,7 @@ const useGetCloudProviderConfig = () => {
                   {`${data[CLUSTER_FORM_FIELD_NAMES.INSTANCE_CONFIG]?.currency}${(
                     data[CLUSTER_FORM_FIELD_NAMES.INSTANCE_CONFIG]?.price_monthly *
                       data[CLUSTER_FORM_FIELD_NAMES.INSTANCES_AMOUNT] +
-                    defaultVolume?.price_monthly *
+                    (isLocalDisk ? 0 : defaultVolume?.price_monthly) *
                       data[STORAGE_BLOCK_FIELDS.STORAGE_AMOUNT] *
                       data[CLUSTER_FORM_FIELD_NAMES.INSTANCES_AMOUNT]
                   )?.toFixed(2)}/${t('month', { ns: 'shared' })}`}
@@ -135,10 +136,14 @@ const useGetCloudProviderConfig = () => {
                     {`${data[CLUSTER_FORM_FIELD_NAMES.INSTANCE_CONFIG]?.currency}${data[
                       CLUSTER_FORM_FIELD_NAMES.INSTANCE_CONFIG
                     ]?.price_monthly.toFixed(2)}/${t('perServer', { ns: 'clusters' })}`}
-                    , ~
-                    {`${defaultVolume?.currency}${(
-                      defaultVolume?.price_monthly * data[STORAGE_BLOCK_FIELDS.STORAGE_AMOUNT]
-                    )?.toFixed(2)}/${t('perDisk', { ns: 'clusters' })}`}
+                    {!isLocalDisk && (
+                      <>
+                        , ~
+                        {`${defaultVolume?.currency}${(
+                          defaultVolume?.price_monthly * data[STORAGE_BLOCK_FIELDS.STORAGE_AMOUNT]
+                        )?.toFixed(2)}/${t('perDisk', { ns: 'clusters' })}`}
+                      </>
+                    )}
                   </Typography>
                 </Stack>
               </>

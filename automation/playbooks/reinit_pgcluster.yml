@@ -1,11 +1,18 @@
 ---
-- name: vitabaks.autobase.restart_pgcluster | Restart PostgreSQL Cluster
+- name: vitabaks.autobase.reinit_pgcluster | Prepare PostgreSQL Cluster Reinitialization
   hosts: postgres_cluster
   gather_facts: true
   become: true
   become_method: sudo
   any_errors_fatal: true
   tasks:
+    - name: Require Patroni reinit member name
+      ansible.builtin.assert:
+        that: patroni_reinit_member_name | default('') | length > 0
+        fail_msg: >-
+          Set patroni_reinit_member_name to the Patroni replica node name to reinitialize.
+      when: inventory_hostname == groups['postgres_cluster'][0]
+
     - name: Gather package facts
       ansible.builtin.package_facts:
         manager: auto
@@ -29,7 +36,7 @@
             | default('8008') }}/leader
         status_code: 200
         ca_path: "{{ patroni_restapi_cafile | default(omit, true) }}"
-      register: restart_patroni_leader_result
+      register: reinit_patroni_leader_result
       changed_when: false
       failed_when: false
       check_mode: false
@@ -46,8 +53,8 @@
       ansible.builtin.set_fact:
         leader_result: >-
           {{
-            restart_patroni_leader_result
-            if restart_patroni_leader_result.status is defined
+            reinit_patroni_leader_result
+            if reinit_patroni_leader_result.status is defined
             else patroni_leader_result | default({})
           }}
       changed_when: false
@@ -89,7 +96,7 @@
       changed_when: false
       check_mode: false
 
-    - name: "Print Patroni Cluster info"
+    - name: Print Patroni Cluster info
       ansible.builtin.debug:
         msg:
           - "Cluster Name: {{ patroni_cluster_name | default('postgres-cluster') }}"
@@ -98,75 +105,38 @@
         - groups.get('primary', []) | length > 0
         - inventory_hostname in groups['primary']
 
-    - name: Get current Patroni passwords
-      ansible.builtin.import_role:
-        name: vitabaks.autobase.pre_checks
-        tasks_from: passwords
-      vars:
-        source_group: "primary"
-        postgresql_cluster_maintenance: true
-      when: patroni_superuser_password | default('') | length < 1
-
-- name: vitabaks.autobase.restart_pgcluster | Restart patroni on secondary
-  hosts: secondary
-  serial: 1 # restart replicas one by one
-  gather_facts: false
-  become: true
-  become_method: sudo
-  any_errors_fatal: true
-  tasks:
-    - name: Stop read-only traffic
-      ansible.builtin.import_role:
-        name: vitabaks.autobase.update
-        tasks_from: stop_traffic
-
-    - name: Stop Services
-      ansible.builtin.import_role:
-        name: vitabaks.autobase.update
-        tasks_from: stop_services
-
-    - name: Start Services
-      ansible.builtin.import_role:
-        name: vitabaks.autobase.update
-        tasks_from: start_services
-
-    - name: Start read-only traffic
-      ansible.builtin.import_role:
-        name: vitabaks.autobase.update
-        tasks_from: start_traffic
-
-- name: vitabaks.autobase.restart_pgcluster | Restart patroni on master
+- name: vitabaks.autobase.reinit_pgcluster | Reinitialize Patroni replica
   hosts: primary
-  gather_facts: false
+  gather_facts: true
   become: true
   become_method: sudo
   any_errors_fatal: true
-  environment: "{{ proxy_env | default({}) }}"
   tasks:
-    - name: Switchover Patroni leader role
+    - name: Validate Patroni reinit member
+      ansible.builtin.assert:
+        that:
+          - patroni_reinit_member_name | default('') in
+            (groups.get('secondary', [])
+            | map('extract', hostvars)
+            | map(attribute='ansible_hostname')
+            | list)
+        fail_msg: >-
+          Reinit member '{{ patroni_reinit_member_name | default('') }}' is not a Patroni replica in cluster
+          '{{ patroni_cluster_name | default('postgres-cluster') }}'.
+
+    - name: Reinitialize Patroni replica
       ansible.builtin.import_role:
         name: vitabaks.autobase.patroni
-        tasks_from: switchover
-      when: groups.get('secondary', []) | length > 0
+        tasks_from: reinit
 
-    - name: Stop read-only traffic
-      ansible.builtin.import_role:
-        name: vitabaks.autobase.update
-        tasks_from: stop_traffic
-      when: groups.get('secondary', []) | length > 0
+    - name: Inform about asynchronous Patroni reinitialization
+      ansible.builtin.debug:
+        msg:
+          - "Reinitialization request for Patroni replica '{{ patroni_reinit_member_name }}' was accepted."
+          - "Please wait until the replica is healthy before continuing."
+      when: not (patroni_reinit_wait | default(false) | bool)
 
-    - name: Stop Services
-      ansible.builtin.import_role:
-        name: vitabaks.autobase.update
-        tasks_from: stop_services
-
-    - name: Start Services
-      ansible.builtin.import_role:
-        name: vitabaks.autobase.update
-        tasks_from: start_services
-
-    - name: Start read-only traffic
-      ansible.builtin.import_role:
-        name: vitabaks.autobase.update
-        tasks_from: start_traffic
-      when: groups.get('secondary', []) | length > 0
+    - name: Confirm Patroni replica reinitialization is complete
+      ansible.builtin.debug:
+        msg: "Patroni replica '{{ patroni_reinit_member_name }}' was reinitialized and is healthy."
+      when: patroni_reinit_wait | default(false) | bool

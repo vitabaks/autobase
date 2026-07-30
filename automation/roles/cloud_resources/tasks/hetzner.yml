@@ -528,6 +528,7 @@
       loop_control:
         index_var: idx
         label: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}-storage"
+      when: not use_local_disk | bool
 
     # Load Balancer
     - name: "Hetzner Cloud: Create or modify Load Balancer"

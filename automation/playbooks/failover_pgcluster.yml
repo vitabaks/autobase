@@ -1,0 +1,103 @@
+---
+- name: vitabaks.autobase.failover_pgcluster | Failover PostgreSQL Cluster
+  hosts: postgres_cluster
+  gather_facts: true
+  become: true
+  become_method: sudo
+  any_errors_fatal: true
+  ignore_unreachable: true
+  tasks:
+    - name: Gather package facts
+      ansible.builtin.package_facts:
+        manager: auto
+      check_mode: false
+      when: ansible_facts.packages is not defined
+
+    - name: Define bind_address
+      ansible.builtin.import_role:
+        name: vitabaks.autobase.bind_address
+      when: bind_address is not defined
+
+    - name: Set default variables
+      ansible.builtin.import_role:
+        name: vitabaks.autobase.common
+
+    - name: "[Prepare] Check for a healthy Patroni leader"
+      ansible.builtin.uri:
+        url: >-
+          {{ patroni_restapi_protocol | default('https') }}://{{ patroni_restapi_connect_addr
+            | default(patroni_bind_address | default(bind_address, true), true) }}:{{ patroni_restapi_port
+            | default('8008') }}/leader
+        status_code: 200
+        ca_path: "{{ patroni_restapi_cafile | default(omit, true) }}"
+      register: failover_patroni_leader_result
+      changed_when: false
+      failed_when: false
+      check_mode: false
+      environment:
+        no_proxy: "{{ patroni_bind_address | default(bind_address, true) }}"
+
+    - name: Fail when a healthy Patroni leader is detected
+      ansible.builtin.fail:
+        msg: >
+          A healthy Patroni leader is present in cluster '{{ patroni_cluster_name | default('postgres-cluster') }}'.
+          Use switchover_pgcluster.yml for a planned role change.
+      when:
+        - not patroni_failover_force | default(false) | bool
+        - inventory_hostname == groups['postgres_cluster'][0]
+        - (groups.get('postgres_cluster', [])
+            | map('extract', hostvars)
+            | selectattr('failover_patroni_leader_result.status', 'defined')
+            | selectattr('failover_patroni_leader_result.status', 'equalto', 200)
+            | list | length) > 0
+
+    - name: "[Prepare] Find healthy Patroni replicas"
+      ansible.builtin.uri:
+        url: >-
+          {{ patroni_restapi_protocol | default('https') }}://{{ patroni_restapi_connect_addr
+            | default(patroni_bind_address | default(bind_address, true), true) }}:{{ patroni_restapi_port
+            | default('8008') }}/replica
+        status_code: 200
+        ca_path: "{{ patroni_restapi_cafile | default(omit, true) }}"
+      register: failover_patroni_replica_result
+      changed_when: false
+      failed_when: false
+      check_mode: false
+      environment:
+        no_proxy: "{{ patroni_bind_address | default(bind_address, true) }}"
+
+    - name: "[Prepare] Get healthy Patroni replicas"
+      ansible.builtin.set_fact:
+        failover_candidates: >-
+          {{
+            groups.get('postgres_cluster', [])
+            | map('extract', hostvars)
+            | selectattr('failover_patroni_replica_result.status', 'defined')
+            | selectattr('failover_patroni_replica_result.status', 'equalto', 200)
+            | map(attribute='ansible_hostname')
+            | list
+          }}
+      changed_when: false
+      check_mode: false
+
+    - name: "[Prepare] Select Patroni failover candidate"
+      ansible.builtin.set_fact:
+        failover_executor: >-
+          {{ patroni_failover_candidate_name | default(failover_candidates | first | default(''), true) }}
+      changed_when: false
+      check_mode: false
+
+    - name: Validate Patroni failover candidate
+      ansible.builtin.assert:
+        that:
+          - failover_executor | length > 0
+          - failover_executor in failover_candidates
+        fail_msg: >-
+          Failover candidate '{{ failover_executor }}' is not a healthy Patroni replica in cluster
+          '{{ patroni_cluster_name | default('postgres-cluster') }}'.
+
+    - name: Failover Patroni leader role
+      ansible.builtin.import_role:
+        name: vitabaks.autobase.patroni
+        tasks_from: failover
+      when: ansible_hostname == failover_executor

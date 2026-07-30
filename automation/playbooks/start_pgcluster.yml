@@ -1,0 +1,21 @@
+---
+- name: vitabaks.autobase.start_pgcluster | Start Patroni services
+  hosts: postgres_cluster
+  gather_facts: true
+  become: true
+  become_method: sudo
+  any_errors_fatal: true
+  tasks:
+    - name: Define bind_address
+      ansible.builtin.import_role:
+        name: vitabaks.autobase.bind_address
+      when: bind_address is not defined
+
+    - name: Set default variables
+      ansible.builtin.import_role:
+        name: vitabaks.autobase.common
+
+    - name: Start services
+      ansible.builtin.import_role:
+        name: vitabaks.autobase.update
+        tasks_from: start_services

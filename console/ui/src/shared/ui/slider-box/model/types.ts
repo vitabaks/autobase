@@ -1,20 +1,24 @@
 import { ReactElement } from 'react';
-import { Mark } from '@mui/material/Slider/useSlider.types';
+import { SliderProps } from '@mui/material';
+import { FieldError } from 'react-hook-form';
+
+type SliderMark = Extract<NonNullable<SliderProps['marks']>, readonly unknown[]>[number];
 
 export interface SliderBoxProps {
   amount: number;
-  changeAmount: (...event: any[]) => void;
+  changeAmount: (amount: number) => void;
   icon?: ReactElement;
   unit?: string;
   min: number;
   max: number;
-  marks?: { label: unknown; value: unknown }[];
+  marks?: SliderMark[];
   marksAmount?: number;
   marksAdditionalLabel?: string;
   step?: number | null;
-  error?: object;
+  error?: FieldError;
   limitMin?: boolean;
   limitMax?: boolean;
+  allowZero?: boolean;
   topRightElements?: ReactElement | null;
 }
 
@@ -25,4 +29,4 @@ export type GenerateSliderMarksType = (
   max: number,
   amount: number,
   marksAdditionalLabel: string,
-) => Mark[];
+) => SliderMark[];

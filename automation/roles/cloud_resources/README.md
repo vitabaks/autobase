@@ -35,8 +35,8 @@ Provision the PostgreSQL cluster infrastructure in public clouds (AWS, GCP, Azur
 | server_network | string | "" | Existing network/subnet/VPC. If provided, the server will be added to this network (needs to be created beforehand) |
 | server_spot | bool | false | Spot/preemptible where supported. Applicable for AWS, GCP, Azure |
 | server_public_ip | bool | true | Assign public IPs to servers |
-| volume_type | string | "" | Data disk type. Defaults: 'gp3' for AWS, 'pd-ssd' for GCP, 'StandardSSD_LRS' for Azure |
-| volume_size | int | 100 | Data disk size (GB) |
+| volume_type | string | "" | Data disk type. Set to `local` to use the system disk and skip creating an external data disk. Defaults: 'gp3' for AWS, 'pd-ssd' for GCP, 'StandardSSD_LRS' for Azure |
+| volume_size | int | 100 | Data disk size (GB). Set to `0` to use the system disk; this is equivalent to `volume_type: local` |
 | system_volume_type | string | "" | System disk type. Defaults: 'gp3' for AWS, 'pd-ssd' for GCP, 'StandardSSD_LRS' for Azure |
 | system_volume_size | int | 100 | System disk size (GB) |
 | ssh_key_name | string | "" | Name of the SSH key to be added to the server. Note: If not provided, all cloud available SSH keys will be added (applicable to DigitalOcean, Hetzner) |
@@ -90,7 +90,7 @@ Provision the PostgreSQL cluster infrastructure in public clouds (AWS, GCP, Azur
 | Variable | Provider | Default/Notes |
 |----------|----------|---------------|
 | aws_ec2_spot_instance | AWS | Fallback for server_spot |
-| gcp_project | GCP | Fallbacks to projectNumber from credentials |
+| gcp_project | GCP | Fallbacks to project_id from service account credentials |
 | gcp_compute_instance_preemptible | GCP | Fallback for server_spot |
 | gcp_compute_health_check_interval_sec, gcp_compute_health_check_check_timeout_sec, gcp_compute_health_check_unhealthy_threshold, gcp_compute_health_check_healthy_threshold | GCP | Interval/timeout/threshold tuning |
 | gcp_compute_backend_service_timeout_sec, gcp_compute_backend_service_log_enable | GCP | LB Backend timeouts/logging |

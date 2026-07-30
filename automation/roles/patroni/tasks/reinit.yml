@@ -1,0 +1,35 @@
+---
+- name: Reinitialize the selected Patroni replica
+  become: true
+  become_user: postgres
+  ansible.builtin.command: >-
+    patronictl -c /etc/patroni/patroni.yml reinit {{ patroni_cluster_name }}
+    {{ patroni_reinit_member_name | default('') }} --force
+  environment:
+    PATH: "{{ ansible_env.PATH | default('') }}:/usr/bin:/usr/local/bin"
+
+- name: Wait for Patroni replica reinitialization to complete
+  ansible.builtin.uri:
+    url: >-
+      {{ patroni_restapi_protocol | default('https') }}://{{ hostvars[reinit_member].patroni_restapi_connect_addr
+        | default(hostvars[reinit_member].patroni_bind_address
+        | default(hostvars[reinit_member].bind_address, true), true) }}:{{ patroni_restapi_port
+        | default('8008') }}/replica
+    status_code: 200
+    ca_path: "{{ patroni_restapi_cafile | default(omit, true) }}"
+  register: patroni_reinit_replica_result
+  changed_when: false
+  failed_when: false
+  check_mode: false
+  until: patroni_reinit_replica_result.status | default(0) == 200
+  retries: "{{ (cluster_restore_timeout | default(86400) | int) // 30 }}"
+  delay: 30
+  environment:
+    no_proxy: "{{ patroni_bind_address | default(bind_address, true) }}"
+  loop: "{{ groups.get('secondary', []) }}"
+  loop_control:
+    loop_var: reinit_member
+    label: "{{ reinit_member }}"
+  when:
+    - patroni_reinit_wait | default(false) | bool
+    - hostvars[reinit_member].ansible_hostname == patroni_reinit_member_name | default('')

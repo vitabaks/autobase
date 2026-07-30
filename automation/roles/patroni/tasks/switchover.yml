@@ -44,11 +44,23 @@
     - synchronous_mode | default(false) | bool
     - patroni_leader_result.status | default(0) == 200
 
+- name: Execute CHECKPOINT before switchover
+  become: true
+  become_user: postgres
+  ansible.builtin.command: >
+    {{ postgresql_bin_dir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc "CHECKPOINT"
+  environment:
+    PGPASSWORD: "{{ patroni_superuser_password }}"
+  when: patroni_leader_result.status | default(0) == 200
+
 # If the node is the current leader, perform switchover
 - name: Perform switchover of the Patroni leader role to another node
   become: true
   become_user: postgres
-  ansible.builtin.command: "patronictl -c /etc/patroni/patroni.yml switchover {{ patroni_cluster_name }} --force"
+  ansible.builtin.command: >-
+    patronictl -c /etc/patroni/patroni.yml switchover {{ patroni_cluster_name }}
+    {{ '--candidate ' ~ patroni_switchover_candidate_name
+      if patroni_switchover_candidate_name | default('') | length > 0 else '' }} --force
   register: patronictl_switchover_result
   ignore_errors: true # show the error and continue the playbook execution
   environment:
@@ -73,7 +85,10 @@
     - name: Perform switchover of the Patroni leader role to another node (RETRY)
       become: true
       become_user: postgres
-      ansible.builtin.command: "patronictl -c /etc/patroni/patroni.yml switchover {{ patroni_cluster_name }} --force"
+      ansible.builtin.command: >-
+        patronictl -c /etc/patroni/patroni.yml switchover {{ patroni_cluster_name }}
+        {{ '--candidate ' ~ patroni_switchover_candidate_name
+          if patroni_switchover_candidate_name | default('') | length > 0 else '' }} --force
       register: patronictl_switchover_retry_result
       environment:
         PATH: "{{ ansible_env.PATH }}:/usr/bin:/usr/local/bin"

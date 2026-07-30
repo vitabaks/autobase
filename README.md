@@ -98,12 +98,12 @@ Autobase has been actively developed for over 7 years (since 2019) and is truste
 
 If you find our project helpful, consider giving it a star on GitHub! Your support helps us grow and motivates us to keep improving. Starring the project is a simple yet effective way to show your appreciation and help others discover it.
 
-<a href="https://star-history.com/#autobase-tech/autobase&Date">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=autobase-tech/autobase&type=Date&theme=dark" />
-    <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=autobase-tech/autobase&type=Date" />
-    <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=autobase-tech/autobase&type=Date" />
-  </picture>
+<a href="https://www.star-history.com/?type=date&repos=autobase-tech%2Fautobase">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=autobase-tech/autobase&type=date&theme=dark&legend=top-left&sealed_token=VdYxGE_5d92Xolz9F9ZUWnCr8ysiUiSRl4f8Yw6V5AK3RlEU4W1hECTT6IREYWAMxy2KBEvkrrDE7vcLzeqb0WtTRzzDN2QDOQsG5naaj6zq3BXQAVZoEs7Yyiz3HssFq0sjcgeWXj8bvfxCb5WSwTGY8jsc3TN5ZN8wWfRyCNGNmKWsstjDiPM_pmFi" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=autobase-tech/autobase&type=date&legend=top-left&sealed_token=VdYxGE_5d92Xolz9F9ZUWnCr8ysiUiSRl4f8Yw6V5AK3RlEU4W1hECTT6IREYWAMxy2KBEvkrrDE7vcLzeqb0WtTRzzDN2QDOQsG5naaj6zq3BXQAVZoEs7Yyiz3HssFq0sjcgeWXj8bvfxCb5WSwTGY8jsc3TN5ZN8wWfRyCNGNmKWsstjDiPM_pmFi" />
+   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=autobase-tech/autobase&type=date&legend=top-left&sealed_token=VdYxGE_5d92Xolz9F9ZUWnCr8ysiUiSRl4f8Yw6V5AK3RlEU4W1hECTT6IREYWAMxy2KBEvkrrDE7vcLzeqb0WtTRzzDN2QDOQsG5naaj6zq3BXQAVZoEs7Yyiz3HssFq0sjcgeWXj8bvfxCb5WSwTGY8jsc3TN5ZN8wWfRyCNGNmKWsstjDiPM_pmFi" />
+ </picture>
 </a>
 
 ## License

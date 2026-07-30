@@ -304,10 +304,7 @@
         os_type: Linux
         os_disk_size_gb: "{{ system_volume_size | default('80') }}" # system disk size
         managed_disk_type: "{{ system_volume_type | default('StandardSSD_LRS', true) }}"
-        data_disks:
-          - lun: 0
-            disk_size_gb: "{{ volume_size | int }}"
-            managed_disk_type: "{{ volume_type | default('StandardSSD_LRS', true) }}"
+        data_disks: "{{ [] if use_local_disk | bool else [data_disk] }}"
         network_interface_names:
           - "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}-network-interface"
         tags:
@@ -317,6 +314,11 @@
         index_var: idx
         label: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}"
       register: server_result
+      vars:
+        data_disk:
+          lun: 0
+          disk_size_gb: "{{ volume_size | int }}"
+          managed_disk_type: "{{ volume_type | default('StandardSSD_LRS', true) }}"
 
     # Required to allow data disk size to be changed after deployment without deallocating the VM.
     - name: "Azure: Ensure data disk size"
@@ -330,6 +332,7 @@
       loop_control:
         label: "{{ item.ansible_facts.azure_vm.storage_profile.data_disks[0].name | default('data-disk') }}"
       when:
+        - not use_local_disk | bool
         - item.ansible_facts.azure_vm.storage_profile.data_disks is defined
         - item.ansible_facts.azure_vm.storage_profile.data_disks | length > 0
         - item.ansible_facts.azure_vm.storage_profile.data_disks[0].managed_disk is defined

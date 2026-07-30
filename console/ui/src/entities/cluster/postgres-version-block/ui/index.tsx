@@ -7,6 +7,8 @@ import { PostgresVersionBlockProps } from '@entities/cluster/postgres-version-bl
 
 const PostgresVersionBox: FC<PostgresVersionBlockProps> = ({ postgresVersions }) => {
   const { t } = useTranslation('clusters');
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
   const {
     control,
     formState: { errors },
@@ -26,13 +28,34 @@ const PostgresVersionBox: FC<PostgresVersionBlockProps> = ({ postgresVersions })
             fullWidth
             value={value}
             onChange={onChange}
+            renderValue={(selectedVersion) => String(selectedVersion)}
             error={!!errors[CLUSTER_FORM_FIELD_NAMES.POSTGRES_VERSION]}
-            helperText={errors[CLUSTER_FORM_FIELD_NAMES.POSTGRES_VERSION]?.message}>
-            {postgresVersions.map((version) => (
-              <MenuItem key={version?.major_version} value={version?.major_version}>
-                {version?.major_version}
-              </MenuItem>
-            ))}
+            helperText={errors[CLUSTER_FORM_FIELD_NAMES.POSTGRES_VERSION]?.message}
+            MenuProps={{
+              PaperProps: {
+                sx: { maxHeight: '200px' },
+              },
+            }}>
+            {postgresVersions.map((version) => {
+              const isEndOfLife =
+                version.end_of_life && new Date(`${version.end_of_life}T00:00:00`).getTime() < today.getTime();
+              const versionDetails = [
+                version.release_date ? `Release: ${version.release_date}` : null,
+                version.end_of_life ? `EOL: ${version.end_of_life}` : null,
+              ]
+                .filter(Boolean)
+                .join(', ');
+
+              return (
+                <MenuItem
+                  key={version?.major_version}
+                  value={version?.major_version}
+                  sx={isEndOfLife ? { color: 'error.main' } : undefined}>
+                  {version?.major_version}
+                  {versionDetails ? `\u00A0\u00A0(${versionDetails})` : ''}
+                </MenuItem>
+              );
+            })}
           </Select>
         )}
       />

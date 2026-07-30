@@ -7,20 +7,20 @@ require (
 	github.com/docker/go-connections v0.7.0
 	github.com/gdex-lab/go-render v1.0.1
 	github.com/go-openapi/errors v0.22.8
-	github.com/go-openapi/loads v0.24.0
-	github.com/go-openapi/runtime v0.32.4
-	github.com/go-openapi/strfmt v0.26.3
+	github.com/go-openapi/loads v0.25.0
+	github.com/go-openapi/runtime v0.32.6
+	github.com/go-openapi/strfmt v0.27.0
 	github.com/google/uuid v1.6.0
 	github.com/goombaio/namegenerator v0.0.0-20181006234301-989e774b106e
 	github.com/jackc/pgx/v5 v5.10.0
 	github.com/jessevdk/go-flags v1.6.1
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/mitchellh/mapstructure v1.5.0
-	github.com/pressly/goose/v3 v3.27.1
+	github.com/pressly/goose/v3 v3.27.3
 	github.com/rs/zerolog v1.35.1
 	github.com/segmentio/asm v1.2.1
 	go.openly.dev/pointy v1.3.0
-	golang.org/x/sync v0.21.0
+	golang.org/x/sync v0.22.0
 	gotest.tools/v3 v3.5.2
 )
 

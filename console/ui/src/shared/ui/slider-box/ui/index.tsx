@@ -1,5 +1,5 @@
-import { ChangeEvent, FC } from 'react';
-import { Box, Slider, TextField, Typography, useTheme } from '@mui/material';
+import { ChangeEvent, FC, useEffect, useState } from 'react';
+import { Box, Slider, SliderProps, TextField, Typography, useTheme } from '@mui/material';
 import { SliderBoxProps } from '@shared/ui/slider-box/model/types.ts';
 
 import { generateSliderMarks } from '@shared/ui/slider-box/lib/functions.ts';
@@ -18,17 +18,53 @@ const ClusterSliderBox: FC<SliderBoxProps> = ({
   error,
   limitMin = true,
   limitMax,
+  allowZero = false,
   topRightElements,
 }) => {
   const theme = useTheme();
+  const [inputValue, setInputValue] = useState(String(amount));
+  const [sliderValue, setSliderValue] = useState(amount);
+
+  useEffect(() => {
+    setInputValue(String(amount));
+    setSliderValue(amount);
+  }, [amount]);
 
   const onChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { value } = e.target;
     if (/^\d*$/.test(value)) {
-      const num = Number(value);
-      changeAmount(num < (min ?? 0) && limitMin ? min : num > (max ?? Infinity) && limitMax ? max : num);
+      setInputValue(value);
+      if (value) changeAmount(Number(value));
     }
   };
+
+  const onBlur = () => {
+    const num = Number(inputValue);
+    const nextAmount =
+      num === 0 && allowZero
+        ? 0
+        : !inputValue || (num < (min ?? 0) && limitMin)
+          ? min
+          : num > (max ?? Infinity) && limitMax
+            ? max
+            : num;
+    setInputValue(String(nextAmount));
+    changeAmount(nextAmount);
+  };
+
+  const handleSliderChange: NonNullable<SliderProps['onChange']> = (_event, value) => {
+    if (allowZero) {
+      setSliderValue(Number(value));
+      return;
+    }
+    changeAmount(Number(value));
+  };
+
+  const handleSliderChangeCommitted: NonNullable<SliderProps['onChangeCommitted']> = (_event, value) => {
+    if (allowZero) changeAmount(Number(value) < min ? 0 : Number(value));
+  };
+
+  const sliderMarks = marks ?? generateSliderMarks(min ?? 1, max ?? 100, marksAmount ?? 0, marksAdditionalLabel);
 
   return (
     <Box
@@ -36,7 +72,7 @@ const ClusterSliderBox: FC<SliderBoxProps> = ({
       border={`1px solid ${theme.palette.divider}`}
       height="100px"
       borderRadius="8px"
-      overflow="hidden">
+      overflow="visible">
       <Box
         display="flex"
         alignItems="center"
@@ -50,10 +86,11 @@ const ClusterSliderBox: FC<SliderBoxProps> = ({
         {icon}
         <TextField
           required
-          value={amount}
+          value={inputValue}
           onChange={onChange}
+          onBlur={onBlur}
           error={!!error}
-          helperText={(error as any)?.message ?? ''}
+          helperText={error?.message ?? ''}
           size="small"
           sx={{ width: '75px' }}
         />
@@ -65,16 +102,20 @@ const ClusterSliderBox: FC<SliderBoxProps> = ({
         flexDirection="column"
         justifyContent="center"
         width="100%"
-        padding="32px">
+        padding={topRightElements ? '32px' : '32px 32px 24px'}>
         {topRightElements ?? null}
         <Slider
-          value={amount}
-          onChange={changeAmount}
-          step={step}
+          value={allowZero ? sliderValue : amount}
+          onChange={handleSliderChange}
+          onChangeCommitted={handleSliderChangeCommitted}
+          step={allowZero ? 1 : step}
           valueLabelDisplay="auto"
-          min={min}
+          min={allowZero ? 0 : min}
           max={max}
-          marks={marks ?? generateSliderMarks(min ?? 1, max ?? 100, marksAmount ?? 0, marksAdditionalLabel)}
+          marks={sliderMarks}
+          sx={{
+            '& .MuiSlider-markLabel': { marginTop: '-8px' },
+          }}
         />
       </Box>
     </Box>

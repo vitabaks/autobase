@@ -8,8 +8,11 @@ import { toast } from 'react-toastify';
  * @param pollingInterval - Polling interval in ms. Use 0 to disable polling.
  * @param options - Different config options.
  */
-export const useQueryPolling = (request: any, pollingInterval: number, options?: { stop?: boolean }) => {
-  const result = request();
+export const useQueryPolling = <T extends { refetch: () => unknown }>(
+  result: T,
+  pollingInterval: number,
+  options?: { stop?: boolean },
+) => {
   const stop = options?.stop === true;
 
   useEffect(() => {
@@ -18,7 +21,7 @@ export const useQueryPolling = (request: any, pollingInterval: number, options?:
     return () => {
       clearInterval(polling);
     };
-  }, [pollingInterval, stop]);
+  }, [pollingInterval, result, stop]);
 
   return result;
 };

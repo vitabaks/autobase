@@ -78,12 +78,20 @@
   when: gcp_service_account_contents is not defined
 
 # Project info
-- name: "GCP: Gather information about project"
-  google.cloud.gcp_resourcemanager_project_info:
-    auth_kind: "serviceaccount"
-    service_account_contents: "{{ gcp_service_account_contents }}"
-  register: project_info
-  when: gcp_project is not defined or gcp_project | length < 1
+- name: "Set variable: gcp_project"
+  ansible.builtin.set_fact:
+    gcp_project: "{{ (gcp_service_account_contents | from_json).get('project_id', '') }}"
+  no_log: true
+  changed_when: false
+  when: gcp_project | default('') | length < 1
+
+- name: "Fail if GCP project was not found"
+  ansible.builtin.fail:
+    msg: >-
+      Unable to determine the GCP project.
+      Make sure that a valid GCP service account JSON key is provided
+      or explicitly set the project ID in the gcp_project variable.
+  when: gcp_project | default('') | length < 1
 
 # Create (if state is present)
 - block:
@@ -108,7 +116,7 @@
       google.cloud.gcp_compute_network_info:
         auth_kind: "serviceaccount"
         service_account_contents: "{{ gcp_service_account_contents }}"
-        project: "{{ gcp_project | default(project_info.resources[0].projectNumber) }}"
+        project: "{{ gcp_project | default('') }}"
         filters:
           - name = "{{ gcp_network_name }}"
       register: gcp_network_info
@@ -117,7 +125,7 @@
       google.cloud.gcp_compute_subnetwork_info:
         auth_kind: "serviceaccount"
         service_account_contents: "{{ gcp_service_account_contents }}"
-        project: "{{ gcp_project | default(project_info.resources[0].projectNumber) }}"
+        project: "{{ gcp_project | default('') }}"
         region: "{{ (item | split('/regions/'))[1] | split('/subnetworks/') | first }}"
         filters:
           - name = "{{ item | split('/subnetworks/') | last }}"
@@ -140,7 +148,7 @@
       google.cloud.gcp_compute_firewall:
         auth_kind: "serviceaccount"
         service_account_contents: "{{ gcp_service_account_contents }}"
-        project: "{{ gcp_project | default(project_info.resources[0].projectNumber) }}"
+        project: "{{ gcp_project | default('') }}"
         name: "{{ patroni_cluster_name }}-ssh-public"
         description: "Firewall rule for public SSH access to Postgres cluster servers"
         allowed:
@@ -162,7 +170,7 @@
       google.cloud.gcp_compute_firewall:
         auth_kind: "serviceaccount"
         service_account_contents: "{{ gcp_service_account_contents }}"
-        project: "{{ gcp_project | default(project_info.resources[0].projectNumber) }}"
+        project: "{{ gcp_project | default('') }}"
         name: "{{ patroni_cluster_name }}-netdata-public"
         description: "Firewall rule for public Netdata monitoring access"
         allowed:
@@ -184,7 +192,7 @@
       google.cloud.gcp_compute_firewall:
         auth_kind: "serviceaccount"
         service_account_contents: "{{ gcp_service_account_contents }}"
-        project: "{{ gcp_project | default(project_info.resources[0].projectNumber) }}"
+        project: "{{ gcp_project | default('') }}"
         name: "{{ patroni_cluster_name }}-database-public"
         description: "Firewall rule for public database access"
         allowed:
@@ -214,7 +222,7 @@
       google.cloud.gcp_compute_firewall:
         auth_kind: "serviceaccount"
         service_account_contents: "{{ gcp_service_account_contents }}"
-        project: "{{ gcp_project | default(project_info.resources[0].projectNumber) }}"
+        project: "{{ gcp_project | default('') }}"
         name: "{{ patroni_cluster_name }}-firewall-rule"
         description: "Firewall rule for Postgres cluster"
         allowed:
@@ -255,7 +263,7 @@
       google.cloud.gcp_compute_firewall:
         auth_kind: "serviceaccount"
         service_account_contents: "{{ gcp_service_account_contents }}"
-        project: "{{ gcp_project | default(project_info.resources[0].projectNumber) }}"
+        project: "{{ gcp_project | default('') }}"
         name: "{{ patroni_cluster_name }}-lb-firewall-rule"
         description: "Firewall rule for Health Checks and Load Balancer access to the database"
         priority: 900
@@ -279,7 +287,7 @@
       google.cloud.gcp_compute_instance_info:
         auth_kind: "serviceaccount"
         service_account_contents: "{{ gcp_service_account_contents }}"
-        project: "{{ gcp_project | default(project_info.resources[0].projectNumber) }}"
+        project: "{{ gcp_project | default('') }}"
         zone: "{{ server_location + '-b' if not server_location is match('.*-[a-z]$') else server_location }}" # add "-b" if the zone is not defined
         filters:
           - "name = {{ server_name | lower }}{{ '%02d' % (idx + 1) }}"
@@ -293,25 +301,11 @@
       google.cloud.gcp_compute_instance:
         auth_kind: "serviceaccount"
         service_account_contents: "{{ gcp_service_account_contents }}"
-        project: "{{ gcp_project | default(project_info.resources[0].projectNumber) }}"
+        project: "{{ gcp_project | default('') }}"
         zone: "{{ server_location + '-b' if not server_location is match('.*-[a-z]$') else server_location }}" # add "-b" if the zone is not defined
         name: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}"
         machine_type: "{{ server_type }}"
-        disks:
-          - device_name: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}-system"
-            auto_delete: true
-            boot: true
-            initialize_params:
-              disk_name: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}-system"
-              source_image: "{{ server_image }}"
-              disk_size_gb: "{{ system_volume_size | default('80') }}" # system disk size
-              disk_type: "{{ system_volume_type | default('pd-ssd', true) }}"
-          - device_name: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}-storage"
-            auto_delete: true
-            initialize_params:
-              disk_name: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}-storage"
-              disk_size_gb: "{{ volume_size | int }}"
-              disk_type: "{{ volume_type | default('pd-ssd', true) }}"
+        disks: "{{ [system_disk] + ([] if use_local_disk | bool else [data_disk]) }}"
         network_interfaces:
           - network:
               selfLink: "global/networks/{{ gcp_network_name }}"
@@ -336,13 +330,30 @@
       until: server_result is success
       delay: 10
       retries: 3
+      vars:
+        system_disk:
+          device_name: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}-system"
+          auto_delete: true
+          boot: true
+          initialize_params:
+            disk_name: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}-system"
+            source_image: "{{ server_image }}"
+            disk_size_gb: "{{ system_volume_size | default('80') }}"
+            disk_type: "{{ system_volume_type | default('pd-ssd', true) }}"
+        data_disk:
+          device_name: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}-storage"
+          auto_delete: true
+          initialize_params:
+            disk_name: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}-storage"
+            disk_size_gb: "{{ volume_size | int }}"
+            disk_type: "{{ volume_type | default('pd-ssd', true) }}"
 
     # Required to allow data disk size to be changed after deployment.
     - name: "GCP: Ensure data disk size"
       google.cloud.gcp_compute_disk:
         auth_kind: "serviceaccount"
         service_account_contents: "{{ gcp_service_account_contents }}"
-        project: "{{ gcp_project | default(project_info.resources[0].projectNumber) }}"
+        project: "{{ gcp_project | default('') }}"
         zone: "{{ server_location + '-b' if not server_location is match('.*-[a-z]$') else server_location }}"
         name: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}-storage"
         size_gb: "{{ volume_size | int }}"
@@ -352,6 +363,7 @@
       loop_control:
         index_var: idx
         label: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}-storage"
+      when: not use_local_disk | bool
 
     # Load Balancer
     # This block creates Global External classic proxy Network Load Balancer.
@@ -363,7 +375,7 @@
           google.cloud.gcp_compute_instance_group:
             auth_kind: "serviceaccount"
             service_account_contents: "{{ gcp_service_account_contents }}"
-            project: "{{ gcp_project | default(project_info.resources[0].projectNumber) }}"
+            project: "{{ gcp_project | default('') }}"
             name: "{{ patroni_cluster_name }}"
             description: "{{ patroni_cluster_name }} instance group"
             region: "{{ region }}"
@@ -395,7 +407,7 @@
           google.cloud.gcp_compute_health_check:
             auth_kind: "serviceaccount"
             service_account_contents: "{{ gcp_service_account_contents }}"
-            project: "{{ gcp_project | default(project_info.resources[0].projectNumber) }}"
+            project: "{{ gcp_project | default('') }}"
             name: "{{ patroni_cluster_name }}-{{ item }}-hc"
             description: "{{ patroni_cluster_name }} {{ item }} health check"
             type: "{{ patroni_restapi_protocol | upper }}"
@@ -423,7 +435,7 @@
           google.cloud.gcp_compute_backend_service:
             auth_kind: "serviceaccount"
             service_account_contents: "{{ gcp_service_account_contents }}"
-            project: "{{ gcp_project | default(project_info.resources[0].projectNumber) }}"
+            project: "{{ gcp_project | default('') }}"
             name: "{{ patroni_cluster_name }}-{{ item }}"
             description: "{{ patroni_cluster_name }} {{ item }} backend"
             protocol: "TCP"
@@ -458,7 +470,7 @@
           google.cloud.gcp_compute_target_tcp_proxy:
             auth_kind: "serviceaccount"
             service_account_contents: "{{ gcp_service_account_contents }}"
-            project: "{{ gcp_project | default(project_info.resources[0].projectNumber) }}"
+            project: "{{ gcp_project | default('') }}"
             name: "{{ patroni_cluster_name }}-{{ item }}-proxy"
             description: "{{ patroni_cluster_name }} {{ item }} TCP Proxy"
             service:
@@ -480,7 +492,7 @@
           google.cloud.gcp_compute_global_address:
             auth_kind: "serviceaccount"
             service_account_contents: "{{ gcp_service_account_contents }}"
-            project: "{{ gcp_project | default(project_info.resources[0].projectNumber) }}"
+            project: "{{ gcp_project | default('') }}"
             name: "{{ patroni_cluster_name }}-{{ item }}-ip"
             description: "{{ patroni_cluster_name }} {{ item }} load balancer IP address"
             address_type: "EXTERNAL"
@@ -501,7 +513,7 @@
           google.cloud.gcp_compute_global_forwarding_rule:
             auth_kind: "serviceaccount"
             service_account_contents: "{{ gcp_service_account_contents }}"
-            project: "{{ gcp_project | default(project_info.resources[0].projectNumber) }}"
+            project: "{{ gcp_project | default('') }}"
             name: "{{ patroni_cluster_name }}-{{ item }}-fr"
             description: "{{ patroni_cluster_name }} {{ item }} forwarding rule"
             load_balancing_scheme: "EXTERNAL"
@@ -527,7 +539,7 @@
       google.cloud.gcp_storage_bucket:
         auth_kind: "serviceaccount"
         service_account_contents: "{{ gcp_service_account_contents }}"
-        project: "{{ gcp_project | default(project_info.resources[0].projectNumber) }}"
+        project: "{{ gcp_project | default('') }}"
         name: "{{ gcp_bucket_name }}"
         storage_class: "{{ gcp_bucket_storage_class }}"
         predefined_default_object_acl: "{{ gcp_bucket_default_object_acl }}"
@@ -611,7 +623,7 @@
       google.cloud.gcp_compute_instance:
         auth_kind: "serviceaccount"
         service_account_contents: "{{ gcp_service_account_contents }}"
-        project: "{{ gcp_project | default(project_info.resources[0].projectNumber) }}"
+        project: "{{ gcp_project | default('') }}"
         zone: "{{ server_location + '-b' if not server_location is match('.*-[a-z]$') else server_location }}" # add "-b" if the zone is not defined
         name: "{{ server_name | lower }}{{ '%02d' % (idx + 1) }}"
         state: absent
@@ -624,7 +636,7 @@
       google.cloud.gcp_compute_global_forwarding_rule:
         auth_kind: "serviceaccount"
         service_account_contents: "{{ gcp_service_account_contents }}"
-        project: "{{ gcp_project | default(project_info.resources[0].projectNumber) }}"
+        project: "{{ gcp_project | default('') }}"
         name: "{{ patroni_cluster_name }}-{{ item }}-fr"
         target: "/global/targetTcpProxies/{{ patroni_cluster_name }}-{{ item }}-proxy"
         state: absent
@@ -642,7 +654,7 @@
       google.cloud.gcp_compute_global_address:
         auth_kind: "serviceaccount"
         service_account_contents: "{{ gcp_service_account_contents }}"
-        project: "{{ gcp_project | default(project_info.resources[0].projectNumber) }}"
+        project: "{{ gcp_project | default('') }}"
         name: "{{ patroni_cluster_name }}-{{ item }}-ip"
         address_type: "EXTERNAL"
         ip_version: "IPV4"
@@ -661,7 +673,7 @@
       google.cloud.gcp_compute_target_tcp_proxy:
         auth_kind: "serviceaccount"
         service_account_contents: "{{ gcp_service_account_contents }}"
-        project: "{{ gcp_project | default(project_info.resources[0].projectNumber) }}"
+        project: "{{ gcp_project | default('') }}"
         name: "{{ patroni_cluster_name }}-{{ item }}-proxy"
         service:
           selfLink: "/global/backendServices/{{ patroni_cluster_name }}-{{ item }}"
@@ -680,7 +692,7 @@
       google.cloud.gcp_compute_backend_service:
         auth_kind: "serviceaccount"
         service_account_contents: "{{ gcp_service_account_contents }}"
-        project: "{{ gcp_project | default(project_info.resources[0].projectNumber) }}"
+        project: "{{ gcp_project | default('') }}"
         name: "{{ patroni_cluster_name }}-{{ item }}"
         state: absent
       loop:
@@ -697,7 +709,7 @@
       google.cloud.gcp_compute_health_check:
         auth_kind: "serviceaccount"
         service_account_contents: "{{ gcp_service_account_contents }}"
-        project: "{{ gcp_project | default(project_info.resources[0].projectNumber) }}"
+        project: "{{ gcp_project | default('') }}"
         name: "{{ patroni_cluster_name }}-{{ item }}-hc"
         state: absent
       loop:
@@ -714,7 +726,7 @@
       google.cloud.gcp_compute_instance_group:
         auth_kind: "serviceaccount"
         service_account_contents: "{{ gcp_service_account_contents }}"
-        project: "{{ gcp_project | default(project_info.resources[0].projectNumber) }}"
+        project: "{{ gcp_project | default('') }}"
         name: "{{ patroni_cluster_name }}"
         region: "{{ server_location[:-2] if server_location[-2:] | regex_search('-[a-z]$') else server_location }}"
         zone: "{{ server_location + '-b' if not server_location is match('.*-[a-z]$') else server_location }}"
@@ -724,7 +736,7 @@
       google.cloud.gcp_compute_firewall:
         auth_kind: "serviceaccount"
         service_account_contents: "{{ gcp_service_account_contents }}"
-        project: "{{ gcp_project | default(project_info.resources[0].projectNumber) }}"
+        project: "{{ gcp_project | default('') }}"
         name: "{{ patroni_cluster_name }}-ssh-public"
         state: absent
 
@@ -732,7 +744,7 @@
       google.cloud.gcp_compute_firewall:
         auth_kind: "serviceaccount"
         service_account_contents: "{{ gcp_service_account_contents }}"
-        project: "{{ gcp_project | default(project_info.resources[0].projectNumber) }}"
+        project: "{{ gcp_project | default('') }}"
         name: "{{ patroni_cluster_name }}-netdata-public"
         state: absent
 
@@ -740,7 +752,7 @@
       google.cloud.gcp_compute_firewall:
         auth_kind: "serviceaccount"
         service_account_contents: "{{ gcp_service_account_contents }}"
-        project: "{{ gcp_project | default(project_info.resources[0].projectNumber) }}"
+        project: "{{ gcp_project | default('') }}"
         name: "{{ patroni_cluster_name }}-database-public"
         state: absent
 
@@ -748,7 +760,7 @@
       google.cloud.gcp_compute_firewall:
         auth_kind: "serviceaccount"
         service_account_contents: "{{ gcp_service_account_contents }}"
-        project: "{{ gcp_project | default(project_info.resources[0].projectNumber) }}"
+        project: "{{ gcp_project | default('') }}"
         name: "{{ patroni_cluster_name }}-firewall-rule"
         state: absent
 
@@ -756,7 +768,7 @@
       google.cloud.gcp_compute_firewall:
         auth_kind: "serviceaccount"
         service_account_contents: "{{ gcp_service_account_contents }}"
-        project: "{{ gcp_project | default(project_info.resources[0].projectNumber) }}"
+        project: "{{ gcp_project | default('') }}"
         name: "{{ patroni_cluster_name }}-lb-firewall-rule"
         state: absent
 
@@ -764,7 +776,7 @@
       google.cloud.gcp_storage_bucket:
         auth_kind: "serviceaccount"
         service_account_contents: "{{ gcp_service_account_contents }}"
-        project: "{{ gcp_project | default(project_info.resources[0].projectNumber) }}"
+        project: "{{ gcp_project | default('') }}"
         name: "{{ gcp_bucket_name }}"
         state: absent
       when:

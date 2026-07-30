@@ -22,7 +22,7 @@ import DefaultTable from '@shared/ui/default-table';
 import RowActionsMenu from '@features/row-actions-menu/ui';
 
 const OperationsTable: FC = () => {
-  const { t, i18n } = useTranslation(['operations', 'shared']);
+  const { t } = useTranslation(['operations', 'shared']);
 
   const currentProject = useAppSelector(selectCurrentProject);
   const pollingInterval = useAppSelector(selectPollingInterval('operations'));
@@ -44,20 +44,17 @@ const OperationsTable: FC = () => {
     value: formatOperationsDate(subDays(new Date(), 1)),
   });
 
-  const operationsList = useQueryPolling(
-    () =>
-      useGetOperationsQuery({
-        projectId: Number(currentProject),
-        startDate: startDate.value,
-        endDate,
-        offset: pagination.pageIndex * pagination.pageSize,
-        limit: pagination.pageSize,
-        ...(sorting?.[0] ? { sortBy: manageSortingOrder(sorting[0]) } : {}),
-      }),
-    pollingInterval,
-  );
+  const operationsListRequest = useGetOperationsQuery({
+    projectId: Number(currentProject),
+    startDate: startDate.value,
+    endDate,
+    offset: pagination.pageIndex * pagination.pageSize,
+    limit: pagination.pageSize,
+    ...(sorting?.[0] ? { sortBy: manageSortingOrder(sorting[0]) } : {}),
+  });
+  const operationsList = useQueryPolling(operationsListRequest, pollingInterval);
 
-  const columns = useMemo<MRT_ColumnDef<OperationsTableValues>[]>(() => operationTableColumns(t), [i18n.language]);
+  const columns = useMemo<MRT_ColumnDef<OperationsTableValues>[]>(() => operationTableColumns(t), [t]);
 
   const data = useGetOperationsTableData(operationsList.data?.data);
 

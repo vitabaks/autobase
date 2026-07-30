@@ -1,5 +1,4 @@
 import { FC } from 'react';
-import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router-dom';
 import { useGetClustersByIdQuery } from '@shared/api/api/clusters.ts';
 import { Grid } from '@mui/material';
@@ -12,11 +11,11 @@ import { selectPollingInterval } from '@app/redux/slices/pollingIntervalSlice/po
 import Spinner from '@shared/ui/spinner';
 
 const OverviewCluster: FC = () => {
-  const { t } = useTranslation('clusters');
   const { clusterId } = useParams();
   const pollingInterval = useAppSelector(selectPollingInterval('clusterOverview'));
 
-  const cluster = useQueryPolling(() => useGetClustersByIdQuery({ id: clusterId }), pollingInterval);
+  const clusterRequest = useGetClustersByIdQuery({ id: clusterId });
+  const cluster = useQueryPolling(clusterRequest, pollingInterval);
 
   const connectionInfo = cluster.data?.connection_info;
 

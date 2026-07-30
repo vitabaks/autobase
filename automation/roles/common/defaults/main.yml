@@ -107,7 +107,7 @@ keepalived_virtual_router_id: "{{ cluster_vip.split('.')[3] | int }}" # The last
 
 # vip-manager (if 'cluster_vip' is specified and 'with_haproxy_load_balancing' is 'false')
 # renovate: datasource=github-releases depName=cybertec-postgresql/vip-manager extractVersion=^v(?<version>.*)$
-vip_manager_version: 4.0.0
+vip_manager_version: 4.2.0
 vip_manager_conf: "/etc/patroni/vip-manager.yml"
 vip_manager_interval: "1000" # time (in milliseconds) after which vip-manager wakes up and checks if it needs to register or release ip addresses.
 vip_manager_iface: "{{ vip_interface }}" # interface to which the virtual ip will be added
@@ -133,7 +133,7 @@ dcs_exists: false # or 'true' if you do not want Autobase to deploy and manage e
 
 # if dcs_type: "etcd" and dcs_exists: false
 # renovate: datasource=github-releases depName=etcd-io/etcd extractVersion=^v(?<version>.*)$
-etcd_version: 3.5.27
+etcd_version: 3.6.13
 # Note: when etcd_installation_method: "rpm", the etcd package is installed from pgdg-rhel-extras,
 # unless install_postgresql_repo or install_postgresql_repo_extras are set to false.
 etcd_installation_method: "binary" # binary -> install from repo such as https://github.com, "{{ pkg_type }}" -> install from apt or yum repository
@@ -279,7 +279,7 @@ postgresql_cluster_name: "{{ 'main' if ansible_os_family == 'Debian' else 'data'
 postgresql_home_dir: "{{ '/var/lib/postgresql' if ansible_os_family == 'Debian' else '/var/lib/pgsql' }}"
 # You can specify custom data dir path. Example: "/pgdata/{{ postgresql_version }}/main"
 postgresql_data_dir: "\
-  {% if cloud_provider | default('') | length > 0 %}\
+  {% if cloud_provider | default('') | length > 0 and volume_type | default('') | lower != 'local' %}\
   {{ postgresql_data_dir_mount_path | default('/pgdata') }}/{{ postgresql_version }}/{{ postgresql_cluster_name }}\
   {% else %}\
   {{ postgresql_home_dir }}/{{ postgresql_version }}/{{ postgresql_cluster_name }}\
@@ -651,14 +651,14 @@ patroni_watchdog_device: /dev/watchdog
 # If false, ensure that /dev/watchdog is available and can be used by the postgres user.
 patroni_watchdog_configure_softdog: true
 
-patroni_postgresql_use_pg_rewind: true # or 'false'
+patroni_postgresql_use_pg_rewind: true
 # try to use pg_rewind on the former leader when it joins cluster as a replica.
 
-patroni_remove_data_directory_on_rewind_failure: false # or 'true' (if use_pg_rewind: 'true')
+patroni_remove_data_directory_on_rewind_failure: false
 # avoid removing the data directory on an unsuccessful rewind
 # if 'true', Patroni will remove the PostgreSQL data directory and recreate the replica.
 
-patroni_remove_data_directory_on_diverged_timelines: false # or 'true'
+patroni_remove_data_directory_on_diverged_timelines: false
 # if 'true', Patroni will remove the PostgreSQL data directory and recreate the replica
 # if it notices that timelines are diverging and the former master can not start streaming from the new master.
 
@@ -707,8 +707,8 @@ postgresql_archive_command: >-
      else '/bin/true' }}
 
 # pg_probackup
-pg_probackup_install: false # or 'true'
-pg_probackup_install_from_postgrespro_repo: true # or 'false'
+pg_probackup_install: false
+pg_probackup_install_from_postgrespro_repo: true
 pg_probackup_version: "{{ postgresql_version }}"
 pg_probackup_instance: "pg_probackup_instance_name"
 pg_probackup_dir: "/mnt/backup_dir"
@@ -725,9 +725,9 @@ pg_probackup_restore_command: "{{ pg_probackup_command_parts | join('') }}"
 pg_probackup_patroni_cluster_bootstrap_command: "{{ pg_probackup_command_parts | join('') }}"
 
 # WAL-G
-wal_g_install: false # or 'true'
+wal_g_install: false
 # renovate: datasource=github-releases depName=wal-g/wal-g extractVersion=^v(?<version>.*)$
-wal_g_version: 3.0.7
+wal_g_version: 3.0.8
 wal_g_installation_method: "binary" # or "src" to build from source code
 wal_g_path: "/usr/local/bin/wal-g --config {{ postgresql_home_dir }}/.walg.json"
 wal_g_json: # config https://github.com/wal-g/wal-g#configuration
@@ -751,7 +751,7 @@ wal_g_patroni_cluster_bootstrap_recovery_conf:
   - recovery_target_action: "promote"
   - recovery_target_timeline: "latest"
 #  - recovery_target_time: "2020-06-01 11:00:00+03"  # Point-in-Time Recovery (example)
-wal_g_prefetch_dir_create: true # or 'false'
+wal_g_prefetch_dir_create: true
 wal_g_prefetch_dir_path: "{{ postgresql_home_dir }}/wal-g-prefetch"
 
 # Define job_parts outside of wal_g_cron_jobs
@@ -791,7 +791,7 @@ wal_g_cron_jobs:
 
 # pgBackRest
 pgbackrest_install: false # or 'true' to install and configure backups using pgBackRest
-pgbackrest_install_from_pgdg_repo: true # or 'false'
+pgbackrest_install_from_pgdg_repo: true
 pgbackrest_stanza: "{{ patroni_cluster_name }}" # specify your --stanza
 pgbackrest_repo_type: "posix" # or "s3", "gcs", "azure"
 pgbackrest_repo_host: "" # dedicated repository host (optional)
@@ -937,10 +937,12 @@ netdata_conf:
 nameservers: []
 #  - "1.1.1.1" # Cloudflare DNS (primary)
 #  - "8.8.8.8" # Google DNS (secondary)
+#  - { entry: "9.9.9.9", state: "absent" } # remove a DNS server entry
 
 # /etc/hosts (optional)
 etc_hosts: []
 #  - "10.128.64.143 pgbackrest.minio.local minio.local s3.eu-west-3.amazonaws.com"  # example (MinIO)
+#  - { entry: "10.0.0.11 db1 db1.local", state: "absent" } # remove a host entry
 #  - ""
 
 # NTP (Network Time Protocol) service
@@ -979,12 +981,12 @@ locale_gen:
 locale: "en_US.UTF-8"
 
 # Configure swap space
-swap_file_create: true # or 'false'
+swap_file_create: true
 swap_file_path: /swapfile
 swap_file_size_mb: "4096" # change this value for your system
 
 # Kernel parameters
-sysctl_set: true # or 'false'
+sysctl_set: true
 sysctl_file: /etc/sysctl.d/autobase.sysctl.conf
 sysctl_conf:
   etcd_cluster: []
@@ -1031,16 +1033,16 @@ sysctl_conf:
 huge_pages_auto_conf: true
 
 # Transparent Huge Pages
-disable_thp: true # or 'false'
+disable_thp: true
 
 # Max open file limit
-set_limits: true # or 'false'
+set_limits: true
 limits_user: "postgres"
 soft_nofile: 65536
 hard_nofile: 200000
 
 # I/O Scheduler (optional)
-set_scheduler: false # or 'true'
+set_scheduler: false
 scheduler:
   - { sched: "deadline", nr_requests: "1024", device: "sda" }
 #  - { sched: "noop" , nr_requests: "1024", device: "sdb" }
@@ -1064,6 +1066,8 @@ ssh_known_hosts: "{{ groups['postgres_cluster'] }}"
 
 # List of public SSH keys to be added to the database server's ~/.ssh/authorized_keys file.
 ssh_public_keys: []
+#  - "ssh-ed25519 AAAAC3... user1@example"
+#  - { entry: "ssh-rsa AAAAB3... user2@example", state: "absent" } # remove a public key
 
 # sudo
 sudo_users:

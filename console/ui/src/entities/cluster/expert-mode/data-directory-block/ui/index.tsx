@@ -18,7 +18,7 @@ const DataDirectoryBlock: FC = () => {
 
   useEffect(() => {
     setValue(DATA_DIRECTORY_FIELD_NAMES.DATA_DIRECTORY, `/pgdata/${watchPostgresVersion ?? 18}/main`);
-  }, [watchPostgresVersion]);
+  }, [setValue, watchPostgresVersion]);
 
   return (
     <Box>

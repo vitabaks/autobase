@@ -1,5 +1,5 @@
 ---
-- name: vitabaks.autobase.restart_pgcluster | Restart PostgreSQL Cluster
+- name: vitabaks.autobase.stop_pgcluster | PostgreSQL Cluster shutdown
   hosts: postgres_cluster
   gather_facts: true
   become: true
@@ -29,7 +29,7 @@
             | default('8008') }}/leader
         status_code: 200
         ca_path: "{{ patroni_restapi_cafile | default(omit, true) }}"
-      register: restart_patroni_leader_result
+      register: stop_patroni_leader_result
       changed_when: false
       failed_when: false
       check_mode: false
@@ -46,8 +46,8 @@
       ansible.builtin.set_fact:
         leader_result: >-
           {{
-            restart_patroni_leader_result
-            if restart_patroni_leader_result.status is defined
+            stop_patroni_leader_result
+            if stop_patroni_leader_result.status is defined
             else patroni_leader_result | default({})
           }}
       changed_when: false
@@ -89,84 +89,35 @@
       changed_when: false
       check_mode: false
 
-    - name: "Print Patroni Cluster info"
-      ansible.builtin.debug:
-        msg:
-          - "Cluster Name: {{ patroni_cluster_name | default('postgres-cluster') }}"
-          - "Cluster Leader: {{ ansible_hostname }}"
-      when:
-        - groups.get('primary', []) | length > 0
-        - inventory_hostname in groups['primary']
-
     - name: Get current Patroni passwords
       ansible.builtin.import_role:
         name: vitabaks.autobase.pre_checks
         tasks_from: passwords
       vars:
-        source_group: "primary"
+        source_group: primary
         postgresql_cluster_maintenance: true
       when: patroni_superuser_password | default('') | length < 1
 
-- name: vitabaks.autobase.restart_pgcluster | Restart patroni on secondary
+- name: vitabaks.autobase.stop_pgcluster | Stop Patroni on secondaries
   hosts: secondary
-  serial: 1 # restart replicas one by one
   gather_facts: false
   become: true
   become_method: sudo
   any_errors_fatal: true
   tasks:
-    - name: Stop read-only traffic
-      ansible.builtin.import_role:
-        name: vitabaks.autobase.update
-        tasks_from: stop_traffic
-
-    - name: Stop Services
+    - name: Stop services
       ansible.builtin.import_role:
         name: vitabaks.autobase.update
         tasks_from: stop_services
 
-    - name: Start Services
-      ansible.builtin.import_role:
-        name: vitabaks.autobase.update
-        tasks_from: start_services
-
-    - name: Start read-only traffic
-      ansible.builtin.import_role:
-        name: vitabaks.autobase.update
-        tasks_from: start_traffic
-
-- name: vitabaks.autobase.restart_pgcluster | Restart patroni on master
+- name: vitabaks.autobase.stop_pgcluster | Stop Patroni on primary
   hosts: primary
   gather_facts: false
   become: true
   become_method: sudo
   any_errors_fatal: true
-  environment: "{{ proxy_env | default({}) }}"
   tasks:
-    - name: Switchover Patroni leader role
-      ansible.builtin.import_role:
-        name: vitabaks.autobase.patroni
-        tasks_from: switchover
-      when: groups.get('secondary', []) | length > 0
-
-    - name: Stop read-only traffic
-      ansible.builtin.import_role:
-        name: vitabaks.autobase.update
-        tasks_from: stop_traffic
-      when: groups.get('secondary', []) | length > 0
-
-    - name: Stop Services
+    - name: Stop services
       ansible.builtin.import_role:
         name: vitabaks.autobase.update
         tasks_from: stop_services
-
-    - name: Start Services
-      ansible.builtin.import_role:
-        name: vitabaks.autobase.update
-        tasks_from: start_services
-
-    - name: Start read-only traffic
-      ansible.builtin.import_role:
-        name: vitabaks.autobase.update
-        tasks_from: start_traffic
-      when: groups.get('secondary', []) | length > 0
