@@ -54,19 +54,10 @@
       when: inventory_hostname in groups['postgres_cluster']
       tags: always
 
-    - name: "[Prepare] Set effective Patroni REST API protocol"
-      ansible.builtin.set_fact:
-        patroni_restapi_effective_protocol: >-
-          {{ (patroni_restapi_protocol | default('https'))
-             if (patroni_restapi_probe.status | default(-1)) in [200, 503]
-             else ('http' if (patroni_restapi_protocol | default('https')) == 'https' else 'https') }}
-      when: inventory_hostname in groups['postgres_cluster']
-      tags: always
-
     - name: "[Prepare] Get Patroni Cluster Leader Node"
       ansible.builtin.uri:
         url: >-
-          {{ patroni_restapi_effective_protocol | default(patroni_restapi_protocol | default('https')) }}://{{ patroni_restapi_connect_addr
+          {{ patroni_restapi_effective_protocol }}://{{ patroni_restapi_connect_addr
             | default(patroni_bind_address | default(bind_address, true), true) }}:{{ patroni_restapi_port
             | default('8008') }}/leader
         status_code: 200
@@ -80,6 +71,11 @@
       check_mode: false
       environment:
         no_proxy: "{{ patroni_bind_address | default(bind_address, true) }}"
+      vars:
+        patroni_restapi_effective_protocol: >-
+          {{ (patroni_restapi_protocol | default('https'))
+             if (patroni_restapi_probe.status | default(-1)) in [200, 503]
+             else ('http' if (patroni_restapi_protocol | default('https')) == 'https' else 'https') }}
       when: inventory_hostname in groups['postgres_cluster']
       tags: always
 
