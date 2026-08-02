@@ -3,8 +3,6 @@
   hosts: postgres_cluster:etcd_cluster:consul_instances
   become: true
   gather_facts: true
-  vars:
-    target_node: "{{ node_to_remove | default('') }}"
 
   pre_tasks:
     - name: Validate that node_to_remove is specified
@@ -13,11 +11,39 @@
         msg: >-
           Please specify the node_to_remove variable with the node
           to remove from the cluster.
-      when: target_node | length == 0
+      when: node_to_remove | default('') | length == 0
 
     - name: Define bind_address
       ansible.builtin.include_role:
         name: vitabaks.autobase.bind_address
+      tags: always
+
+    # Normalize supported node aliases for reliable group and hostvars lookups.
+    - name: Resolve node_to_remove to its inventory hostname
+      ansible.builtin.set_fact:
+        target_node: >-
+          {%- set requested_node = node_to_remove | default('') -%}
+          {%- set resolved = namespace(name=requested_node) -%}
+          {%- for host in groups['all'] | default([]) -%}
+          {%- set aliases = [
+            host,
+            hostvars[host].ansible_hostname | default('')
+          ] -%}
+          {%- if requested_node in aliases -%}
+          {%- set resolved.name = host -%}
+          {%- endif -%}
+          {%- endfor -%}
+          {{- resolved.name -}}
+      tags: always
+
+    - name: Validate that node_to_remove matches an inventory host
+      run_once: true # noqa run-once
+      ansible.builtin.assert:
+        that:
+          - target_node in (groups['all'] | default([]))
+        fail_msg: >-
+          Node '{{ node_to_remove | default('') }}' was not found in the inventory. Specify
+          its inventory_hostname or ansible_hostname.
       tags: always
 
     - name: Define passwords
@@ -33,8 +59,6 @@
   hosts: postgres_cluster
   become: true
   gather_facts: true
-  vars:
-    target_node: "{{ node_to_remove | default('') }}"
 
   pre_tasks:
     - block:
@@ -151,8 +175,6 @@
   hosts: etcd_cluster
   become: true
   gather_facts: false
-  vars:
-    target_node: "{{ node_to_remove | default('') }}"
 
   tasks:
     - block:
@@ -170,13 +192,12 @@
             ETCDCTL_API: "3"
           register: etcd_members_list_before
           changed_when: false
-          when: inventory_hostname != target_node
+          delegate_to: "{{ groups['etcd_cluster'] | difference([target_node]) | first }}"
 
         - name: Show etcd cluster members before removal
           run_once: true # noqa run-once
           ansible.builtin.debug:
             msg: "{{ etcd_members_list_before.stdout_lines }}"
-          when: inventory_hostname != target_node
 
         - name: Remove target node from etcd cluster
           ansible.builtin.include_role:
@@ -200,13 +221,12 @@
           until: etcd_members_list_after.rc == 0
           retries: 3
           delay: 5
-          when: inventory_hostname != target_node
+          delegate_to: "{{ groups['etcd_cluster'] | difference([target_node]) | first }}"
 
         - name: Show etcd cluster members after removal
           run_once: true # noqa run-once
           ansible.builtin.debug:
             msg: "{{ etcd_members_list_after.stdout_lines }}"
-          when: inventory_hostname != target_node
       when: dcs_type | default('etcd') == 'etcd'
       tags: etcd
 
@@ -215,7 +235,6 @@
   become: true
   gather_facts: true
   vars:
-    target_node: "{{ node_to_remove | default('') }}"
     consul_http_addr: "{% if consul_tls_enable | default(true) | bool %}https{% else %}http{% endif %}://127.0.0.1:8500"
     consul_ca_flag: "{% if consul_tls_enable | default(true) | bool %}-ca-file=/etc/consul/tls/ca.crt{% endif %}"
     consul_client_flags: >-
@@ -344,8 +363,6 @@
   hosts: postgres_cluster
   become: true
   gather_facts: true
-  vars:
-    target_node: "{{ node_to_remove | default('') }}"
   tasks:
     - name: Update patroni config file
       ansible.builtin.include_role:
