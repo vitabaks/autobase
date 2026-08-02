@@ -122,5 +122,5 @@ Autobase adheres to a modular design separating atomic logic (roles) and orchest
 
 #### Removal
 
-- `remove_node` – Remove a node from an existing cluster. Set the required `node_to_remove` to the node name.
+- `remove_node` – Remove a node from an existing cluster. Set the required `node_to_remove` to the node's `inventory_hostname` or `ansible_hostname`.
 - `remove_cluster` – Remove the PostgreSQL cluster and, optionally, its DCS (etcd or Consul), including all data.

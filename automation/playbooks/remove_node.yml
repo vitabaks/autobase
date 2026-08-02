@@ -21,16 +21,13 @@
     # Normalize supported node aliases for reliable group and hostvars lookups.
     - name: Resolve node_to_remove to its inventory hostname
       ansible.builtin.set_fact:
-        target_node_input: "{{ node_to_remove | default('') }}"
         target_node: >-
           {%- set requested_node = node_to_remove | default('') -%}
           {%- set resolved = namespace(name=requested_node) -%}
           {%- for host in groups['all'] | default([]) -%}
           {%- set aliases = [
             host,
-            hostvars[host].ansible_hostname | default(''),
-            hostvars[host].ansible_host | default(''),
-            hostvars[host].bind_address | default('')
+            hostvars[host].ansible_hostname | default('')
           ] -%}
           {%- if requested_node in aliases -%}
           {%- set resolved.name = host -%}
@@ -45,8 +42,8 @@
         that:
           - target_node in (groups['all'] | default([]))
         fail_msg: >-
-          Node '{{ target_node_input }}' was not found in the inventory. Specify
-          its inventory_hostname, ansible_hostname, ansible_host, or bind_address.
+          Node '{{ node_to_remove | default('') }}' was not found in the inventory. Specify
+          its inventory_hostname or ansible_hostname.
       tags: always
 
     - name: Define passwords
