@@ -24,7 +24,7 @@
       tags: always
 
 - name: vitabaks.autobase.cloud_resources | Resize filesystem
-  hosts: postgres_cluster
+  hosts: "{{ 'postgres_cluster' if (state | default('present')) != 'absent' else [] }}"
   become: true
   become_method: sudo
   gather_facts: true
