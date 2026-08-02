@@ -71,32 +71,6 @@ func configureAPI(api *operations.PgConsoleAPI) http.Handler {
 			return middleware.NotImplemented("operation cluster.PostClusters has not yet been implemented")
 		})
 	}
-	if api.ClusterPostClustersIDReinitHandler == nil {
-		api.ClusterPostClustersIDReinitHandler = cluster.PostClustersIDReinitHandlerFunc(func(params cluster.PostClustersIDReinitParams) middleware.Responder {
-			return middleware.NotImplemented("operation cluster.PostClustersIDReinit has not yet been implemented")
-		})
-	}
-	if api.ClusterPostClustersIDReloadHandler == nil {
-		api.ClusterPostClustersIDReloadHandler = cluster.PostClustersIDReloadHandlerFunc(func(params cluster.PostClustersIDReloadParams) middleware.Responder {
-			return middleware.NotImplemented("operation cluster.PostClustersIDReload has not yet been implemented")
-		})
-	}
-	if api.ClusterPostClustersIDRestartHandler == nil {
-		api.ClusterPostClustersIDRestartHandler = cluster.PostClustersIDRestartHandlerFunc(func(params cluster.PostClustersIDRestartParams) middleware.Responder {
-			return middleware.NotImplemented("operation cluster.PostClustersIDRestart has not yet been implemented")
-		})
-	}
-	if api.ClusterPostClustersIDStartHandler == nil {
-		api.ClusterPostClustersIDStartHandler = cluster.PostClustersIDStartHandlerFunc(func(params cluster.PostClustersIDStartParams) middleware.Responder {
-			return middleware.NotImplemented("operation cluster.PostClustersIDStart has not yet been implemented")
-		})
-	}
-	if api.ClusterPostClustersIDStopHandler == nil {
-		api.ClusterPostClustersIDStopHandler = cluster.PostClustersIDStopHandlerFunc(func(params cluster.PostClustersIDStopParams) middleware.Responder {
-			return middleware.NotImplemented("operation cluster.PostClustersIDStop has not yet been implemented")
-		})
-	}
-
 	api.PreServerShutdown = func() {}
 
 	api.ServerShutdown = func() {}

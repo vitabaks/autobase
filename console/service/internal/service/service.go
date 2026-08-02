@@ -102,7 +102,6 @@ func NewService(
 	api.ClusterGetClustersHandler = cluster.NewGetClustersHandler(db, log.Logger)
 	api.ClusterGetClustersIDHandler = cluster.NewGetClusterHandler(db, log.Logger)
 	api.ClusterGetClustersDefaultNameHandler = cluster.NewGetClusterDefaultNameHandler(db, log.Logger)
-	api.ClusterPostClustersIDRemoveHandler = cluster.NewRemoveClusterHandler(db, dockerManager, logCollector, cfg, log.Logger)
 	api.ClusterDeleteServersIDHandler = cluster.NewDeleteServerHandler(db, log.Logger)
 	api.ClusterPostClustersIDRefreshHandler = cluster.NewPostClusterRefreshHandler(db, log.Logger, clusterWatcher)
 
