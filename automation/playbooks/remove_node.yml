@@ -16,6 +16,7 @@
     - name: Define bind_address
       ansible.builtin.include_role:
         name: vitabaks.autobase.bind_address
+      when: bind_address is not defined
       tags: always
 
     # Normalize supported node aliases for reliable group and hostvars lookups.
