@@ -811,7 +811,6 @@ pgbackrest_conf:
     - { option: "repo1-bundle", value: "y" }
     - { option: "repo1-block", value: "y" }
     - { option: "start-fast", value: "y" }
-    - { option: "stop-auto", value: "y" }
     - { option: "link-all", value: "y" }
     - { option: "resume", value: "n" }
     - { option: "spool-path", value: "/var/spool/pgbackrest" }
@@ -843,7 +842,6 @@ pgbackrest_server_conf:
     - { option: "archive-copy", value: "n" }
     - { option: "backup-standby", value: "{{ 'y' if groups['postgres_cluster'] | length > 1 else 'n' }}" }
     - { option: "start-fast", value: "y" }
-    - { option: "stop-auto", value: "y" }
     - { option: "link-all", value: "y" }
     - { option: "resume", value: "n" }
 #    - { option: "", value: "" }

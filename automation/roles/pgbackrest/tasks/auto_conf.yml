@@ -22,7 +22,6 @@
         - { option: "repo1-bundle", value: "y" }
         - { option: "repo1-block", value: "y" }
         - { option: "start-fast", value: "y" }
-        - { option: "stop-auto", value: "y" }
         - { option: "link-all", value: "y" }
         - { option: "resume", value: "n" }
         - { option: "archive-async", value: "y" }
@@ -55,7 +54,6 @@
         - { option: "repo1-bundle", value: "y" }
         - { option: "repo1-block", value: "y" }
         - { option: "start-fast", value: "y" }
-        - { option: "stop-auto", value: "y" }
         - { option: "link-all", value: "y" }
         - { option: "resume", value: "n" }
         - { option: "archive-async", value: "y" }
@@ -94,7 +92,6 @@
         - { option: "repo1-bundle", value: "y" }
         - { option: "repo1-block", value: "y" }
         - { option: "start-fast", value: "y" }
-        - { option: "stop-auto", value: "y" }
         - { option: "link-all", value: "y" }
         - { option: "resume", value: "n" }
         - { option: "archive-async", value: "y" }
@@ -133,7 +130,6 @@
         - { option: "repo1-bundle", value: "y" }
         - { option: "repo1-block", value: "y" }
         - { option: "start-fast", value: "y" }
-        - { option: "stop-auto", value: "y" }
         - { option: "link-all", value: "y" }
         - { option: "resume", value: "n" }
         - { option: "archive-async", value: "y" }
@@ -173,7 +169,6 @@
         - { option: "repo1-bundle", value: "y" }
         - { option: "repo1-block", value: "y" }
         - { option: "start-fast", value: "y" }
-        - { option: "stop-auto", value: "y" }
         - { option: "link-all", value: "y" }
         - { option: "resume", value: "n" }
         - { option: "archive-async", value: "y" }
