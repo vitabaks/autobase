@@ -12,6 +12,7 @@ This role installs and configures [WAL-G](https://github.com/wal-g/wal-g), an ar
 | wal_g_path | `/usr/local/bin/wal-g --config {{ postgresql_home_dir }}/.walg.json` | WAL-G executable plus default config argument. The binary is copied to the first path segment. |
 | wal_g_json | [...] | WAL-G configuration variables (option:value). |
 | wal_g_archive_command | `{{ wal_g_path }} wal-push %p` | archive_command used by PostgreSQL. |
+| wal_g_restore_command | `{{ wal_g_path }} wal-fetch %f %p` | restore_command used by PostgreSQL. |
 | wal_g_patroni_cluster_bootstrap_command | `{{ wal_g_path }} backup-fetch {{ postgresql_data_dir }} LATEST` | Patroni bootstrap command for recovery from WAL-G backup. |
 | wal_g_patroni_cluster_bootstrap_recovery_conf | [...] | List for Patroni recovery parameters (restore_command, recovery_target_action, etc.). |
 | wal_g_backup_command | [...] | Parts that form the backup command (joined into a single string for cron). |

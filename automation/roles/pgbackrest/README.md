@@ -17,6 +17,7 @@ Installs and configures [pgBackRest](https://github.com/pgbackrest/pgbackrest) f
 | `pgbackrest_conf.stanza` | [...] | List of stanza options (section [stanza]); see defaults. |
 | `pgbackrest_server_conf.global` | [...] | Global options for a dedicated repo server (generated when repo_host is set). |
 | `pgbackrest_archive_command` | `"pgbackrest --stanza={{ pgbackrest_stanza }} archive-push %p"` | WAL archive_command helper string. |
+| `pgbackrest_restore_command` | `"pgbackrest --stanza={{ pgbackrest_stanza }} archive-get %f %p"` | WAL restore_command helper string. |
 | `pgbackrest_patroni_cluster_restore_command` | `"/usr/bin/pgbackrest --stanza={{ pgbackrest_stanza }} --delta restore"` | Command used for cluster restore/bootstrap. |
 | `pgbackrest_patroni_cluster_bootstrap_recovery_conf` | [...] | List for Patroni recovery parameters (restore_command, recovery_target_action, etc.). |
 | `pgbackrest_patroni_cluster_clean_bootstrap` | `false` | Controls how Patroni bootstraps from a pgBackRest backup: false – delta restore into the existing data directory (faster, reuses unchanged files). true – clean restore into an empty data directory (wipes existing contents first). |
