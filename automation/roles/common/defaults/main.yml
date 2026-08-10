@@ -872,6 +872,11 @@ pgbackrest_diff_backup_command: >-
      if pgbackrest_repo_host | default('') | length > 0
      else "if [ $(psql -tAXc 'select pg_is_in_recovery()') = 'f' ]; then pgbackrest --stanza=" ~ pgbackrest_stanza ~ " --type=diff backup; fi" }}
 
+pgbackrest_incr_backup_command: >-
+  {{ 'pgbackrest --stanza=' ~ pgbackrest_stanza ~ ' --type=incr backup'
+     if pgbackrest_repo_host | default('') | length > 0
+     else "if [ $(psql -tAXc 'select pg_is_in_recovery()') = 'f' ]; then pgbackrest --stanza=" ~ pgbackrest_stanza ~ " --type=incr backup; fi" }}
+
 pgbackrest_cron_jobs:
   - name: "pgBackRest: Full Backup"
     file: "/etc/cron.d/pgbackrest-{{ patroni_cluster_name }}"
@@ -891,6 +896,15 @@ pgbackrest_cron_jobs:
     month: "*"
     weekday: "1-6"
     job: "{{ pgbackrest_diff_backup_command }}"
+  - name: "pgBackRest: Incr Backup"
+    file: "/etc/cron.d/pgbackrest-{{ patroni_cluster_name }}"
+    user: "postgres"
+    minute: "00"
+    hour: "*/4"
+    day: "*"
+    month: "*"
+    weekday: "*"
+    job: "{{ pgbackrest_incr_backup_command }}"
 
 # PITR mode (if patroni_cluster_bootstrap_method: "pgbackrest" or "wal-g"):
 # 1) The database cluster directory will be cleaned (for "wal-g") or overwritten (for "pgbackrest" --delta restore).
