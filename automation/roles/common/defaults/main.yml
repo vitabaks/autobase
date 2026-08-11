@@ -847,12 +847,12 @@ pgbackrest_server_conf:
 
 pgbackrest_archive_command: "pgbackrest --stanza={{ pgbackrest_stanza }} archive-push %p"
 pgbackrest_restore_command: "pgbackrest --stanza={{ pgbackrest_stanza }} archive-get %f %p"
-pgbackrest_restore_immediate: false
-pgbackrest_restore_target_time: "" # e.g. "2026-06-26 11:00:00+00"
-pgbackrest_restore_backup_set: "" # e.g. "20260625-120000F_20260626-120000I"; empty means latest
+pgbackrest_restore_immediate: "{{ restore_immediate | default(false) }}"
+pgbackrest_restore_target_time: "{{ restore_target_time | default('') }}" # e.g. "2026-06-26 11:00:00+00"
+pgbackrest_restore_backup_name: "{{ restore_backup_name | default('') }}" # e.g. "20260625-120000F_20260626-120000I"; empty means latest
 pgbackrest_patroni_cluster_restore_command: >-
   {{ '/usr/bin/pgbackrest --stanza=' ~ pgbackrest_stanza
-     ~ (' --set=' ~ pgbackrest_restore_backup_set if pgbackrest_restore_backup_set | length > 0 else '')
+     ~ (' --set=' ~ pgbackrest_restore_backup_name if pgbackrest_restore_backup_name | length > 0 else '')
      ~ (' --type=time --target="' ~ pgbackrest_restore_target_time ~ '"' if pgbackrest_restore_target_time | length > 0
         else (' --type=immediate' if pgbackrest_restore_immediate | bool else ''))
      ~ ' --delta restore' }}
