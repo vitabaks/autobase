@@ -1,0 +1,54 @@
+---
+- name: vitabaks.autobase.backup_list | List PostgreSQL backups
+  hosts: postgres_cluster
+  gather_facts: false
+  serial: 1
+  ignore_unreachable: true
+  become: true
+  become_user: postgres
+  vars:
+    backup_list_selected_tool: >-
+      {{ backup_list_tool | default(
+        'pgbackrest' if pgbackrest_install | default(false) | bool
+        else 'wal-g' if wal_g_install | default(false) | bool
+        else ''
+      ) | lower }}
+    backup_list_json: "{{ backup_list_format | default('text') | lower == 'json' }}"
+    backup_list_commands:
+      pgbackrest: >-
+        pgbackrest --stanza={{ pgbackrest_stanza | default(patroni_cluster_name | default('postgres-cluster')) }}
+        {{ '--output=json ' if backup_list_json | bool else '' }}info
+      wal-g: >-
+        {{ wal_g_path | default('/usr/local/bin/wal-g --config "$HOME/.walg.json"') }}
+        backup-list{{ ' --json' if backup_list_json | bool else '' }}
+  tasks:
+    - name: Validate backup list parameters
+      ansible.builtin.assert:
+        that:
+          - backup_list_format | default('text') | lower in ['text', 'json']
+          - backup_list_selected_tool in ['pgbackrest', 'wal-g']
+        fail_msg: >-
+          Set backup_list_tool to 'pgbackrest' or 'wal-g', and backup_list_format to 'text' or 'json'.
+
+    - name: Get backup list
+      ansible.builtin.command: "{{ backup_list_commands[backup_list_selected_tool] }}"
+      args:
+        expand_argument_vars: true
+      register: backup_list_result
+      changed_when: false
+
+    - name: Display backup list
+      ansible.builtin.debug:
+        msg: "{{ backup_list_result.stdout | from_json if backup_list_json | bool else backup_list_result.stdout_lines }}"
+      when: backup_list_result is not unreachable
+
+    - name: Fail when all PostgreSQL nodes are unreachable
+      ansible.builtin.fail:
+        msg: All nodes in the 'postgres_cluster' group are unreachable.
+      when:
+        - backup_list_result is unreachable
+        - inventory_hostname == ansible_play_hosts_all | last
+
+    - name: Stop after the first available node
+      ansible.builtin.meta: end_play
+      when: backup_list_result is not unreachable
