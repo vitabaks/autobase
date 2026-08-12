@@ -13,8 +13,11 @@ This role installs and configures [WAL-G](https://github.com/wal-g/wal-g), an ar
 | wal_g_json | [...] | WAL-G configuration variables (option:value). |
 | wal_g_archive_command | `{{ wal_g_path }} wal-push %p` | archive_command used by PostgreSQL. |
 | wal_g_restore_command | `{{ wal_g_path }} wal-fetch %f %p` | restore_command used by PostgreSQL. |
-| wal_g_patroni_cluster_bootstrap_command | `{{ wal_g_path }} backup-fetch {{ postgresql_data_dir }} LATEST` | Patroni bootstrap command for recovery from WAL-G backup. |
-| wal_g_patroni_cluster_bootstrap_recovery_conf | [...] | List for Patroni recovery parameters (restore_command, recovery_target_action, etc.). |
+| wal_g_restore_backup_name | `LATEST` | Backup name passed to `backup-fetch`. Set a name from `wal-g backup-list` to restore a specific backup. |
+| wal_g_restore_target_time | `""` | Optional PITR target time, for example `"2026-06-26 11:00:00+00"`. |
+| wal_g_restore_immediate | `false` | Set to `true` to stop recovery as soon as the restored backup becomes consistent. A non-empty `wal_g_restore_target_time` takes precedence. |
+| wal_g_patroni_cluster_bootstrap_command | `{{ wal_g_path }} backup-fetch {{ postgresql_data_dir }} {{ wal_g_restore_backup_name }}` | Patroni bootstrap command for recovery from a WAL-G backup. |
+| wal_g_patroni_cluster_bootstrap_recovery_conf | [...] | Recovery parameters generated from `wal_g_restore_target_time` or `wal_g_restore_immediate`. |
 | wal_g_backup_command | [...] | Parts that form the backup command (joined into a single string for cron). |
 | wal_g_delete_command | [...] | Parts that form the retention delete command (joined into a single string for cron). |
 | wal_g_cron_jobs | [...] | List of cron jobs. Each item supports: name, user, file, minute, hour, day, month, weekday, job, state, disabled. |
