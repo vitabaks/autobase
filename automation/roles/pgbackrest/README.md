@@ -18,7 +18,10 @@ Installs and configures [pgBackRest](https://github.com/pgbackrest/pgbackrest) f
 | `pgbackrest_server_conf.global` | [...] | Global options for a dedicated repo server (generated when repo_host is set). |
 | `pgbackrest_archive_command` | `"pgbackrest --stanza={{ pgbackrest_stanza }} archive-push %p"` | WAL archive_command helper string. |
 | `pgbackrest_restore_command` | `"pgbackrest --stanza={{ pgbackrest_stanza }} archive-get %f %p"` | WAL restore_command helper string. |
-| `pgbackrest_patroni_cluster_restore_command` | `"/usr/bin/pgbackrest --stanza={{ pgbackrest_stanza }} --delta restore"` | Command used for cluster restore/bootstrap. |
+| `pgbackrest_restore_target_time` | `""` | Optional PITR target time, for example `"2020-06-01 11:00:00+03"`. Adds `--type=time --target=...` to the cluster restore command. |
+| `pgbackrest_restore_immediate` | `false` | Set to `true` to add `--type=immediate`. A non-empty `pgbackrest_restore_target_time` takes precedence. |
+| `pgbackrest_restore_backup_set` | `""` | Optional backup set name added as `--set=...`. An empty value lets pgBackRest restore the latest backup set. |
+| `pgbackrest_patroni_cluster_restore_command` | `"/usr/bin/pgbackrest --stanza={{ pgbackrest_stanza }} --delta restore"` | Command used for cluster restore/bootstrap. Includes the configured backup set and time or immediate recovery target. |
 | `pgbackrest_patroni_cluster_bootstrap_recovery_conf` | [...] | List for Patroni recovery parameters (restore_command, recovery_target_action, etc.). |
 | `pgbackrest_patroni_cluster_clean_bootstrap` | `false` | Controls how Patroni bootstraps from a pgBackRest backup: false – delta restore into the existing data directory (faster, reuses unchanged files). true – clean restore into an empty data directory (wipes existing contents first). |
 | `pgbackrest_cron_jobs` | [...] | Cron jobs for backups (full/diff). Created on DB host by default, or on repo_host if defined. |
