@@ -20,7 +20,7 @@
         {{ '--output=json ' if backup_list_json | bool else '' }}info
       wal-g: >-
         {{ wal_g_path | default('/usr/local/bin/wal-g --config "$HOME/.walg.json"') }}
-        backup-list{{ ' --json' if backup_list_json | bool else '' }}
+        backup-list{{ ' --detail --json' if backup_list_json | bool else '' }}
   tasks:
     - name: Validate backup list parameters
       ansible.builtin.assert:
