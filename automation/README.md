@@ -116,6 +116,7 @@ Autobase adheres to a modular design separating atomic logic (roles) and orchest
   - `pg_logical_switchover_rollback` -  Switches PostgreSQL traffic back to the source cluster.
   - `pg_logical_replication_stop` - Clean up publications, subscriptions, and replication slots.
 - `backup_list` – Display the list of pgBackRest or WAL-G backups in text or JSON format.
+- `restore_pgcluster` – Restore the current PostgreSQL cluster from a pgBackRest or WAL-G backup.
 
 #### Scaling
 

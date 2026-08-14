@@ -6,7 +6,9 @@
     enabled: true
     state: reloaded
   listen: "reload patroni"
-  when: postgresql_cluster_maintenance | default(false) | bool # exclude for initial deployment.
+  when:
+    - postgresql_cluster_maintenance | default(false) | bool # exclude for initial deployment.
+    - patroni_config_reload | default(true) | bool
 
 - name: Reload postgres
   become: true

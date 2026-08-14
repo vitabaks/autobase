@@ -1,0 +1,88 @@
+---
+- name: vitabaks.autobase.restore_pgcluster | Restore PostgreSQL Cluster
+  hosts: postgres_cluster
+  become: true
+  become_method: sudo
+  gather_facts: true
+  any_errors_fatal: true
+  environment: "{{ proxy_env | default({}) }}"
+  vars:
+    restore_pgcluster_selected_tool: >-
+      {{ restore_pgcluster_tool | default(
+        'pgbackrest' if pgbackrest_install | default(false) | bool
+        else 'wal-g' if wal_g_install | default(false) | bool
+        else ''
+      ) | lower }}
+    patroni_cluster_bootstrap_method: "{{ restore_pgcluster_selected_tool }}"
+    patroni_create_replica_methods:
+      - "{{ 'pgbackrest' if restore_pgcluster_selected_tool == 'pgbackrest' else 'wal_g' }}"
+    restore_pgcluster_selected_bootstrap_command: >-
+      {{ pgbackrest_patroni_cluster_restore_command
+         if restore_pgcluster_selected_tool == 'pgbackrest'
+         else wal_g_patroni_cluster_bootstrap_command }}
+    postgresql_restore_command: >-
+      {{ pgbackrest_restore_command
+         if restore_pgcluster_selected_tool == 'pgbackrest'
+         else wal_g_restore_command }}
+    disable_archive_command: false
+    keep_patroni_dynamic_json: true
+    patroni_config_reload: false
+    point_in_time_recovery: true
+    postgresql_exists: true
+
+  pre_tasks:
+    - name: Gather package facts
+      ansible.builtin.package_facts:
+        manager: auto
+      check_mode: false
+
+    - name: Define bind_address
+      ansible.builtin.import_role:
+        name: vitabaks.autobase.bind_address
+      when: bind_address is not defined
+
+    - name: Set default variables
+      ansible.builtin.import_role:
+        name: vitabaks.autobase.common
+
+    - name: Validate restore parameters
+      ansible.builtin.assert:
+        that:
+          - restore_pgcluster_selected_tool in ['pgbackrest', 'wal-g']
+          - restore_pgcluster_selected_tool != 'pgbackrest' or pgbackrest_install | bool
+          - restore_pgcluster_selected_tool != 'wal-g' or wal_g_install | bool
+          - not (restore_immediate | default(false) | bool and restore_target_time | default('') | length > 0)
+          - postgresql_restore_command | default('') | trim | length > 0
+          - restore_pgcluster_selected_bootstrap_command | default('') | trim | length > 0
+        fail_msg: >-
+          Enable exactly one backup tool with 'pgbackrest_install' or 'wal_g_install'.
+          If both tools are enabled, set 'restore_pgcluster_tool' to 'pgbackrest' or 'wal-g'.
+          'restore_immediate' and 'restore_target_time' cannot be used together.
+          The selected backup tool must provide non-empty PostgreSQL restore and bootstrap commands.
+      run_once: true
+
+    - name: Validate automatic backup tool selection
+      ansible.builtin.assert:
+        that:
+          - (pgbackrest_install | bool) != (wal_g_install | bool)
+        fail_msg: >-
+          Automatic restore tool selection requires exactly one enabled backup tool.
+          Set 'restore_pgcluster_tool' to 'pgbackrest' or 'wal-g'.
+      when: restore_pgcluster_tool | default('') | length == 0
+      run_once: true
+
+    - name: Get current Patroni passwords
+      ansible.builtin.import_role:
+        name: vitabaks.autobase.pre_checks
+        tasks_from: passwords
+      vars:
+        postgresql_cluster_maintenance: true
+        source_group: master
+
+  roles:
+    - role: vitabaks.autobase.patroni
+
+  tasks:
+    - name: PostgreSQL cluster restore completed
+      ansible.builtin.include_role:
+        name: vitabaks.autobase.deploy_finish
