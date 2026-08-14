@@ -68,6 +68,48 @@
       when: restore_pgcluster_tool | default('') | length == 0
       run_once: true
 
+    - name: Check that a pgBackRest backup is available before restore
+      ansible.builtin.command: >-
+        pgbackrest --stanza={{ pgbackrest_stanza }} --type=full --output=json info
+      become_user: postgres
+      register: pgbackrest_backup_check_result
+      changed_when: false
+      failed_when: false
+      when:
+        - inventory_hostname == groups['master'][0]
+        - restore_pgcluster_selected_tool == 'pgbackrest'
+
+    - name: Stop restore when pgBackRest backup is unavailable
+      ansible.builtin.fail:
+        msg: "Cannot restore PostgreSQL: no accessible pgBackRest backup was found for stanza '{{ pgbackrest_stanza }}'."
+      when:
+        - inventory_hostname == groups['master'][0]
+        - restore_pgcluster_selected_tool == 'pgbackrest'
+        - pgbackrest_backup_check_result.rc != 0
+          or ((pgbackrest_backup_check_result.stdout | from_json)
+              | map(attribute='backup') | flatten | length) == 0
+
+    - name: Check that a WAL-G backup is available before restore
+      ansible.builtin.command: "{{ wal_g_path }} backup-list --json"
+      args:
+        expand_argument_vars: true
+      become_user: postgres
+      register: wal_g_backup_check_result
+      changed_when: false
+      failed_when: false
+      when:
+        - inventory_hostname == groups['master'][0]
+        - restore_pgcluster_selected_tool == 'wal-g'
+
+    - name: Stop restore when WAL-G backup is unavailable
+      ansible.builtin.fail:
+        msg: "Cannot restore PostgreSQL: no accessible WAL-G backup was found."
+      when:
+        - inventory_hostname == groups['master'][0]
+        - restore_pgcluster_selected_tool == 'wal-g'
+        - wal_g_backup_check_result.rc != 0
+          or (wal_g_backup_check_result.stdout | from_json | length) == 0
+
     - name: Get current Patroni passwords
       ansible.builtin.import_role:
         name: vitabaks.autobase.pre_checks
