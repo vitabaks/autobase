@@ -101,7 +101,7 @@
           - backup_pgcluster_selected_tool in ['pgbackrest', 'wal-g']
         fail_msg: Set either 'pgbackrest_install' or 'wal_g_install' to true.
 
-    - name: Create incremental PostgreSQL backup
+    - name: Create PostgreSQL backup
       ansible.builtin.shell: "{{ backup_pgcluster_command }}"
       args:
         executable: /bin/bash
