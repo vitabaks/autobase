@@ -5,7 +5,6 @@
   become_method: sudo
   gather_facts: true
   any_errors_fatal: true
-  environment: "{{ proxy_env | default({}) }}"
   vars:
     restore_pgcluster_selected_tool: >-
       {{ restore_pgcluster_tool | default(
@@ -16,19 +15,17 @@
     patroni_cluster_bootstrap_method: "{{ restore_pgcluster_selected_tool }}"
     patroni_create_replica_methods:
       - "{{ 'pgbackrest' if restore_pgcluster_selected_tool == 'pgbackrest' else 'wal_g' }}"
-    restore_pgcluster_selected_bootstrap_command: >-
-      {{ pgbackrest_patroni_cluster_restore_command
-         if restore_pgcluster_selected_tool == 'pgbackrest'
-         else wal_g_patroni_cluster_bootstrap_command }}
     postgresql_restore_command: >-
       {{ pgbackrest_restore_command
          if restore_pgcluster_selected_tool == 'pgbackrest'
          else wal_g_restore_command }}
+    restore_pgcluster_selected_bootstrap_command: >-
+      {{ pgbackrest_patroni_cluster_restore_command
+         if restore_pgcluster_selected_tool == 'pgbackrest'
+         else wal_g_patroni_cluster_bootstrap_command }}
     disable_archive_command: false
     keep_patroni_dynamic_json: true
-    patroni_config_reload: false
     point_in_time_recovery: true
-    postgresql_exists: true
 
   pre_tasks:
     - name: Gather package facts
@@ -81,6 +78,8 @@
 
   roles:
     - role: vitabaks.autobase.patroni
+      vars:
+        patroni_config_reload: false
 
   tasks:
     - name: PostgreSQL cluster restore completed
