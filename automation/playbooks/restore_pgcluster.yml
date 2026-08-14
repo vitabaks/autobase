@@ -73,8 +73,16 @@
         fail_msg: "'restore_immediate' and 'restore_target_time' cannot be used together."
 
     - name: Check that a pgBackRest backup is available before restore
-      ansible.builtin.command: >-
-        pgbackrest --stanza={{ pgbackrest_stanza }} --type=full --output=json info
+      ansible.builtin.command:
+        argv:
+          - pgbackrest
+          - "--stanza={{ pgbackrest_stanza }}"
+          - >-
+            {{ '--set=' + pgbackrest_restore_backup_name
+               if pgbackrest_restore_backup_name | length > 0
+               else '--type=full' }}
+          - --output=json
+          - info
       become: true
       become_user: postgres
       register: pgbackrest_backup_check_result
@@ -86,7 +94,10 @@
 
     - name: Stop restore when pgBackRest backup is unavailable
       ansible.builtin.fail:
-        msg: "Cannot restore PostgreSQL: no accessible pgBackRest backup was found for stanza '{{ pgbackrest_stanza }}'."
+        msg: >-
+          Cannot restore PostgreSQL: pgBackRest backup
+          '{{ pgbackrest_restore_backup_name | default('') }}'
+          is not accessible for stanza '{{ pgbackrest_stanza }}'.
       when:
         - inventory_hostname == groups['master'][0]
         - restore_pgcluster_selected_tool == 'pgbackrest'
@@ -109,12 +120,23 @@
 
     - name: Stop restore when WAL-G backup is unavailable
       ansible.builtin.fail:
-        msg: "Cannot restore PostgreSQL: no accessible WAL-G backup was found."
+        msg: >-
+          Cannot restore PostgreSQL: WAL-G backup
+          '{{ wal_g_restore_backup_name | default('') }}' is not accessible.
       when:
         - inventory_hostname == groups['master'][0]
         - restore_pgcluster_selected_tool == 'wal-g'
-        - wal_g_backup_check_result.rc != 0
+        - >-
+          wal_g_backup_check_result.rc != 0
           or (wal_g_backup_check_result.stdout | from_json | length) == 0
+          or (
+            wal_g_restore_backup_name != 'LATEST'
+            and (
+              wal_g_backup_check_result.stdout | from_json
+              | selectattr('backup_name', 'equalto', wal_g_restore_backup_name)
+              | list | length
+            ) == 0
+          )
 
     - name: Get current Patroni passwords
       ansible.builtin.import_role:
