@@ -42,29 +42,32 @@
       ansible.builtin.import_role:
         name: vitabaks.autobase.common
 
-    - name: Validate restore parameters
+    - name: Validate backup tool
       ansible.builtin.assert:
         that:
-          - restore_pgcluster_selected_tool in ['pgbackrest', 'wal-g']
           - restore_pgcluster_selected_tool != 'pgbackrest' or pgbackrest_install | bool
           - restore_pgcluster_selected_tool != 'wal-g' or wal_g_install | bool
-          - not (restore_immediate | default(false) | bool and restore_target_time | default('') | length > 0)
-          - postgresql_restore_command | default('') | trim | length > 0
-          - restore_pgcluster_selected_bootstrap_command | default('') | trim | length > 0
         fail_msg: >-
-          Enable exactly one backup tool with 'pgbackrest_install' or 'wal_g_install'.
-          If both tools are enabled, set 'restore_pgcluster_tool' to 'pgbackrest' or 'wal-g'.
-          'restore_immediate' and 'restore_target_time' cannot be used together.
-          The selected backup tool must provide non-empty PostgreSQL restore and bootstrap commands.
+          Enable the selected backup tool with 'pgbackrest_install' or 'wal_g_install'.
 
-    - name: Validate automatic backup tool selection
+    - name: Validate PostgreSQL restore command
       ansible.builtin.assert:
         that:
-          - (pgbackrest_install | bool) != (wal_g_install | bool)
+          - postgresql_restore_command | default('') | trim | length > 0
+        fail_msg: The selected backup tool must provide a non-empty PostgreSQL restore command.
+
+    - name: Validate Patroni bootstrap command
+      ansible.builtin.assert:
+        that:
+          - restore_pgcluster_selected_bootstrap_command | default('') | trim | length > 0
         fail_msg: >-
-          Automatic restore tool selection requires exactly one enabled backup tool.
-          Set 'restore_pgcluster_tool' to 'pgbackrest' or 'wal-g'.
-      when: restore_pgcluster_tool | default('') | length == 0
+          The selected backup tool must provide a non-empty Patroni bootstrap command.
+
+    - name: Validate PITR target settings
+      ansible.builtin.assert:
+        that:
+          - not (restore_immediate | default(false) | bool and restore_target_time | default('') | length > 0)
+        fail_msg: "'restore_immediate' and 'restore_target_time' cannot be used together."
 
     - name: Check that a pgBackRest backup is available before restore
       ansible.builtin.command: >-
