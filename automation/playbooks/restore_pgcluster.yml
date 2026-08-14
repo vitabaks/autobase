@@ -56,7 +56,6 @@
           If both tools are enabled, set 'restore_pgcluster_tool' to 'pgbackrest' or 'wal-g'.
           'restore_immediate' and 'restore_target_time' cannot be used together.
           The selected backup tool must provide non-empty PostgreSQL restore and bootstrap commands.
-      run_once: true
 
     - name: Validate automatic backup tool selection
       ansible.builtin.assert:
@@ -66,11 +65,11 @@
           Automatic restore tool selection requires exactly one enabled backup tool.
           Set 'restore_pgcluster_tool' to 'pgbackrest' or 'wal-g'.
       when: restore_pgcluster_tool | default('') | length == 0
-      run_once: true
 
     - name: Check that a pgBackRest backup is available before restore
       ansible.builtin.command: >-
         pgbackrest --stanza={{ pgbackrest_stanza }} --type=full --output=json info
+      become: true
       become_user: postgres
       register: pgbackrest_backup_check_result
       changed_when: false
@@ -93,6 +92,7 @@
       ansible.builtin.command: "{{ wal_g_path }} backup-list --json"
       args:
         expand_argument_vars: true
+      become: true
       become_user: postgres
       register: wal_g_backup_check_result
       changed_when: false
