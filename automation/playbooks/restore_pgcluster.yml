@@ -42,28 +42,16 @@
       ansible.builtin.import_role:
         name: vitabaks.autobase.common
 
-    - name: Validate restore backup tool selection
-      ansible.builtin.assert:
-        that:
-          - restore_pgcluster_selected_tool in ['pgbackrest', 'wal-g']
-        fail_msg: "Set 'restore_pgcluster_tool' to 'pgbackrest' or 'wal-g'."
-
-    - name: Validate automatic backup tool selection
+    - name: Validate backup tool
       ansible.builtin.assert:
         that:
           - (pgbackrest_install | bool) != (wal_g_install | bool)
+          - >-
+            restore_pgcluster_selected_tool ==
+            ('pgbackrest' if pgbackrest_install | bool else 'wal-g')
         fail_msg: >-
-          Automatic restore tool selection requires exactly one enabled backup tool.
-          Set 'restore_pgcluster_tool' to 'pgbackrest' or 'wal-g' when both tools are enabled.
-      when: restore_pgcluster_tool | default('') | length == 0
-
-    - name: Validate selected backup tool is enabled
-      ansible.builtin.assert:
-        that:
-          - restore_pgcluster_selected_tool != 'pgbackrest' or pgbackrest_install | bool
-          - restore_pgcluster_selected_tool != 'wal-g' or wal_g_install | bool
-        fail_msg: >-
-          Enable the selected backup tool with 'pgbackrest_install' or 'wal_g_install'.
+          Enable exactly one backup tool with 'pgbackrest_install' or 'wal_g_install'.
+          If set, 'restore_pgcluster_tool' must match the enabled tool.
 
     - name: Validate PostgreSQL restore command
       ansible.builtin.assert:
