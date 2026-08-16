@@ -697,7 +697,7 @@ func (s *dbStorage) GetOperations(ctx context.Context, req *GetOperationsReq) ([
 		curOffset = *req.Offset
 	}
 
-	subQuery := `where project_id = $1 and started >= $2 and finished <= $3`
+	subQuery := `where project_id = $1 and started >= $2 and started <= $3`
 
 	var (
 		extraWhere           string

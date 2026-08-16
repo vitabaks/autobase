@@ -6,22 +6,24 @@ import { toast } from 'react-toastify';
  * Hook polls RTK query request every N milliseconds.
  * @param request - RTK request to poll.
  * @param pollingInterval - Polling interval in ms. Use 0 to disable polling.
- * @param options - Different config options.
+ * @param options - Different config options. `onPoll` replaces the default refetch callback.
  */
 export const useQueryPolling = <T extends { refetch: () => unknown }>(
   result: T,
   pollingInterval: number,
-  options?: { stop?: boolean },
+  options?: { stop?: boolean; onPoll?: () => void },
 ) => {
   const stop = options?.stop === true;
+  const onPoll = options?.onPoll;
+  const refetch = result.refetch;
 
   useEffect(() => {
     if (stop || !pollingInterval || pollingInterval <= 0) return;
-    const polling = setInterval(() => result.refetch(), pollingInterval);
+    const polling = setInterval(() => (onPoll ? onPoll() : refetch()), pollingInterval);
     return () => {
       clearInterval(polling);
     };
-  }, [pollingInterval, result, stop]);
+  }, [onPoll, pollingInterval, refetch, stop]);
 
   return result;
 };
