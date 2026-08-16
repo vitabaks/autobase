@@ -115,6 +115,7 @@ Autobase adheres to a modular design separating atomic logic (roles) and orchest
   - `pg_logical_switchover` - Redirects PostgreSQL traffic from the source cluster to the target cluster with near-zero downtime.
   - `pg_logical_switchover_rollback` -  Switches PostgreSQL traffic back to the source cluster.
   - `pg_logical_replication_stop` - Clean up publications, subscriptions, and replication slots.
+- `backup_pgcluster` – Run the pgBackRest or WAL-G backup command on the current Patroni leader, or on the host set in `backup_pgcluster_target`.
 - `backup_list` – Display the list of pgBackRest or WAL-G backups in text or JSON format.
 
 #### Scaling
