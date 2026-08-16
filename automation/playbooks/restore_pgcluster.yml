@@ -97,6 +97,18 @@
           The pgBackRest option '--target-action' must be pause, promote, or shutdown.
       when: restore_pgcluster_selected_tool == 'pgbackrest'
 
+    - name: Validate pgBackRest target timeline recovery type
+      ansible.builtin.assert:
+        that:
+          - >-
+            '--target-timeline=' not in restore_pgcluster_selected_bootstrap_command or
+            restore_pgcluster_selected_bootstrap_command
+            is search('(^|\s)--type=(default|lsn|name|standby|time|xid)(\s|$)')
+        fail_msg: >-
+          The pgBackRest option '--target-timeline' requires '--type' to be
+          default, lsn, name, standby, time, or xid.
+      when: restore_pgcluster_selected_tool == 'pgbackrest'
+
     - name: Validate PITR target action
       ansible.builtin.assert:
         that:

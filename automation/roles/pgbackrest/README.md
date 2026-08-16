@@ -21,9 +21,9 @@ Installs and configures [pgBackRest](https://github.com/pgbackrest/pgbackrest) f
 | `pgbackrest_restore_target_time` | `""` | Optional PITR target time, for example `"2020-06-01 11:00:00+03"`. Adds `--type=time --target=...` to the cluster restore command. |
 | `pgbackrest_restore_immediate` | `false` | Set to `true` to add `--type=immediate`. A non-empty `pgbackrest_restore_target_time` takes precedence. |
 | `pgbackrest_restore_target_action` | `{{ restore_target_action \| default('promote') }}` | Action after reaching the target: pause, promote, or shutdown. Added to the pgBackRest command only when targeted recovery is configured. |
-| `pgbackrest_restore_target_timeline` | `{{ restore_target_timeline \| default('latest') }}` | Timeline to recover along: current, latest, or a timeline ID. |
+| `pgbackrest_restore_target_timeline` | `{{ restore_target_timeline \| default('latest') }}` | Timeline to recover along: current, latest, or a timeline ID. Not passed to pgBackRest for immediate recovery. |
 | `pgbackrest_restore_backup_name` | `""` | Optional backup set name added as `--set=...`. An empty value lets pgBackRest restore the latest backup set. |
-| `pgbackrest_patroni_cluster_restore_command` | `"/usr/bin/pgbackrest --stanza={{ pgbackrest_stanza }} --delta restore"` | Base restore command. Includes the configured backup set and time or immediate recovery target. |
+| `pgbackrest_patroni_cluster_restore_command` | `"/usr/bin/pgbackrest --stanza={{ pgbackrest_stanza }} --type=default --delta restore"` | Base restore command. Includes the configured backup set and recovery type. |
 | `pgbackrest_patroni_cluster_bootstrap_command` | Derived | Cluster bootstrap/master command with target action and timeline options. |
 | `pgbackrest_patroni_replica_restore_command` | Derived | Replica restore command. Uses pause only at a configured PITR target and applies the selected timeline. |
 | `pgbackrest_patroni_cluster_bootstrap_recovery_conf` | [...] | List for Patroni recovery parameters (restore_command, recovery_target_action, etc.). |
