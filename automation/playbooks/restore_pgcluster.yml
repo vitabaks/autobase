@@ -96,7 +96,7 @@
       ansible.builtin.fail:
         msg: >-
           Cannot restore PostgreSQL: pgBackRest backup
-          '{{ pgbackrest_restore_backup_name | default('') }}'
+          {{ pgbackrest_restore_backup_name | default('') }}
           is not accessible for stanza '{{ pgbackrest_stanza }}'.
       when:
         - inventory_hostname == groups['master'][0]
@@ -122,7 +122,8 @@
       ansible.builtin.fail:
         msg: >-
           Cannot restore PostgreSQL: WAL-G backup
-          '{{ wal_g_restore_backup_name | default('') }}' is not accessible.
+          {{ wal_g_restore_backup_name | default('') }}
+          is not accessible.
       when:
         - inventory_hostname == groups['master'][0]
         - restore_pgcluster_selected_tool == 'wal-g'
