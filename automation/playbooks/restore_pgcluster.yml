@@ -74,6 +74,29 @@
         fail_msg: >-
           The selected backup tool must provide a non-empty Patroni bootstrap command.
 
+    - name: Validate pgBackRest target action recovery type
+      ansible.builtin.assert:
+        that:
+          - >-
+            '--target-action=' not in restore_pgcluster_selected_bootstrap_command or
+            restore_pgcluster_selected_bootstrap_command
+            is search('(^|\s)--type=(immediate|lsn|name|time|xid)(\s|$)')
+        fail_msg: >-
+          The pgBackRest option '--target-action' requires '--type' to be
+          immediate, lsn, name, time, or xid.
+      when: restore_pgcluster_selected_tool == 'pgbackrest'
+
+    - name: Validate pgBackRest target action value
+      ansible.builtin.assert:
+        that:
+          - >-
+            '--target-action=' not in restore_pgcluster_selected_bootstrap_command or
+            restore_pgcluster_selected_bootstrap_command
+            is search('(^|\s)--target-action=(pause|promote|shutdown)(\s|$)')
+        fail_msg: >-
+          The pgBackRest option '--target-action' must be pause, promote, or shutdown.
+      when: restore_pgcluster_selected_tool == 'pgbackrest'
+
     - name: Validate PITR target action
       ansible.builtin.assert:
         that:
