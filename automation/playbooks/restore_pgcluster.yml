@@ -162,7 +162,7 @@
         else current_setting('data_directory') || '/' || pg_current_logfile()
         end"
       vars:
-        psql_command: "{{ pg_old_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres"
+        psql_command: "{{ postgresql_bin_dir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres"
       environment:
         PGPASSWORD: "{{ patroni_superuser_password }}"
       register: postgresql_log_file_result
