@@ -20,9 +20,17 @@
          if restore_pgcluster_selected_tool == 'pgbackrest'
          else wal_g_restore_command }}
     restore_pgcluster_selected_bootstrap_command: >-
-      {{ pgbackrest_patroni_cluster_restore_command
+      {{ pgbackrest_patroni_cluster_bootstrap_command
          if restore_pgcluster_selected_tool == 'pgbackrest'
          else wal_g_patroni_cluster_bootstrap_command }}
+    restore_pgcluster_selected_target_action: >-
+      {{ pgbackrest_restore_target_action
+         if restore_pgcluster_selected_tool == 'pgbackrest'
+         else wal_g_restore_target_action }}
+    restore_pgcluster_selected_target_timeline: >-
+      {{ pgbackrest_restore_target_timeline
+         if restore_pgcluster_selected_tool == 'pgbackrest'
+         else wal_g_restore_target_timeline }}
     disable_archive_command: false
     keep_patroni_dynamic_json: true
     point_in_time_recovery: true
@@ -66,11 +74,26 @@
         fail_msg: >-
           The selected backup tool must provide a non-empty Patroni bootstrap command.
 
-    - name: Validate PITR target settings
+    - name: Validate PITR target action
+      ansible.builtin.assert:
+        that:
+          - restore_pgcluster_selected_target_action in ['pause', 'promote', 'shutdown']
+        fail_msg: >-
+          'restore_target_action' must be pause, promote, or shutdown.
+
+    - name: Validate PITR target timeline
+      ansible.builtin.assert:
+        that:
+          - restore_pgcluster_selected_target_timeline | string | trim | length > 0
+        fail_msg: >-
+          'restore_target_timeline' must not be empty.
+
+    - name: Validate that PITR targets do not conflict
       ansible.builtin.assert:
         that:
           - not (restore_immediate | default(false) | bool and restore_target_time | default('') | length > 0)
-        fail_msg: "'restore_immediate' and 'restore_target_time' cannot be used together."
+        fail_msg: >-
+          'restore_immediate' and 'restore_target_time' cannot be used together.
 
     - name: Check that a pgBackRest backup is available before restore
       ansible.builtin.command:

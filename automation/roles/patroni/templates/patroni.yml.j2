@@ -93,7 +93,7 @@ bootstrap:
 {% endif %}
 {% if patroni_cluster_bootstrap_method == 'pgbackrest' %}
   pgbackrest:
-    command: {{ pgbackrest_patroni_cluster_restore_command | to_json }}
+    command: {{ pgbackrest_patroni_cluster_bootstrap_command | to_json }}
     keep_existing_recovery_conf: True
     no_params: True
     recovery_conf:

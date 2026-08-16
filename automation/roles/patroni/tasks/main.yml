@@ -683,20 +683,16 @@
       when: inventory_hostname == groups['master'][0]
 
     - block: # for pgbackrest only (for use --delta restore)
-        - name: Run "{{ pgbackrest_patroni_cluster_restore_command | default('') }}" on Master
-          ansible.builtin.command: >
-            {{ pgbackrest_patroni_cluster_restore_command }}
-            {{ '--target-action=promote' if pgbackrest_patroni_cluster_restore_command is search('--type=') else '' }}
+        - name: Run "{{ pgbackrest_patroni_cluster_bootstrap_command | default('') }}" on Master
+          ansible.builtin.command: "{{ pgbackrest_patroni_cluster_bootstrap_command }}"
           async: "{{ cluster_restore_timeout | default(86400) }}" # timeout 24 hours
           poll: 0
           register: pgbackrest_restore_master
           when: inventory_hostname == groups['master'][0]
 
           # if patroni_create_replica_methods: "pgbackrest"
-        - name: Run "{{ pgbackrest_patroni_cluster_restore_command | default('') }}" on Replica
-          ansible.builtin.command: >
-            {{ pgbackrest_patroni_cluster_restore_command }}
-            {{ '--target-action=pause' if pgbackrest_patroni_cluster_restore_command is search('--type=') else '' }}
+        - name: Run "{{ pgbackrest_patroni_replica_restore_command | default('') }}" on Replica
+          ansible.builtin.command: "{{ pgbackrest_patroni_replica_restore_command }}"
           async: "{{ cluster_restore_timeout | default(86400) }}" # timeout 24 hours
           poll: 0
           register: pgbackrest_restore_replica
