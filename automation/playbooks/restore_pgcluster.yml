@@ -198,9 +198,7 @@
           -e 'redo (starts|done)|consistent recovery state reached' \
           -e 'recovery (stopping|has paused|ended)' \
           -e 'last completed transaction|selected new timeline ID' \
-          -e 'database system is (ready to accept connections|shut down)' \
-          -e 'FATAL' \
-          -e 'PANIC'
+          -e 'database system is (ready to accept connections|shut down)'
       args:
         executable: /bin/bash
       become: true
