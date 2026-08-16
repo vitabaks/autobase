@@ -82,24 +82,24 @@ bootstrap:
   method: {{ patroni_cluster_bootstrap_method }}
 {% if patroni_cluster_bootstrap_method == 'wal-g' %}
   wal-g:
-    command: {{ wal_g_patroni_cluster_bootstrap_command }}
+    command: {{ wal_g_patroni_cluster_bootstrap_command | to_json }}
     no_params: True
     recovery_conf:
       {% for item in wal_g_patroni_cluster_bootstrap_recovery_conf %}
       {% for key, value in item.items() %}
-      {{ key }}: {{ value }}
+      {{ key }}: {{ value | to_json }}
       {% endfor %}
       {% endfor %}
 {% endif %}
 {% if patroni_cluster_bootstrap_method == 'pgbackrest' %}
   pgbackrest:
-    command: "{{ pgbackrest_patroni_cluster_restore_command }}"
+    command: {{ pgbackrest_patroni_cluster_restore_command | to_json }}
     keep_existing_recovery_conf: True
     no_params: True
     recovery_conf:
       {% for item in pgbackrest_patroni_cluster_bootstrap_recovery_conf %}
       {% for key, value in item.items() %}
-      {{ key }}: {{ value }}
+      {{ key }}: {{ value | to_json }}
       {% endfor %}
       {% endfor %}
 {% endif %}
