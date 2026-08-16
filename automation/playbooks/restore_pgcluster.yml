@@ -60,12 +60,14 @@
         fail_msg: >-
           Enable exactly one backup tool with 'pgbackrest_install' or 'wal_g_install'.
           If set, 'restore_pgcluster_tool' must match the enabled tool.
+      when: inventory_hostname == groups['master'][0]
 
     - name: Validate PostgreSQL restore command
       ansible.builtin.assert:
         that:
           - postgresql_restore_command | default('') | trim | length > 0
         fail_msg: The selected backup tool must provide a non-empty PostgreSQL restore command.
+      when: inventory_hostname == groups['master'][0]
 
     - name: Validate Patroni bootstrap command
       ansible.builtin.assert:
@@ -73,6 +75,7 @@
           - restore_pgcluster_selected_bootstrap_command | default('') | trim | length > 0
         fail_msg: >-
           The selected backup tool must provide a non-empty Patroni bootstrap command.
+      when: inventory_hostname == groups['master'][0]
 
     - name: Validate pgBackRest target action recovery type
       ansible.builtin.assert:
@@ -84,7 +87,9 @@
         fail_msg: >-
           The pgBackRest option '--target-action' requires '--type' to be
           immediate, lsn, name, time, or xid.
-      when: restore_pgcluster_selected_tool == 'pgbackrest'
+      when:
+        - inventory_hostname == groups['master'][0]
+        - restore_pgcluster_selected_tool == 'pgbackrest'
 
     - name: Validate pgBackRest target action value
       ansible.builtin.assert:
@@ -95,7 +100,9 @@
             is search('(^|\s)--target-action=(pause|promote|shutdown)(\s|$)')
         fail_msg: >-
           The pgBackRest option '--target-action' must be pause, promote, or shutdown.
-      when: restore_pgcluster_selected_tool == 'pgbackrest'
+      when:
+        - inventory_hostname == groups['master'][0]
+        - restore_pgcluster_selected_tool == 'pgbackrest'
 
     - name: Validate pgBackRest target timeline recovery type
       ansible.builtin.assert:
@@ -107,7 +114,9 @@
         fail_msg: >-
           The pgBackRest option '--target-timeline' requires '--type' to be
           default, lsn, name, standby, time, or xid.
-      when: restore_pgcluster_selected_tool == 'pgbackrest'
+      when:
+        - inventory_hostname == groups['master'][0]
+        - restore_pgcluster_selected_tool == 'pgbackrest'
 
     - name: Validate PITR target action
       ansible.builtin.assert:
@@ -115,6 +124,7 @@
           - restore_pgcluster_selected_target_action in ['pause', 'promote', 'shutdown']
         fail_msg: >-
           'restore_target_action' must be pause, promote, or shutdown.
+      when: inventory_hostname == groups['master'][0]
 
     - name: Validate PITR target timeline
       ansible.builtin.assert:
@@ -122,6 +132,7 @@
           - restore_pgcluster_selected_target_timeline | string | trim | length > 0
         fail_msg: >-
           'restore_target_timeline' must not be empty.
+      when: inventory_hostname == groups['master'][0]
 
     - name: Validate that PITR targets do not conflict
       ansible.builtin.assert:
@@ -129,6 +140,7 @@
           - not (restore_immediate | default(false) | bool and restore_target_time | default('') | length > 0)
         fail_msg: >-
           'restore_immediate' and 'restore_target_time' cannot be used together.
+      when: inventory_hostname == groups['master'][0]
 
     - name: Check that a pgBackRest backup is available before restore
       ansible.builtin.command:
