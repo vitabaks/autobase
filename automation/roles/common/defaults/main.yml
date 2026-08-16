@@ -677,7 +677,7 @@ patroni_create_replica_methods:
   - basebackup
 
 pgbackrest:
-  - { option: "command", value: "{{ pgbackrest_patroni_cluster_restore_command }}" }
+  - { option: "command", value: "{{ pgbackrest_patroni_replica_restore_command }}" }
   - { option: "keep_data", value: "True" }
   - { option: "no_params", value: "True" }
 wal_g:
@@ -745,6 +745,8 @@ wal_g_archive_command: "{{ wal_g_path }} wal-push %p"
 wal_g_restore_command: "{{ wal_g_path }} wal-fetch %f %p"
 wal_g_restore_immediate: "{{ restore_immediate | default(false) }}"
 wal_g_restore_target_time: "{{ restore_target_time | default('') }}" # e.g. "2026-06-26 11:00:00+00"
+wal_g_restore_target_action: "{{ restore_target_action | default('promote') | lower }}" # pause, promote, or shutdown
+wal_g_restore_target_timeline: "{{ restore_target_timeline | default('latest') | string }}" # current, latest, or a timeline ID
 wal_g_restore_backup_name: "{{ restore_backup_name | default('LATEST') }}" # or a specific backup name from `wal-g backup-list`
 wal_g_patroni_cluster_bootstrap_command: >-
   {{ wal_g_path }} backup-fetch {{ postgresql_data_dir }} {{ wal_g_restore_backup_name }}
@@ -752,8 +754,8 @@ wal_g_patroni_cluster_bootstrap_recovery_conf: >-
   {{
     [
       {'restore_command': wal_g_restore_command},
-      {'recovery_target_action': 'promote'},
-      {'recovery_target_timeline': 'latest'}
+      {'recovery_target_action': wal_g_restore_target_action},
+      {'recovery_target_timeline': wal_g_restore_target_timeline}
     ]
     + ([{'recovery_target_time': wal_g_restore_target_time}] if wal_g_restore_target_time | length > 0
        else ([{'recovery_target': 'immediate'}] if wal_g_restore_immediate | bool else []))
@@ -829,7 +831,6 @@ pgbackrest_conf:
   stanza: # [stanza_name] section
     - { option: "process-max", value: "4" }
     - { option: "log-level-console", value: "info" }
-    - { option: "recovery-option", value: "recovery_target_action=promote" }
     - { option: "pg1-socket-path", value: "{{ postgresql_unix_socket_dir }}" }
     - { option: "pg1-path", value: "{{ postgresql_data_dir }}" }
 #    - { option: "", value: "" }
@@ -858,17 +859,39 @@ pgbackrest_archive_command: "pgbackrest --stanza={{ pgbackrest_stanza }} archive
 pgbackrest_restore_command: "pgbackrest --stanza={{ pgbackrest_stanza }} archive-get %f %p"
 pgbackrest_restore_immediate: "{{ restore_immediate | default(false) }}"
 pgbackrest_restore_target_time: "{{ restore_target_time | default('') }}" # e.g. "2026-06-26 11:00:00+00"
+pgbackrest_restore_target_action: "{{ restore_target_action | default('promote') | lower }}" # pause, promote, or shutdown
+pgbackrest_restore_target_timeline: "{{ restore_target_timeline | default('latest') | string }}" # current, latest, or a timeline ID
 pgbackrest_restore_backup_name: "{{ restore_backup_name | default('') }}" # e.g. "20260625-120000F_20260626-120000I"; empty means latest
 pgbackrest_patroni_cluster_restore_command: >-
   {{ '/usr/bin/pgbackrest --stanza=' ~ pgbackrest_stanza
      ~ (' --set=' ~ pgbackrest_restore_backup_name if pgbackrest_restore_backup_name | length > 0 else '')
      ~ (' --type=time --target="' ~ pgbackrest_restore_target_time ~ '"' if pgbackrest_restore_target_time | length > 0
-        else (' --type=immediate' if pgbackrest_restore_immediate | bool else ''))
+        else (' --type=immediate' if pgbackrest_restore_immediate | bool else ' --type=default'))
      ~ ' --delta restore' }}
+pgbackrest_patroni_cluster_bootstrap_command: >-
+  {{ pgbackrest_patroni_cluster_restore_command
+     ~ (' --target-action=' ~ pgbackrest_restore_target_action
+        if pgbackrest_patroni_cluster_restore_command
+           is search('(^|\s)--type=(immediate|lsn|name|time|xid)(\s|$)')
+           and '--target-action=' not in pgbackrest_patroni_cluster_restore_command else '')
+     ~ (' --target-timeline=' ~ pgbackrest_restore_target_timeline
+        if pgbackrest_patroni_cluster_restore_command
+           is search('(^|\s)--type=(default|lsn|name|standby|time|xid)(\s|$)')
+           and '--target-timeline=' not in pgbackrest_patroni_cluster_restore_command else '') }}
+pgbackrest_patroni_replica_restore_command: >-
+  {{ (pgbackrest_patroni_cluster_restore_command
+      | regex_replace('(^|\s)--target-action=\S+', ''))
+     ~ (' --target-action=pause'
+        if pgbackrest_patroni_cluster_restore_command
+           is search('(^|\s)--type=(immediate|lsn|name|time|xid)(\s|$)') else '')
+     ~ (' --target-timeline=' ~ pgbackrest_restore_target_timeline
+        if pgbackrest_patroni_cluster_restore_command
+           is search('(^|\s)--type=(default|lsn|name|standby|time|xid)(\s|$)')
+           and '--target-timeline=' not in pgbackrest_patroni_cluster_restore_command else '') }}
 pgbackrest_patroni_cluster_bootstrap_recovery_conf:
   - restore_command: "{{ pgbackrest_restore_command }}"
-  - recovery_target_action: promote
-  - recovery_target_timeline: latest
+  - recovery_target_action: "{{ pgbackrest_restore_target_action }}"
+  - recovery_target_timeline: "{{ pgbackrest_restore_target_timeline }}"
 pgbackrest_patroni_cluster_clean_bootstrap: false  # false: use delta restore for PITR into existing data dir; true: clean data directory before restore.
 
 # By default, the cron jobs is created on the database server.

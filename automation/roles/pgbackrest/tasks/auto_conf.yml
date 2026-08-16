@@ -31,7 +31,6 @@
         - { option: "backup-standby", value: "{{ 'y' if groups['postgres_cluster'] | length > 1 else 'n' }}" }
       stanza:
         - { option: "log-level-console", value: "info" }
-        - { option: "recovery-option", value: "recovery_target_action=promote" }
         - { option: "pg1-path", value: "{{ postgresql_data_dir }}" }
   delegate_to: localhost
   run_once: true # noqa run-once
@@ -63,7 +62,6 @@
         - { option: "backup-standby", value: "{{ 'y' if groups['postgres_cluster'] | length > 1 else 'n' }}" }
       stanza:
         - { option: "log-level-console", value: "info" }
-        - { option: "recovery-option", value: "recovery_target_action=promote" }
         - { option: "pg1-path", value: "{{ postgresql_data_dir }}" }
   no_log: true # do not output contents to the ansible log
   when: cloud_provider | default('') | lower == 'gcp'
@@ -101,7 +99,6 @@
         - { option: "backup-standby", value: "{{ 'y' if groups['postgres_cluster'] | length > 1 else 'n' }}" }
       stanza:
         - { option: "log-level-console", value: "info" }
-        - { option: "recovery-option", value: "recovery_target_action=promote" }
         - { option: "pg1-path", value: "{{ postgresql_data_dir }}" }
   no_log: true # do not output contents to the ansible log
   when: cloud_provider | default('') | lower == 'azure'
@@ -139,7 +136,6 @@
         - { option: "backup-standby", value: "{{ 'y' if groups['postgres_cluster'] | length > 1 else 'n' }}" }
       stanza:
         - { option: "log-level-console", value: "info" }
-        - { option: "recovery-option", value: "recovery_target_action=promote" }
         - { option: "pg1-path", value: "{{ postgresql_data_dir }}" }
   vars:
     default_region: "{{ (server_location in ['nyc1', 'nyc2']) | ternary('nyc3', server_location) }}"
@@ -178,7 +174,6 @@
         - { option: "backup-standby", value: "{{ 'y' if groups['postgres_cluster'] | length > 1 else 'n' }}" }
       stanza:
         - { option: "log-level-console", value: "info" }
-        - { option: "recovery-option", value: "recovery_target_action=promote" }
         - { option: "pg1-path", value: "{{ postgresql_data_dir }}" }
   vars:
     default_region: "{{ (server_location in ['hel1', 'fsn1', 'nbg1']) | ternary(server_location, 'nbg1') }}"

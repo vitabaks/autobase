@@ -55,17 +55,23 @@
   retries: 360
   delay: 10
   vars:
-    psql_command: "{{ pg_old_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }}"
+    psql_command: "{{ pg_old_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres"
   environment:
     PGPASSWORD: "{{ patroni_superuser_password }}"
   when: inventory_hostname in groups['primary']
 
-- name: "Get the current PostgreSQL log file"
-  ansible.builtin.shell: |
-    set -o pipefail;
-    ls -t {{ postgresql_log_dir }} | grep .{{ postgresql_log_format | default('log') }} | head -n 1
-  args:
-    executable: /bin/bash
+- name: Get current PostgreSQL log file
+  ansible.builtin.command: >-
+    {{ psql_command }} -tAXc "
+    select case
+    when pg_current_logfile() is null then ''
+    when pg_current_logfile() like '/%' then pg_current_logfile()
+    else current_setting('data_directory') || '/' || pg_current_logfile()
+    end"
+  vars:
+    psql_command: "{{ pg_old_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres"
+  environment:
+    PGPASSWORD: "{{ patroni_superuser_password }}"
   register: pg_log_filename
   changed_when: false
   ignore_errors: true

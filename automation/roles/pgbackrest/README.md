@@ -20,8 +20,12 @@ Installs and configures [pgBackRest](https://github.com/pgbackrest/pgbackrest) f
 | `pgbackrest_restore_command` | `"pgbackrest --stanza={{ pgbackrest_stanza }} archive-get %f %p"` | WAL restore_command helper string. |
 | `pgbackrest_restore_target_time` | `""` | Optional PITR target time, for example `"2020-06-01 11:00:00+03"`. Adds `--type=time --target=...` to the cluster restore command. |
 | `pgbackrest_restore_immediate` | `false` | Set to `true` to add `--type=immediate`. A non-empty `pgbackrest_restore_target_time` takes precedence. |
-| `pgbackrest_restore_backup_set` | `""` | Optional backup set name added as `--set=...`. An empty value lets pgBackRest restore the latest backup set. |
-| `pgbackrest_patroni_cluster_restore_command` | `"/usr/bin/pgbackrest --stanza={{ pgbackrest_stanza }} --delta restore"` | Command used for cluster restore/bootstrap. Includes the configured backup set and time or immediate recovery target. |
+| `pgbackrest_restore_target_action` | `{{ restore_target_action \| default('promote') }}` | Action after reaching the target: pause, promote, or shutdown. Added to the pgBackRest command only when targeted recovery is configured. |
+| `pgbackrest_restore_target_timeline` | `{{ restore_target_timeline \| default('latest') }}` | Timeline to recover along: current, latest, or a timeline ID. Not passed to pgBackRest for immediate recovery. |
+| `pgbackrest_restore_backup_name` | `""` | Optional backup set name added as `--set=...`. An empty value lets pgBackRest restore the latest backup set. |
+| `pgbackrest_patroni_cluster_restore_command` | `"/usr/bin/pgbackrest --stanza={{ pgbackrest_stanza }} --type=default --delta restore"` | Base restore command. Includes the configured backup set and recovery type. |
+| `pgbackrest_patroni_cluster_bootstrap_command` | Derived | Cluster bootstrap/master command with target action and timeline options. |
+| `pgbackrest_patroni_replica_restore_command` | Derived | Replica restore command. Uses pause only at a configured PITR target and applies the selected timeline. |
 | `pgbackrest_patroni_cluster_bootstrap_recovery_conf` | [...] | List for Patroni recovery parameters (restore_command, recovery_target_action, etc.). |
 | `pgbackrest_patroni_cluster_clean_bootstrap` | `false` | Controls how Patroni bootstraps from a pgBackRest backup: false – delta restore into the existing data directory (faster, reuses unchanged files). true – clean restore into an empty data directory (wipes existing contents first). |
 | `pgbackrest_cron_jobs` | [...] | Cron jobs for backups (full/diff). Created on DB host by default, or on repo_host if defined. |

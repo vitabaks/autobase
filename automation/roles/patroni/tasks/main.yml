@@ -1,12 +1,14 @@
 ---
 - name: Make sure handlers are flushed immediately
   ansible.builtin.meta: flush_handlers
+  when: not point_in_time_recovery | default(false) | bool
 
 # pip install
 - ansible.builtin.import_tasks: pip.yml
   when:
     - patroni_installation_method == "pip"
     - pip_package not in system_packages
+    - not point_in_time_recovery | default(false) | bool
   vars:
     pip_package: "python{{ python_version | default('3') }}-pip"
   tags: patroni, patroni_install, pip
@@ -71,7 +73,10 @@
         PATH: "{{ ansible_env.PATH }}:/usr/local/bin:/usr/bin"
         PIP_BREAK_SYSTEM_PACKAGES: "1"
       when: patroni_pip_package_repo | length < 1 and patroni_install_version != "latest"
-  when: installation_method == "packages" and patroni_installation_method == "pip"
+  when:
+    - installation_method == "packages"
+    - patroni_installation_method == "pip"
+    - not point_in_time_recovery | default(false) | bool
   environment: "{{ proxy_env | default({}) }}"
   tags: patroni, patroni_install
 
@@ -117,7 +122,10 @@
         PATH: "{{ ansible_env.PATH }}:/usr/local/bin:/usr/bin"
         PIP_BREAK_SYSTEM_PACKAGES: "1"
       when: patroni_pip_package_repo | length > 0
-  when: installation_method == "packages" and patroni_installation_method == "pip"
+  when:
+    - installation_method == "packages"
+    - patroni_installation_method == "pip"
+    - not point_in_time_recovery | default(false) | bool
   tags: patroni, patroni_install
 
 - block: # installation_method: "packages" and patroni_installation_method: "rpm/deb"
@@ -189,7 +197,10 @@
       retries: 3
       when: ansible_os_family == "RedHat" and patroni_rpm_package_repo | length > 0
   environment: "{{ proxy_env | default({}) }}"
-  when: installation_method == "packages" and (patroni_installation_method == "rpm" or patroni_installation_method == "deb")
+  when:
+    - installation_method == "packages"
+    - patroni_installation_method in ['rpm', 'deb']
+    - not point_in_time_recovery | default(false) | bool
   tags: patroni, patroni_install
 
 # Patroni configure
@@ -200,6 +211,7 @@
     owner: postgres
     group: postgres
     mode: "0750"
+  when: not point_in_time_recovery | default(false) | bool
   tags: patroni, patroni_conf
 
 # TLS (etcd)
@@ -216,6 +228,7 @@
     - tls_cert_generate | bool
     - dcs_type == "etcd"
     - not dcs_exists | bool
+    - not point_in_time_recovery | default(false) | bool
   tags: patroni, patroni_conf
 
 # TLS (consul)
@@ -232,6 +245,7 @@
     - tls_cert_generate | bool
     - dcs_type == "consul"
     - not dcs_exists | bool
+    - not point_in_time_recovery | default(false) | bool
   tags: patroni, patroni_conf
 
 - name: Create patroni config file
@@ -246,7 +260,9 @@
     group: postgres
     state: directory
     mode: "0750"
-  when: patroni_log_destination == 'logfile'
+  when:
+    - patroni_log_destination == 'logfile'
+    - not point_in_time_recovery | default(false) | bool
   tags: patroni, patroni_conf
 
 - block: # if cluster_scaling (add_node.yml)
@@ -326,7 +342,9 @@
         loop_var: patroni_config_with_cluster_vip_item
         label: "{{ patroni_config_with_cluster_vip_item.line }}"
       when: not with_haproxy_load_balancing|bool and not pgbouncer_install|bool and (cluster_vip is defined and cluster_vip | length > 0)
-  when: cluster_scaling is defined and cluster_scaling | bool
+  when:
+    - cluster_scaling is defined and cluster_scaling | bool
+    - not point_in_time_recovery | default(false) | bool
   tags: patroni, patroni_conf
 
 - name: Copy systemd service file "/etc/systemd/system/patroni.service"
@@ -336,6 +354,7 @@
     owner: postgres
     group: postgres
     mode: "0644"
+  when: not point_in_time_recovery | default(false) | bool
   tags: patroni, patroni_conf, patroni_service
 
 - name: Prepare PostgreSQL | create statistics directory (if not already exists)
@@ -347,6 +366,7 @@
     - postgresql_stats_temp_directory_path is defined
     - postgresql_stats_temp_directory_path != 'none'
     - postgresql_version | int <= 14
+    - not point_in_time_recovery | default(false) | bool
   tags: patroni, pgsql_stats_tmp
 
 - name: Prepare PostgreSQL | mount the statistics directory in memory (tmpfs)
@@ -360,6 +380,7 @@
     - postgresql_stats_temp_directory_path is defined
     - postgresql_stats_temp_directory_path != 'none'
     - postgresql_version | int <= 14
+    - not point_in_time_recovery | default(false) | bool
   tags: patroni, pgsql_stats_tmp
 
 - name: Prepare PostgreSQL | make sure the postgresql log directory "{{ postgresql_log_dir | default('') }}" exists
@@ -369,7 +390,7 @@
     group: postgres
     state: directory
     mode: "0700"
-  tags: patroni
+  tags: patroni, point_in_time_recovery
 
 - name: Prepare PostgreSQL | make sure the custom WAL directory "{{ postgresql_wal_dir | default('') }}" exists
   ansible.builtin.file:
@@ -379,41 +400,36 @@
     state: directory
     mode: "0700"
   when: postgresql_wal_dir is defined and postgresql_wal_dir | length > 0
-  tags: patroni, custom_wal_dir
+  tags: patroni, point_in_time_recovery, custom_wal_dir
+
+- name: Prepare PostgreSQL | make sure PostgreSQL home directory "{{ postgresql_home_dir | default('') }}"
+  ansible.builtin.file:
+    path: "{{ postgresql_home_dir }}"
+    state: directory
+    owner: postgres
+    group: postgres
+    mode: "0755"
+  tags: patroni, point_in_time_recovery
+
+- name: Prepare PostgreSQL | make sure PostgreSQL data directory "{{ postgresql_data_dir | default('') }}" exists
+  ansible.builtin.file:
+    path: "{{ postgresql_data_dir }}"
+    owner: postgres
+    group: postgres
+    state: directory
+    mode: "0700"
+  tags: patroni, point_in_time_recovery
+
+- name: Prepare PostgreSQL | make sure PostgreSQL unix socket directory "{{ postgresql_unix_socket_dir | default('') }}" exists
+  ansible.builtin.file:
+    path: "{{ postgresql_unix_socket_dir }}"
+    owner: postgres
+    group: postgres
+    state: directory
+    mode: "02775"
+  tags: patroni, point_in_time_recovery
 
 - block: # when postgresql NOT exists or PITR
-    - name: Prepare PostgreSQL | make sure PostgreSQL home directory "{{ postgresql_home_dir | default('') }}"
-      ansible.builtin.file:
-        path: "{{ postgresql_home_dir }}"
-        state: directory
-        owner: postgres
-        group: postgres
-        mode: "0755"
-
-    - name: Prepare PostgreSQL | make sure PostgreSQL data directory "{{ postgresql_data_dir | default('') }}" exists
-      ansible.builtin.file:
-        path: "{{ postgresql_data_dir }}"
-        owner: postgres
-        group: postgres
-        state: directory
-        mode: "0700"
-
-    - name: Prepare PostgreSQL | make sure PostgreSQL unix socket directory "{{ postgresql_unix_socket_dir | default('') }}" exists
-      ansible.builtin.file:
-        path: "{{ postgresql_unix_socket_dir }}"
-        owner: postgres
-        group: postgres
-        state: directory
-        mode: "02775"
-
-    - name: Prepare PostgreSQL | make sure PostgreSQL log directory "{{ postgresql_log_dir | default('') }}" exists
-      ansible.builtin.file:
-        path: "{{ postgresql_log_dir }}"
-        owner: postgres
-        group: postgres
-        state: directory
-        mode: "0700"
-
     # for Debian based distros only
     # patroni bootstrap failure is possible if the PostgreSQL config files are missing
     - name: Prepare PostgreSQL | make sure PostgreSQL config directory exists
@@ -458,14 +474,6 @@
             name: patroni
             state: stopped
 
-        - name: Prepare PostgreSQL | make sure the postgres home directory "{{ postgresql_home_dir | default('') }}"
-          ansible.builtin.file:
-            path: "{{ postgresql_home_dir }}"
-            state: directory
-            owner: postgres
-            group: postgres
-            mode: "0755"
-
         - name: Prepare PostgreSQL | make sure the data directory "{{ postgresql_data_dir | default('') }}" is empty
           ansible.builtin.file:
             path: "{{ postgresql_data_dir }}"
@@ -476,22 +484,6 @@
           loop:
             - absent
             - directory
-
-        - name: Prepare PostgreSQL | make sure PostgreSQL unix socket directory "{{ postgresql_unix_socket_dir | default('') }}" exists
-          ansible.builtin.file:
-            path: "{{ postgresql_unix_socket_dir }}"
-            owner: postgres
-            group: postgres
-            state: directory
-            mode: "02775"
-
-        - name: Prepare PostgreSQL | make sure PostgreSQL log directory "{{ postgresql_log_dir | default('') }}" exists
-          ansible.builtin.file:
-            path: "{{ postgresql_log_dir }}"
-            owner: postgres
-            group: postgres
-            state: directory
-            mode: "0700"
 
         - name: Prepare PostgreSQL | make sure the custom WAL directory "{{ postgresql_wal_dir | default('') }}" is empty
           ansible.builtin.file:
@@ -691,20 +683,16 @@
       when: inventory_hostname == groups['master'][0]
 
     - block: # for pgbackrest only (for use --delta restore)
-        - name: Run "{{ pgbackrest_patroni_cluster_restore_command | default('') }}" on Master
-          ansible.builtin.command: >
-            {{ pgbackrest_patroni_cluster_restore_command }}
-            {{ '--target-action=promote' if pgbackrest_patroni_cluster_restore_command is search('--type=') else '' }}
+        - name: Run "{{ pgbackrest_patroni_cluster_bootstrap_command | default('') }}" on Master
+          ansible.builtin.command: "{{ pgbackrest_patroni_cluster_bootstrap_command }}"
           async: "{{ cluster_restore_timeout | default(86400) }}" # timeout 24 hours
           poll: 0
           register: pgbackrest_restore_master
           when: inventory_hostname == groups['master'][0]
 
           # if patroni_create_replica_methods: "pgbackrest"
-        - name: Run "{{ pgbackrest_patroni_cluster_restore_command | default('') }}" on Replica
-          ansible.builtin.command: >
-            {{ pgbackrest_patroni_cluster_restore_command }}
-            {{ '--target-action=pause' if pgbackrest_patroni_cluster_restore_command is search('--type=') else '' }}
+        - name: Run "{{ pgbackrest_patroni_replica_restore_command | default('') }}" on Replica
+          ansible.builtin.command: "{{ pgbackrest_patroni_replica_restore_command }}"
           async: "{{ cluster_restore_timeout | default(86400) }}" # timeout 24 hours
           poll: 0
           register: pgbackrest_restore_replica
@@ -775,18 +763,6 @@
           failed_when: false
           when: inventory_hostname == groups['master'][0]
 
-        - name: Check PostgreSQL recovery log
-          ansible.builtin.command: "grep -A2 'recovery stopping' /tmp/pg_recovery_{{ ansible_date_time.date }}.log"
-          register: pg_recovery_result
-          changed_when: false
-          failed_when: false
-          when: inventory_hostname == groups['master'][0]
-
-        - name: PostgreSQL recovery details
-          ansible.builtin.debug:
-            msg: "{{ pg_recovery_result.stdout_lines }}"
-          when: pg_recovery_result.stdout_lines is defined
-
         - name: Check that PostgreSQL is stopped
           ansible.builtin.command: "{{ postgresql_bin_dir }}/pg_ctl status -D {{ postgresql_data_dir }}"
           register: pg_ctl_status_result
@@ -810,6 +786,7 @@
       ansible.builtin.stat:
         path: "{{ postgresql_data_dir }}/patroni.dynamic.json"
       register: patroni_dynamic_json
+      when: not keep_patroni_dynamic_json | bool or disable_archive_command | bool
 
     - name: Remove patroni.dynamic.json file
       ansible.builtin.file:
@@ -1127,8 +1104,10 @@
         name: "postgresql@{{ postgresql_version }}-{{ postgresql_cluster_name }}"
         enabled: false
         daemon_reload: true
-  when: ansible_os_family == "Debian" and
-    postgresql_packages|join(" ") is not search("postgrespro")
+  when:
+    - ansible_os_family == "Debian"
+    - postgresql_packages | join(" ") is not search("postgrespro")
+    - not point_in_time_recovery | default(false) | bool
   tags: patroni, postgresql_disable
 
 # "RedHat"
@@ -1137,8 +1116,10 @@
     name: "postgresql-{{ postgresql_version }}"
     enabled: false
     daemon_reload: true
-  when: ansible_os_family == "RedHat" and
-    postgresql_packages|join(" ") is not search("postgrespro")
+  when:
+    - ansible_os_family == "RedHat"
+    - postgresql_packages | join(" ") is not search("postgrespro")
+    - not point_in_time_recovery | default(false) | bool
   tags: patroni, postgresql_disable
 
 # PostgresPro
@@ -1147,7 +1128,9 @@
     name: "postgrespro-std-{{ postgresql_version }}"
     enabled: false
     daemon_reload: true
-  when: postgresql_packages|join(" ") is search("postgrespro-std")
+  when:
+    - postgresql_packages | join(" ") is search("postgrespro-std")
+    - not point_in_time_recovery | default(false) | bool
   tags: patroni, postgresql_disable
 
 # PATRONICTL_CONFIG_FILE (patroni v1.6.1 and higher)
@@ -1162,6 +1145,7 @@
     mode: "0644"
     create: true
   register: patronictl_env_result
+  when: not point_in_time_recovery | default(false) | bool
   tags: patroni, patroni_env
 
 - name: Add PATRONICTL_CONFIG_FILE to /etc/profile.d/patroni.sh
@@ -1173,4 +1157,5 @@
     owner: root
     group: root
     mode: "0644"
+  when: not point_in_time_recovery | default(false) | bool
   tags: patroni, patroni_env

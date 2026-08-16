@@ -117,6 +117,7 @@ Autobase adheres to a modular design separating atomic logic (roles) and orchest
   - `pg_logical_replication_stop` - Clean up publications, subscriptions, and replication slots.
 - `backup_pgcluster` – Run the pgBackRest or WAL-G backup command on the current Patroni leader, or on the host set in `backup_pgcluster_target`.
 - `backup_list` – Display the list of pgBackRest or WAL-G backups in text or JSON format.
+- `restore_pgcluster` – Restore the current PostgreSQL cluster from a pgBackRest or WAL-G backup.
 
 #### Scaling
 
