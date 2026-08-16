@@ -790,6 +790,7 @@
       ansible.builtin.stat:
         path: "{{ postgresql_data_dir }}/patroni.dynamic.json"
       register: patroni_dynamic_json
+      when: not keep_patroni_dynamic_json | bool or disable_archive_command | bool
 
     - name: Remove patroni.dynamic.json file
       ansible.builtin.file:
