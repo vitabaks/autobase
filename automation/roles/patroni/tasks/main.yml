@@ -767,18 +767,6 @@
           failed_when: false
           when: inventory_hostname == groups['master'][0]
 
-        - name: Check PostgreSQL recovery log
-          ansible.builtin.command: "grep -A2 'recovery stopping' /tmp/pg_recovery_{{ ansible_date_time.date }}.log"
-          register: pg_recovery_result
-          changed_when: false
-          failed_when: false
-          when: inventory_hostname == groups['master'][0]
-
-        - name: PostgreSQL recovery details
-          ansible.builtin.debug:
-            msg: "{{ pg_recovery_result.stdout_lines }}"
-          when: pg_recovery_result.stdout_lines is defined
-
         - name: Check that PostgreSQL is stopped
           ansible.builtin.command: "{{ postgresql_bin_dir }}/pg_ctl status -D {{ postgresql_data_dir }}"
           register: pg_ctl_status_result
