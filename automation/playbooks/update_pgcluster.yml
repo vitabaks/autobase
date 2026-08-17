@@ -80,6 +80,16 @@
       when: inventory_hostname in groups['primary'] | default([])
       tags: always
 
+    - name: '[Prepare] Get current passwords'
+      ansible.builtin.import_role:
+        name: vitabaks.autobase.pre_checks
+        tasks_from: passwords
+      vars:
+        source_group: primary
+        postgresql_cluster_maintenance: true
+      when: patroni_superuser_password | default('') | length < 1
+      tags: always
+
 - name: "(1/4) PRE-UPDATE: Perform pre-update tasks"
   hosts: "primary:secondary"
   gather_facts: true
