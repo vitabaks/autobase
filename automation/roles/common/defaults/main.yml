@@ -1120,10 +1120,10 @@ ssh_public_keys: []
 #  - { entry: "ssh-rsa AAAAB3... user2@example", state: "absent" } # remove a public key
 
 # sudo
-sudo_users:
-  - name: "postgres"
-    nopasswd: "yes" # or "no" to require a password
-    commands: "ALL"
+sudo_users: []
+#  - name: "postgres"
+#    nopasswd: "yes" # or "no" to require a password
+#    commands: "ALL"
 #  - name: "joe" # other user (example)
 #    nopasswd: "no"
 #    commands: "/usr/bin/find, /usr/bin/less, /usr/bin/tail, /bin/kill"
