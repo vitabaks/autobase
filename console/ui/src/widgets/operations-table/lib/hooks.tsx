@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { OPERATIONS_TABLE_COLUMN_NAMES } from '@widgets/operations-table/model/constants.ts';
 import { ResponseOperation } from '@shared/api/api/operations.ts';
 
@@ -16,3 +16,12 @@ export const useGetOperationsTableData = (data: ResponseOperation[]) =>
       })) ?? [],
     [data],
   );
+
+export const useOperationsEndDate = () => {
+  const [endDate, setEndDate] = useState(() => new Date().toISOString());
+  const refreshEndDate = useCallback(() => {
+    setEndDate(new Date().toISOString());
+  }, []);
+
+  return { endDate, refreshEndDate };
+};

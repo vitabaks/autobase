@@ -15,7 +15,8 @@ import {
 } from '@features/operations-table-buttons/lib/functions.ts';
 import { PAGINATION_LIMIT_OPTIONS } from '@shared/config/constants.ts';
 import { selectPollingInterval } from '@app/redux/slices/pollingIntervalSlice/pollingIntervalSlice.ts';
-import { useGetOperationsTableData } from '@widgets/operations-table/lib/hooks.tsx';
+import { useGetOperationsTableData, useOperationsEndDate } from '@widgets/operations-table/lib/hooks.tsx';
+import type { OperationsDateRange } from '@features/operations-table-buttons/model/types.ts';
 import { manageSortingOrder } from '@shared/lib/functions.ts';
 import { useQueryPolling } from '@shared/lib/hooks.tsx';
 import DefaultTable from '@shared/ui/default-table';
@@ -38,8 +39,8 @@ const OperationsTable: FC = () => {
     pageSize: PAGINATION_LIMIT_OPTIONS[1].value,
   });
 
-  const [endDate] = useState(new Date().toISOString());
-  const [startDate, setStartDate] = useState({
+  const { endDate, refreshEndDate } = useOperationsEndDate();
+  const [startDate, setStartDate] = useState<OperationsDateRange>({
     name: getOperationsDateRangeVariants(t)[0].value,
     value: formatOperationsDate(subDays(new Date(), 1)),
   });
@@ -52,7 +53,7 @@ const OperationsTable: FC = () => {
     limit: pagination.pageSize,
     ...(sorting?.[0] ? { sortBy: manageSortingOrder(sorting[0]) } : {}),
   });
-  const operationsList = useQueryPolling(operationsListRequest, pollingInterval);
+  const operationsList = useQueryPolling(operationsListRequest, pollingInterval, { onPoll: refreshEndDate });
 
   const columns = useMemo<MRT_ColumnDef<OperationsTableValues>[]>(() => operationTableColumns(t), [t]);
 
@@ -81,7 +82,7 @@ const OperationsTable: FC = () => {
 
   return (
     <>
-      <OperationsTableButtons refetch={operationsList.refetch} startDate={startDate} setStartDate={setStartDate} />
+      <OperationsTableButtons refetch={refreshEndDate} startDate={startDate} setStartDate={setStartDate} />
       <DefaultTable tableConfig={tableConfig} />
     </>
   );
