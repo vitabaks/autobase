@@ -6,8 +6,10 @@
     content: |
       {{ item.name }}  ALL=(ALL)  NOPASSWD: ALL
     force: true
-  when: item.nopasswd == "yes" and
-    ( item.commands is not defined or item.commands == "ALL")
+  when:
+    - sudo_users | default([]) | length > 0
+    - item.nopasswd == "yes"
+    - item.commands is not defined or item.commands == "ALL"
   loop: "{{ sudo_users | list }}"
   tags: sudo
 
@@ -18,8 +20,10 @@
     content: |
       {{ item.name }}  ALL=(ALL)  NOPASSWD: {{ item.commands }}
     force: true
-  when: item.nopasswd == "yes" and
-    ( item.commands is defined and item.commands != "ALL" )
+  when:
+    - sudo_users | default([]) | length > 0
+    - item.nopasswd == "yes"
+    - item.commands is defined and item.commands != "ALL"
   loop: "{{ sudo_users | list }}"
   tags: sudo
 
@@ -30,8 +34,10 @@
     content: |
       {{ item.name }}  ALL=(ALL)  ALL
     force: true
-  when: item.nopasswd != "yes" and
-    ( item.commands is not defined or item.commands == "ALL" )
+  when:
+    - sudo_users | default([]) | length > 0
+    - item.nopasswd != "yes"
+    - item.commands is not defined or item.commands == "ALL"
   loop: "{{ sudo_users | list }}"
   tags: sudo
 
@@ -42,7 +48,9 @@
     content: |
       {{ item.name }}  ALL=(ALL)  {{ item.commands }}
     force: true
-  when: item.nopasswd != "yes" and
-    ( item.commands is defined and item.commands != "ALL" )
+  when:
+    - sudo_users | default([]) | length > 0
+    - item.nopasswd != "yes"
+    - item.commands is defined and item.commands != "ALL"
   loop: "{{ sudo_users | list }}"
   tags: sudo
