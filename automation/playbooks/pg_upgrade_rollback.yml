@@ -36,6 +36,17 @@
       loop: "{{ groups['replica'] | default([]) }}"
       changed_when: false
       when: "'replica' in groups and groups['replica'] | length > 0"
+
+    - name: '[Prepare] Get current passwords'
+      become: true
+      become_user: postgres
+      ansible.builtin.import_role:
+        name: vitabaks.autobase.pre_checks
+        tasks_from: passwords
+      vars:
+        source_group: primary
+        postgresql_cluster_maintenance: true
+      when: patroni_superuser_password | default('') | length < 1
   tags:
     - always
 

@@ -71,6 +71,15 @@
           - "Cluster Name: {{ patroni_cluster_name | default('postgres-cluster') }}"
           - "Cluster Leader: {{ ansible_hostname }}"
       when: inventory_hostname in groups['primary'] | default([])
+
+    - name: '[Prepare] Get current passwords'
+      ansible.builtin.import_role:
+        name: vitabaks.autobase.pre_checks
+        tasks_from: passwords
+      vars:
+        source_group: primary
+        postgresql_cluster_maintenance: true
+      when: patroni_superuser_password | default('') | length < 1
   tags:
     - always
 
