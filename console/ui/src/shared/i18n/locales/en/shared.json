@@ -53,6 +53,32 @@
   "switchToLightMode": "Switch to Light Mode",
   "switchToDarkMode": "Switch to Dark Mode",
   "switchToSystemMode": "Switch to System Mode",
+  "upgrade": {
+    "button": "Upgrade",
+    "title": "Upgrade to Autobase Enterprise",
+    "close": "Close upgrade dialog",
+    "description": "Community Edition is designed for PostgreSQL cluster deployment only. Upgrade to Enterprise Edition to manage the complete cluster lifecycle from one platform.",
+    "community": {
+      "title": "Community Edition",
+      "badge": "Current installation",
+      "deployment": "Deploy high-availability PostgreSQL clusters",
+      "limited": "No cluster lifecycle management",
+      "no-support": "No support included"
+    },
+    "enterprise": {
+      "title": "Enterprise Edition",
+      "badge": "Full platform",
+      "lifecycle": "Complete cluster lifecycle management",
+      "operations": "Backups, restores, upgrades, scaling, and monitoring",
+      "support": "24/7 premium support with SLA"
+    },
+    "pricing": {
+      "title": "Choose the right plan for your needs",
+      "description": "Choose a plan based on the number of PostgreSQL clusters you manage, included DBA hours, and the support SLA you need.",
+      "button": "View plans and pricing"
+    },
+    "later": "Maybe later"
+  },
   "valid": "Valid",
   "invalid": "Invalid",
   "locale": "Locale",

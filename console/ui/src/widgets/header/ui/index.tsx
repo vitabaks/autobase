@@ -9,6 +9,7 @@ import Typography from '@mui/material/Typography';
 import Logo from '@shared/assets/AutobaseLogo.svg?react';
 import LogoutButton from '@features/logout-button';
 import ThemeToggle from '@features/theme-toggle';
+import UpgradeToEnterprise from '@features/upgrade-to-enterprise';
 import { useGetProjectsQuery } from '@shared/api/api/projects.ts';
 import { HEADER_HEIGHT } from '@shared/model/constants.ts';
 import { OPEN_SIDEBAR_WIDTH } from '@widgets/sidebar/model/constants.ts';
@@ -40,8 +41,7 @@ const Header: FC = () => {
         borderBottom: theme.palette.mode === 'light' ? '1px solid' : 'none',
         borderBottomColor: theme.palette.mode === 'light' ? 'divider' : 'transparent',
       })}
-      elevation={0}
-    >
+      elevation={0}>
       <Toolbar sx={{ minHeight: `${HEADER_HEIGHT} !important`, paddingLeft: '0 !important' }}>
         <Stack direction="row" justifyContent="space-between" alignItems="center" width="100%">
           <Stack direction="row" alignItems="center">
@@ -83,8 +83,9 @@ const Header: FC = () => {
             </TextField>
           </Stack>
           <Stack direction="row" alignItems="center" gap="8px">
+            <UpgradeToEnterprise />
             <ThemeToggle />
-          <LogoutButton />
+            <LogoutButton />
           </Stack>
         </Stack>
       </Toolbar>
