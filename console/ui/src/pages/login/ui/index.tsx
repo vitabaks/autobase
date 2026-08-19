@@ -65,7 +65,7 @@ const Login: FC = () => {
             <Link href="https://gs-labs.ru/" underline="hover" target="_blank">
               GS Labs
             </Link>
-            &nbsp;and the Autobase Community
+            &nbsp;& Autobase Community
           </Typography>
         </Box>
       </Paper>
