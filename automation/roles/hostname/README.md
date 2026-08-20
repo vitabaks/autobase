@@ -10,7 +10,7 @@ Sets the system hostname and ensures it is reflected in /etc/hosts for local res
 
 ## Behavior
 - Uses the Ansible hostname module to set the hostname.
-- Adds/updates the localhost line in /etc/hosts to include the current ansible_hostname.
+- Rewrites the `127.0.0.1` line in `/etc/hosts` so `ansible_hostname` is the first alias and `localhost` is the second. This makes `hostname -f` return the short hostname (glibc's FQDN resolution returns the first alias on the matching `/etc/hosts` line) instead of `localhost`, preventing duplicate-FQDN issues across cluster nodes.
 
 ## Dependencies
 
