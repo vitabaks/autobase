@@ -18,6 +18,7 @@ import { SSH_KEY_BLOCK_FIELD_NAMES } from '@entities/cluster/ssh-key-block/model
 import { LoadBalancerBlockSchema } from '@entities/cluster/load-balancers-block/model/validation.ts';
 import { DcsBlockSchema } from '@entities/cluster/expert-mode/dcs-block/model/validation.ts';
 import { isValidSshPublicKeyList } from '@shared/lib/sshPublicKeyValidation.ts';
+import { isValidSshPrivateKey } from '@shared/lib/sshPrivateKeyValidation.ts';
 
 const CloudFormSchema = (t: TFunction) =>
   yup.object({
@@ -104,7 +105,14 @@ export const LocalFormSchema = (t: TFunction) =>
                   .mixed()
                   .when(CLUSTER_FORM_FIELD_NAMES.IS_USE_DEFINED_SECRET, ([isUseDefinedSecret], schema) =>
                     !isUseDefinedSecret
-                      ? yup.string().required(t('requiredField', { ns: 'validation' }))
+                      ? yup
+                          .string()
+                          .required(t('requiredField', { ns: 'validation' }))
+                          .test(
+                            'is valid SSH private key',
+                            t('invalidSshPrivateKey', { ns: 'validation' }),
+                            (value) => !value || isValidSshPrivateKey(value),
+                          )
                       : schema.notRequired(),
                   )
               : schema.notRequired(),

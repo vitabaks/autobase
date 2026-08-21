@@ -3,6 +3,7 @@ import { TFunction } from 'i18next';
 import { PROVIDERS } from '@shared/config/constants.ts';
 
 import { SECRET_MODAL_CONTENT_FORM_FIELD_NAMES } from '@entities/secret-form-block/model/constants.ts';
+import { isValidSshPrivateKey } from '@shared/lib/sshPrivateKeyValidation.ts';
 
 const requiredField = ({ valueToBeRequired, t }: { valueToBeRequired: string; t: TFunction }) =>
   yup
@@ -43,7 +44,20 @@ export const AddSecretFormSchema = (t: TFunction) =>
       valueToBeRequired: PROVIDERS.HETZNER,
       t,
     }),
-    [SECRET_MODAL_CONTENT_FORM_FIELD_NAMES.SSH_PRIVATE_KEY]: requiredField({ valueToBeRequired: 'ssh_key', t }),
+    [SECRET_MODAL_CONTENT_FORM_FIELD_NAMES.SSH_PRIVATE_KEY]: yup
+      .mixed()
+      .when(SECRET_MODAL_CONTENT_FORM_FIELD_NAMES.SECRET_TYPE, ([secretType]) =>
+        secretType === 'ssh_key'
+          ? yup
+              .string()
+              .required(t('requiredField', { ns: 'validation' }))
+              .test(
+                'is valid SSH private key',
+                t('invalidSshPrivateKey', { ns: 'validation' }),
+                (value) => !value || isValidSshPrivateKey(value),
+              )
+          : yup.mixed().optional(),
+      ),
     [SECRET_MODAL_CONTENT_FORM_FIELD_NAMES.USERNAME]: requiredField({ valueToBeRequired: 'password', t }),
     [SECRET_MODAL_CONTENT_FORM_FIELD_NAMES.PASSWORD]: requiredField({ valueToBeRequired: 'password', t }),
   });
