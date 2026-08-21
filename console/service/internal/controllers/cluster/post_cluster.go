@@ -51,6 +51,24 @@ func (h *postClusterHandler) Handle(param cluster.PostClustersParams) middleware
 		return cluster.NewPostClustersBadRequest().WithPayload(controllers.MakeErrorPayload(fmt.Errorf("cluster %s already exists", param.Body.Name), controllers.BaseError))
 	}
 
+	const (
+		LocationExtraVar          = "server_location"
+		CloudProviderExtraVar     = "cloud_provider"
+		ServersExtraVar           = "server_count"
+		PostgreSqlVersionExtraVar = "postgresql_version"
+		InventoryJsonEnv          = "ANSIBLE_INVENTORY_JSON"
+	)
+
+	extraVars := map[string]interface{}{}
+
+	if param.Body.ExtraVars != nil {
+		if m, ok := param.Body.ExtraVars.(map[string]interface{}); ok {
+			extraVars = m
+		} else {
+			localLog.Warn().Msg("unexpected type for extra_vars, expected map[string]interface{}")
+		}
+	}
+
 	var (
 		secretEnvs    []string
 		secretID      *int64
@@ -58,14 +76,20 @@ func (h *postClusterHandler) Handle(param cluster.PostClustersParams) middleware
 		paramLocation ParamLocation
 	)
 	if param.Body.AuthInfo != nil {
-		secretEnvs, paramLocation, err = getSecretEnvs(param.HTTPRequest.Context(), h.log, h.db, param.Body.AuthInfo.SecretID, h.cfg.EncryptionKey)
+		secretEnvs, paramLocation, err = getSecretEnvs(
+			param.HTTPRequest.Context(),
+			h.db,
+			param.Body.AuthInfo.SecretID,
+			h.cfg.EncryptionKey,
+			param.Body.ProjectID,
+			getValFromExtraVars(extraVars, CloudProviderExtraVar),
+		)
 		if err != nil {
 			localLog.Error().Err(err).Msg("failed to get secret")
 
 			return cluster.NewPostClustersBadRequest().WithPayload(controllers.MakeErrorPayload(fmt.Errorf("failed to get secret: %s", err.Error()), controllers.BaseError))
 		}
 		secretID = &param.Body.AuthInfo.SecretID
-		localLog.Trace().Strs("secretEnvs", secretEnvs).Msg("got secret")
 	} else {
 		localLog.Debug().Msg("AuthInfo is nil, secret is expected in envs from web")
 	}
@@ -76,16 +100,6 @@ func (h *postClusterHandler) Handle(param cluster.PostClustersParams) middleware
 
 	ansibleLogEnv := h.getAnsibleLogEnv(param.Body.Name)
 	localLog.Trace().Strs("file_log", ansibleLogEnv).Msg("got file log name")
-
-	extraVars := map[string]interface{}{}
-
-	if param.Body.ExtraVars != nil {
-		if m, ok := param.Body.ExtraVars.(map[string]interface{}); ok {
-			extraVars = m
-		} else {
-			localLog.Warn().Interface("extra_vars_raw", param.Body.ExtraVars).Msg("unexpected type for extra_vars, expected map[string]interface{}")
-		}
-	}
 
 	if paramLocation == EnvParamLocation {
 		param.Body.Envs = append(param.Body.Envs, secretEnvs...)
@@ -100,14 +114,6 @@ func (h *postClusterHandler) Handle(param cluster.PostClustersParams) middleware
 	param.Body.Envs = append(param.Body.Envs, ansibleLogEnv...)
 
 	h.addProxySettings(extraVars, &param, localLog)
-
-	const (
-		LocationExtraVar          = "server_location"
-		CloudProviderExtraVar     = "cloud_provider"
-		ServersExtraVar           = "server_count"
-		PostgreSqlVersionExtraVar = "postgresql_version"
-		InventoryJsonEnv          = "ANSIBLE_INVENTORY_JSON"
-	)
 
 	var (
 		serverCount      int
@@ -124,13 +130,13 @@ func (h *postClusterHandler) Handle(param cluster.PostClustersParams) middleware
 			decodedInventory, decodeErr := base64.StdEncoding.DecodeString(rawInventory)
 			if decodeErr != nil {
 				// If base64 decoding fails, treat it as plain JSON
-				localLog.Warn().Str("inventory_json", rawInventory).Err(decodeErr).Msg("base64 decode failed, trying as plain JSON")
+				localLog.Warn().Err(decodeErr).Msg("base64 decode failed, trying inventory as plain JSON")
 				decodedInventory = []byte(rawInventory)
 			}
 
 			// Try to parse the decoded inventory as JSON
 			if err := json.Unmarshal(decodedInventory, &inventoryJson); err != nil {
-				localLog.Error().Str("inventory_json", string(decodedInventory)).Err(err).Msg("failed to parse inventory json")
+				localLog.Error().Err(err).Msg("failed to parse inventory JSON")
 				inventoryJsonVal = nil // to correct insert in db
 			} else {
 				// If successfully parsed, save it and calculate server count
@@ -139,7 +145,7 @@ func (h *postClusterHandler) Handle(param cluster.PostClustersParams) middleware
 			}
 		} else {
 			// No inventory found in envs; fallback to 0
-			localLog.Warn().Str("inventory_json", "").Msg("ANSIBLE_INVENTORY_JSON not found in Envs")
+			localLog.Warn().Msg("ANSIBLE_INVENTORY_JSON not found in Envs")
 			serverCount = 0
 		}
 	} else {

@@ -3,11 +3,11 @@ package cluster
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+
+	"postgresql-cluster-console/internal/authinfo"
 	"postgresql-cluster-console/internal/storage"
 	"postgresql-cluster-console/models"
-	"postgresql-cluster-console/pkg/tracer"
-
-	"github.com/rs/zerolog"
 )
 
 type ParamLocation uint8
@@ -18,18 +18,18 @@ const (
 	ExtraVarsParamLocation ParamLocation = 2
 )
 
-func getSecretEnvs(ctx context.Context, log zerolog.Logger, db storage.IStorage, secretID int64, secretKey string) ([]string, ParamLocation, error) {
-	localLog := log.With().Str("cid", ctx.Value(tracer.CtxCidKey{}).(string)).Logger()
+func getSecretEnvs(ctx context.Context, db storage.IStorage, secretID int64, secretKey string, projectID int64, cloudProvider string) ([]string, ParamLocation, error) {
 	secretView, err := db.GetSecret(ctx, secretID)
 	if err != nil {
 		return nil, UnknownParamLocation, err
 	}
-	localLog.Trace().Any("secret_view", secretView).Msg("got secret view from db")
+	if err := authinfo.ValidateSecretReference(secretView, projectID, cloudProvider); err != nil {
+		return nil, UnknownParamLocation, err
+	}
 	secretVal, err := db.GetSecretVal(ctx, secretID, secretKey)
 	if err != nil {
 		return nil, UnknownParamLocation, err
 	}
-	localLog.Trace().Msgf("secretVal %s", string(secretVal))
 
 	switch models.SecretType(secretView.Type) {
 	case models.SecretTypeAws:
@@ -94,6 +94,6 @@ func getSecretEnvs(ctx context.Context, log zerolog.Logger, db storage.IStorage,
 
 		return []string{"ansible_user=" + sec.USERNAME, "ansible_ssh_pass=" + sec.PASSWORD, "ansible_sudo_pass=" + sec.PASSWORD}, ExtraVarsParamLocation, nil
 	default:
-		return nil, UnknownParamLocation, nil
+		return nil, UnknownParamLocation, fmt.Errorf("secret %d has unsupported type %q", secretID, secretView.Type)
 	}
 }
