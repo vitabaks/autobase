@@ -78,13 +78,14 @@
   ansible.builtin.add_host:
     name: "{{ item.private_ip }}"
     group: consul_instances
-    consul_node_role: "{{ 'server' if not dcs_exists | default(false) else 'client' }}"
+    consul_node_role: "{{ 'server' if not (dcs_exists | default(false) | bool) and consul_index < 7 else 'client' }}"
     ansible_ssh_host: "{{ item[(server_public_ip | bool and ssh_public_access | bool) | ternary('public_ip', 'private_ip')] }}"
     ansible_ssh_private_key_file: "{{ ssh_private_key_file | default(None) }}"
     new_node: "{{ item.new_node | default(omit) }}"
     bind_address: "{{ item.private_ip }}"
   loop: "{{ ip_addresses }}"
   loop_control:
+    index_var: consul_index
     label: "{{ item[(server_public_ip | bool and ssh_public_access | bool) | ternary('public_ip', 'private_ip')] }}"
   changed_when: false
   when: dcs_type == "consul"
