@@ -21,6 +21,7 @@ services:
     environment:
       - PG_CONSOLE_AUTHORIZATION_TOKEN=${AUTH_TOKEN}
       - PG_CONSOLE_LOGGER_LEVEL=${PG_CONSOLE_LOGGER_LEVEL:-DEBUG}
+      - PG_CONSOLE_AUTH_COOKIE_SECURE=false
       - PG_CONSOLE_DB_HOST=autobase-console-db
     networks:
       - autobase
