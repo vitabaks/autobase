@@ -6,7 +6,7 @@ FROM docker.io/bhavikagarwal2001/dbdesk-studio:${DBDESK_STUDIO_VERSION} AS dbdes
 FROM node:24-bookworm-slim AS node-runtime
 
 # build-env
-FROM golang:1.26-bookworm AS api-builder
+FROM golang:1.27-bookworm AS api-builder
 WORKDIR /go/src/pg-console
 
 COPY console/service/ .
