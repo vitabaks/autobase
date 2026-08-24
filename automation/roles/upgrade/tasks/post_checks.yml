@@ -12,7 +12,9 @@
     psql_command: "{{ pg_new_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres"
   environment:
     PGPASSWORD: "{{ patroni_superuser_password }}"
-  when: inventory_hostname in groups['primary']
+  when:
+    - inventory_hostname in groups['primary']
+    - groups.get('secondary', []) | length > 0
 
 # Error, if no active replication connections found.
 - name: "Post-Check error. No active replication connections found."
@@ -24,6 +26,7 @@
   ignore_errors: true # show the error and continue the playbook execution
   when:
     - inventory_hostname in groups['primary']
+    - groups.get('secondary', []) | length > 0
     - pg_replication_state.stdout | int == 0
 
 - name: Create a table "test_replication" with 10000 rows on the primary
@@ -39,7 +42,9 @@
     psql_command: "{{ pg_new_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres"
   environment:
     PGPASSWORD: "{{ patroni_superuser_password }}"
-  when: inventory_hostname in groups['primary']
+  when:
+    - inventory_hostname in groups['primary']
+    - groups.get('secondary', []) | length > 0
 
 - name: Wait until the PostgreSQL replica is synchronized
   ansible.builtin.command: >
@@ -55,7 +60,7 @@
   environment:
     PGPASSWORD: "{{ patroni_superuser_password }}"
   when:
-    - inventory_hostname in groups['secondary']
+    - inventory_hostname in groups.get('secondary', [])
     - create_table_result is success
 
 - name: Drop a table "test_replication"
@@ -67,6 +72,7 @@
     PGPASSWORD: "{{ patroni_superuser_password }}"
   when:
     - inventory_hostname in groups['primary']
+    - groups.get('secondary', []) | length > 0
     - create_table_result is success
 
 - name: Print the result of checking the number of records
@@ -75,7 +81,7 @@
       - "The PostgreSQL replication is OK for replica {{ ansible_hostname }}"
       - "The number of records in the test_replication table the same as the primary ({{ count_test.stdout }} rows)"
   when:
-    - inventory_hostname in groups['secondary']
+    - inventory_hostname in groups.get('secondary', [])
     - count_test.stdout is defined
     - count_test.stdout | int == 10000
 
@@ -89,6 +95,6 @@
   failed_when: count_test.stdout | int != 10000
   ignore_errors: true # show the error and continue the playbook execution
   when:
-    - inventory_hostname in groups['secondary']
+    - inventory_hostname in groups.get('secondary', [])
     - count_test.stdout is defined
     - count_test.stdout | int != 10000

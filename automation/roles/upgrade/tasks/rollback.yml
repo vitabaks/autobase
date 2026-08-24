@@ -33,7 +33,7 @@
     msg: "The Patroni cluster is already running. Stop rollback."
   vars:
     cluster_members: "{{ patroni_cluster_result.json.members | default([]) | rejectattr('state', 'equalto', 'stopped') | list | length }}"
-    total_nodes: "{{ groups['primary'] | length + groups['secondary'] | length }}"
+    total_nodes: "{{ groups['primary'] | length + groups.get('secondary', []) | length }}"
   when:
     - inventory_hostname in groups['primary']
     # Check if the cluster members (excluding 'stopped') equals the total number of nodes
@@ -158,7 +158,7 @@
     name: patroni
     state: started
   when:
-    - inventory_hostname in groups['secondary']
+    - inventory_hostname in groups.get('secondary', [])
 
 - name: "[Rollback] Wait for port {{ patroni_restapi_port | default('8008') }} to become open on the host"
   ansible.builtin.wait_for:
@@ -168,7 +168,7 @@
     timeout: "{{ (pg_start_stop_timeout | int) // 2 }}"
     delay: 2
   when:
-    - inventory_hostname in groups['secondary']
+    - inventory_hostname in groups.get('secondary', [])
 
 - name: "[Rollback] Check Patroni is healthy on the replica"
   ansible.builtin.uri:
@@ -183,7 +183,7 @@
   environment:
     no_proxy: "{{ patroni_bind_address | default(bind_address, true) }}"
   when:
-    - inventory_hostname in groups['secondary']
+    - inventory_hostname in groups.get('secondary', [])
 
 # if 'pgbouncer_install' is 'true' and 'pgbouncer_pool_pause' is 'true'
 - block:
