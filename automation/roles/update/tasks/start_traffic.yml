@@ -31,6 +31,21 @@
   delay: 2
   environment:
     no_proxy: "{{ patroni_bind_address | default(bind_address, true) }}"
+  when: groups['postgres_cluster'] | length > 1
+
+- name: Make sure leader endpoint is available on a single-node cluster
+  ansible.builtin.uri:
+    url: "{{ patroni_restapi_protocol }}://{{ patroni_restapi_connect_addr | default(patroni_bind_address | default(bind_address, true), true) }}:\
+      {{ patroni_restapi_port }}/leader"
+    status_code: 200
+    ca_path: "{{ patroni_restapi_cafile | default(omit, true) }}"
+  register: patroni_leader_result
+  until: patroni_leader_result.status == 200
+  retries: 30
+  delay: 2
+  environment:
+    no_proxy: "{{ patroni_bind_address | default(bind_address, true) }}"
+  when: groups['postgres_cluster'] | length == 1
 
 # Warming up caches after reboot (if 'reboot_host_post_delay' is defined)
 - name: "Wait {{ reboot_host_post_delay | default('') }} minutes for caches to warm up after reboot"

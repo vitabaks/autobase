@@ -2,6 +2,8 @@
 
 This role is designed to update the PostgreSQL Cluster to a new minor version (for example, 17.1->17.2, and etc).
 
+Both single-node and multi-node Patroni clusters are supported. A single-node cluster remains unavailable while its primary node is being updated or rebooted because no switchover target exists.
+
 By default, only PostgreSQL packages defined in the `postgresql_packages` variable are updated. In addition, you can update Patroni or the entire system.
 
 #### Usage
@@ -58,9 +60,9 @@ When using load balancing for read-only traffic (the "Type A" and "Type C" schem
 #### 1. PRE-UPDATE: Perform pre-update tasks
 
 - Test PostgreSQL DB Access
-- Make sure that physical replication is active
+- Make sure that physical replication is active (multi-node clusters only)
   - Stop, if there are no active replicas
-- Make sure there is no high replication lag
+- Make sure there is no high replication lag (multi-node clusters only)
   - Note: no more than `max_replication_lag_bytes`
   - Stop, if replication lag is high
 - Make sure there are no long-running transactions
@@ -104,6 +106,7 @@ When using load balancing for read-only traffic (the "Type A" and "Type C" schem
 #### 3. UPDATE: Primary
 
 - Switchover Patroni leader role
+  - Note: Skipped for a single-node cluster.
   - Perform switchover of the leader for the Patroni cluster
   - Make sure that the Patroni is healthy and is a replica
     - Notes:
