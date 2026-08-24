@@ -589,7 +589,7 @@
                 TargetGroupName: "{{ patroni_cluster_name }}-tg-{{ item }}"
         cross_zone_load_balancing: true
         scheme: "{{ 'internet-facing' if database_public_access | bool else 'internal' }}"
-        wait: false
+        wait: true
         state: present
       loop:
         - "primary"
@@ -598,6 +598,9 @@
       loop_control:
         label: "{{ patroni_cluster_name }}-{{ item }}"
       register: aws_elb_network_lb
+      until: aws_elb_network_lb is success
+      retries: 3
+      delay: 10
       vars:
         target_port: "{{ pgbouncer_listen_port | default('6432') if pgbouncer_install | bool else postgresql_port | default('5432') }}"
       when: cloud_load_balancer | bool and aws_load_balancer_type | lower == 'nlb' and
