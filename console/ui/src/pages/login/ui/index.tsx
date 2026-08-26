@@ -2,8 +2,10 @@ import { FC } from 'react';
 import { Box, Button, Link, Paper, Stack, TextField, Typography } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
 import RouterPaths from '@app/router/routerPathsConfig';
 import { generateAbsoluteRouterPath } from '@shared/lib/functions.ts';
+import { useLazyGetVersionQuery } from '@shared/api/api/other.ts';
 import { Controller, useForm } from 'react-hook-form';
 import { LoginFormValues } from '@pages/login/model/types.ts';
 import { LOGIN_FORM_FIELD_NAMES } from '@pages/login/model/constants.ts';
@@ -12,13 +14,24 @@ import Logo from '@shared/assets/AutobaseLogo.svg?react';
 
 const Login: FC = () => {
   const { t } = useTranslation('shared');
+  const { t: tToasts } = useTranslation('toasts');
   const navigate = useNavigate();
 
   const { handleSubmit, control } = useForm<LoginFormValues>();
+  const [validateToken, { isFetching }] = useLazyGetVersionQuery();
 
-  const onSubmit = (values: LoginFormValues) => {
+  const onSubmit = async (values: LoginFormValues) => {
+    // Store the entered token first so the request carries it, then validate it
+    // against the API (GET /version requires the bearer). The token is never
+    // shipped in the built assets, so this is the only place it is checked.
     localStorage.setItem('token', values[LOGIN_FORM_FIELD_NAMES.TOKEN]);
-    navigate(generateAbsoluteRouterPath(RouterPaths.clusters.absolutePath));
+    try {
+      await validateToken().unwrap();
+      navigate(generateAbsoluteRouterPath(RouterPaths.clusters.absolutePath));
+    } catch {
+      localStorage.removeItem('token');
+      toast.error(tToasts('invalidToken'));
+    }
   };
 
   return (
@@ -43,6 +56,7 @@ const Login: FC = () => {
                   required
                   autoFocus
                   fullWidth
+                  type="password"
                   value={value}
                   onChange={onChange}
                   label={t('token')}
@@ -51,7 +65,7 @@ const Login: FC = () => {
                 />
               )}
             />
-            <Button variant="contained" fullWidth type="submit">
+            <Button variant="contained" fullWidth type="submit" disabled={isFetching}>
               {t('login')}
             </Button>
             <Typography variant="caption" size="small">

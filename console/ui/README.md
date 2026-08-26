@@ -88,8 +88,8 @@ This controls browser fetch frequency, not backend freshness. Cluster views are 
 
 ### Docker Secrets
 
-The UI container supports the `_FILE` convention for `PG_CONSOLE_AUTHORIZATION_TOKEN` and `VITE_AUTH_TOKEN`.
-If `PG_CONSOLE_AUTHORIZATION_TOKEN_FILE` or `VITE_AUTH_TOKEN_FILE` is set, the entrypoint reads the file and uses its contents as the corresponding variable. Setting both the base variable and its `_FILE` variant to non-empty values is an error.
+The UI container supports the `_FILE` convention for `PG_CONSOLE_AUTHORIZATION_TOKEN`.
+If `PG_CONSOLE_AUTHORIZATION_TOKEN_FILE` is set, the entrypoint reads the file and uses its contents as the value. Setting both the base variable and its `_FILE` variant to non-empty values is an error.
 
 ## Architecture
 
