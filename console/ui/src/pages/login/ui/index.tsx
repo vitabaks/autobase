@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import RouterPaths from '@app/router/routerPathsConfig';
 import { generateAbsoluteRouterPath } from '@shared/lib/functions.ts';
+import { setDbdeskAuthCookie } from '@shared/lib/dbdeskAuthCookie.ts';
 import { Controller, useForm } from 'react-hook-form';
 import { LoginFormValues } from '@pages/login/model/types.ts';
 import { LOGIN_FORM_FIELD_NAMES } from '@pages/login/model/constants.ts';
@@ -18,6 +19,7 @@ const Login: FC = () => {
 
   const onSubmit = (values: LoginFormValues) => {
     localStorage.setItem('token', values[LOGIN_FORM_FIELD_NAMES.TOKEN]);
+    setDbdeskAuthCookie(values[LOGIN_FORM_FIELD_NAMES.TOKEN]);
     navigate(generateAbsoluteRouterPath(RouterPaths.clusters.absolutePath));
   };
 

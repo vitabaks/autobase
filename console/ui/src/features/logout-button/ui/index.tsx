@@ -4,6 +4,7 @@ import { IconButton, Tooltip } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import RouterPaths from '@app/router/routerPathsConfig';
 import { generateAbsoluteRouterPath } from '@shared/lib/functions.ts';
+import { clearDbdeskAuthCookie } from '@shared/lib/dbdeskAuthCookie.ts';
 import { useTranslation } from 'react-i18next';
 
 const LogoutButton: FC = () => {
@@ -12,6 +13,7 @@ const LogoutButton: FC = () => {
 
   const handleLogout = () => {
     localStorage.removeItem('token');
+    clearDbdeskAuthCookie();
     navigate(generateAbsoluteRouterPath(RouterPaths.login.absolutePath));
   };
 
