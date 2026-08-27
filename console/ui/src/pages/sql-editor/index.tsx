@@ -1,5 +1,5 @@
-import { FC, useEffect, useMemo, useRef } from 'react';
-import { Box, Typography } from '@mui/material';
+import { FC, useEffect, useMemo, useRef, useState } from 'react';
+import { Box, CircularProgress, Typography } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import { DBDESK_URL } from '@shared/config/constants.ts';
 import { useAppSelector } from '@app/redux/store/hooks.ts';
@@ -19,6 +19,7 @@ const SqlEditor: FC = () => {
   const { t } = useTranslation('shared');
   const actualTheme = useAppSelector(selectActualTheme);
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   const dbdeskOrigin = useMemo(getDbdeskOrigin, []);
 
@@ -54,7 +55,22 @@ const SqlEditor: FC = () => {
         display: 'flex',
         flexDirection: 'column',
         overflow: 'hidden',
+        position: 'relative',
       }}>
+      {isLoading && (
+        <Box
+          sx={{
+            position: 'absolute',
+            inset: 0,
+            zIndex: 1,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: 'background.paper',
+          }}>
+          <CircularProgress size={48} />
+        </Box>
+      )}
       <iframe
         ref={iframeRef}
         src={DBDESK_URL}
@@ -65,9 +81,11 @@ const SqlEditor: FC = () => {
           height: '100%',
           border: 'none',
           flexGrow: 1,
+          opacity: isLoading ? 0 : 1,
         }}
         allow="clipboard-read; clipboard-write"
         onLoad={() => {
+          setIsLoading(false);
           iframeRef.current?.contentWindow?.postMessage(
             { type: 'dbdesk-set-theme', theme: actualTheme },
             dbdeskOrigin,

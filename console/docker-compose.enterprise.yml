@@ -65,8 +65,6 @@ services:
   dbdesk-studio:
     image: docker.io/bhavikagarwal2001/dbdesk-studio:0.1.5
     container_name: dbdesk-studio
-    ports:
-      - 9876:9876  # nginx (frontend + /api/ proxy); Express listens internally on PORT
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://localhost:6789/health"]
       interval: 10s

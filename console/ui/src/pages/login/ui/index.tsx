@@ -6,6 +6,7 @@ import { toast } from 'react-toastify';
 import RouterPaths from '@app/router/routerPathsConfig';
 import { generateAbsoluteRouterPath } from '@shared/lib/functions.ts';
 import { useLazyGetVersionQuery } from '@shared/api/api/other.ts';
+import { setDbdeskAuthCookie } from '@shared/lib/dbdeskAuthCookie.ts';
 import { Controller, useForm } from 'react-hook-form';
 import { LoginFormValues } from '@pages/login/model/types.ts';
 import { LOGIN_FORM_FIELD_NAMES } from '@pages/login/model/constants.ts';
@@ -27,6 +28,7 @@ const Login: FC = () => {
     localStorage.setItem('token', values[LOGIN_FORM_FIELD_NAMES.TOKEN]);
     try {
       await validateToken().unwrap();
+      setDbdeskAuthCookie(values[LOGIN_FORM_FIELD_NAMES.TOKEN]);
       navigate(generateAbsoluteRouterPath(RouterPaths.clusters.absolutePath));
     } catch {
       localStorage.removeItem('token');
