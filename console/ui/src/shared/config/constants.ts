@@ -5,7 +5,6 @@ export const LOCALES = Object.freeze({
 });
 
 export const API_URL = getEnvVariable('VITE_API_URL');
-export const AUTH_TOKEN = getEnvVariable('VITE_AUTH_TOKEN');
 export const CLUSTERS_POLLING_INTERVAL = getEnvVariable('VITE_CLUSTERS_POLLING_INTERVAL');
 export const CLUSTER_OVERVIEW_POLLING_INTERVAL = getEnvVariable('VITE_CLUSTER_OVERVIEW_POLLING_INTERVAL');
 export const OPERATIONS_POLLING_INTERVAL = getEnvVariable('VITE_OPERATIONS_POLLING_INTERVAL');
