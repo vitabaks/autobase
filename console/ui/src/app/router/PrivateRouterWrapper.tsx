@@ -1,20 +1,22 @@
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import RouterPaths from '@app/router/routerPathsConfig';
 import { FC, useEffect } from 'react';
-import { toast } from 'react-toastify';
-import { useTranslation } from 'react-i18next';
-import { AUTH_TOKEN } from '@shared/config/constants.ts';
+import { setDbdeskAuthCookie } from '@shared/lib/dbdeskAuthCookie.ts';
 
 const PrivateRouteWrapper: FC = () => {
-  const { t } = useTranslation('toasts');
   const location = useLocation();
+  const token = localStorage.getItem('token');
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (token && token !== AUTH_TOKEN) toast.error(t('invalidToken'));
-  }, [localStorage.getItem('token')]);
+    // Keep the SQL editor auth cookie in sync for validated sessions restored
+    // from localStorage without exposing the expected token in the UI bundle.
+    if (token) setDbdeskAuthCookie(token);
+  }, [token]);
 
-  return localStorage.getItem('token') === AUTH_TOKEN ? (
+  // A token is stored only after it was validated against the API at login
+  // (see pages/login). Enforcement is server-side: every API call carries the
+  // bearer and the backend rejects an invalid one with 401.
+  return token ? (
     <Outlet />
   ) : (
     <Navigate to={RouterPaths.login.absolutePath} replace state={{ path: location.pathname }} />

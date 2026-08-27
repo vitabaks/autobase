@@ -521,6 +521,9 @@
       loop_control:
         label: "{{ patroni_cluster_name }}-{{ item }}"
       register: aws_elb_classic_lb
+      until: aws_elb_classic_lb is success
+      retries: 3
+      delay: 10
       when: server_result.results | default([]) | length > 0 and
         cloud_load_balancer | bool and aws_load_balancer_type | lower == 'clb' and
         (item == 'primary' or
@@ -589,7 +592,7 @@
                 TargetGroupName: "{{ patroni_cluster_name }}-tg-{{ item }}"
         cross_zone_load_balancing: true
         scheme: "{{ 'internet-facing' if database_public_access | bool else 'internal' }}"
-        wait: false
+        wait: true
         state: present
       loop:
         - "primary"
@@ -598,6 +601,9 @@
       loop_control:
         label: "{{ patroni_cluster_name }}-{{ item }}"
       register: aws_elb_network_lb
+      until: aws_elb_network_lb is success
+      retries: 3
+      delay: 10
       vars:
         target_port: "{{ pgbouncer_listen_port | default('6432') if pgbouncer_install | bool else postgresql_port | default('5432') }}"
       when: cloud_load_balancer | bool and aws_load_balancer_type | lower == 'nlb' and
@@ -715,6 +721,7 @@
         secret_key: "{{ lookup('ansible.builtin.env', 'AWS_SECRET_ACCESS_KEY') }}"
         name: "{{ patroni_cluster_name }}-{{ item }}"
         region: "{{ server_location }}"
+        wait: true
         state: absent
       loop:
         - "primary"
@@ -722,6 +729,10 @@
         - "sync"
       loop_control:
         label: "{{ patroni_cluster_name }}-{{ item }}"
+      register: aws_elb_classic_lb_delete
+      until: aws_elb_classic_lb_delete is success
+      retries: 3
+      delay: 10
       when: aws_load_balancer_type | lower == 'clb' and
         (item == 'primary' or
         (item == 'replica' and server_count | int > 1) or
@@ -733,6 +744,7 @@
         secret_key: "{{ lookup('ansible.builtin.env', 'AWS_SECRET_ACCESS_KEY') }}"
         name: "{{ patroni_cluster_name }}-{{ item }}"
         region: "{{ server_location }}"
+        wait: true
         state: absent
       loop:
         - "primary"
@@ -740,6 +752,10 @@
         - "sync"
       loop_control:
         label: "{{ patroni_cluster_name }}-{{ item }}"
+      register: aws_elb_network_lb_delete
+      until: aws_elb_network_lb_delete is success
+      retries: 3
+      delay: 10
       when: aws_load_balancer_type | lower == 'nlb' and
         (item == 'primary' or
         (item == 'replica' and server_count | int > 1) or
@@ -758,6 +774,10 @@
         - "sync"
       loop_control:
         label: "{{ patroni_cluster_name }}-tg-{{ item }}"
+      register: aws_elb_target_group_delete
+      until: aws_elb_target_group_delete is success
+      retries: 3
+      delay: 10
       when: aws_load_balancer_type | lower == 'nlb' and
         (item == 'primary' or
         (item == 'replica' and server_count | int > 1) or
