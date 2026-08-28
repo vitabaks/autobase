@@ -60,7 +60,7 @@ listen replicas
     maxconn {{ haproxy_maxconn.replica }}
     option tcplog
     balance roundrobin
-{% for host in groups['secondary'] %}
+{% for host in groups.get('secondary', []) %}
 server {{ hostvars[host]['ansible_hostname'] }} {{ hostvars[host]['patroni_bind_address'] | default(hostvars[host]['bind_address'], true) }}:{{ pgbouncer_listen_port }}
 {% endfor %}
 
@@ -74,7 +74,7 @@ listen replicas_direct
     maxconn {{ haproxy_maxconn.replica }}
     option tcplog
     balance roundrobin
-  {% for host in groups['secondary'] %}
+  {% for host in groups.get('secondary', []) %}
 server {{ hostvars[host]['ansible_hostname'] }} {{ hostvars[host]['patroni_bind_address'] | default(hostvars[host]['bind_address'], true) }}:{{ postgresql_port }}
   {% endfor %}
 {% endif %}
@@ -88,7 +88,7 @@ listen replicas_sync
     maxconn {{ haproxy_maxconn.replica }}
     option tcplog
     balance roundrobin
-{% for host in groups['secondary'] %}
+{% for host in groups.get('secondary', []) %}
 server {{ hostvars[host]['ansible_hostname'] }} {{ hostvars[host]['patroni_bind_address'] | default(hostvars[host]['bind_address'], true) }}:{{ pgbouncer_listen_port }}
 {% endfor %}
 
@@ -102,7 +102,7 @@ listen replicas_sync_direct
     maxconn {{ haproxy_maxconn.replica }}
     option tcplog
     balance roundrobin
-  {% for host in groups['secondary'] %}
+  {% for host in groups.get('secondary', []) %}
 server {{ hostvars[host]['ansible_hostname'] }} {{ hostvars[host]['patroni_bind_address'] | default(hostvars[host]['bind_address'], true) }}:{{ postgresql_port }}
   {% endfor %}
 {% endif %}
@@ -116,7 +116,7 @@ listen replicas_async
     maxconn {{ haproxy_maxconn.replica }}
     option tcplog
     balance roundrobin
-{% for host in groups['secondary'] %}
+{% for host in groups.get('secondary', []) %}
 server {{ hostvars[host]['ansible_hostname'] }} {{ hostvars[host]['patroni_bind_address'] | default(hostvars[host]['bind_address'], true) }}:{{ pgbouncer_listen_port }}
 {% endfor %}
 
@@ -130,8 +130,7 @@ listen replicas_async_direct
     maxconn {{ haproxy_maxconn.replica }}
     option tcplog
     balance roundrobin
-  {% for host in groups['secondary'] %}
+  {% for host in groups.get('secondary', []) %}
 server {{ hostvars[host]['ansible_hostname'] }} {{ hostvars[host]['patroni_bind_address'] | default(hostvars[host]['bind_address'], true) }}:{{ postgresql_port }}
   {% endfor %}
 {% endif %}
-

@@ -48,7 +48,7 @@
     name: patroni
     state: started
   when:
-    - inventory_hostname in groups['secondary']
+    - inventory_hostname in groups.get('secondary', [])
 
 - name: Wait for Patroni port "{{ patroni_restapi_port | default('8008') }}" to become open on the host
   ansible.builtin.wait_for:
@@ -58,7 +58,7 @@
     timeout: "{{ (pg_start_stop_timeout | int) // 2 }}"
     delay: 2
   when:
-    - inventory_hostname in groups['secondary']
+    - inventory_hostname in groups.get('secondary', [])
 
 - name: Check Patroni is healthy on the replica
   ansible.builtin.uri:
@@ -73,13 +73,13 @@
   environment:
     no_proxy: "{{ patroni_bind_address | default(bind_address, true) }}"
   when:
-    - inventory_hostname in groups['secondary']
+    - inventory_hostname in groups.get('secondary', [])
 
 # if 'pgbouncer_install' is 'true' and 'pgbouncer_pool_pause' is 'true'
 - name: Perform RESUME PgBouncer pools on the replica
   ansible.builtin.include_tasks: pgbouncer_resume.yml
   when:
-    - inventory_hostname in groups['secondary']
+    - inventory_hostname in groups.get('secondary', [])
     - hostvars[groups['primary'][0]].pgbouncer_pool_pause_result is defined
     - hostvars[groups['primary'][0]].pgbouncer_pool_pause_result is succeeded
 

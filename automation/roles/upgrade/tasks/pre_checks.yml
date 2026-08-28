@@ -308,7 +308,9 @@
     psql_command: "{{ pg_old_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres"
   environment:
     PGPASSWORD: "{{ patroni_superuser_password }}"
-  when: inventory_hostname in groups['primary']
+  when:
+    - inventory_hostname in groups['primary']
+    - groups.get('secondary', []) | length > 0
 
 # Stop, if there are no active replicas
 - name: "Pre-Check error. Print physical replication state"
@@ -316,6 +318,7 @@
     msg: "There are no active replica servers (pg_stat_replication returned 0 entries)."
   when:
     - inventory_hostname in groups['primary']
+    - groups.get('secondary', []) | length > 0
     - pg_replication_state.stdout | int == 0
 
 - name: "[Pre-Check] Make sure there is no high replication lag (more than {{ max_replication_lag_bytes | default(0) | int | human_readable }})"
@@ -336,6 +339,7 @@
     PGPASSWORD: "{{ patroni_superuser_password }}"
   when:
     - inventory_hostname in groups['primary']
+    - groups.get('secondary', []) | length > 0
     - pg_old_version | string is version('10', '>=')
 
 # Stop, if replication lag is high
@@ -367,6 +371,7 @@
     PGPASSWORD: "{{ patroni_superuser_password }}"
   when:
     - inventory_hostname in groups['primary']
+    - groups.get('secondary', []) | length > 0
     - pg_old_version | string is version('10', '<')
 
 # Stop, if replication lag is high (for 9x)
@@ -460,7 +465,7 @@
   vars:
     ssh_key_user: postgres
     source_group: "{{ 'target_cluster' if inventory_hostname in groups.get('target_cluster', []) else 'postgres_cluster' }}"
-  when: inventory_hostname in groups['primary'] or inventory_hostname in groups['secondary']
+  when: inventory_hostname in groups['primary'] or inventory_hostname in groups.get('secondary', [])
 
 # if pg_new_wal_dir is defined (for synchronize wal dir)
 - name: "[Pre-Check] Make sure that the sshpass package are installed"
@@ -503,7 +508,7 @@
     /tmp/testrsync {{ hostvars[item]['bind_address'] }}:/tmp/
   args:
     executable: /bin/bash
-  loop: "{{ groups.secondary | list }}"
+  loop: "{{ groups.get('secondary', []) | list }}"
   when: inventory_hostname in groups['primary']
 
 - name: "[Pre-Check] Cleanup testrsync file"
@@ -512,7 +517,7 @@
   ansible.builtin.file:
     path: /tmp/testrsync
     state: absent
-  when: inventory_hostname in groups['primary'] or inventory_hostname in groups['secondary']
+  when: inventory_hostname in groups['primary'] or inventory_hostname in groups.get('secondary', [])
 
 # Tablespaces
 - name: "[Pre-Check] Check if PostgreSQL tablespaces exist"
@@ -540,7 +545,7 @@
   ansible.builtin.file:
     path: "{{ pg_old_datadir }}/recovery.signal"
     state: absent
-  when: inventory_hostname in groups['primary'] or inventory_hostname in groups['secondary']
+  when: inventory_hostname in groups['primary'] or inventory_hostname in groups.get('secondary', [])
 
 # PgBouncer (if 'pgbouncer_pool_pause' is 'true')
 # Note: not for blue-green upgrade method

@@ -111,7 +111,7 @@
     psql_command: "{{ pg_old_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres"
   environment:
     PGPASSWORD: "{{ patroni_superuser_password }}"
-  when: inventory_hostname in groups['secondary']
+  when: inventory_hostname in groups.get('secondary', [])
 
 - name: "Wait until physical replication becomes active"
   ansible.builtin.command: >-
@@ -127,7 +127,7 @@
     psql_command: "{{ pg_old_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres"
   environment:
     PGPASSWORD: "{{ patroni_superuser_password }}"
-  when: inventory_hostname in groups['secondary']
+  when: inventory_hostname in groups.get('secondary', [])
 
 - name: "Wait until physical replication lag is 0 bytes"
   ansible.builtin.command: >-
@@ -145,4 +145,6 @@
     psql_command: "{{ pg_old_bindir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres"
   environment:
     PGPASSWORD: "{{ patroni_superuser_password }}"
-  when: inventory_hostname in groups['primary']
+  when:
+    - inventory_hostname in groups['primary']
+    - groups.get('secondary', []) | length > 0

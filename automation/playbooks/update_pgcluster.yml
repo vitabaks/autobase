@@ -175,6 +175,7 @@
       ansible.builtin.include_role:
         name: vitabaks.autobase.patroni
         tasks_from: switchover
+      when: groups['postgres_cluster'] | length > 1
 
     - name: Stop read-only traffic
       ansible.builtin.include_role:

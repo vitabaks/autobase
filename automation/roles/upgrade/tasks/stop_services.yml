@@ -35,6 +35,7 @@
     PGPASSWORD: "{{ patroni_superuser_password }}"
   when:
     - inventory_hostname in groups['primary']
+    - groups.get('secondary', []) | length > 0
     - pg_old_version | string is version('10', '>=')
 
 # Stop, if replication lag is high
@@ -72,6 +73,7 @@
     PGPASSWORD: "{{ patroni_superuser_password }}"
   when:
     - inventory_hostname in groups['primary']
+    - groups.get('secondary', []) | length > 0
     - pg_old_version | string is version('10', '<')
 
 # Stop, if replication lag is high (for 9x)
@@ -109,7 +111,7 @@
   ansible.builtin.command: >-
     {{ pg_old_bindir }}/pg_ctl -D {{ pg_old_datadir }} stop -m fast -w -t {{ pg_start_stop_timeout }}
   when:
-    - inventory_hostname in groups['secondary']
+    - inventory_hostname in groups.get('secondary', [])
 
 # additional checks using pg_ctl
 - name: "Check if PostgreSQL {{ pg_old_version | default('') }} is stopped"

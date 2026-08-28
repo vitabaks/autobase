@@ -26,7 +26,7 @@
   changed_when: false
   register: pg_checkpoint_location_replica
   when:
-    - inventory_hostname in groups['secondary']
+    - inventory_hostname in groups.get('secondary', [])
 
 - name: Print 'Latest checkpoint location' for the leader
   ansible.builtin.debug:
@@ -38,13 +38,13 @@
   ansible.builtin.debug:
     msg: "Replica: {{ ansible_hostname }}, latest checkpoint location: {{ pg_checkpoint_location_replica.stdout }}"
   when:
-    - inventory_hostname in groups['secondary']
+    - inventory_hostname in groups.get('secondary', [])
 
 - name: Check if all 'Latest checkpoint location' values match
   ansible.builtin.set_fact:
     pg_checkpoint_location_match: "{{ pg_checkpoint_location_replica.stdout == hostvars[groups['primary'][0]]['pg_checkpoint_location_leader']['stdout'] }}"
   when:
-    - inventory_hostname in groups['secondary']
+    - inventory_hostname in groups.get('secondary', [])
 
 - name: "SUCCESS: 'Latest checkpoint location' values match on all cluster nodes"
   ansible.builtin.debug:
@@ -54,7 +54,8 @@
     # This condition retrieves the 'pg_checkpoint_location_match' value for each node in the 'secondary' group.
     # The 'select' filter selects all nodes whose 'pg_checkpoint_location_match' is 'False'.
     # If no such nodes exist (i.e., the length of the resulting list is less than 1), it means that the 'pg_checkpoint_location_match' is 'True' for all nodes.
-    - groups['secondary'] | map('extract', hostvars, 'pg_checkpoint_location_match') | select('equalto', False) | list | length < 1
+    - groups.get('secondary', []) | length > 0
+    - groups.get('secondary', []) | map('extract', hostvars, 'pg_checkpoint_location_match') | select('equalto', False) | list | length < 1
 
 # Stop, if 'Latest checkpoint location' doesn't match
 - block:
@@ -77,4 +78,4 @@
     # If there is at least one such node (i.e., the length of the resulting list is greater than 0),
     # it means that the 'pg_checkpoint_location_match' is not 'True' for all nodes,
     # and the block of tasks is executed, including cleanup and throwing an error.
-    - groups['secondary'] | map('extract', hostvars, 'pg_checkpoint_location_match') | select('equalto', False) | list | length > 0
+    - groups.get('secondary', []) | map('extract', hostvars, 'pg_checkpoint_location_match') | select('equalto', False) | list | length > 0

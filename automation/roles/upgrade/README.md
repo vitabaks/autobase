@@ -2,6 +2,8 @@
 
 This role is designed for in-place or blue-green upgrade methods (e.g., from version 17 to 18).
 
+Both single-node and multi-node Patroni clusters are supported.
+
 **Playbooks**
 
 In-place method:
