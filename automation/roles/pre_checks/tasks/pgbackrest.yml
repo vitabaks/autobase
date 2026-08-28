@@ -21,10 +21,12 @@
     msg:
       - "The 'pgbackrest_repo_host' variable is set but the 'pgbackrest' group in your inventory is empty."
       - "Please add the necessary host to the 'pgbackrest' group in your inventory."
+      - "If 'pgbackrest_repo_host' is an existing repository that should not be managed by this collection, set 'pgbackrest_repo_external: true' instead."
   when:
     - inventory_hostname == groups['master'][0] # display only once
     - pgbackrest_repo_host | length > 0
     - groups['pgbackrest'] is undefined or groups['pgbackrest'] | length == 0
+    - not (pgbackrest_repo_external | default(false) | bool)
 
 - name: "pgBackRest | Ensure 'repo1-host' and 'repo1-host-user' are set correctly"
   ansible.builtin.set_fact:
