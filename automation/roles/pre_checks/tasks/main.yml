@@ -37,8 +37,8 @@
 - name: Perform pre-checks for pgbackrest
   ansible.builtin.import_tasks: pgbackrest.yml
   when:
-    - pgbackrest_install is defined
-    - pgbackrest_install | bool
+    - (pgbackrest_install is defined and pgbackrest_install | bool) or
+      (pgbackrest_repo_external | default(false) | bool)
     - inventory_hostname in groups['postgres_cluster']
 
 - name: Perform pre-checks for WAL-G

@@ -805,6 +805,7 @@ pgbackrest_stanza: "{{ patroni_cluster_name }}" # specify your --stanza
 pgbackrest_repo_type: "posix" # or "s3", "gcs", "azure"
 pgbackrest_repo_host: "" # dedicated repository host (optional)
 pgbackrest_repo_user: "postgres" # if "repo_host" is set (optional)
+pgbackrest_repo_external: false # 'true' if 'repo_host' is an existing repo this collection should not manage (skip the '[pgbackrest]' group requirement and server-side config/stanza-create/cron)
 pgbackrest_conf_file: "/etc/pgbackrest/pgbackrest.conf"
 # config https://pgbackrest.org/configuration.html
 pgbackrest_conf:
