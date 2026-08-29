@@ -1,6 +1,6 @@
 # Ansible Role: tls_certificate
 
-Generates and manages TLS certificates for the cluster. Creates a self-signed CA and server certificate/key (with SANs), and optionally distributes them to all nodes.
+Generates and manages TLS certificates for the cluster. Creates a self-signed CA and server certificate/key (with SANs), and distributes them to all nodes.
 
 ### How it works
 - Generation (tasks/main.yml):
@@ -8,7 +8,8 @@ Generates and manages TLS certificates for the cluster. Creates a self-signed CA
   - SANs are auto-built from hostnames/FQDNs/IPs of hosts in tls_group_name unless tls_subject_alt_name variable is provided.
   - Skips if files exist; override with tls_cert_regenerate/tls_ca_regenerate.
 - Distribution (tasks/copy.yml):
-  - Reads files from tls_source_host (or the first host in tls_group_name by default) and copies to all nodes with desired owner.
+  - Reads files from tls_source_host (or the first host in tls_group_name by default) and copies them to all nodes.
+  - When available, the CA private key is copied as root:root with mode 0400; other files use the configured TLS owner.
 
 ## Main Role Variables
 
@@ -57,6 +58,7 @@ Notes:
 - SAN auto-detection uses one of: etcd_bind_address, consul_bind_address, patroni_bind_address, or bind_address, depending on tls_group_name.
 - Generation and distribution use tls_source_host when provided; otherwise they use groups[tls_group_name][0] (default group “master” in copy.yml if tls_group_name is unset).
 - Existing CA certificates are preserved when only the server certificate is regenerated. Only tls_ca_regenerate may replace a CA.
+- When present on the source node, the CA private key is distributed to all target nodes by default, allowing any remaining node to become the certificate source after a host failure. Existing installations without the key continue copying the other TLS files.
 
 ## Dependencies
 
