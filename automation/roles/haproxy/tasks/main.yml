@@ -104,7 +104,7 @@
   tags: haproxy, haproxy_service, load_balancing
 
 - block: # for add_balancer.yml
-    - name: "Fetch haproxy.cfg file from {{ groups.balancers[0] }}"
+    - name: "Fetch haproxy.cfg file from {{ balancer_source_host }}"
       run_once: true
       ansible.builtin.fetch:
         src: /etc/haproxy/haproxy.cfg
@@ -112,7 +112,7 @@
         validate_checksum: true
         flat: true
       notify: "restart haproxy"
-      delegate_to: "{{ groups.balancers[0] }}"
+      delegate_to: "{{ balancer_source_host }}"
 
     - name: Copy haproxy.cfg file to replica
       ansible.builtin.copy:
@@ -175,6 +175,13 @@
         label: "{{ bind_config_with_vip_item.line }}"
       notify: "restart haproxy"
       when: cluster_vip is defined and cluster_vip | length > 0
+  vars:
+    balancer_source_host: >-
+      {{
+        groups['balancers']
+        | difference(groups['new_balancer'] | default([]))
+        | first
+      }}
   when: add_balancer is defined and add_balancer|bool
   tags: haproxy, haproxy_conf, load_balancing
 
