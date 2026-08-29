@@ -284,7 +284,7 @@ type Server struct {
 	Status         string
 	IpAddress      net.IP
 	Timeline       *int64
-	Lag            *int64
+	Lag            *int64 // Replication lag in bytes.
 	Tags           interface{}
 	PendingRestart *bool
 	CreatedAt      time.Time

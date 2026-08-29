@@ -1,6 +1,7 @@
 import { createMRTColumnHelper } from 'material-react-table';
 import { TFunction } from 'i18next';
 import { ClusterOverviewTableValues } from '@widgets/cluster-overview-table/model/types.ts';
+import { formatBytes } from '@shared/lib/formatBytes.ts';
 
 export const CLUSTER_OVERVIEW_TABLE_COLUMN_NAMES = Object.freeze({
   NAME: 'name',
@@ -8,7 +9,7 @@ export const CLUSTER_OVERVIEW_TABLE_COLUMN_NAMES = Object.freeze({
   ROLE: 'role',
   STATE: 'state',
   TIMELINE: 'timeline',
-  LAG_IN_MB: 'lagInMb',
+  LAG: 'lag',
   PENDING_RESTART: 'pendingRestart',
   TAGS: 'tags',
   ID: 'id',
@@ -36,8 +37,9 @@ export const clusterOverviewTableColumns = (t: TFunction) => [
     header: t('timeline', { ns: 'clusters' }),
     size: 80,
   }),
-  columnHelper.accessor(CLUSTER_OVERVIEW_TABLE_COLUMN_NAMES.LAG_IN_MB, {
-    header: t('lagInMb', { ns: 'clusters' }),
+  columnHelper.accessor(CLUSTER_OVERVIEW_TABLE_COLUMN_NAMES.LAG, {
+    header: t('lag', { ns: 'clusters' }),
+    Cell: ({ cell }) => formatBytes(cell.getValue()),
     size: 140,
   }),
   columnHelper.accessor(CLUSTER_OVERVIEW_TABLE_COLUMN_NAMES.PENDING_RESTART, {

@@ -13,7 +13,7 @@ type ClusterInfo struct {
 		State          string      `json:"state"`
 		Host           string      `json:"host"`
 		Timeline       int64       `json:"timeline"`
-		Lag            interface{} `json:"lag"`
+		Lag            interface{} `json:"lag"` // Replication lag in bytes, or "unknown".
 		Tags           interface{} `json:"tags"`
 		PendingRestart bool        `json:"pending_restart"`
 	} `json:"members"`
