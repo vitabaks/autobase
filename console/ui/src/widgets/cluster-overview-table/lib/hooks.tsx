@@ -12,7 +12,7 @@ export const useGetOverviewClusterTableData = (data: ClusterInfoInstance[]) => {
         [CLUSTER_OVERVIEW_TABLE_COLUMN_NAMES.ROLE]: item?.role,
         [CLUSTER_OVERVIEW_TABLE_COLUMN_NAMES.STATE]: item?.status,
         [CLUSTER_OVERVIEW_TABLE_COLUMN_NAMES.TIMELINE]: item?.timeline,
-        [CLUSTER_OVERVIEW_TABLE_COLUMN_NAMES.LAG_IN_MB]: item?.lag,
+        [CLUSTER_OVERVIEW_TABLE_COLUMN_NAMES.LAG]: item?.lag,
         [CLUSTER_OVERVIEW_TABLE_COLUMN_NAMES.TAGS]: item?.tags && (
           <Box display="flex" gap={1} alignItems="center" flexWrap="wrap" width="100%">
             {Object.entries(item.tags).map(([key, value]) => (

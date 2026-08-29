@@ -58,7 +58,7 @@
   "role": "Role",
   "state": "State",
   "timeline": "Timeline",
-  "lagInMb": "Lag in MB",
+  "lag": "Lag",
   "pendingRestart": "Pending restart",
   "scheduledRestart": "Scheduled restart",
   "tags": "Tags",
