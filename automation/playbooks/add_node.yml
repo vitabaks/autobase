@@ -361,6 +361,35 @@
         - dcs_type | default('etcd') == 'etcd'
         - new_etcd_nodes | default([]) | length > 0
       tags: etcd
+
+    # Autobase Console uses this output to register newly added servers.
+    - name: System info
+      ansible.builtin.debug:
+        msg:
+          server_name: "{{ hostname | default(ansible_hostname) }}"
+          server_location: "{{ server_location | default(omit) }}"
+          ip_address: "{{ bind_address | default('N/A') }}"
+          os: "{{ ansible_distribution | default('N/A') }} {{ ansible_distribution_version | default('N/A') }}"
+          kernel: "{{ ansible_kernel | default('N/A') }}"
+          cpu:
+            model: "{{ ansible_processor[2] | default('N/A') }}"
+            count: "{{ ansible_processor_count | default('N/A') }}"
+            cores: "{{ ansible_processor_cores | default('N/A') }}"
+          memory: "{{ (ansible_memtotal_mb / 1024) | round(2) if ansible_memtotal_mb is defined else 'N/A' }} GB"
+          disk_space_total: >-
+            {{
+              (ansible_mounts
+                | map(attribute='size_total')
+                | map('int')
+                | sum / 1024 / 1024 / 1024
+              )
+              | round(2) if ansible_mounts is defined else 'N/A'
+            }} GB
+          architecture: "{{ ansible_architecture | default('N/A') }}"
+          virtualization_type: "{{ ansible_virtualization_type | default('N/A') }}"
+          product_name: "{{ ansible_product_name | default('N/A') }}"
+      when: new_node | default(false) | bool
+      tags: always
   roles:
     # finish (info)
     - role: vitabaks.autobase.deploy_finish
