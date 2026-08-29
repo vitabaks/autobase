@@ -300,6 +300,7 @@
   any_errors_fatal: true
   vars:
     cluster_scaling: true
+    tls_source_host: "{{ groups['postgres_cluster'] | difference(new_postgres_nodes | default([])) | first }}"
   tasks:
     - name: Generate Postgres TLS certificate
       ansible.builtin.include_role:

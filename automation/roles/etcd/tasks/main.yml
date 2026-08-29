@@ -98,6 +98,13 @@
         fetch_tls_dir: "{{ etcd_tls_dir | default('/etc/etcd/tls') }}"
         copy_tls_dir: "{{ etcd_tls_dir | default('/etc/etcd/tls') }}"
         copy_tls_owner: "etcd"
+  vars:
+    tls_source_host: >-
+      {{
+        (groups['etcd_cluster'] | difference(new_etcd_nodes | default([])) | first)
+        if cluster_scaling | default(false) | bool
+        else (groups['etcd_cluster'] | first)
+      }}
   when: tls_cert_generate | default(true) | bool
   tags: etcd, etcd_conf
 

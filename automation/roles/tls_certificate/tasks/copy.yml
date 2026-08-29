@@ -1,5 +1,13 @@
 ---
-- name: "Fetch TLS certificate, key and CA from master node"
+- name: Check if TLS CA private key exists on source node
+  ansible.builtin.stat:
+    path: "{{ fetch_tls_dir | default(tls_dir | default('/etc/tls')) }}/{{ tls_ca_key | default('ca.key') }}"
+  register: tls_ca_key_stat
+  delegate_to: "{{ tls_source_host | default(groups[tls_group_name | default('master')][0]) }}"
+  run_once: true
+  tags: tls, tls_cert_copy
+
+- name: Fetch TLS certificate, key and CA from TLS source node
   ansible.builtin.slurp:
     src: "{{ fetch_tls_dir | default(tls_dir | default('/etc/tls')) }}/{{ item }}"
   register: tls_files_raw
@@ -7,8 +15,10 @@
     - "{{ fetch_tls_privatekey | default(tls_privatekey | default('server.key')) }}"
     - "{{ fetch_tls_cert | default(tls_cert | default('server.crt')) }}"
     - "{{ fetch_tls_ca_cert | default(tls_ca_cert | default('ca.crt')) }}"
-  delegate_to: "{{ groups[tls_group_name | default('master')][0] }}"
+    - "{{ (tls_ca_key | default('ca.key')) if tls_ca_key_stat.stat.exists else '' }}"
+  delegate_to: "{{ tls_source_host | default(groups[tls_group_name | default('master')][0]) }}"
   run_once: true
+  when: item | length > 0
   tags: tls, tls_cert_copy
 
 - name: "Set variable: tls_files"
@@ -17,6 +27,7 @@
       server_key: "{{ tls_files_raw.results[0].content }}"
       server_crt: "{{ tls_files_raw.results[1].content }}"
       ca_crt: "{{ tls_files_raw.results[2].content }}"
+      ca_key: "{{ tls_files_raw.results[3].content | default('') }}"
   run_once: true
   tags: tls, tls_cert_copy
 
@@ -33,14 +44,16 @@
   ansible.builtin.copy:
     content: "{{ (tls_files[item.key] | b64decode) }}"
     dest: "{{ copy_tls_dir | default(tls_dir | default('/etc/tls')) }}/{{ item.filename }}"
-    owner: "{{ copy_tls_owner | default(tls_owner | default('postgres')) }}"
-    group: "{{ copy_tls_owner | default(tls_owner | default('postgres')) }}"
+    owner: "{{ item.owner | default(copy_tls_owner | default(tls_owner | default('postgres'))) }}"
+    group: "{{ item.group | default(copy_tls_owner | default(tls_owner | default('postgres'))) }}"
     mode: "{{ item.mode }}"
   notify: "{{ copy_tls_notify | default([]) }}"
   loop:
     - { key: "server_crt", filename: "{{ copy_tls_cert | default(tls_cert | default('server.crt')) }}", mode: "0644" }
     - { key: "ca_crt", filename: "{{ copy_tls_ca_cert | default(tls_ca_cert | default('ca.crt')) }}", mode: "0644" }
     - { key: "server_key", filename: "{{ copy_tls_privatekey | default(tls_privatekey | default('server.key')) }}", mode: "0400" }
+    - { key: "ca_key", filename: "{{ tls_ca_key | default('ca.key') }}", owner: "root", group: "root", mode: "0400" }
   loop_control:
     label: "{{ copy_tls_dir | default(tls_dir | default('/etc/tls')) }}/{{ item.filename }}"
+  when: item.key != 'ca_key' or tls_files.ca_key | length > 0
   tags: tls, tls_cert_copy

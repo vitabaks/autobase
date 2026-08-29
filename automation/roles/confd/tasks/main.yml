@@ -79,7 +79,7 @@
   tags: confd_conf, confd
 
 - block: # for add_balancer.yml
-    - name: "Fetch confd.toml, haproxy.toml, haproxy.tmpl conf files from {{ groups.balancers[0] }}"
+    - name: "Fetch confd.toml, haproxy.toml, haproxy.tmpl conf files from {{ balancer_source_host }}"
       run_once: true
       ansible.builtin.fetch:
         src: "{{ item }}"
@@ -90,7 +90,7 @@
         - /etc/confd/confd.toml
         - /etc/confd/conf.d/haproxy.toml
         - /etc/confd/templates/haproxy.tmpl
-      delegate_to: "{{ groups.balancers[0] }}"
+      delegate_to: "{{ balancer_source_host }}"
 
     - name: Copy confd.toml, haproxy.toml, haproxy.tmpl conf files to replica
       ansible.builtin.copy:
@@ -161,6 +161,13 @@
         label: "{{ line_item_2.line }}"
       notify: "restart confd"
       when: cluster_vip is not defined or cluster_vip | length < 1
+  vars:
+    balancer_source_host: >-
+      {{
+        groups['balancers']
+        | difference(groups['new_balancer'] | default([]))
+        | first
+      }}
   when: add_balancer is defined and add_balancer|bool
   tags: confd_conf, confd
 

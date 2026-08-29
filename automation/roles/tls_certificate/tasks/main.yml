@@ -25,11 +25,28 @@
         mode: "0755"
 
     - block:
-        # Check if certificates already exist
+        # Check if certificates already exist. This must also run when only the
+        # server certificate is regenerated, so the existing CA is preserved.
         - name: Check if TLS CA cert already exists
           ansible.builtin.stat:
             path: "{{ tls_directory }}/{{ generate_tls_ca_cert | default(tls_ca_cert | default('ca.crt')) }}"
           register: ca_cert
+
+        - name: Check if TLS CA key already exists
+          ansible.builtin.stat:
+            path: "{{ tls_directory }}/{{ generate_tls_ca_key | default(tls_ca_key | default('ca.key')) }}"
+          register: ca_key
+
+        - name: Validate existing TLS CA files
+          ansible.builtin.assert:
+            that:
+              - not (cluster_scaling | default(false) | bool) or ca_cert.stat.exists | default(false)
+              - not (cluster_scaling | default(false) | bool) or ca_key.stat.exists | default(false)
+              - tls_ca_regenerate | default(false) | bool or
+                (ca_cert.stat.exists | default(false)) == (ca_key.stat.exists | default(false))
+            fail_msg: >-
+              The existing TLS CA certificate and private key must both be present on
+              {{ tls_certificate_source_host }}. Refusing to generate a replacement CA.
 
         - name: Check if TLS server cert already exists
           ansible.builtin.stat:
@@ -54,11 +71,10 @@
                  else 'consul_tls_cert_regenerate' if tls_group_name | default('') == 'consul_instances'
                  else 'tls_cert_regenerate' }}
           when:
+            - not tls_cert_regenerate | default(false) | bool
             - server_key.stat.exists | default(false)
             - server_cert.stat.exists | default(false)
-      when:
-        - not tls_cert_regenerate | default(false) | bool
-        - inventory_hostname == (groups[tls_group_name | default('master')][0])
+      when: inventory_hostname == tls_certificate_source_host
 
     # Clean up existing certificates if tls_cert_regenerate is true
     - name: Clean up existing certificates
@@ -68,7 +84,9 @@
       loop:
         - "{{ generate_tls_privatekey | default(tls_privatekey | default('server.key')) }}"
         - "{{ generate_tls_cert | default(tls_cert | default('server.crt')) }}"
-      when: tls_cert_regenerate | default(false) | bool
+      when:
+        - inventory_hostname == tls_certificate_source_host
+        - tls_cert_regenerate | default(false) | bool
 
     # Clean up existing CA certificates if tls_ca_regenerate is true
     - name: Clean up existing CA certificates
@@ -78,9 +96,12 @@
       loop:
         - "{{ generate_tls_ca_cert | default(tls_ca_cert | default('ca.crt')) }}"
         - "{{ generate_tls_ca_key | default(tls_ca_key | default('ca.key')) }}"
-      when: tls_ca_regenerate | default(false) | bool
+      when:
+        - inventory_hostname == tls_certificate_source_host
+        - tls_ca_regenerate | default(false) | bool
   vars:
     tls_directory: "{{ generate_tls_dir | default(tls_dir | default('/etc/tls')) }}"
+    tls_certificate_source_host: "{{ tls_source_host | default(groups[tls_group_name | default('postgres_cluster')][0]) }}"
   when: inventory_hostname in (groups[tls_group_name | default('postgres_cluster')])
   tags: tls, tls_cert_generate
 
@@ -201,8 +222,14 @@
       when: need_srv_cert
   vars:
     tls_directory: "{{ generate_tls_dir | default(tls_dir | default('/etc/tls')) }}"
-    need_ca: "{{ not (ca_cert is defined and ca_cert.stat.exists | default(false)) or (tls_ca_regenerate | default(false) | bool) }}"
+    need_ca: >-
+      {{
+        not (ca_cert is defined and ca_cert.stat.exists | default(false)) or
+        not (ca_key is defined and ca_key.stat.exists | default(false)) or
+        (tls_ca_regenerate | default(false) | bool)
+      }}
     need_srv_key: "{{ not (server_key is defined and server_key.stat.exists | default(false)) or (tls_cert_regenerate | default(false) | bool) }}"
     need_srv_cert: "{{ not (server_cert is defined and server_cert.stat.exists | default(false)) or (tls_cert_regenerate | default(false) | bool) }}"
-  when: inventory_hostname == (groups[tls_group_name | default('postgres_cluster')][0])
+    tls_certificate_source_host: "{{ tls_source_host | default(groups[tls_group_name | default('postgres_cluster')][0]) }}"
+  when: inventory_hostname == tls_certificate_source_host
   tags: tls, tls_cert_generate
