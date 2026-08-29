@@ -22,6 +22,13 @@
         fetch_tls_dir: "{{ consul_tls_dir | default('/etc/consul/tls') }}"
         copy_tls_dir: "{{ consul_tls_dir | default('/etc/consul/tls') }}"
         copy_tls_owner: "{{ consul_user }}"
+  vars:
+    tls_source_host: >-
+      {{
+        (groups['consul_instances'] | difference(new_consul_nodes | default([])) | first)
+        if cluster_scaling | default(false) | bool
+        else (groups['consul_instances'] | first)
+      }}
   when: tls_cert_generate | default(false) | bool
 
 # Copy the existing TLS certificates from the role's files directory if 'tls_cert_generate' is 'false'.

@@ -8,7 +8,7 @@ Generates and manages TLS certificates for the cluster. Creates a self-signed CA
   - SANs are auto-built from hostnames/FQDNs/IPs of hosts in tls_group_name unless tls_subject_alt_name variable is provided.
   - Skips if files exist; override with tls_cert_regenerate/tls_ca_regenerate.
 - Distribution (tasks/copy.yml):
-  - Reads files from the first host in tls_group_name (or master by default) and copies to all nodes with desired owner.
+  - Reads files from tls_source_host (or the first host in tls_group_name by default) and copies to all nodes with desired owner.
 
 ## Main Role Variables
 
@@ -28,6 +28,7 @@ Generates and manages TLS certificates for the cluster. Creates a self-signed CA
 | Variable | Default | Description |
 |---|---|---|
 | tls_group_name | postgres_cluster | Inventory group to derive SANs from and to pick the “first” host. |
+| tls_source_host | first host in tls_group_name | Host that owns the CA private key and generates/distributes certificates. |
 | tls_subject_alt_name | "" | Comma-separated SANs; if empty, auto-generated from ansible_hostname, ansible_fqdn, and bind addresses. |
 | tls_owner | postgres | Default owner used when copying certs/keys to nodes. |
 | generate_tls_dir | unset -> tls_dir | Override generation directory. |
@@ -54,7 +55,8 @@ Generates and manages TLS certificates for the cluster. Creates a self-signed CA
 
 Notes:
 - SAN auto-detection uses one of: etcd_bind_address, consul_bind_address, patroni_bind_address, or bind_address, depending on tls_group_name.
-- Generation runs on groups[tls_group_name][0]; copy slurps from that host (default group “master” in copy.yml if tls_group_name is unset).
+- Generation and distribution use tls_source_host when provided; otherwise they use groups[tls_group_name][0] (default group “master” in copy.yml if tls_group_name is unset).
+- Existing CA certificates are preserved when only the server certificate is regenerated. Only tls_ca_regenerate may replace a CA.
 
 ## Dependencies
 
