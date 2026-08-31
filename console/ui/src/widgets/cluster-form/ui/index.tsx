@@ -28,6 +28,7 @@ import { SECRET_MODAL_CONTENT_FORM_FIELD_NAMES } from '@entities/secret-form-blo
 import { ClusterFormProps } from '@widgets/cluster-form/model/types.ts';
 import { DATABASE_SERVERS_FIELD_NAMES } from '@/entities/cluster/database-servers-block/model/const';
 import { mapFormValuesToRequestFields } from '@shared/lib/clusterValuesTransformFunctions.ts';
+import ClusterFormValidationAlert from '@widgets/cluster-form/ui/ClusterFormValidationAlert.tsx';
 
 const DatabaseBlock = lazy(() => import('@entities/cluster/expert-mode/databases-block/ui'));
 const ConnectionPoolsBlock = lazy(() => import('@entities/cluster/expert-mode/connection-pools-block/ui'));
@@ -120,11 +121,12 @@ const ClusterForm: React.FC<ClusterFormProps> = ({
 
   const cancelHandler = () => navigate(generateAbsoluteRouterPath(RouterPaths.clusters.absolutePath));
 
-  const { isValid, isSubmitting } = methods.formState; // spreading is required by React Hook Form to ensure the correct form state
+  const { isSubmitting } = methods.formState; // spreading is required by React Hook Form to ensure the correct form state
 
   return (
     <Stack direction="column" gap={2} padding="8px">
       <form
+        noValidate
         onSubmit={
           watchProvider?.code !== PROVIDERS.LOCAL && secrets?.data?.data?.length !== 1
             ? undefined
@@ -153,11 +155,13 @@ const ClusterForm: React.FC<ClusterFormProps> = ({
               <AdditionalSettingsBlock />
             </>
           ) : null}
+          <ClusterFormValidationAlert />
           {watchProvider?.code !== PROVIDERS.LOCAL && secrets?.data?.data?.length !== 1 ? (
-            <ClusterSecretModal isClusterFormDisabled={!isValid} />
+            <ClusterSecretModal
+              validateClusterForm={() => methods.trigger(undefined, { shouldFocus: true })}
+            />
           ) : (
             <DefaultFormButtons
-              isDisabled={!isValid}
               isSubmitting={isSubmitting || addClusterTriggerState.isLoading || addSecretTriggerState.isLoading}
               cancelHandler={cancelHandler}
               submitButtonLabel={t('createCluster')}

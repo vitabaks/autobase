@@ -40,7 +40,11 @@ import { mapFormValuesToRequestFields } from '@shared/lib/clusterValuesTransform
 import { PROVIDERS } from '@shared/config/constants.ts';
 import { isEmpty } from 'lodash';
 
-const ClusterSecretModal: FC<ClusterSecretModalProps> = ({ isClusterFormDisabled = false, customExtraVars = {} }) => {
+const ClusterSecretModal: FC<ClusterSecretModalProps> = ({
+  isClusterFormDisabled = false,
+  validateClusterForm,
+  customExtraVars = {},
+}) => {
   const { t } = useTranslation(['clusters', 'shared', 'toasts']);
   const navigate = useNavigate();
   const currentProject = useAppSelector(selectCurrentProject);
@@ -68,6 +72,12 @@ const ClusterSecretModal: FC<ClusterSecretModalProps> = ({ isClusterFormDisabled
   const watchIsSaveToConsole = methods.watch(CLUSTER_SECRET_MODAL_FORM_FIELD_NAMES.IS_SAVE_TO_CONSOLE);
 
   const handleModalOpenState = (isOpen: boolean) => () => setIsModalOpen(isOpen);
+
+  const handleCreateClusterClick = async () => {
+    if (!validateClusterForm || (await validateClusterForm())) {
+      setIsModalOpen(true);
+    }
+  };
 
   const cancelHandler = () => navigate(generateAbsoluteRouterPath(RouterPaths.clusters.absolutePath));
 
@@ -144,7 +154,7 @@ const ClusterSecretModal: FC<ClusterSecretModalProps> = ({ isClusterFormDisabled
         disabled={
           isClusterFormDisabled || isSubmitting || addSecretTriggerState.isLoading || addClusterTriggerState.isLoading
         }
-        onClick={handleModalOpenState(true)}
+        onClick={handleCreateClusterClick}
         variant="contained"
         startIcon={
           isSubmitting || addSecretTriggerState.isLoading || addClusterTriggerState.isLoading ? (

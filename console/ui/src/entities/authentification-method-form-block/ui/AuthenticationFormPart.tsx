@@ -25,7 +25,7 @@ const AuthenticationFormPart: FC = () => {
         render={({ field: { value, onChange } }) => (
           <TextField
             fullWidth
-            required={watchAuthenticationMethod === AUTHENTICATION_METHODS.PASSWORD}
+            required
             value={value as string}
             onChange={onChange}
             label={t('username')}
