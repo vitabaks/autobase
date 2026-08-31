@@ -2,6 +2,7 @@
   "clusters": "Clusters",
   "cluster": "Cluster",
   "createCluster": "Create cluster",
+  "fieldsToComplete": "Complete or correct the following fields to create the cluster",
   "createPostgresCluster": "Create Postgres Cluster",
   "clusterName": "Cluster name",
   "showFailureLog": "Show failure log",
@@ -80,6 +81,7 @@
   "fileSystemType": "File system type",
   "volumeType": "Volume type",
   "backupMethod": "Backup method",
+  "backupConfiguration": "Backup configuration",
   "backupStartTime": "Backup start time",
   "backupRetention": "Backup retention (days)",
   "backupRetentionTooltip": "The number of days to retain backup files. Backups older than this period will be automatically deleted.",
@@ -135,5 +137,10 @@
   "custom": "Custom",
   "customInstanceTypeInfo": "If the required instance type is not listed, you can specify it here (ensure it follows the format supported by the API).",
   "accessKey": "Access key",
-  "secretKey": "Secret key"
+  "secretKey": "Secret key",
+  "databaseServerNumber": "Database server {{number}}",
+  "loadBalancerNumber": "Load balancer {{number}}",
+  "dcsServerNumber": "DCS server {{number}}",
+  "databaseNumber": "Database {{number}}",
+  "connectionPoolNumber": "Connection pool {{number}}"
 }

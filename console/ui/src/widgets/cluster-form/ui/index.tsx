@@ -28,6 +28,7 @@ import { SECRET_MODAL_CONTENT_FORM_FIELD_NAMES } from '@entities/secret-form-blo
 import { ClusterFormProps } from '@widgets/cluster-form/model/types.ts';
 import { DATABASE_SERVERS_FIELD_NAMES } from '@/entities/cluster/database-servers-block/model/const';
 import { mapFormValuesToRequestFields } from '@shared/lib/clusterValuesTransformFunctions.ts';
+import ClusterFormValidationAlert from '@widgets/cluster-form/ui/ClusterFormValidationAlert.tsx';
 
 const DatabaseBlock = lazy(() => import('@entities/cluster/expert-mode/databases-block/ui'));
 const ConnectionPoolsBlock = lazy(() => import('@entities/cluster/expert-mode/connection-pools-block/ui'));
@@ -153,6 +154,7 @@ const ClusterForm: React.FC<ClusterFormProps> = ({
               <AdditionalSettingsBlock />
             </>
           ) : null}
+          <ClusterFormValidationAlert />
           {watchProvider?.code !== PROVIDERS.LOCAL && secrets?.data?.data?.length !== 1 ? (
             <ClusterSecretModal isClusterFormDisabled={!isValid} />
           ) : (
