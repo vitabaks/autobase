@@ -126,6 +126,7 @@ const ClusterForm: React.FC<ClusterFormProps> = ({
   return (
     <Stack direction="column" gap={2} padding="8px">
       <form
+        noValidate
         onSubmit={
           watchProvider?.code !== PROVIDERS.LOCAL && secrets?.data?.data?.length !== 1
             ? undefined
