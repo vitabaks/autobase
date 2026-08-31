@@ -120,16 +120,16 @@ export const LocalFormSchema = (t: TFunction) =>
       [SECRET_MODAL_CONTENT_FORM_FIELD_NAMES.USERNAME]: yup
         .mixed()
         .when(
-          [CLUSTER_FORM_FIELD_NAMES.PROVIDER, CLUSTER_FORM_FIELD_NAMES.AUTHENTICATION_METHOD],
-          ([provider, authenticationMethod], schema) =>
-            provider?.code === PROVIDERS.LOCAL && authenticationMethod === AUTHENTICATION_METHODS.PASSWORD
-              ? yup
-                  .mixed()
-                  .when(CLUSTER_FORM_FIELD_NAMES.IS_USE_DEFINED_SECRET, ([isUseDefinedSecret], schema) =>
-                    !isUseDefinedSecret
-                      ? yup.string().required(t('requiredField', { ns: 'validation' }))
-                      : schema.notRequired(),
-                  )
+          [
+            CLUSTER_FORM_FIELD_NAMES.PROVIDER,
+            CLUSTER_FORM_FIELD_NAMES.AUTHENTICATION_METHOD,
+            CLUSTER_FORM_FIELD_NAMES.IS_USE_DEFINED_SECRET,
+          ],
+          ([provider, authenticationMethod, isUseDefinedSecret], schema) =>
+            provider?.code === PROVIDERS.LOCAL &&
+            (authenticationMethod === AUTHENTICATION_METHODS.SSH ||
+              (authenticationMethod === AUTHENTICATION_METHODS.PASSWORD && !isUseDefinedSecret))
+              ? yup.string().required(t('requiredField', { ns: 'validation' }))
               : schema.notRequired(),
         ),
       [SECRET_MODAL_CONTENT_FORM_FIELD_NAMES.PASSWORD]: yup
