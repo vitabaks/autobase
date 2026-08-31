@@ -121,7 +121,7 @@ const ClusterForm: React.FC<ClusterFormProps> = ({
 
   const cancelHandler = () => navigate(generateAbsoluteRouterPath(RouterPaths.clusters.absolutePath));
 
-  const { isValid, isSubmitting } = methods.formState; // spreading is required by React Hook Form to ensure the correct form state
+  const { isSubmitting } = methods.formState; // spreading is required by React Hook Form to ensure the correct form state
 
   return (
     <Stack direction="column" gap={2} padding="8px">
@@ -156,10 +156,11 @@ const ClusterForm: React.FC<ClusterFormProps> = ({
           ) : null}
           <ClusterFormValidationAlert />
           {watchProvider?.code !== PROVIDERS.LOCAL && secrets?.data?.data?.length !== 1 ? (
-            <ClusterSecretModal isClusterFormDisabled={!isValid} />
+            <ClusterSecretModal
+              validateClusterForm={() => methods.trigger(undefined, { shouldFocus: true })}
+            />
           ) : (
             <DefaultFormButtons
-              isDisabled={!isValid}
               isSubmitting={isSubmitting || addClusterTriggerState.isLoading || addSecretTriggerState.isLoading}
               cancelHandler={cancelHandler}
               submitButtonLabel={t('createCluster')}
