@@ -14,7 +14,11 @@ import {
 } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import { Controller, useFormContext, useWatch } from 'react-hook-form';
-import { BACKUP_METHODS, BACKUPS_BLOCK_FIELD_NAMES } from '@entities/cluster/expert-mode/backups-block/model/const.ts';
+import {
+  BACKUP_DEFAULTS,
+  BACKUP_METHODS,
+  BACKUPS_BLOCK_FIELD_NAMES,
+} from '@entities/cluster/expert-mode/backups-block/model/const.ts';
 import { range } from '@mui/x-data-grid/internals';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import ConfigureBackupModal from '@entities/cluster/expert-mode/backups-block/ui/ConfigureBackupModal.tsx';
@@ -87,7 +91,13 @@ const BackupsBlock: FC = () => {
                     {...field}
                     row
                     onChange={(e) => {
+                      const method = e.target.value as keyof typeof BACKUP_DEFAULTS.RETENTION_BY_METHOD;
                       resetField(BACKUPS_BLOCK_FIELD_NAMES.CONFIG, { keepDirty: true });
+                      setValue(
+                        BACKUPS_BLOCK_FIELD_NAMES.BACKUP_RETENTION,
+                        BACKUP_DEFAULTS.RETENTION_BY_METHOD[method],
+                        { shouldDirty: true, shouldValidate: true },
+                      );
                       field.onChange(e);
                     }}>
                     {[
@@ -188,7 +198,6 @@ const BackupsBlock: FC = () => {
                           <TextField
                             {...field}
                             required
-                            onChange={handleInputChange(field.onChange)}
                             size="small"
                             error={!!errors?.[fieldName]}
                             helperText={errors?.[fieldName]?.message as string}
