@@ -36,7 +36,9 @@ const BackupsBlock: FC = () => {
   } = useFormContext();
 
   const watchIsBackupsEnabled = useWatch({ name: BACKUPS_BLOCK_FIELD_NAMES.IS_BACKUPS_ENABLED });
+  const watchBackupMethod = useWatch({ name: BACKUPS_BLOCK_FIELD_NAMES.BACKUP_METHOD });
   const watchProvider = useWatch({ name: CLUSTER_FORM_FIELD_NAMES.PROVIDER });
+  const isWalGSelected = watchBackupMethod === BACKUP_METHODS.WAL_G;
 
   const handleInputChange = (onChange: (event: ChangeEvent) => void) => (e: ChangeEvent<HTMLInputElement>) => {
     // prevent user from entering less than restricted amount in input field
@@ -156,8 +158,8 @@ const BackupsBlock: FC = () => {
               render={({ field }) => (
                 <Stack direction="row" alignItems="center">
                   <Stack width="250px" direction="row" alignItems="center" gap={0.5}>
-                    <Typography>{t('backupRetention')}</Typography>
-                    <Tooltip title={t('backupRetentionTooltip')}>
+                    <Typography>{t(isWalGSelected ? 'fullBackupsToRetain' : 'backupRetention')}</Typography>
+                    <Tooltip title={t(isWalGSelected ? 'fullBackupsToRetainTooltip' : 'backupRetentionTooltip')}>
                       <HelpOutlineIcon fontSize="small" />
                     </Tooltip>
                   </Stack>
