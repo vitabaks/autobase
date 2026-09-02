@@ -534,19 +534,6 @@
             (item in ['sync', 'async'] and server_count | int > 1 and synchronous_mode | bool)
       when: cloud_load_balancer | bool
 
-    # GCS Bucket (Backups)
-    - name: "GCP: Create bucket '{{ gcp_bucket_name | default('') }}'"
-      google.cloud.gcp_storage_bucket:
-        auth_kind: "serviceaccount"
-        service_account_contents: "{{ gcp_service_account_contents }}"
-        project: "{{ gcp_project | default('') }}"
-        name: "{{ gcp_bucket_name }}"
-        storage_class: "{{ gcp_bucket_storage_class }}"
-        predefined_default_object_acl: "{{ gcp_bucket_default_object_acl }}"
-        state: present
-      when:
-        - (pgbackrest_install | bool or wal_g_install | bool)
-        - gcp_bucket_create | bool
   when: state == 'present'
 
 # Info
@@ -772,14 +759,4 @@
         name: "{{ patroni_cluster_name }}-lb-firewall-rule"
         state: absent
 
-    - name: "GCP: Delete bucket '{{ gcp_bucket_name | default('') }}'"
-      google.cloud.gcp_storage_bucket:
-        auth_kind: "serviceaccount"
-        service_account_contents: "{{ gcp_service_account_contents }}"
-        project: "{{ gcp_project | default('') }}"
-        name: "{{ gcp_bucket_name }}"
-        state: absent
-      when:
-        - (pgbackrest_install | bool or wal_g_install | bool)
-        - gcp_bucket_absent | bool
   when: state == 'absent'

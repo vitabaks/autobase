@@ -39,9 +39,9 @@ The `pgbackrest_conf` variable uses a dictionary with global and stanza sections
 - `stanza`: database-specific settings (`pg1-path`, `pg1-socket-path`, etc.)
 
 
-### pgBackRest auto conf (cloud_provider)
+### pgBackRest auto conf (cloud_backup_provider)
 
-If `cloud_provider` is set, the role runs tasks/[auto_conf.yml](./tasks/auto_conf.yml) to automatically build `pgbackrest_conf` for the selected backend.
+If `cloud_backup_provider` (or its default, `cloud_provider`) is set, the role runs tasks/[auto_conf.yml](./tasks/auto_conf.yml) to automatically build `pgbackrest_conf` for the selected backend.
 
 ## Dependencies
 

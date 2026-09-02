@@ -1,6 +1,6 @@
 # yamllint disable rule:line-length
 ---
-# AWS S3 bucket (if 'cloud_provider=aws')
+# AWS S3 bucket (if 'cloud_backup_provider=aws')
 - name: "Set variable 'pgbackrest_conf' for backup in AWS S3 bucket"
   ansible.builtin.set_fact:
     pgbackrest_conf:
@@ -35,9 +35,9 @@
   delegate_to: localhost
   run_once: true # noqa run-once
   no_log: true # do not output contents to the ansible log
-  when: cloud_provider | default('') | lower == 'aws'
+  when: cloud_backup_provider | default(cloud_provider | default('')) | lower == 'aws'
 
-# GCS Bucket (if 'cloud_provider=gcp')
+# GCS Bucket (if 'cloud_backup_provider=gcp')
 - name: "Set variable 'pgbackrest_conf' for backup in GCS Bucket"
   ansible.builtin.set_fact:
     pgbackrest_conf:
@@ -64,9 +64,9 @@
         - { option: "log-level-console", value: "info" }
         - { option: "pg1-path", value: "{{ postgresql_data_dir }}" }
   no_log: true # do not output contents to the ansible log
-  when: cloud_provider | default('') | lower == 'gcp'
+  when: cloud_backup_provider | default(cloud_provider | default('')) | lower == 'gcp'
 
-# Azure Blob Storage (if 'cloud_provider=azure')
+# Azure Blob Storage (if 'cloud_backup_provider=azure')
 - name: "Set variable 'pgbackrest_conf' for backup in Azure Blob Storage"
   ansible.builtin.set_fact:
     pgbackrest_conf:
@@ -101,9 +101,9 @@
         - { option: "log-level-console", value: "info" }
         - { option: "pg1-path", value: "{{ postgresql_data_dir }}" }
   no_log: true # do not output contents to the ansible log
-  when: cloud_provider | default('') | lower == 'azure'
+  when: cloud_backup_provider | default(cloud_provider | default('')) | lower == 'azure'
 
-# DigitalOcean Spaces Object Storage (if 'cloud_provider=digitalocean')
+# DigitalOcean Spaces Object Storage (if 'cloud_backup_provider=digitalocean')
 # Note: requires the Spaces access keys "AWS_ACCESS_KEY_ID" and "AWS_SECRET_ACCESS_KEY" (https://cloud.digitalocean.com/account/api/spaces)
 - name: "Set variable 'pgbackrest_conf' for backup in DigitalOcean Spaces Object Storage"
   ansible.builtin.set_fact:
@@ -140,9 +140,9 @@
   vars:
     default_region: "{{ (server_location in ['nyc1', 'nyc2']) | ternary('nyc3', server_location) }}"
   no_log: true # do not output contents to the ansible log
-  when: cloud_provider | default('') | lower == 'digitalocean'
+  when: cloud_backup_provider | default(cloud_provider | default('')) | lower == 'digitalocean'
 
-# Hetzner Object Storage (if 'cloud_provider=hetzner')
+# Hetzner Object Storage (if 'cloud_backup_provider=hetzner')
 - name: "Set variable 'pgbackrest_conf' for backup in Hetzner Object Storage (S3 bucket)"
   ansible.builtin.set_fact:
     pgbackrest_conf:
@@ -180,4 +180,4 @@
   delegate_to: localhost
   run_once: true # noqa run-once
   no_log: true # do not output contents to the ansible log
-  when: cloud_provider | default('') | lower == 'hetzner'
+  when: cloud_backup_provider | default(cloud_provider | default('')) | lower == 'hetzner'

@@ -1,6 +1,6 @@
 # yamllint disable rule:line-length
 ---
-# AWS S3 bucket (if 'cloud_provider=aws')
+# AWS S3 bucket (if 'cloud_backup_provider=aws')
 - name: "Set variable 'wal_g_json' for backup in AWS S3 bucket"
   ansible.builtin.set_fact:
     wal_g_json:
@@ -21,9 +21,9 @@
   delegate_to: localhost
   run_once: true # noqa run-once
   no_log: true # do not output contents to the ansible log
-  when: cloud_provider | default('') | lower == 'aws'
+  when: cloud_backup_provider | default(cloud_provider | default('')) | lower == 'aws'
 
-# GCS Bucket (if 'cloud_provider=gcp')
+# GCS Bucket (if 'cloud_backup_provider=gcp')
 - name: "Set variable 'wal_g_json' for backup in GCS Bucket"
   ansible.builtin.set_fact:
     wal_g_json:
@@ -40,9 +40,9 @@
       - { option: "PGPORT", value: "{{ postgresql_port | default('5432') }}" }
       - { option: "PGUSER", value: "{{ patroni_superuser_username | default('postgres') }}" }
   no_log: true # do not output contents to the ansible log
-  when: cloud_provider | default('') | lower == 'gcp'
+  when: cloud_backup_provider | default(cloud_provider | default('')) | lower == 'gcp'
 
-# Azure Blob Storage (if 'cloud_provider=azure')
+# Azure Blob Storage (if 'cloud_backup_provider=azure')
 - name: "Set variable 'wal_g_json' for backup in Azure Blob Storage"
   ansible.builtin.set_fact:
     wal_g_json:
@@ -69,9 +69,9 @@
       - { option: "PGPORT", value: "{{ postgresql_port | default('5432') }}" }
       - { option: "PGUSER", value: "{{ patroni_superuser_username | default('postgres') }}" }
   no_log: true # do not output contents to the ansible log
-  when: cloud_provider | default('') | lower == 'azure'
+  when: cloud_backup_provider | default(cloud_provider | default('')) | lower == 'azure'
 
-# DigitalOcean Spaces Object Storage (if 'cloud_provider=digitalocean')
+# DigitalOcean Spaces Object Storage (if 'cloud_backup_provider=digitalocean')
 - name: "Set variable 'wal_g_json' for backup in DigitalOcean Spaces Object Storage"
   ansible.builtin.set_fact:
     wal_g_json:
@@ -97,9 +97,9 @@
   vars:
     default_region: "{{ (server_location in ['nyc1', 'nyc2']) | ternary('nyc3', server_location) }}"
   no_log: true # do not output contents to the ansible log
-  when: cloud_provider | default('') | lower == 'digitalocean'
+  when: cloud_backup_provider | default(cloud_provider | default('')) | lower == 'digitalocean'
 
-# Hetzner Object Storage (if 'cloud_provider=hetzner')
+# Hetzner Object Storage (if 'cloud_backup_provider=hetzner')
 - name: "Set variable 'wal_g_json' for backup in AWS S3 bucket"
   ansible.builtin.set_fact:
     wal_g_json:
@@ -130,4 +130,4 @@
   delegate_to: localhost
   run_once: true # noqa run-once
   no_log: true # do not output contents to the ansible log
-  when: cloud_provider | default('') | lower == 'hetzner'
+  when: cloud_backup_provider | default(cloud_provider | default('')) | lower == 'hetzner'
