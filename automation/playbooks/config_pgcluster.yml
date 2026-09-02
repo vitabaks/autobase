@@ -149,13 +149,13 @@
   pre_tasks:
     - block: # Ensure Postgres TLS certificates exist on all nodes
         - name: Generate Postgres TLS certificate
-          ansible.builtin.include_role:
+          ansible.builtin.import_role:
             name: vitabaks.autobase.tls_certificate
           vars:
             tls_group_name: "postgres_cluster"
 
         - name: Copy Postgres TLS certificate, key and CA to all nodes
-          ansible.builtin.include_role:
+          ansible.builtin.import_role:
             name: vitabaks.autobase.tls_certificate
             tasks_from: copy
       when: tls_cert_generate | default(true) | bool
