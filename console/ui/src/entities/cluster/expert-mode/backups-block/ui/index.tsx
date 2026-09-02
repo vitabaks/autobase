@@ -14,7 +14,11 @@ import {
 } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import { Controller, useFormContext, useWatch } from 'react-hook-form';
-import { BACKUP_METHODS, BACKUPS_BLOCK_FIELD_NAMES } from '@entities/cluster/expert-mode/backups-block/model/const.ts';
+import {
+  BACKUP_DEFAULTS,
+  BACKUP_METHODS,
+  BACKUPS_BLOCK_FIELD_NAMES,
+} from '@entities/cluster/expert-mode/backups-block/model/const.ts';
 import { range } from '@mui/x-data-grid/internals';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import ConfigureBackupModal from '@entities/cluster/expert-mode/backups-block/ui/ConfigureBackupModal.tsx';
@@ -32,7 +36,9 @@ const BackupsBlock: FC = () => {
   } = useFormContext();
 
   const watchIsBackupsEnabled = useWatch({ name: BACKUPS_BLOCK_FIELD_NAMES.IS_BACKUPS_ENABLED });
+  const watchBackupMethod = useWatch({ name: BACKUPS_BLOCK_FIELD_NAMES.BACKUP_METHOD });
   const watchProvider = useWatch({ name: CLUSTER_FORM_FIELD_NAMES.PROVIDER });
+  const isWalGSelected = watchBackupMethod === BACKUP_METHODS.WAL_G;
 
   const handleInputChange = (onChange: (event: ChangeEvent) => void) => (e: ChangeEvent<HTMLInputElement>) => {
     // prevent user from entering less than restricted amount in input field
@@ -87,7 +93,13 @@ const BackupsBlock: FC = () => {
                     {...field}
                     row
                     onChange={(e) => {
+                      const method = e.target.value as keyof typeof BACKUP_DEFAULTS.RETENTION_BY_METHOD;
                       resetField(BACKUPS_BLOCK_FIELD_NAMES.CONFIG, { keepDirty: true });
+                      setValue(
+                        BACKUPS_BLOCK_FIELD_NAMES.BACKUP_RETENTION,
+                        BACKUP_DEFAULTS.RETENTION_BY_METHOD[method],
+                        { shouldDirty: true, shouldValidate: true },
+                      );
                       field.onChange(e);
                     }}>
                     {[
@@ -146,8 +158,8 @@ const BackupsBlock: FC = () => {
               render={({ field }) => (
                 <Stack direction="row" alignItems="center">
                   <Stack width="250px" direction="row" alignItems="center" gap={0.5}>
-                    <Typography>{t('backupRetention')}</Typography>
-                    <Tooltip title={t('backupRetentionTooltip')}>
+                    <Typography>{t(isWalGSelected ? 'fullBackupsToRetain' : 'backupRetention')}</Typography>
+                    <Tooltip title={t(isWalGSelected ? 'fullBackupsToRetainTooltip' : 'backupRetentionTooltip')}>
                       <HelpOutlineIcon fontSize="small" />
                     </Tooltip>
                   </Stack>
@@ -188,7 +200,6 @@ const BackupsBlock: FC = () => {
                           <TextField
                             {...field}
                             required
-                            onChange={handleInputChange(field.onChange)}
                             size="small"
                             error={!!errors?.[fieldName]}
                             helperText={errors?.[fieldName]?.message as string}

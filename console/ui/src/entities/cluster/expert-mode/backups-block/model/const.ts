@@ -12,3 +12,11 @@ export const BACKUP_METHODS = Object.freeze({
   PG_BACK_REST: 'pgbackrest_install',
   WAL_G: 'wal_g_install',
 });
+
+export const BACKUP_DEFAULTS = Object.freeze({
+  START_HOUR: 3,
+  RETENTION_BY_METHOD: {
+    [BACKUP_METHODS.PG_BACK_REST]: 30,
+    [BACKUP_METHODS.WAL_G]: 4,
+  },
+});

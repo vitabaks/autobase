@@ -1,5 +1,9 @@
 import { AUTHENTICATION_METHODS, IS_EXPERT_MODE } from '@shared/model/constants.ts';
-import { BACKUP_METHODS, BACKUPS_BLOCK_FIELD_NAMES } from '@entities/cluster/expert-mode/backups-block/model/const.ts';
+import {
+  BACKUP_DEFAULTS,
+  BACKUP_METHODS,
+  BACKUPS_BLOCK_FIELD_NAMES,
+} from '@entities/cluster/expert-mode/backups-block/model/const.ts';
 import { ADDITIONAL_SETTINGS_BLOCK_FIELD_NAMES } from '@entities/cluster/expert-mode/additional-settings-block/model/const.ts';
 import { POSTGRES_PARAMETERS_FIELD_NAMES } from '@entities/cluster/expert-mode/postgres-parameters-block/model/const.ts';
 import { KERNEL_PARAMETERS_FIELD_NAMES } from '@entities/cluster/expert-mode/kernel-parameters-block/model/const.ts';
@@ -127,8 +131,9 @@ export const getClusterFormDefaultValues = () => ({
     ? {
         [BACKUPS_BLOCK_FIELD_NAMES.IS_BACKUPS_ENABLED]: true,
         [BACKUPS_BLOCK_FIELD_NAMES.BACKUP_METHOD]: BACKUP_METHODS.PG_BACK_REST,
-        [BACKUPS_BLOCK_FIELD_NAMES.BACKUP_RETENTION]: 30,
-        [BACKUPS_BLOCK_FIELD_NAMES.BACKUP_START_TIME]: 1,
+        [BACKUPS_BLOCK_FIELD_NAMES.BACKUP_RETENTION]:
+          BACKUP_DEFAULTS.RETENTION_BY_METHOD[BACKUP_METHODS.PG_BACK_REST],
+        [BACKUPS_BLOCK_FIELD_NAMES.BACKUP_START_TIME]: BACKUP_DEFAULTS.START_HOUR,
         [BACKUPS_BLOCK_FIELD_NAMES.CONFIG]: '',
         [BACKUPS_BLOCK_FIELD_NAMES.ACCESS_KEY]: '',
         [BACKUPS_BLOCK_FIELD_NAMES.SECRET_KEY]: '',

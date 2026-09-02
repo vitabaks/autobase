@@ -1,10 +1,12 @@
 import { FC, useState } from 'react';
-import { Button, Card, Modal, Stack, TextField, Tooltip, Typography } from '@mui/material';
+import { Alert, Button, Card, Modal, Stack, TextField, Tooltip, Typography } from '@mui/material';
 import { Controller, useFormContext, useWatch } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { BACKUP_METHODS, BACKUPS_BLOCK_FIELD_NAMES } from '@entities/cluster/expert-mode/backups-block/model/const.ts';
 import DoNotDisturbAltOutlinedIcon from '@mui/icons-material/DoNotDisturbAltOutlined';
 import DoneOutlinedIcon from '@mui/icons-material/DoneOutlined';
+import { CLUSTER_FORM_FIELD_NAMES } from '@widgets/cluster-form/model/constants.ts';
+import { PROVIDERS } from '@shared/config/constants.ts';
 
 const ConfigureBackupModal: FC = () => {
   const { t } = useTranslation(['clusters', 'shared']);
@@ -20,6 +22,8 @@ const ConfigureBackupModal: FC = () => {
 
   const watchBackupMethod = useWatch({ name: BACKUPS_BLOCK_FIELD_NAMES.BACKUP_METHOD });
   const watchConfig = useWatch({ name: BACKUPS_BLOCK_FIELD_NAMES.CONFIG });
+  const watchProvider = useWatch({ name: CLUSTER_FORM_FIELD_NAMES.PROVIDER });
+  const isCloudProvider = Boolean(watchProvider?.code && watchProvider.code !== PROVIDERS.LOCAL);
 
   return (
     <>
@@ -40,8 +44,8 @@ const ConfigureBackupModal: FC = () => {
             top: '50%',
             left: '50%',
             transform: 'translate(-50%, -50%)',
-            width: '80%',
-            minWidth: '400px',
+            width: 'calc(100% - 32px)',
+            maxWidth: '900px',
             height: 'max-content',
             bgcolor: 'background.paper',
             borderRadius: '3px',
@@ -51,6 +55,12 @@ const ConfigureBackupModal: FC = () => {
             <Typography fontWeight="bold" fontSize={20}>
               {t('configureBackup')}
             </Typography>
+            {isCloudProvider ? (
+              <>
+                <Alert severity="info">{t('cloudBackupConfigurationHelp')}</Alert>
+                <Typography fontWeight="bold">{t('customConfigurationOptional')}</Typography>
+              </>
+            ) : null}
             {
               <Controller
                 control={control}

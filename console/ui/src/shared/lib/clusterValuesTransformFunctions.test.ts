@@ -1,6 +1,23 @@
 // @vitest-environment jsdom
 import { describe, expect, it, vi } from 'vitest';
 
+describe('cluster form backup defaults', () => {
+  it('uses Autobase start hour and retention defaults in expert mode', async () => {
+    localStorage.setItem('isExpertMode', 'true');
+    vi.resetModules();
+
+    const { getClusterFormDefaultValues } = await import('@widgets/cluster-form/model/constants.ts');
+    const { BACKUP_DEFAULTS, BACKUP_METHODS } = await import(
+      '@entities/cluster/expert-mode/backups-block/model/const.ts'
+    );
+    const values = getClusterFormDefaultValues();
+
+    expect(values.backupStartTime).toBe(3);
+    expect(values.backupRetention).toBe(30);
+    expect(BACKUP_DEFAULTS.RETENTION_BY_METHOD[BACKUP_METHODS.WAL_G]).toBe(4);
+  });
+});
+
 describe('getLocalMachineEnvs', () => {
   it('maps per-host ssh port to ansible_ssh_port', async () => {
     localStorage.setItem('isExpertMode', 'false');
