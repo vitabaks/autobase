@@ -141,6 +141,10 @@
   become_method: sudo
   gather_facts: false
   any_errors_fatal: true
+  pre_tasks:
+    - name: Set default variables
+      ansible.builtin.import_role:
+        name: vitabaks.autobase.common
   tasks:
     - name: Update archive_command in Patroni DCS
       ansible.builtin.uri:
