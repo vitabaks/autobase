@@ -1,0 +1,80 @@
+---
+- name: Transfer etcd leadership before rebooting a colocated node
+  when:
+    - transfer_etcd_leadership_before_reboot | default(true) | bool
+    - dcs_type | default('etcd') == 'etcd'
+    - inventory_hostname in groups.get('etcd_cluster', [])
+    - groups.get('etcd_cluster', []) | length > 1
+  block:
+    - name: Define etcdctl connection options
+      ansible.builtin.set_fact:
+        update_etcdctl_bin: "{{ (etcd_bin_dir | default('/usr/local/bin')) ~ '/etcdctl' }}"
+        update_etcdctl_options: >-
+          {{
+            ['--endpoints=' ~ (patroni_etcd_protocol | default('https')) ~ '://' ~
+               (etcd_bind_address | default(bind_address, true)) ~ ':' ~ (etcd_client_port | default('2379'))]
+            +
+            (['--cacert=' ~ (etcd_tls_dir | default('/etc/etcd/tls')) ~ '/' ~ (etcd_tls_ca_crt | default('ca.crt')),
+              '--cert=' ~ (etcd_tls_dir | default('/etc/etcd/tls')) ~ '/' ~ (etcd_tls_server_crt | default('server.crt')),
+              '--key=' ~ (etcd_tls_dir | default('/etc/etcd/tls')) ~ '/' ~ (etcd_tls_server_key | default('server.key'))]
+             if etcd_tls_enable | default(true) | bool else [])
+          }}
+
+    - name: Get local etcd endpoint status
+      ansible.builtin.command:
+        argv: "{{ [update_etcdctl_bin] + update_etcdctl_options + ['endpoint', 'status', '--write-out=json'] }}"
+      environment:
+        ETCDCTL_API: "3"
+      register: update_local_etcd_status
+      changed_when: false
+      check_mode: false
+
+    - name: Get healthy etcd peer statuses
+      ansible.builtin.command:
+        argv: "{{ [update_etcdctl_bin] + update_etcdctl_options + ['endpoint', 'status', '--cluster', '--write-out=json'] }}"
+      environment:
+        ETCDCTL_API: "3"
+      register: update_etcd_cluster_status
+      changed_when: false
+      check_mode: false
+
+    - name: Define etcd leadership facts
+      ansible.builtin.set_fact:
+        update_local_etcd_member_id: "{{ (update_local_etcd_status.stdout | from_json).0.Status.header.member_id }}"
+        update_etcd_leader_id: "{{ (update_local_etcd_status.stdout | from_json).0.Status.leader }}"
+        update_etcd_transferee_id: >-
+          {{
+            '%x' | format(
+              (update_etcd_cluster_status.stdout | from_json)
+              | rejectattr('Status.header.member_id', 'equalto',
+                           (update_local_etcd_status.stdout | from_json).0.Status.header.member_id)
+              | map(attribute='Status.header.member_id')
+              | first
+            )
+          }}
+
+    - name: Transfer etcd leadership to a healthy peer
+      ansible.builtin.command:
+        argv: "{{ [update_etcdctl_bin] + update_etcdctl_options + ['move-leader', update_etcd_transferee_id | string] }}"
+      environment:
+        ETCDCTL_API: "3"
+      when: update_local_etcd_member_id == update_etcd_leader_id
+      register: update_etcd_leadership_transfer
+      changed_when: update_etcd_leadership_transfer.rc == 0
+
+    - name: Verify etcd leadership moved off the reboot target
+      ansible.builtin.command:
+        argv: "{{ [update_etcdctl_bin] + update_etcdctl_options + ['endpoint', 'status', '--write-out=json'] }}"
+      environment:
+        ETCDCTL_API: "3"
+      register: update_etcd_status_after_transfer
+      changed_when: false
+      failed_when: >-
+        ((update_etcd_status_after_transfer.stdout | from_json).0.Status.header.member_id)
+        == ((update_etcd_status_after_transfer.stdout | from_json).0.Status.leader)
+      retries: 10
+      delay: 1
+      until: >-
+        ((update_etcd_status_after_transfer.stdout | from_json).0.Status.header.member_id)
+        != ((update_etcd_status_after_transfer.stdout | from_json).0.Status.leader)
+      check_mode: false

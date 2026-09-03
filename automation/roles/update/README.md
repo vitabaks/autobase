@@ -48,6 +48,10 @@ Update all system packages:
   - The waiting time (in minutes) for the caches to warm up after restarting the server before updating the next server.
   - Note: Applicable when there are multiple replicas.
   - Default value: `5` (minutes).
+- `transfer_etcd_leadership_before_reboot`
+  - Transfer etcd leadership to a healthy peer before rebooting a colocated etcd node.
+  - This prevents a rolling system update from interrupting Patroni's DCS access when the reboot target is the etcd leader.
+  - Default value: `true`.
 
 ---
 
@@ -90,6 +94,7 @@ When using load balancing for read-only traffic (the "Type A" and "Type C" schem
 - Update all system packages (includes PostgreSQL and Patroni)
   - if `target=system`
   - Update all system packages
+  - Transfer etcd leadership to a healthy peer when the reboot target is a colocated etcd leader
 - Start Services
   - Start Patroni service
   - Wait for Patroni port to become open on the host
@@ -155,5 +160,6 @@ When using load balancing for read-only traffic (the "Type A" and "Type C" schem
 ## Dependencies
 
 This role depends on:
+
 - `vitabaks.autobase.common` - Provides common variables and configurations
 - `vitabaks.autobase.patroni` - Uses the `switchover` task
