@@ -86,6 +86,10 @@ Provision the PostgreSQL cluster infrastructure in public clouds (AWS, GCP, Azur
 | hetzner_object_storage_secret_key | string | "" | Object Storage SECRET KEY (required) |
 | hetzner_object_storage_absent | bool | false | Allow delete Object Storage on state=absent |
 
+Set `cloud_backup_provider` when backup storage should be provisioned in a different cloud than the database servers.
+In that case, also provide the credentials and region-related variables required by the selected backup provider. The
+`server_location` value continues to describe the server provider and is not translated between clouds.
+
 ### Provider-specific (optional) variables referenced in tasks
 
 | Variable | Provider | Default/Notes |
