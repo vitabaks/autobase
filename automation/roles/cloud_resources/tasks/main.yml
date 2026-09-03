@@ -92,16 +92,6 @@
     - cluster_scaling | default(false) | bool or
       patroni_standby_cluster.host | default('') | length > 0
 
-- name: Import tasks for cloud backup storage
-  ansible.builtin.import_tasks: backup_storage.yml
-  vars:
-    backup_storage_install_dependencies: >-
-      {{ cloud_backup_provider | default(cloud_provider) | lower != cloud_provider | lower }}
-  when:
-    - state == 'absent' or
-      (pgbackrest_install | default(false) | bool and pgbackrest_auto_conf | default(true) | bool) or
-      (wal_g_install | default(false) | bool and wal_g_auto_conf | default(true) | bool)
-
 - name: Import tasks for AWS
   ansible.builtin.import_tasks: aws.yml
   when: cloud_provider | lower == 'aws'
@@ -121,3 +111,13 @@
 - name: Import tasks for Hetzner Cloud
   ansible.builtin.import_tasks: hetzner.yml
   when: cloud_provider | lower == 'hetzner'
+
+- name: Import tasks for cloud backup storage
+  ansible.builtin.import_tasks: backup_storage.yml
+  vars:
+    backup_storage_install_dependencies: >-
+      {{ cloud_backup_provider | default(cloud_provider) | lower != cloud_provider | lower }}
+  when:
+    - state == 'absent' or
+      (pgbackrest_install | default(false) | bool and pgbackrest_auto_conf | default(true) | bool) or
+      (wal_g_install | default(false) | bool and wal_g_auto_conf | default(true) | bool)
