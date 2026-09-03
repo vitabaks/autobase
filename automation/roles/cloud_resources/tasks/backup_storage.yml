@@ -214,9 +214,14 @@
         - state == 'present'
         - azure_blob_storage_create | bool
       block:
+        - name: "Azure: Create backup storage resource group"
+          azure.azcollection.azure_rm_resourcegroup:
+            name: "{{ azure_resource_group | default('postgres-cluster-resource-group' ~ '-' ~ azure_backup_location) }}"
+            location: "{{ azure_backup_location }}"
+
         - name: "Azure: Create Storage Account '{{ azure_blob_storage_account_name | default('') }}'"
           azure.azcollection.azure_rm_storageaccount:
-            resource_group: "{{ azure_resource_group | default('postgres-cluster-resource-group' ~ '-' ~ server_location) }}"
+            resource_group: "{{ azure_resource_group | default('postgres-cluster-resource-group' ~ '-' ~ azure_backup_location) }}"
             name: "{{ azure_blob_storage_account_name }}"
             account_type: "{{ azure_blob_storage_account_type }}"
             kind: "{{ azure_blob_storage_account_kind }}"
@@ -227,7 +232,7 @@
 
         - name: "Azure: Get Storage Account info"
           azure.azcollection.azure_rm_storageaccount_info:
-            resource_group: "{{ azure_resource_group | default('postgres-cluster-resource-group' ~ '-' ~ server_location) }}"
+            resource_group: "{{ azure_resource_group | default('postgres-cluster-resource-group' ~ '-' ~ azure_backup_location) }}"
             name: "{{ azure_blob_storage_account_name }}"
             show_connection_string: true
           no_log: true
@@ -240,7 +245,7 @@
 
         - name: "Azure: Create Blob Storage container '{{ azure_blob_storage_name | default('') }}'"
           azure.azcollection.azure_rm_storageblob:
-            resource_group: "{{ azure_resource_group | default('postgres-cluster-resource-group' ~ '-' ~ server_location) }}"
+            resource_group: "{{ azure_resource_group | default('postgres-cluster-resource-group' ~ '-' ~ azure_backup_location) }}"
             account_name: "{{ azure_blob_storage_account_name }}"
             container: "{{ azure_blob_storage_name }}"
             blob_type: "{{ azure_blob_storage_blob_type }}"
@@ -255,14 +260,14 @@
       block:
         - name: "Azure: Delete Blob Storage '{{ azure_blob_storage_name | default('') }}'"
           azure.azcollection.azure_rm_storageblob:
-            resource_group: "{{ azure_resource_group | default('postgres-cluster-resource-group' ~ '-' ~ server_location) }}"
+            resource_group: "{{ azure_resource_group | default('postgres-cluster-resource-group' ~ '-' ~ azure_backup_location) }}"
             storage_account_name: "{{ azure_blob_storage_account_name }}"
             container: "{{ azure_blob_storage_name }}"
             state: absent
 
         - name: "Azure: Delete Storage Account '{{ azure_blob_storage_account_name | default('') }}'"
           azure.azcollection.azure_rm_storageaccount:
-            resource_group: "{{ azure_resource_group | default('postgres-cluster-resource-group' ~ '-' ~ server_location) }}"
+            resource_group: "{{ azure_resource_group | default('postgres-cluster-resource-group' ~ '-' ~ azure_backup_location) }}"
             name: "{{ azure_blob_storage_account_name }}"
             force_delete_nonempty: true
             state: absent

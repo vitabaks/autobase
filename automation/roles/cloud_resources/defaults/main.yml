@@ -57,6 +57,7 @@ gcp_bucket_default_object_acl: "projectPrivate" # Apply a predefined set of defa
 gcp_bucket_absent: false # Allow to delete GCS bucket when deleting a cluster servers using the 'state=absent' variable.
 
 azure_blob_storage_create: true # if 'cloud_backup_provider=azure'
+azure_backup_location: "{{ server_location }}" # Azure region for backup storage.
 azure_blob_storage_name: "{{ patroni_cluster_name }}-backup" # Name of a blob container within the storage account.
 azure_blob_storage_blob_type: "block" # Type of blob object. Values include: block, page.
 azure_blob_storage_account_name: "{{ patroni_cluster_name | lower | replace('-', '') | truncate(24, true, '') }}" # Storage account name must be between 3 and 24 characters in length and use numbers and lower-case letters only.
