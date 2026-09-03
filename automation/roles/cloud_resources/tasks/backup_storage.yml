@@ -1,63 +1,7 @@
 ---
-- name: Install backup storage dependencies
-  block:
-    - name: Ensure that 'python3-pip' package is present on control host
-      ansible.builtin.command: which pip3
-      register: backup_storage_pip3_check
-      failed_when: false
-      changed_when: false
-
-    - name: Clean dnf cache
-      ansible.builtin.command: dnf clean all
-      when:
-        - backup_storage_pip3_check.rc != 0
-        - ansible_os_family == "RedHat"
-
-    - name: Update apt cache
-      ansible.builtin.apt:
-        update_cache: true
-        cache_valid_time: 3600
-      register: backup_storage_apt_status
-      until: backup_storage_apt_status is success
-      delay: 5
-      retries: 3
-      when:
-        - backup_storage_pip3_check.rc != 0
-        - ansible_os_family == "Debian"
-
-    - name: Install 'python3-pip' package on control host
-      ansible.builtin.package:
-        name: python3-pip
-        state: present
-      register: backup_storage_package_status
-      until: backup_storage_package_status is success
-      delay: 10
-      retries: 3
-      when:
-        - backup_storage_pip3_check.rc != 0
-        - ansible_distribution != "MacOSX"
-
-  delegate_to: 127.0.0.1
-  become: false
-  run_once: true
-  when: backup_storage_install_dependencies | default(true) | bool
-
 - name: Manage GCP backup storage
   when: cloud_backup_provider | default(cloud_provider) | lower == 'gcp'
   block:
-    - name: Ensure that 'google-auth' dependency is present on control host
-      ansible.builtin.pip:
-        name: google-auth
-        executable: pip3
-        extra_args: --user
-      environment:
-        PATH: "{{ ansible_env.PATH }}:/usr/local/bin:/usr/bin"
-        PIP_BREAK_SYSTEM_PACKAGES: "1"
-      delegate_to: 127.0.0.1
-      become: false
-      run_once: true
-      when: backup_storage_install_dependencies | default(true) | bool
-
     - name: Lookup the GCP_SERVICE_ACCOUNT_CONTENTS environmental variable
       ansible.builtin.set_fact:
         gcp_service_account_contents_raw: "{{ lookup('ansible.builtin.env', 'GCP_SERVICE_ACCOUNT_CONTENTS') | default('') }}"
@@ -123,19 +67,6 @@
 - name: Manage AWS backup storage
   when: cloud_backup_provider | default(cloud_provider) | lower == 'aws'
   block:
-    - name: Ensure that 'boto3' dependency is present on control host
-      ansible.builtin.pip:
-        name: boto3
-        executable: pip3
-        extra_args: --user
-      environment:
-        PATH: "{{ ansible_env.PATH }}:/usr/local/bin:/usr/bin"
-        PIP_BREAK_SYSTEM_PACKAGES: "1"
-      delegate_to: 127.0.0.1
-      become: false
-      run_once: true
-      when: backup_storage_install_dependencies | default(true) | bool
-
     - name: "AWS: Create S3 bucket '{{ aws_s3_bucket_name | default('') }}'"
       amazon.aws.s3_bucket:
         access_key: "{{ lookup('ansible.builtin.env', 'AWS_ACCESS_KEY_ID') }}"
@@ -168,47 +99,6 @@
 - name: Manage Azure backup storage
   when: cloud_backup_provider | default(cloud_provider) | lower == 'azure'
   block:
-    - name: Prepare Azure dependencies
-      when: backup_storage_install_dependencies | default(true) | bool
-      delegate_to: 127.0.0.1
-      become: false
-      run_once: true
-      block:
-        - name: Ensure that Azure collection is installed on control host
-          ansible.builtin.command: ansible-galaxy collection list azure.azcollection
-          changed_when: false
-          failed_when: false
-          register: backup_storage_azcollection_result
-
-        - name: Fail when Azure collection is not installed
-          ansible.builtin.fail:
-            msg:
-              - "Please install Azure collection"
-              - "ansible-galaxy collection install azure.azcollection"
-          when: backup_storage_azcollection_result.stderr is search("unable to find")
-
-        - name: Get ansible_collections path
-          ansible.builtin.shell: >
-            set -o pipefail;
-            ansible-galaxy collection list | grep ansible_collections | head -n 1 | awk '{print $2}'
-          args:
-            executable: /bin/bash
-          register: backup_storage_collections_path
-          changed_when: false
-          when: ansible_collections_path is not defined
-
-        - name: Ensure that Azure collection requirements are present on control host
-          ansible.builtin.pip:
-            requirements: >-
-              {{ ansible_collections_path
-                 | default(backup_storage_collections_path.stdout) }}/azure/azcollection/requirements.txt
-            executable: pip3
-            extra_args: "--trusted-host=pypi.python.org --trusted-host=pypi.org --trusted-host=files.pythonhosted.org"
-            umask: "0022"
-          environment:
-            PATH: "{{ ansible_env.PATH }}:/usr/local/bin:/usr/bin"
-            PIP_BREAK_SYSTEM_PACKAGES: "1"
-
     - name: "Azure: Create backup storage"
       when:
         - state == 'present'
@@ -275,19 +165,6 @@
 - name: Manage DigitalOcean backup storage
   when: cloud_backup_provider | default(cloud_provider) | lower in ['digitalocean', 'do']
   block:
-    - name: Ensure that 'boto3' dependency is present on control host
-      ansible.builtin.pip:
-        name: boto3
-        executable: pip3
-        extra_args: --user
-      environment:
-        PATH: "{{ ansible_env.PATH }}:/usr/local/bin:/usr/bin"
-        PIP_BREAK_SYSTEM_PACKAGES: "1"
-      delegate_to: 127.0.0.1
-      become: false
-      run_once: true
-      when: backup_storage_install_dependencies | default(true) | bool
-
     - name: "DigitalOcean: Create Spaces Bucket '{{ digital_ocean_spaces_name | default('') }}'"
       community.digitalocean.digital_ocean_spaces:
         oauth_token: "{{ lookup('ansible.builtin.env', 'DO_API_TOKEN') }}"
@@ -320,19 +197,6 @@
 - name: Manage Hetzner Cloud backup storage
   when: cloud_backup_provider | default(cloud_provider) | lower == 'hetzner'
   block:
-    - name: Ensure that 'boto3' dependency is present on control host
-      ansible.builtin.pip:
-        name: boto3
-        executable: pip3
-        extra_args: --user
-      environment:
-        PATH: "{{ ansible_env.PATH }}:/usr/local/bin:/usr/bin"
-        PIP_BREAK_SYSTEM_PACKAGES: "1"
-      delegate_to: 127.0.0.1
-      become: false
-      run_once: true
-      when: backup_storage_install_dependencies | default(true) | bool
-
     - name: "Hetzner Cloud: Create Object Storage (S3 bucket) '{{ hetzner_object_storage_name | default('') }}'"
       amazon.aws.s3_bucket:
         endpoint_url: "{{ hetzner_object_storage_endpoint }}"
