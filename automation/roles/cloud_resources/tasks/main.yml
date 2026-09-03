@@ -117,7 +117,4 @@
 
 - name: Import tasks for cloud backup storage
   ansible.builtin.import_tasks: backup_storage.yml
-  when:
-    - state == 'absent' or
-      (pgbackrest_install | default(false) | bool and pgbackrest_auto_conf | default(true) | bool) or
-      (wal_g_install | default(false) | bool and wal_g_auto_conf | default(true) | bool)
+  when: pgbackrest_install | default(false) | bool or wal_g_install | default(false) | bool
