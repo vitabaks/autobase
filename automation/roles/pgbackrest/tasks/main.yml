@@ -199,20 +199,24 @@
 - name: Add pgbackrest cron jobs on database server
   ansible.builtin.include_role:
     name: vitabaks.autobase.cron
+    apply:
+      tags: pgbackrest, pgbackrest_cron
   vars:
     cron_jobs: "{{ pgbackrest_cron_jobs }}"
   when:
     - "'postgres_cluster' in group_names"
     - pgbackrest_repo_host | default('') | length < 1
-  tags: pgbackrest_cron
+  tags: pgbackrest, pgbackrest_cron
 
 # Dedicated pgbackrest server (if "repo_host" is set)
 - name: Add pgbackrest cron jobs on pgbackrest server
   ansible.builtin.include_role:
     name: vitabaks.autobase.cron
+    apply:
+      tags: pgbackrest, pgbackrest_cron
   vars:
     cron_jobs: "{{ pgbackrest_cron_jobs }}"
   when:
     - "'pgbackrest' in group_names"
     - pgbackrest_repo_host | default('') | length > 0
-  tags: pgbackrest_cron
+  tags: pgbackrest, pgbackrest_cron

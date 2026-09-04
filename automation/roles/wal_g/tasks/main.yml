@@ -270,6 +270,8 @@
 - name: Add WAL-G cron jobs
   ansible.builtin.include_role:
     name: vitabaks.autobase.cron
+    apply:
+      tags: wal-g, wal_g, wal_g_cron
   vars:
     cron_jobs: "{{ wal_g_cron_jobs }}"
   tags: wal-g, wal_g, wal_g_cron
