@@ -7,8 +7,8 @@ require (
 	github.com/docker/go-connections v0.8.1
 	github.com/gdex-lab/go-render v1.0.1
 	github.com/go-openapi/errors v0.22.8
-	github.com/go-openapi/loads v0.25.0
-	github.com/go-openapi/runtime v0.33.0
+	github.com/go-openapi/loads v0.25.2
+	github.com/go-openapi/runtime v0.33.1
 	github.com/go-openapi/strfmt v0.27.0
 	github.com/google/uuid v1.6.0
 	github.com/goombaio/namegenerator v0.0.0-20181006234301-989e774b106e
