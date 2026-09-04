@@ -32,9 +32,9 @@ Notes:
 - The role creates ~postgres/.walg.json and the prefetch directory when enabled.
 - Cron jobs are created via ansible.builtin.cron from wal_g_cron_jobs.
 
-### WAL-G auto conf (cloud_provider)
+### WAL-G auto conf (cloud_backup_provider)
 
-If `cloud_provider` is set, the role runs tasks/[auto_conf.yml](./tasks/auto_conf.yml) to automatically build WAL-G config.
+If `cloud_backup_provider` (or its default, `cloud_provider`) is set, the role runs tasks/[auto_conf.yml](./tasks/auto_conf.yml) to automatically build WAL-G config.
 
 ## Dependencies
 

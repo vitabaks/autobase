@@ -1,73 +1,4 @@
 ---
-# Dependencies
-- name: Install Python dependencies
-  block:
-    - name: Ensure that 'python3-pip' package is present on control host
-      ansible.builtin.command: which pip3
-      register: pip3_check
-      failed_when: false
-      changed_when: false
-
-    - name: Clean dnf cache
-      ansible.builtin.command: dnf clean all
-      when:
-        - pip3_check.rc != 0
-        - ansible_os_family == "RedHat"
-
-    - name: Update apt cache
-      ansible.builtin.apt:
-        update_cache: true
-        cache_valid_time: 3600
-      register: apt_status
-      until: apt_status is success
-      delay: 5
-      retries: 3
-      when:
-        - pip3_check.rc != 0
-        - ansible_os_family == "Debian"
-
-    - name: Install 'python3-pip' package on control host
-      ansible.builtin.package:
-        name: python3-pip
-        state: present
-      register: package_status
-      until: package_status is success
-      delay: 10
-      retries: 3
-      when:
-        - pip3_check.rc != 0
-        - ansible_distribution != "MacOSX"
-
-    - name: Ensure that 'hcloud' dependency is present on control host
-      ansible.builtin.pip:
-        name: hcloud
-        executable: pip3
-        extra_args: --user
-      become: false
-      vars:
-        ansible_become: false
-      run_once: true
-      environment:
-        PATH: "{{ ansible_env.PATH }}:/usr/local/bin:/usr/bin"
-        PIP_BREAK_SYSTEM_PACKAGES: "1"
-
-    - name: Ensure that 'boto3' dependency is present on control host
-      ansible.builtin.pip:
-        name: boto3
-        executable: pip3
-        extra_args: --user
-      become: false
-      vars:
-        ansible_become: false
-      environment:
-        PATH: "{{ ansible_env.PATH }}:/usr/local/bin:/usr/bin"
-        PIP_BREAK_SYSTEM_PACKAGES: "1"
-      when:
-        - (pgbackrest_install | bool or wal_g_install | bool)
-        - hetzner_object_storage_create | bool
-  delegate_to: 127.0.0.1
-  run_once: true
-
 # SSH key
 - block:
     # Delete the temporary ssh key from the cloud (if exists)
@@ -443,27 +374,6 @@
       when:
         - cloud_firewall | bool
 
-    # Object Storage (S3 bucket for backups)
-    - name: "Hetzner Cloud: Create Object Storage (S3 bucket) '{{ hetzner_object_storage_name | default('') }}'"
-      amazon.aws.s3_bucket:
-        endpoint_url: "{{ hetzner_object_storage_endpoint }}"
-        ceph: true
-        aws_access_key: "{{ hetzner_object_storage_access_key | default(default_access_key, true) }}"
-        aws_secret_key: "{{ hetzner_object_storage_secret_key | default(default_secret_key, true) }}"
-        name: "{{ hetzner_object_storage_name }}"
-        region: "{{ hetzner_object_storage_region }}"
-        requester_pays: false
-        state: present
-      register: s3_bucket_result
-      failed_when: s3_bucket_result.failed and not "GetBucketRequestPayment" in s3_bucket_result.msg
-      # TODO: https://github.com/ansible-collections/amazon.aws/issues/2447
-      vars:
-        default_access_key: "{{ pgbackrest_s3_key | default(wal_g_aws_access_key_id | default('')) }}"
-        default_secret_key: "{{ pgbackrest_s3_key_secret | default(wal_g_aws_secret_access_key | default('')) }}"
-      when:
-        - (pgbackrest_install | bool or wal_g_install | bool)
-        - hetzner_object_storage_create | bool
-
     # Server and volume
     - name: "Hetzner Cloud: Gather information about servers"
       hetzner.hcloud.server_info:
@@ -820,20 +730,4 @@
         state: "absent"
         name: "{{ patroni_cluster_name }}-firewall"
 
-    - name: "Hetzner Cloud: Delete Object Storage (S3 bucket) '{{ hetzner_object_storage_name | default('') }}'"
-      amazon.aws.s3_bucket:
-        endpoint_url: "{{ hetzner_object_storage_endpoint }}"
-        ceph: true
-        access_key: "{{ hetzner_object_storage_access_key }}"
-        secret_key: "{{ hetzner_object_storage_secret_key }}"
-        name: "{{ hetzner_object_storage_name }}"
-        region: "{{ hetzner_object_storage_region }}"
-        requester_pays: false
-        state: absent
-        force: true
-      when:
-        - (pgbackrest_install | bool or wal_g_install | bool)
-        - hetzner_object_storage_absent | bool
-        - hetzner_object_storage_access_key | length > 0
-        - hetzner_object_storage_secret_key | length > 0
   when: state == 'absent'

@@ -1,0 +1,179 @@
+---
+- name: Install Python dependencies
+  block:
+    - name: Ensure that 'python3-pip' package is present on control host
+      ansible.builtin.command: which pip3
+      register: pip3_check
+      failed_when: false
+      changed_when: false
+
+    - name: Clean dnf cache
+      ansible.builtin.command: dnf clean all
+      when:
+        - pip3_check.rc != 0
+        - ansible_os_family == "RedHat"
+
+    - name: Update apt cache
+      ansible.builtin.apt:
+        update_cache: true
+        cache_valid_time: 3600
+      register: apt_status
+      until: apt_status is success
+      delay: 5
+      retries: 3
+      when:
+        - pip3_check.rc != 0
+        - ansible_os_family == "Debian"
+
+    - name: Install 'python3-pip' package on control host
+      ansible.builtin.package:
+        name: python3-pip
+        state: present
+      register: package_status
+      until: package_status is success
+      delay: 10
+      retries: 3
+      when:
+        - pip3_check.rc != 0
+        - ansible_distribution != "MacOSX"
+
+    - name: Ensure that 'boto3' dependency is present on control host
+      ansible.builtin.pip:
+        name: boto3
+        executable: pip3
+        extra_args: --user
+      become: false
+      vars:
+        ansible_become: false
+      environment:
+        PATH: "{{ ansible_env.PATH }}:/usr/local/bin:/usr/bin"
+        PIP_BREAK_SYSTEM_PACKAGES: "1"
+      when:
+        - cloud_provider | default('') | lower == 'aws' or
+          cloud_backup_provider | default(cloud_provider | default('')) | lower in ['aws', 'digitalocean', 'do', 'hetzner']
+
+    - name: Ensure that 'google-auth' dependency is present on control host
+      ansible.builtin.pip:
+        name: google-auth
+        executable: pip3
+        extra_args: --user
+      become: false
+      vars:
+        ansible_become: false
+      environment:
+        PATH: "{{ ansible_env.PATH }}:/usr/local/bin:/usr/bin"
+        PIP_BREAK_SYSTEM_PACKAGES: "1"
+      when:
+        - cloud_provider | default('') | lower == 'gcp' or
+          cloud_backup_provider | default(cloud_provider | default('')) | lower == 'gcp'
+
+    - name: Ensure that 'dopy' dependency is present on control host
+      ansible.builtin.pip:
+        name: dopy
+        executable: pip3
+        extra_args: --user
+      become: false
+      vars:
+        ansible_become: false
+      environment:
+        PATH: "{{ ansible_env.PATH }}:/usr/local/bin:/usr/bin"
+        PIP_BREAK_SYSTEM_PACKAGES: "1"
+      when:
+        - cloud_provider | default('') | lower in ['digitalocean', 'do']
+
+    - name: Ensure that 'hcloud' dependency is present on control host
+      ansible.builtin.pip:
+        name: hcloud
+        executable: pip3
+        extra_args: --user
+      become: false
+      vars:
+        ansible_become: false
+      environment:
+        PATH: "{{ ansible_env.PATH }}:/usr/local/bin:/usr/bin"
+        PIP_BREAK_SYSTEM_PACKAGES: "1"
+      when:
+        - cloud_provider | default('') | lower == 'hetzner'
+
+    - name: Prepare Azure dependencies
+      when:
+        - cloud_provider | default('') | lower == 'azure' or
+          cloud_backup_provider | default(cloud_provider | default('')) | lower == 'azure'
+      block:
+        - name: Ensure that Azure collection is installed on control host
+          ansible.builtin.command: ansible-galaxy collection list azure.azcollection
+          changed_when: false
+          failed_when: false
+          register: azcollection_result
+
+        - name: Azure collection not installed
+          ansible.builtin.fail:
+            msg:
+              - "Please install Azure collection"
+              - "ansible-galaxy collection install azure.azcollection"
+          when: azcollection_result.stderr is search("unable to find")
+
+        - name: Get ansible_collections path
+          ansible.builtin.shell: >
+            set -o pipefail;
+            ansible-galaxy collection list | grep ansible_collections | head -n 1 | awk '{print $2}'
+          args:
+            executable: /bin/bash
+          register: collections_path
+          changed_when: false
+          when: ansible_collections_path is not defined
+
+        - name: Ensure that Azure collection requirements is present on control host
+          ansible.builtin.pip:
+            requirements: "{{ ansible_collections_path | default(collections_path.stdout) }}/azure/azcollection/requirements.txt"
+            executable: pip3
+            extra_args: "--trusted-host=pypi.python.org --trusted-host=pypi.org --trusted-host=files.pythonhosted.org"
+            umask: "0022"
+          environment:
+            PATH: "{{ ansible_env.PATH }}:/usr/local/bin:/usr/bin"
+            PIP_BREAK_SYSTEM_PACKAGES: "1"
+
+    - name: Prepare Azure CLI
+      when:
+        - cloud_provider | default('') | lower == 'azure'
+        - cloud_load_balancer | bool
+      block:
+        - name: Check if Azure CLI is installed
+          ansible.builtin.command: az --version
+          register: az_version_result
+          changed_when: false
+          failed_when: false
+
+        - name: Install Azure CLI
+          community.general.homebrew:
+            name: azure-cli
+            state: present
+          ignore_errors: true
+          when:
+            - az_version_result.rc != 0
+            - ansible_distribution == "MacOSX"
+
+        - name: Install Azure CLI
+          ansible.builtin.shell: >
+            set -o pipefail;
+            curl -sL https://aka.ms/InstallAzureCLIDeb | bash
+          args:
+            executable: /bin/bash
+          ignore_errors: true
+          when:
+            - az_version_result.rc != 0
+            - ansible_os_family == "Debian"
+
+        - name: Login to Azure using Service Principal
+          ansible.builtin.shell: |
+            az login --service-principal \
+            --username "{{ lookup('env', 'AZURE_CLIENT_ID') }}" \
+            --password "{{ lookup('env', 'AZURE_SECRET') }}" \
+            --tenant "{{ lookup('env', 'AZURE_TENANT') }}"
+          args:
+            executable: /bin/bash
+          changed_when: false
+
+  delegate_to: 127.0.0.1
+  become: false
+  run_once: true

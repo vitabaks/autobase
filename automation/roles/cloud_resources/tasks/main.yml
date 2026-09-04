@@ -92,6 +92,13 @@
     - cluster_scaling | default(false) | bool or
       patroni_standby_cluster.host | default('') | length > 0
 
+- name: Import tasks for cloud provider dependencies
+  ansible.builtin.import_tasks: dependencies.yml
+
+- name: Import tasks for cloud backup storage
+  ansible.builtin.import_tasks: backup_storage.yml
+  when: pgbackrest_install | default(false) | bool or wal_g_install | default(false) | bool
+
 - name: Import tasks for AWS
   ansible.builtin.import_tasks: aws.yml
   when: cloud_provider | lower == 'aws'
