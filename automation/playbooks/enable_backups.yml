@@ -107,6 +107,15 @@
       changed_when: false
       check_mode: false
 
+    - name: Get current Patroni passwords
+      ansible.builtin.import_role:
+        name: vitabaks.autobase.pre_checks
+        tasks_from: passwords
+      vars:
+        source_group: primary
+        postgresql_cluster_maintenance: true
+      when: patroni_restapi_password | default('') | length < 1
+
 - name: vitabaks.autobase.enable_backups | Install and configure pgBackRest
   hosts: pgbackrest:postgres_cluster
   become: true
