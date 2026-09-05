@@ -3,6 +3,7 @@
   when:
     - transfer_etcd_leadership_before_reboot | default(true) | bool
     - dcs_type | default('etcd') == 'etcd'
+    - not dcs_exists | default(false) | bool
     - inventory_hostname in groups.get('etcd_cluster', [])
     - groups.get('etcd_cluster', []) | length > 1
   block:

@@ -63,6 +63,8 @@ When using load balancing for read-only traffic (the "Type A" and "Type C" schem
 
 #### 1. PRE-UPDATE: Perform pre-update tasks
 
+- Make sure that all etcd endpoints are healthy
+  - Stop before stopping services if any endpoint remains unhealthy after retries.
 - Test PostgreSQL DB Access
 - Make sure that physical replication is active (multi-node clusters only)
   - Stop, if there are no active replicas
