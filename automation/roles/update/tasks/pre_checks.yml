@@ -1,4 +1,30 @@
 ---
+- name: "[Pre-Check] Make sure that all etcd endpoints are healthy"
+  become: true
+  become_user: root
+  run_once: true  # noqa run-once
+  delegate_to: "{{ groups.get('etcd_cluster', []) | first | default(inventory_hostname) }}"
+  ansible.builtin.command: >-
+    {{ etcd_bin_dir | default('/usr/local/bin') }}/etcdctl endpoint health --cluster
+    --endpoints={{ patroni_etcd_protocol | default('http', true) }}://127.0.0.1:2379
+    {% if etcd_tls_enable | default(false) | bool %}
+    --cacert={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_ca_crt | default('ca.crt') }}
+    --cert={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_server_crt | default('server.crt') }}
+    --key={{ etcd_tls_dir | default('/etc/etcd/tls') }}/{{ etcd_tls_server_key | default('server.key') }}
+    {% endif %}
+  environment:
+    ETCDCTL_API: "3"
+  register: update_etcd_health_result
+  until: update_etcd_health_result.rc == 0
+  retries: 3
+  delay: 5
+  changed_when: false
+  check_mode: false
+  when:
+    - dcs_type | default('etcd') == 'etcd'
+    - not dcs_exists | default(false) | bool
+    - groups.get('etcd_cluster', []) | length > 0
+
 - name: "[Pre-Check] (ALL) Test PostgreSQL DB Access"
   ansible.builtin.command: >-
     {{ postgresql_bin_dir }}/psql -h 127.0.0.1 -p {{ postgresql_port }} -U {{ patroni_superuser_username }} -d postgres -tAXc 'select 1'

@@ -62,6 +62,13 @@
     - ansible_virtualization_type not in ['container', 'docker', 'lxc', 'podman'] # exclude for containers to prevent test failures in CI.
     - reboot_host_after_update | bool
 
+- name: Prepare etcd leadership before reboot
+  ansible.builtin.include_tasks: prepare_etcd_reboot.yml
+  when:
+    - reboot_host_after_update | bool
+    - (reboot_required_debian.stat.exists is defined and reboot_required_debian.stat.exists) or
+      (reboot_required_rhel.rc is defined and reboot_required_rhel.rc != 0)
+
 - name: Rebooting host
   ansible.builtin.reboot:
     msg: "Reboot initiated by Ansible due to required system updates"
