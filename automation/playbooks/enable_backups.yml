@@ -1,0 +1,175 @@
+---
+- name: vitabaks.autobase.enable_backups | Provision cloud backup storage
+  hosts: localhost
+  gather_facts: true
+  any_errors_fatal: true
+  pre_tasks:
+    - name: Ensure exactly one backup method is enabled
+      ansible.builtin.assert:
+        that:
+          - (pgbackrest_install | default(false) | bool) != (wal_g_install | default(false) | bool)
+        fail_msg: "Set exactly one of 'pgbackrest_install' or 'wal_g_install' to true."
+  tasks:
+    - block:
+        - name: Install cloud provider dependencies
+          ansible.builtin.import_role:
+            name: vitabaks.autobase.cloud_resources
+            tasks_from: dependencies
+
+        - name: Provision cloud backup storage
+          ansible.builtin.import_role:
+            name: vitabaks.autobase.cloud_resources
+            tasks_from: backup_storage
+      when:
+        - cloud_backup_provider | default(cloud_provider | default('')) | length > 0
+        - pgbackrest_install | default(false) | bool or wal_g_install | default(false) | bool
+
+- name: vitabaks.autobase.enable_backups | Prepare the existing PostgreSQL cluster
+  hosts: postgres_cluster
+  become: true
+  become_method: sudo
+  gather_facts: true
+  any_errors_fatal: true
+  pre_tasks:
+    - name: Define bind_address
+      ansible.builtin.import_role:
+        name: vitabaks.autobase.bind_address
+      when: bind_address is not defined
+
+    - name: Set default variables
+      ansible.builtin.import_role:
+        name: vitabaks.autobase.common
+
+    - name: Set maintenance variable
+      ansible.builtin.set_fact:
+        postgresql_cluster_maintenance: true
+
+    - name: Probe Patroni REST API with configured protocol
+      ansible.builtin.uri:
+        url: >-
+          {{ patroni_restapi_protocol | default('https') }}://{{ patroni_restapi_connect_addr
+            | default(patroni_bind_address | default(bind_address, true), true) }}:{{ patroni_restapi_port
+            | default('8008') }}/leader
+        status_code: [200, 503]
+        validate_certs: false
+        ca_path: "{{ patroni_restapi_cafile | default(omit, true) }}"
+      register: patroni_restapi_probe
+      changed_when: false
+      failed_when: false
+      check_mode: false
+      environment:
+        no_proxy: "{{ patroni_bind_address | default(bind_address, true) }}"
+
+    - name: Set effective Patroni REST API protocol
+      ansible.builtin.set_fact:
+        patroni_restapi_effective_protocol: >-
+          {{ (patroni_restapi_protocol | default('https'))
+             if (patroni_restapi_probe.status | default(-1)) in [200, 503]
+             else ('http' if (patroni_restapi_protocol | default('https')) == 'https' else 'https') }}
+
+    - name: Get Patroni cluster leader node
+      ansible.builtin.uri:
+        url: >-
+          {{ patroni_restapi_effective_protocol }}://{{ patroni_restapi_connect_addr
+            | default(patroni_bind_address | default(bind_address, true), true) }}:{{ patroni_restapi_port
+            | default('8008') }}/leader
+        status_code: 200
+        validate_certs: "{{ patroni_restapi_effective_protocol == (patroni_restapi_protocol | default('https')) }}"
+        ca_path: "{{ patroni_restapi_cafile | default(omit, true) }}"
+      register: patroni_leader_result
+      changed_when: false
+      failed_when: false
+      check_mode: false
+      environment:
+        no_proxy: "{{ patroni_restapi_connect_addr | default(patroni_bind_address | default(bind_address, true), true) }}"
+
+    - name: Stop when the Patroni cluster is unhealthy
+      ansible.builtin.fail:
+        msg: >-
+          No healthy leader node detected in cluster '{{ patroni_cluster_name | default('postgres-cluster') }}'.
+          Please ensure the cluster is up and a node responds on the Patroni REST API port
+          ({{ patroni_restapi_port | default('8008') }}).
+      when:
+        - inventory_hostname == groups['postgres_cluster'][0]
+        - (groups.get('postgres_cluster', [])
+            | map('extract', hostvars)
+            | selectattr('patroni_leader_result.status', 'defined')
+            | selectattr('patroni_leader_result.status', 'equalto', 200)
+            | list | length) == 0
+
+  tasks:
+    - name: Add the Patroni leader to the primary group
+      ansible.builtin.add_host:
+        name: "{{ item }}"
+        groups: primary
+      when: hostvars[item]['patroni_leader_result']['status'] | default(0) == 200
+      loop: "{{ groups['postgres_cluster'] }}"
+      changed_when: false
+      check_mode: false
+
+    - name: Get current Patroni passwords
+      ansible.builtin.import_role:
+        name: vitabaks.autobase.pre_checks
+        tasks_from: passwords
+      vars:
+        source_group: primary
+        postgresql_cluster_maintenance: true
+      when: patroni_restapi_password | default('') | length < 1
+
+- name: vitabaks.autobase.enable_backups | Install and configure pgBackRest
+  hosts: pgbackrest:postgres_cluster
+  become: true
+  become_method: sudo
+  gather_facts: true
+  any_errors_fatal: true
+  environment: "{{ proxy_env | default({}) }}"
+  roles:
+    - role: vitabaks.autobase.pgbackrest
+      when: pgbackrest_install | default(false) | bool
+  tasks:
+    - name: Create pgBackRest stanza
+      ansible.builtin.import_role:
+        name: vitabaks.autobase.pgbackrest
+        tasks_from: stanza_create
+      when: pgbackrest_install | default(false) | bool
+
+- name: vitabaks.autobase.enable_backups | Install and configure WAL-G
+  hosts: postgres_cluster
+  become: true
+  become_method: sudo
+  gather_facts: true
+  any_errors_fatal: true
+  environment: "{{ proxy_env | default({}) }}"
+  roles:
+    - role: vitabaks.autobase.wal_g
+      when: wal_g_install | default(false) | bool
+
+- name: vitabaks.autobase.enable_backups | Apply archive_command in Patroni DCS
+  hosts: primary
+  become: true
+  become_method: sudo
+  gather_facts: false
+  any_errors_fatal: true
+  pre_tasks:
+    - name: Set default variables
+      ansible.builtin.import_role:
+        name: vitabaks.autobase.common
+  tasks:
+    - name: Update archive_command in Patroni DCS
+      ansible.builtin.uri:
+        url: >-
+          {{ patroni_restapi_effective_protocol }}://{{ patroni_restapi_connect_addr
+            | default(patroni_bind_address | default(bind_address, true), true) }}:{{ patroni_restapi_port
+            | default('8008') }}/config
+        method: PATCH
+        user: "{{ patroni_restapi_username | default(omit) }}"
+        password: "{{ patroni_restapi_password | default(omit) }}"
+        body:
+          postgresql:
+            parameters:
+              archive_command: "{{ postgresql_archive_command }}"
+        body_format: json
+        ca_path: "{{ patroni_restapi_cafile | default(omit, true) }}"
+        validate_certs: "{{ patroni_restapi_effective_protocol == (patroni_restapi_protocol | default('https')) }}"
+      environment:
+        no_proxy: "{{ patroni_restapi_connect_addr | default(patroni_bind_address | default(bind_address, true), true) }}"

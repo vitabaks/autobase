@@ -13,7 +13,7 @@
         pgbackrest_install: true
       when:
         - not (pgbackrest_install | default(false) | bool or wal_g_install | default(false) | bool)
-        - cloud_provider | default('') | lower in ['aws', 'gcp', 'azure']
+        - cloud_backup_provider | default(cloud_provider | default('')) | lower in ['aws', 'gcp', 'azure']
         - pgbackrest_auto_conf | default(true) | bool # to be able to disable auto backup settings
       tags: always
   roles:
@@ -77,7 +77,7 @@
         pgbackrest_install: true
       when:
         - not (pgbackrest_install | default(false) | bool or wal_g_install | default(false) | bool)
-        - cloud_provider | default('') | lower in ['aws', 'gcp', 'azure']
+        - cloud_backup_provider | default(cloud_provider | default('')) | lower in ['aws', 'gcp', 'azure']
         - pgbackrest_auto_conf | default(true) | bool # to be able to disable auto backup settings
       tags: always
 
@@ -265,7 +265,7 @@
         pgbackrest_install: true
       when:
         - not (pgbackrest_install | default(false) | bool or wal_g_install | default(false) | bool)
-        - cloud_provider | default('') | lower in ['aws', 'gcp', 'azure']
+        - cloud_backup_provider | default(cloud_provider | default('')) | lower in ['aws', 'gcp', 'azure']
         - pgbackrest_auto_conf | default(true) | bool # to be able to disable auto backup settings
       tags: always
   roles:
@@ -287,7 +287,7 @@
         pgbackrest_install: true
       when:
         - not (pgbackrest_install | default(false) | bool or wal_g_install | default(false) | bool)
-        - cloud_provider | default('') | lower in ['aws', 'gcp', 'azure']
+        - cloud_backup_provider | default(cloud_provider | default('')) | lower in ['aws', 'gcp', 'azure']
         - pgbackrest_auto_conf | default(true) | bool # to be able to disable auto backup settings
       tags: always
 

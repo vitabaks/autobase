@@ -26,6 +26,7 @@ Provision the PostgreSQL cluster infrastructure in public clouds (AWS, GCP, Azur
 | Variable | Type | Default | Description |
 |---------|------|---------|-------------|
 | cloud_provider | string | "" | Specifies the Cloud provider for server creation. Available options: 'aws', 'gcp', 'azure', 'digitalocean', 'hetzner' |
+| cloud_backup_provider | string | cloud_provider | Specifies the Cloud provider for backup storage independently of the server provider. |
 | state | string | present | present to create, absent to delete |
 | server_count | int | 3 | Number of servers in the cluster |
 | server_name | string | {{ patroni_cluster_name }}-pgnode | Will be automatically named with suffixes 01, 02, 03, etc. |
@@ -64,6 +65,7 @@ Provision the PostgreSQL cluster infrastructure in public clouds (AWS, GCP, Azur
 | gcp_bucket_default_object_acl | string | projectPrivate | Default object ACL |
 | gcp_bucket_absent | bool | false | Allow delete bucket on state=absent |
 | azure_blob_storage_create | bool | true | Create Azure Blob container (if 'pgbackrest_install' or 'wal_g_install' is 'true') |
+| azure_backup_location | string | {{ server_location }} | Azure region for backup storage. Can differ from the server region. |
 | azure_blob_storage_name | string | {{ patroni_cluster_name }}-backup | Name of a blob container within the storage account |
 | azure_blob_storage_blob_type | string | block | Type of blob object. Values include: block, page |
 | azure_blob_storage_account_name | string | {{ patroni_cluster_name }} | Storage account name. Must be between 3 and 24 characters in length and use numbers and lower-case letters only |
@@ -84,6 +86,10 @@ Provision the PostgreSQL cluster infrastructure in public clouds (AWS, GCP, Azur
 | hetzner_object_storage_access_key | string | "" | Object Storage ACCESS KEY (required) |
 | hetzner_object_storage_secret_key | string | "" | Object Storage SECRET KEY (required) |
 | hetzner_object_storage_absent | bool | false | Allow delete Object Storage on state=absent |
+
+Set `cloud_backup_provider` when backup storage should be provisioned in a different cloud than the database servers.
+In that case, also provide the credentials and region-related variables required by the selected backup provider (for example, `azure_backup_location` for Azure).
+The `server_location` value continues to describe the server provider and is not translated between clouds.
 
 ### Provider-specific (optional) variables referenced in tasks
 

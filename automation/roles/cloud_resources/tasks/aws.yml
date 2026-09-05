@@ -1,57 +1,4 @@
 ---
-# Dependencies
-- name: Install Python dependencies
-  block:
-    - name: Ensure that 'python3-pip' package is present on control host
-      ansible.builtin.command: which pip3
-      register: pip3_check
-      failed_when: false
-      changed_when: false
-
-    - name: Clean dnf cache
-      ansible.builtin.command: dnf clean all
-      when:
-        - pip3_check.rc != 0
-        - ansible_os_family == "RedHat"
-
-    - name: Update apt cache
-      ansible.builtin.apt:
-        update_cache: true
-        cache_valid_time: 3600
-      register: apt_status
-      until: apt_status is success
-      delay: 5
-      retries: 3
-      when:
-        - pip3_check.rc != 0
-        - ansible_os_family == "Debian"
-
-    - name: Install 'python3-pip' package on control host
-      ansible.builtin.package:
-        name: python3-pip
-        state: present
-      register: package_status
-      until: package_status is success
-      delay: 10
-      retries: 3
-      when:
-        - pip3_check.rc != 0
-        - ansible_distribution != "MacOSX"
-
-    - name: Ensure that 'boto3' dependency is present on control host
-      ansible.builtin.pip:
-        name: boto3
-        executable: pip3
-        extra_args: --user
-      become: false
-      vars:
-        ansible_become: false
-      environment:
-        PATH: "{{ ansible_env.PATH }}:/usr/local/bin:/usr/bin"
-        PIP_BREAK_SYSTEM_PACKAGES: "1"
-  delegate_to: 127.0.0.1
-  run_once: true
-
 # SSH key
 - block:
     # Delete the temporary ssh key from the cloud (if exists)
@@ -128,23 +75,6 @@
         filters:
           vpc-id: "{{ vpc_id }}"
       register: vpc_info
-
-    # S3 bucket (Backups)
-    - name: "AWS: Create S3 bucket '{{ aws_s3_bucket_name | default('') }}'"
-      amazon.aws.s3_bucket:
-        access_key: "{{ lookup('ansible.builtin.env', 'AWS_ACCESS_KEY_ID') }}"
-        secret_key: "{{ lookup('ansible.builtin.env', 'AWS_SECRET_ACCESS_KEY') }}"
-        name: "{{ aws_s3_bucket_name }}"
-        region: "{{ aws_s3_bucket_region }}"
-        object_lock_enabled: "{{ aws_s3_bucket_object_lock_enabled }}"
-        encryption: "{{ aws_s3_bucket_encryption }}"
-        public_access:
-          block_public_acls: "{{ aws_s3_bucket_block_public_acls }}"
-          ignore_public_acls: "{{ aws_s3_bucket_ignore_public_acls }}"
-        state: present
-      when:
-        - (pgbackrest_install | bool or wal_g_install | bool)
-        - aws_s3_bucket_create | bool
 
     # Security Group (Firewall)
     - name: "AWS: Create or modify Security Group"
@@ -793,15 +723,4 @@
       delay: 10
       retries: 3
 
-    - name: "AWS: Delete S3 bucket '{{ aws_s3_bucket_name | default('') }}'"
-      amazon.aws.s3_bucket:
-        access_key: "{{ lookup('ansible.builtin.env', 'AWS_ACCESS_KEY_ID') }}"
-        secret_key: "{{ lookup('ansible.builtin.env', 'AWS_SECRET_ACCESS_KEY') }}"
-        name: "{{ aws_s3_bucket_name }}"
-        region: "{{ aws_s3_bucket_region }}"
-        state: absent
-        force: true
-      when:
-        - (pgbackrest_install | bool or wal_g_install | bool)
-        - aws_s3_bucket_absent | default(false) | bool
   when: state == 'absent'

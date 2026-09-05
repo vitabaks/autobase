@@ -1,0 +1,235 @@
+---
+- name: Manage GCP backup storage
+  when: cloud_backup_provider | default(cloud_provider) | lower == 'gcp'
+  block:
+    - name: Lookup the GCP_SERVICE_ACCOUNT_CONTENTS environmental variable
+      ansible.builtin.set_fact:
+        gcp_service_account_contents_raw: "{{ lookup('ansible.builtin.env', 'GCP_SERVICE_ACCOUNT_CONTENTS') | default('') }}"
+      no_log: true
+
+    - name: Fail if no GCP service account information is provided
+      ansible.builtin.fail:
+        msg: "GCP_SERVICE_ACCOUNT_CONTENTS is not defined or empty. Please provide GCP service account credentials."
+      when: gcp_service_account_contents_raw | length < 1
+
+    - name: "Set variable: gcp_service_account_contents (b64decode)"
+      ansible.builtin.set_fact:
+        gcp_service_account_contents: "{{ gcp_service_account_contents_raw | b64decode }}"
+      no_log: true
+      when: gcp_service_account_contents_raw is match('^[a-zA-Z0-9+/]+={0,2}$')
+
+    - name: "Set variable: gcp_service_account_contents"
+      ansible.builtin.set_fact:
+        gcp_service_account_contents: "{{ gcp_service_account_contents_raw }}"
+      no_log: true
+      when: gcp_service_account_contents is not defined
+
+    - name: "Set variable: gcp_project"
+      ansible.builtin.set_fact:
+        gcp_project: "{{ (gcp_service_account_contents | from_json).get('project_id', '') }}"
+      no_log: true
+      changed_when: false
+      when: gcp_project | default('') | length < 1
+
+    - name: Fail if GCP project was not found
+      ansible.builtin.fail:
+        msg: >-
+          Unable to determine the GCP project.
+          Make sure that a valid GCP service account JSON key is provided
+          or explicitly set the project ID in the gcp_project variable.
+      when: gcp_project | default('') | length < 1
+
+    - name: "GCP: Create bucket '{{ gcp_bucket_name | default('') }}'"
+      google.cloud.gcp_storage_bucket:
+        auth_kind: "serviceaccount"
+        service_account_contents: "{{ gcp_service_account_contents }}"
+        project: "{{ gcp_project | default('') }}"
+        name: "{{ gcp_bucket_name }}"
+        storage_class: "{{ gcp_bucket_storage_class }}"
+        predefined_default_object_acl: "{{ gcp_bucket_default_object_acl }}"
+        state: present
+      when:
+        - state == 'present'
+        - gcp_bucket_create | bool
+
+    - name: "GCP: Delete bucket '{{ gcp_bucket_name | default('') }}'"
+      google.cloud.gcp_storage_bucket:
+        auth_kind: "serviceaccount"
+        service_account_contents: "{{ gcp_service_account_contents }}"
+        project: "{{ gcp_project | default('') }}"
+        name: "{{ gcp_bucket_name }}"
+        state: absent
+      when:
+        - state == 'absent'
+        - (pgbackrest_install | bool or wal_g_install | bool)
+        - gcp_bucket_absent | bool
+
+- name: Manage AWS backup storage
+  when: cloud_backup_provider | default(cloud_provider) | lower == 'aws'
+  block:
+    - name: "AWS: Create S3 bucket '{{ aws_s3_bucket_name | default('') }}'"
+      amazon.aws.s3_bucket:
+        access_key: "{{ lookup('ansible.builtin.env', 'AWS_ACCESS_KEY_ID') }}"
+        secret_key: "{{ lookup('ansible.builtin.env', 'AWS_SECRET_ACCESS_KEY') }}"
+        name: "{{ aws_s3_bucket_name }}"
+        region: "{{ aws_s3_bucket_region }}"
+        object_lock_enabled: "{{ aws_s3_bucket_object_lock_enabled }}"
+        encryption: "{{ aws_s3_bucket_encryption }}"
+        public_access:
+          block_public_acls: "{{ aws_s3_bucket_block_public_acls }}"
+          ignore_public_acls: "{{ aws_s3_bucket_ignore_public_acls }}"
+        state: present
+      when:
+        - state == 'present'
+        - aws_s3_bucket_create | bool
+
+    - name: "AWS: Delete S3 bucket '{{ aws_s3_bucket_name | default('') }}'"
+      amazon.aws.s3_bucket:
+        access_key: "{{ lookup('ansible.builtin.env', 'AWS_ACCESS_KEY_ID') }}"
+        secret_key: "{{ lookup('ansible.builtin.env', 'AWS_SECRET_ACCESS_KEY') }}"
+        name: "{{ aws_s3_bucket_name }}"
+        region: "{{ aws_s3_bucket_region }}"
+        state: absent
+        force: true
+      when:
+        - state == 'absent'
+        - (pgbackrest_install | bool or wal_g_install | bool)
+        - aws_s3_bucket_absent | default(false) | bool
+
+- name: Manage Azure backup storage
+  when: cloud_backup_provider | default(cloud_provider) | lower == 'azure'
+  block:
+    - name: "Azure: Create backup storage"
+      when:
+        - state == 'present'
+        - azure_blob_storage_create | bool
+      block:
+        - name: "Azure: Create backup storage resource group"
+          azure.azcollection.azure_rm_resourcegroup:
+            name: "{{ azure_resource_group | default('postgres-cluster-resource-group' ~ '-' ~ azure_backup_location) }}"
+            location: "{{ azure_backup_location }}"
+
+        - name: "Azure: Create Storage Account '{{ azure_blob_storage_account_name | default('') }}'"
+          azure.azcollection.azure_rm_storageaccount:
+            resource_group: "{{ azure_resource_group | default('postgres-cluster-resource-group' ~ '-' ~ azure_backup_location) }}"
+            name: "{{ azure_blob_storage_account_name }}"
+            account_type: "{{ azure_blob_storage_account_type }}"
+            kind: "{{ azure_blob_storage_account_kind }}"
+            access_tier: "{{ azure_blob_storage_account_access_tier }}"
+            public_network_access: "{{ azure_blob_storage_account_public_network_access }}"
+            allow_blob_public_access: "{{ azure_blob_storage_account_allow_blob_public_access }}"
+            state: present
+
+        - name: "Azure: Get Storage Account info"
+          azure.azcollection.azure_rm_storageaccount_info:
+            resource_group: "{{ azure_resource_group | default('postgres-cluster-resource-group' ~ '-' ~ azure_backup_location) }}"
+            name: "{{ azure_blob_storage_account_name }}"
+            show_connection_string: true
+          no_log: true
+          register: azure_storage_account_info
+
+        - name: "Set variable: azure_storage_account_key"
+          ansible.builtin.set_fact:
+            azure_storage_account_key: "{{ azure_storage_account_info.storageaccounts[0].primary_endpoints.key }}"
+          no_log: true
+
+        - name: "Azure: Create Blob Storage container '{{ azure_blob_storage_name | default('') }}'"
+          azure.azcollection.azure_rm_storageblob:
+            resource_group: "{{ azure_resource_group | default('postgres-cluster-resource-group' ~ '-' ~ azure_backup_location) }}"
+            account_name: "{{ azure_blob_storage_account_name }}"
+            container: "{{ azure_blob_storage_name }}"
+            blob_type: "{{ azure_blob_storage_blob_type }}"
+            state: present
+
+    - name: "Azure: Delete backup storage"
+      when:
+        - state == 'absent'
+        - (pgbackrest_install | bool or wal_g_install | bool)
+        - azure_blob_storage_absent | bool
+      ignore_errors: true
+      block:
+        - name: "Azure: Delete Blob Storage '{{ azure_blob_storage_name | default('') }}'"
+          azure.azcollection.azure_rm_storageblob:
+            resource_group: "{{ azure_resource_group | default('postgres-cluster-resource-group' ~ '-' ~ azure_backup_location) }}"
+            storage_account_name: "{{ azure_blob_storage_account_name }}"
+            container: "{{ azure_blob_storage_name }}"
+            state: absent
+
+        - name: "Azure: Delete Storage Account '{{ azure_blob_storage_account_name | default('') }}'"
+          azure.azcollection.azure_rm_storageaccount:
+            resource_group: "{{ azure_resource_group | default('postgres-cluster-resource-group' ~ '-' ~ azure_backup_location) }}"
+            name: "{{ azure_blob_storage_account_name }}"
+            force_delete_nonempty: true
+            state: absent
+
+- name: Manage DigitalOcean backup storage
+  when: cloud_backup_provider | default(cloud_provider) | lower in ['digitalocean', 'do']
+  block:
+    - name: "DigitalOcean: Create Spaces Bucket '{{ digital_ocean_spaces_name | default('') }}'"
+      community.digitalocean.digital_ocean_spaces:
+        oauth_token: "{{ lookup('ansible.builtin.env', 'DO_API_TOKEN') }}"
+        name: "{{ digital_ocean_spaces_name }}"
+        region: "{{ digital_ocean_spaces_region }}"
+        aws_access_key_id: "{{ digital_ocean_spaces_access_key | default(AWS_ACCESS_KEY_ID | default(default_access_key), true) }}"
+        aws_secret_access_key: "{{ digital_ocean_spaces_secret_key | default(AWS_SECRET_ACCESS_KEY | default(default_secret_key), true) }}"
+        state: present
+      vars:
+        default_access_key: "{{ pgbackrest_s3_key | default(wal_g_aws_access_key_id | default('')) }}"
+        default_secret_key: "{{ pgbackrest_s3_key_secret | default(wal_g_aws_secret_access_key | default('')) }}"
+      when:
+        - state == 'present'
+        - digital_ocean_spaces_create | bool
+
+    - name: "DigitalOcean: Delete Spaces Bucket '{{ digital_ocean_spaces_name | default('') }}'"
+      community.digitalocean.digital_ocean_spaces:
+        oauth_token: "{{ lookup('ansible.builtin.env', 'DO_API_TOKEN') }}"
+        name: "{{ digital_ocean_spaces_name }}"
+        region: "{{ digital_ocean_spaces_region }}"
+        aws_access_key_id: "{{ AWS_ACCESS_KEY_ID }}"
+        aws_secret_access_key: "{{ AWS_SECRET_ACCESS_KEY }}"
+        state: absent
+      ignore_errors: true
+      when:
+        - state == 'absent'
+        - (pgbackrest_install | bool or wal_g_install | bool)
+        - digital_ocean_spaces_absent | bool
+
+- name: Manage Hetzner Cloud backup storage
+  when: cloud_backup_provider | default(cloud_provider) | lower == 'hetzner'
+  block:
+    - name: "Hetzner Cloud: Create Object Storage (S3 bucket) '{{ hetzner_object_storage_name | default('') }}'"
+      amazon.aws.s3_bucket:
+        endpoint_url: "{{ hetzner_object_storage_endpoint }}"
+        ceph: true
+        aws_access_key: "{{ hetzner_object_storage_access_key | default(default_access_key, true) }}"
+        aws_secret_key: "{{ hetzner_object_storage_secret_key | default(default_secret_key, true) }}"
+        name: "{{ hetzner_object_storage_name }}"
+        region: "{{ hetzner_object_storage_region }}"
+        requester_pays: false
+        state: present
+      register: s3_bucket_result
+      failed_when: s3_bucket_result.failed and not "GetBucketRequestPayment" in s3_bucket_result.msg
+      vars:
+        default_access_key: "{{ pgbackrest_s3_key | default(wal_g_aws_access_key_id | default('')) }}"
+        default_secret_key: "{{ pgbackrest_s3_key_secret | default(wal_g_aws_secret_access_key | default('')) }}"
+      when:
+        - state == 'present'
+        - hetzner_object_storage_create | bool
+
+    - name: "Hetzner Cloud: Delete Object Storage (S3 bucket) '{{ hetzner_object_storage_name | default('') }}'"
+      amazon.aws.s3_bucket:
+        endpoint_url: "{{ hetzner_object_storage_endpoint }}"
+        ceph: true
+        access_key: "{{ hetzner_object_storage_access_key }}"
+        secret_key: "{{ hetzner_object_storage_secret_key }}"
+        name: "{{ hetzner_object_storage_name }}"
+        region: "{{ hetzner_object_storage_region }}"
+        requester_pays: false
+        state: absent
+        force: true
+      when:
+        - state == 'absent'
+        - (pgbackrest_install | bool or wal_g_install | bool)
+        - hetzner_object_storage_absent | bool
+        - hetzner_object_storage_access_key | length > 0
+        - hetzner_object_storage_secret_key | length > 0
