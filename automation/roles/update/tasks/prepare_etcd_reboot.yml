@@ -37,6 +37,7 @@
       register: update_etcd_cluster_status
       changed_when: false
       check_mode: false
+      ignore_errors: true # Unreachable endpoints cause a nonzero exit code, but stdout still contains responding peers.
 
     - name: Define etcd leadership facts
       ansible.builtin.set_fact:
