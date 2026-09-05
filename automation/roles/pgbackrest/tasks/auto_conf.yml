@@ -67,6 +67,27 @@
   when: cloud_backup_provider | default(cloud_provider | default('')) | lower == 'gcp'
 
 # Azure Blob Storage (if 'cloud_backup_provider=azure')
+- name: Get Azure Storage Account key for backup configuration
+  block:
+    - name: "Azure: Get Storage Account info"
+      azure.azcollection.azure_rm_storageaccount_info:
+        resource_group: "{{ azure_resource_group | default('postgres-cluster-resource-group-' ~ (azure_backup_location | default(server_location | default('')))) }}"
+        name: "{{ pgbackrest_azure_account | default(azure_blob_storage_account_name | default(patroni_cluster_name | lower | replace('-', '') | truncate(24, true, ''))) }}"
+        show_connection_string: true
+      register: azure_storage_account_info
+
+    - name: "Set variable: azure_storage_account_key"
+      ansible.builtin.set_fact:
+        azure_storage_account_key: "{{ azure_storage_account_info.storageaccounts[0].primary_endpoints.key }}"
+      delegate_facts: true
+  delegate_to: localhost
+  become: false
+  run_once: true # noqa run-once
+  no_log: true
+  when:
+    - cloud_backup_provider | default(cloud_provider | default('')) | lower == 'azure'
+    - pgbackrest_azure_key is not defined
+
 - name: "Set variable 'pgbackrest_conf' for backup in Azure Blob Storage"
   ansible.builtin.set_fact:
     pgbackrest_conf:

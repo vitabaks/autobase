@@ -120,19 +120,6 @@
             allow_blob_public_access: "{{ azure_blob_storage_account_allow_blob_public_access }}"
             state: present
 
-        - name: "Azure: Get Storage Account info"
-          azure.azcollection.azure_rm_storageaccount_info:
-            resource_group: "{{ azure_resource_group | default('postgres-cluster-resource-group' ~ '-' ~ azure_backup_location) }}"
-            name: "{{ azure_blob_storage_account_name }}"
-            show_connection_string: true
-          no_log: true
-          register: azure_storage_account_info
-
-        - name: "Set variable: azure_storage_account_key"
-          ansible.builtin.set_fact:
-            azure_storage_account_key: "{{ azure_storage_account_info.storageaccounts[0].primary_endpoints.key }}"
-          no_log: true
-
         - name: "Azure: Create Blob Storage container '{{ azure_blob_storage_name | default('') }}'"
           azure.azcollection.azure_rm_storageblob:
             resource_group: "{{ azure_resource_group | default('postgres-cluster-resource-group' ~ '-' ~ azure_backup_location) }}"
