@@ -2,7 +2,7 @@
 ---
 cloud_provider: "{{ provision | default('') }}" # Specifies the Cloud provider for server creation. Available options: 'aws', 'gcp', 'azure', 'digitalocean', 'hetzner'.
 cloud_backup_provider: "{{ cloud_provider }}" # Cloud provider for backup storage. Defaults to the server cloud provider.
-cloud_provider_tags: { } # Custom resource tags (dictionary of string keys and values; DigitalOcean uses key:value tags).
+cloud_provider_tags: { } # Custom resource tags (dictionary of string keys and values.
 #  environment: production
 #  project: myproject
 #  key: value
