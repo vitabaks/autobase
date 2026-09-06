@@ -1,4 +1,16 @@
 ---
+- name: "AWS: Validate cluster name length for NLB target groups"
+  ansible.builtin.assert:
+    that:
+      - patroni_cluster_name | length <= 21
+    fail_msg: >-
+      AWS NLB requires patroni_cluster_name to be 21 characters or fewer because
+      the generated target group name adds the '-tg-primary' suffix and cannot exceed 32 characters.
+  when:
+    - state == 'present'
+    - cloud_load_balancer | bool
+    - aws_load_balancer_type | lower == 'nlb'
+
 # SSH key
 - block:
     # Delete the temporary ssh key from the cloud (if exists)
