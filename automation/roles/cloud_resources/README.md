@@ -72,8 +72,8 @@ Provision the PostgreSQL cluster infrastructure in public clouds (AWS, GCP, Azur
 | azure_blob_storage_blob_type | string | block | Type of blob object. Values include: block, page |
 | azure_blob_storage_account_name | string | {{ patroni_cluster_name }} | Storage account name. Must be between 3 and 24 characters in length and use numbers and lower-case letters only |
 | azure_blob_storage_account_type | string | Standard_RAGRS | Type of storage account. Values include: Standard_LRS, Standard_GRS, Standard_RAGRS, Standard_ZRS, Standard_RAGZRS, Standard_GZRS, Premium_LRS, Premium_ZRS |
-| azure_blob_storage_account_kind | string | BlobStorage | The kind of storage. Values include: Storage, StorageV2, BlobStorage, BlockBlobStorage, FileStorage |
-| azure_blob_storage_account_access_tier | string | Hot | The access tier for this storage account. Required when kind=BlobStorage |
+| azure_blob_storage_account_kind | string | StorageV2 | The kind of storage. Values include: StorageV2, BlockBlobStorage, FileStorage |
+| azure_blob_storage_account_access_tier | string | Hot | The access tier for blob data in this storage account |
 | azure_blob_storage_account_public_network_access | string | Enabled | Allow public network access to Storage Account to create Blob Storage container |
 | azure_blob_storage_account_allow_blob_public_access | bool | false | Allow anonymous blob access |
 | azure_blob_storage_absent | bool | false | Allow delete Azure Blob Storage on state=absent |
