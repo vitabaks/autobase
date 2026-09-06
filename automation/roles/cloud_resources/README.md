@@ -27,7 +27,7 @@ Provision the PostgreSQL cluster infrastructure in public clouds (AWS, GCP, Azur
 |---------|------|---------|-------------|
 | cloud_provider | string | "" | Specifies the Cloud provider for server creation. Available options: 'aws', 'gcp', 'azure', 'digitalocean', 'hetzner' |
 | cloud_backup_provider | string | cloud_provider | Specifies the Cloud provider for backup storage independently of the server provider. |
-| cloud_provider_tags | dict | {} | Custom resource tags (string keys and values). |
+| cloud_provider_tags | dict | managed-by: autobase | Custom resource tags (string keys and values). |
 | cloud_backup_provider_tags | dict | cloud_provider_tags | Custom backup storage tags. An explicit dictionary replaces the inherited custom tags. |
 | state | string | present | present to create, absent to delete |
 | server_count | int | 3 | Number of servers in the cluster |
@@ -97,9 +97,11 @@ The `server_location` value continues to describe the server provider and is not
 
 ```yaml
 cloud_provider_tags:
+  managed-by: autobase
   environment: production
   team: platform
 cloud_backup_provider_tags: # Optional; inherits cloud_provider_tags when omitted
+  managed-by: autobase
   environment: production
   team: platform
   purpose: backup
