@@ -111,6 +111,7 @@ DigitalOcean adds missing `key:value` tags to Droplets and removes previous valu
 Removing a key from the variables does not remove it on AWS, Azure or DigitalOcean.
 
 Autobase's `Name` (EC2 instances) and `Cluster`/`cluster` values take precedence over conflicting custom values.
+GCP requires label keys and values to use lowercase letters, numbers, underscores or hyphens. Keys must start with a lowercase letter.
 The DigitalOcean cluster tag and GCP network tags remain unchanged because firewalls and load balancers use them to select servers.
 Use strings for all keys and values (quote numeric values), and follow the selected provider's naming and count limits.
 When backup storage uses a different provider, inherited tags must also satisfy that provider's restrictions.
