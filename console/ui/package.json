@@ -1,7 +1,7 @@
 {
   "name": "postgresql-cluster-console-ui",
   "private": true,
-  "version": "2.10.0",
+  "version": "2.11.0",
   "type": "module",
   "engines": {
     "node": "^24.15.0"
