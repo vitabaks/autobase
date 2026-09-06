@@ -487,23 +487,6 @@
       register: block_storage_result
       when: not use_local_disk | bool
 
-    - name: "DigitalOcean: Remove previous values of configured custom tags"
-      community.digitalocean.digital_ocean_tag:
-        oauth_token: "{{ lookup('ansible.builtin.env', 'DO_API_TOKEN') }}"
-        name: "{{ item.1 }}"
-        resource_id: "{{ item.0.id }}"
-        state: absent
-      vars:
-        tagged_droplets: "{{ droplet_result.results | map(attribute='data.droplet') | list }}"
-      loop: "{{ tagged_droplets | subelements('tags', skip_missing=True) }}"
-      loop_control:
-        label: "{{ item.0.name }}: {{ item.1 }}"
-      when:
-        - item.1 != patroni_cluster_name
-        - "':' in item.1"
-        - item.1.split(':', 1)[0] in cloud_provider_tags
-        - "item.1 != item.1.split(':', 1)[0] ~ ':' ~ cloud_provider_tags[item.1.split(':', 1)[0]]"
-
     - name: "DigitalOcean: Attach Block Storage to Droplet"
       community.digitalocean.digital_ocean_block_storage:
         oauth_token: "{{ lookup('ansible.builtin.env', 'DO_API_TOKEN') }}"
